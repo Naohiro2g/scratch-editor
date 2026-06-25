@@ -12,6 +12,19 @@ const onClickLogo = () => {
     window.location = 'https://scratch.mit.edu';
 };
 
+// Allow auto-loading an extension via the `?extension=<id>` URL param, e.g.
+// `?extension=mcremote`. Builtin extensions load synchronously here.
+const extensionMatches = window.location.href.match(/[?&]extension=([^&]+)/);
+const autoLoadExtensionId = extensionMatches ? decodeURIComponent(extensionMatches[1]) : null;
+
+const handleVmInit = vm => {
+    if (autoLoadExtensionId) {
+        vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(e => {
+            log(`Failed to auto-load extension "${autoLoadExtensionId}": ${e}`);
+        });
+    }
+};
+
 const handleTelemetryModalCancel = () => {
     log('User canceled telemetry modal');
 };
@@ -72,6 +85,7 @@ export default appTarget => {
                 platform={PLATFORM.DESKTOP}
                 showTelemetryModal
                 canSave={false}
+                onVmInit={handleVmInit}
                 onTelemetryModalCancel={handleTelemetryModalCancel}
                 onTelemetryModalOptIn={handleTelemetryModalOptIn}
                 onTelemetryModalOptOut={handleTelemetryModalOptOut}
@@ -82,6 +96,7 @@ export default appTarget => {
                 showComingSoon
                 backpackHost={backpackHost}
                 canSave={false}
+                onVmInit={handleVmInit}
                 onClickLogo={onClickLogo}
             />
     );

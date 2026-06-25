@@ -1,14 +1,23 @@
 import {isRtl} from 'scratch-l10n';
 import editorMessages from 'scratch-l10n/locales/editor-msgs';
+import mcremoteMessages from '../lib/mcremote-l10n';
 
 const UPDATE_LOCALES = 'scratch-gui/locales/UPDATE_LOCALES';
 const SELECT_LOCALE = 'scratch-gui/locales/SELECT_LOCALE';
 
+// Merge this fork's translations into the scratch-l10n catalog, which does not
+// carry them. The merged catalog feeds both react-intl and the VM's
+// format-message via state.locales.messages.
+const messagesByLocale = Object.keys(mcremoteMessages).reduce((acc, locale) => {
+    acc[locale] = Object.assign({}, editorMessages[locale], mcremoteMessages[locale]);
+    return acc;
+}, Object.assign({}, editorMessages));
+
 const initialState = {
     isRtl: false,
     locale: 'en',
-    messagesByLocale: editorMessages,
-    messages: editorMessages.en
+    messagesByLocale: messagesByLocale,
+    messages: messagesByLocale.en
 };
 
 const reducer = function (state, action) {
