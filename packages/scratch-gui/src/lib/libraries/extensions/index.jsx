@@ -49,6 +49,8 @@ import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 import faceSensingIconURL from './faceSensing/faceSensing.png';
 import faceSensingInsetIconURL from './faceSensing/faceSensing-small.svg';
 
+import mcremoteIconURL from './mcremote/mcremote.svg';
+
 export default [
     {
         name: (
@@ -412,5 +414,25 @@ export default [
             />
         ),
         helpLink: 'https://scratch.mit.edu/wedo'
+    },
+    {
+        name: (
+            <FormattedMessage
+                defaultMessage="McRemote"
+                description="Name for the 'McRemote' extension"
+                id="gui.extension.mcremote.name"
+            />
+        ),
+        extensionId: 'mcremote',
+        iconURL: mcremoteIconURL,
+        insetIconURL: mcremoteIconURL,
+        description: (
+            <FormattedMessage
+                defaultMessage="Control Minecraft from Scratch blocks."
+                description="Description for the 'McRemote' extension"
+                id="gui.extension.mcremote.description"
+            />
+        ),
+        featured: true
     }
 ];
