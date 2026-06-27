@@ -6,24 +6,42 @@ const log = require('../../util/log');
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
- * and forwards to the McRemote plugin over plain TCP (see protocol v1 draft).
+ * and forwards each message onto the McRemote plugin over plain TCP, so the
+ * same protocol works bridge-relayed or direct.
  * @type {string}
  */
 const DEFAULT_BRIDGE_URL = 'wss://scratch-bridge.mc-remote.com';
 
 /**
- * Protocol v1 (DRAFT). The extension speaks a JSON envelope to the bridge; the
- * bridge maps each message 1:1 onto the existing RaspberryJuice-style TCP
- * command set so that the same protocol works bridge-relayed or direct.
+ * Protocol semver advertised in the hello handshake. This is the clean
+ * protocol contract version (21.0.0); the b1 package/channel suffix is not
+ * carried on the wire (it is irrelevant to compatibility).
+ * @type {string}
+ */
+const PROTOCOL_VERSION = '21.0.0';
+
+/**
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 21.0.0,
+ * b1). One WebSocket message carries one JSON object.
  *
- *   hello          -> auth (pair / session_token) + sandbox + build context
- *   chat.post      -> ("msg")                        // no reply
- *   world.setBlock -> (x,y,z,id,[data])              // no reply
- *   world.setBlocks-> (x0,y0,z0,x1,y1,z1,id,[data])  // no reply
- *   world.getBlock -> (x,y,z) => id:int              // reply
+ *   request       {jsonrpc:"2.0", id, method, params}  -> reply with id
+ *   notification  {jsonrpc:"2.0",     method, params}  -> no reply (id omitted)
+ *   response      {jsonrpc:"2.0", id, result}
+ *                 {jsonrpc:"2.0", id, error:{code, message, data?}}
  *
- * The exact envelope shape is pending confirmation in mc-remote-knowledge
- * (13-scratch-client). This scaffold sends `{cmd, args}` lines.
+ * `method` is the dot-namespaced command (TCP command names, direct):
+ *
+ *   hello           object params (auth + build context)        -> reply
+ *   chat.post       ["msg"]                                      -> send-only
+ *   world.setBlock  [x, y, z, block]                             -> send-only
+ *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> send-only
+ *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
+ *
+ * Coordinates are deltas from the build origin; the block argument is a
+ * block_state_ref string passed through verbatim (the plugin completes the
+ * namespace and canonicalises the reply). setBlock/setBlocks/chat.post are
+ * fire-and-forget notifications; getBlock is always a request so its reply and
+ * any JSON-RPC error are delivered synchronously.
  */
 
 /**
@@ -46,14 +64,14 @@ class Scratch3McRemoteBlocks {
         this._socket = null;
 
         /**
-         * Pending getBlock-style requests awaiting a reply line, keyed by id.
+         * Pending requests awaiting a reply, keyed by JSON-RPC id.
          * @type {Map<number, {resolve: Function, reject: Function}>}
          * @private
          */
         this._pending = new Map();
 
         /**
-         * Monotonic request id for reply correlation.
+         * Monotonic JSON-RPC request id, reset per connection.
          * @type {number}
          * @private
          */
@@ -132,7 +150,6 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlocks',
-                        // eslint-disable-next-line @stylistic/max-len
                         default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK]',
                         description: 'Fill a cuboid of blocks'
                     }),
@@ -187,24 +204,47 @@ class Scratch3McRemoteBlocks {
             });
             socket.addEventListener('close', () => {
                 this._socket = null;
+                this._rejectPending(new Error('bridge connection closed'));
             });
         });
     }
 
     /**
-     * Send the protocol v1 hello handshake.
-     * TODO(protocol-v1): carry auth (pair / session_token) and build context
-     * (setWorld / setBuildOrigin equivalents). Pending knowledge-repo spec.
+     * Send the hello handshake. b1 is unauthenticated, so the build context
+     * falls back to the server defaults (overworld, origin 200,0,200) and the
+     * hello reply carries catalogHash:null; auth is layered in later betas.
      * @param {string} [sandbox] - optional named sandbox to target.
      * @returns {Promise} resolves when the handshake is acknowledged.
      * @private
      */
     _hello (sandbox) {
-        return this._request('hello', sandbox ? [sandbox] : []);
+        const params = {
+            protocol: PROTOCOL_VERSION,
+            client: {
+                name: 'scratch-mcremote',
+                locale: formatMessage.setup().locale
+            }
+        };
+        if (sandbox) params.sandbox = sandbox;
+        return this._request('hello', params);
     }
 
     /**
-     * Handle an inbound message line from the bridge, correlating replies.
+     * Reject and clear every pending request, e.g. when the socket closes so
+     * that in-flight getBlock calls fail fast instead of hanging forever.
+     * @param {Error} error - the rejection reason.
+     * @private
+     */
+    _rejectPending (error) {
+        for (const pending of this._pending.values()) {
+            pending.reject(error);
+        }
+        this._pending.clear();
+    }
+
+    /**
+     * Handle an inbound JSON-RPC message from the bridge, correlating replies
+     * by id. Non-JSON messages and replies for unknown ids are dropped.
      * @param {MessageEvent} event - the socket message event.
      * @private
      */
@@ -212,7 +252,7 @@ class Scratch3McRemoteBlocks {
         let msg;
         try {
             msg = JSON.parse(event.data);
-        } catch (e) {
+        } catch {
             log.warn(`McRemote: dropping non-JSON bridge message: ${event.data}`);
             return;
         }
@@ -220,42 +260,46 @@ class Scratch3McRemoteBlocks {
         if (!pending) return;
         this._pending.delete(msg.id);
         if (msg.error) {
-            pending.reject(new Error(msg.error));
+            const error = new Error(msg.error.message || 'McRemote error');
+            error.code = msg.error.code;
+            error.data = msg.error.data;
+            if (msg.error.data) error.reason = msg.error.data.reason;
+            pending.reject(error);
         } else {
             pending.resolve(msg.result);
         }
     }
 
     /**
-     * Send a command and await its reply (for getBlock-style commands).
-     * @param {string} cmd - the protocol v1 command name.
-     * @param {Array} args - positional arguments.
+     * Send a JSON-RPC request and await its reply.
+     * @param {string} method - the dot-namespaced command name.
+     * @param {Array|object} params - positional args (object for hello).
      * @returns {Promise} resolves with the reply result.
      * @private
      */
-    _request (cmd, args) {
+    _request (method, params) {
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
             return Promise.reject(new Error('not connected to bridge'));
         }
         const id = this._nextRequestId++;
         return new Promise((resolve, reject) => {
             this._pending.set(id, {resolve, reject});
-            this._socket.send(JSON.stringify({id, cmd, args}));
+            this._socket.send(JSON.stringify({jsonrpc: '2.0', id, method, params}));
         });
     }
 
     /**
-     * Send a fire-and-forget command (no reply expected).
-     * @param {string} cmd - the protocol v1 command name.
-     * @param {Array} args - positional arguments.
+     * Send a JSON-RPC notification (fire-and-forget, no reply expected).
+     * @param {string} method - the dot-namespaced command name.
+     * @param {Array} params - positional arguments.
      * @private
      */
-    _send (cmd, args) {
+    _send (method, params) {
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
-            log.warn(`McRemote: ${cmd} dropped, not connected to bridge`);
+            log.warn(`McRemote: ${method} dropped, not connected to bridge`);
             return;
         }
-        this._socket.send(JSON.stringify({cmd, args}));
+        this._socket.send(JSON.stringify({jsonrpc: '2.0', method, params}));
     }
 
     connect () {
