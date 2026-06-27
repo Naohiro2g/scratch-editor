@@ -74,8 +74,18 @@ packages/
 ├── scratch-svg-renderer/   SVG asset processor
 ├── task-herder/            Async task scheduler with rate limiting
 └── scratch-media-lib-scripts/  Build scripts for media library assets
+mc-remote/                  McRemote fork add-ons (@mc-remote/* scope, all private)
+├── protocol/               @mc-remote/protocol  Wire contract (types + constants), dependency-free leaf
+├── bridge/                 @mc-remote/bridge    Thin wss⇄TCP proxy to a Minecraft Sandbox; depends on protocol
+└── (live/)                 @mc-remote/live      Reserved: observer UI (brand "WireScope"); added in a later beta
 scripts/                    Monorepo-level utility scripts
 ```
+
+The `mc-remote/` packages are the fork's additions for driving Minecraft from Scratch blocks; they are not part
+of upstream `scratch-editor`. `live/` is reserved by name only — it is not created yet (an empty workspace dir
+would trip the `mc-remote/*` glob), and is added when its implementation begins. The scratch-vm McRemote
+extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm at build time and keeps the wire
+constants inline.
 
 ## Packages at a glance
 
@@ -87,6 +97,8 @@ scripts/                    Monorepo-level utility scripts
 | `scratch-svg-renderer` | JavaScript | webpack | Tap |
 | `task-herder` | TypeScript | Vite | Vitest |
 | `scratch-media-lib-scripts` | JavaScript | — | Jest |
+| `@mc-remote/protocol` | TypeScript | Vite (lib) | Vitest |
+| `@mc-remote/bridge` | TypeScript | Vite (Node bundle) | Vitest |
 
 `task-herder` represents the target stack for new packages (TypeScript + Vite + Vitest). The other packages
 reflect the legacy stack and are being migrated incrementally.
