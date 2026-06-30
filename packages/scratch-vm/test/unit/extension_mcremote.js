@@ -64,6 +64,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
 
+    t.equal(socket.url, 'wss://bridge.mc-remote.com');
     const hello = socket.lastSent();
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');

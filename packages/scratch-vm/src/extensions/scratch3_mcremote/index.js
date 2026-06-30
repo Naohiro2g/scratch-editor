@@ -10,7 +10,7 @@ const log = require('../../util/log');
  * same protocol works bridge-relayed or direct.
  * @type {string}
  */
-const DEFAULT_BRIDGE_URL = 'wss://scratch-bridge.mc-remote.com';
+const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
