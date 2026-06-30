@@ -1,5 +1,23 @@
 # Agent Guide: scratch-editor
 
+## McRemote source of truth
+
+This fork contains McRemote-specific code and packages. Before doing work that depends on McRemote project
+decisions, read the relevant documents in the GitHub repository `Naohiro2g/mc-remote-knowledge`.
+
+This includes work affecting McRemote architecture, protocol, bridge, deployment, contributor workflow, learning
+design, or behavior whose rationale depends on McRemote decisions. Typical paths include `mc-remote/*`,
+`packages/scratch-vm/src/extensions/scratch3_mcremote/*`, McRemote localization, bridge configuration, and
+Scratch blocks that communicate with McRemote.
+
+If `Naohiro2g/mc-remote-knowledge` is not accessible, stop and say so. Do not infer missing McRemote context from
+this repository alone, assistant memory, prior conversations, or local reasoning. Do not proceed with design
+decisions or implementation that depends on McRemote-specific context until SSOT access is available.
+
+This file intentionally does not duplicate the McRemote SSOT. Duplication creates drift. Use this file as the
+public entry gate; use the SSOT for McRemote decisions and the repo-specific guidance below for Scratch/editor
+implementation practice.
+
 ## AI-assisted development policy
 
 See [CONTRIBUTING.AI.md](https://github.com/scratchfoundation/.github/blob/main/CONTRIBUTING.AI.md) for Scratch's
