@@ -91,6 +91,26 @@ test('connectTo forwards the sandbox name in hello params', t =>
     })
 );
 
+test('connect block resolves without exposing the hello result', t => {
+    FakeWebSocket.instances = [];
+    const blocks = new McRemote({});
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            catalogHash: null,
+            world_constants: {y_sea: 63}
+        }});
+    return result.then(value => {
+        t.equal(value, void 0);
+        t.end();
+    });
+});
+
 test('connectTo default sandbox matches the bridge default target', t => {
     const blocks = new McRemote({});
     const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
@@ -123,8 +143,11 @@ test('setWorld is an acknowledged build-state request', t =>
         t.equal(msg.method, 'build.setWorld');
         t.equal(msg.id, 2, 'build state changes wait for acknowledgement');
         t.same(msg.params, ['nether']);
-        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
-        return result.then(() => t.end());
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: {ok: true}});
+        return result.then(value => {
+            t.equal(value, void 0);
+            t.end();
+        });
     })
 );
 
