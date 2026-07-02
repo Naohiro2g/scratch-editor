@@ -27,8 +27,8 @@ export const ErrorReason = {
   unknownProperty: 'unknown_property',
   /** Value out of range (`oak_log[axis=w]`); may carry `allowed`. */
   invalidPropertyValue: 'invalid_property_value',
-  /** get/setBlock target chunk not loaded. */
-  unloadedChunk: 'unloaded_chunk',
+  /** Build policy, range, or authorization denied the operation. */
+  buildDenied: 'build_denied',
 } as const
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason]
@@ -39,7 +39,7 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.unknownBlock]: ErrorCode.invalidParams,
   [ErrorReason.unknownProperty]: ErrorCode.invalidParams,
   [ErrorReason.invalidPropertyValue]: ErrorCode.invalidParams,
-  [ErrorReason.unloadedChunk]: ErrorCode.serverError,
+  [ErrorReason.buildDenied]: ErrorCode.serverError,
 }
 
 /** `error.data` payload. `ref` echoes the offending input and is required. */
@@ -48,4 +48,8 @@ export interface ProtocolErrorData {
   ref: string
   /** Allowed values; returned for `invalid_property_value` when known. */
   allowed?: readonly string[]
+  /** Optional build bounds returned with `build_denied` when known. */
+  bounds?: unknown
+  /** Optional offending coordinate or region returned with `build_denied`. */
+  violating?: unknown
 }

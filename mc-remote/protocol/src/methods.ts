@@ -5,6 +5,8 @@
 export const Method = {
   hello: 'hello',
   chatPost: 'chat.post',
+  buildSetWorld: 'build.setWorld',
+  buildSetOrigin: 'build.setOrigin',
   worldSetBlock: 'world.setBlock',
   worldSetBlocks: 'world.setBlocks',
   worldGetBlock: 'world.getBlock',

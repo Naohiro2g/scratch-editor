@@ -52,7 +52,11 @@ const newConnectedBlocks = () => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0', mc_version: '1.21.11', catalogHash: null
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash: null,
+            world_constants: {y_sea: 63}
         }});
     return connected.then(() => ({blocks, socket}));
 };
@@ -70,6 +74,8 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
     t.equal(hello.params.protocol, '21.0.0', 'clean protocol semver, no b1 suffix');
+    t.equal(hello.params.client.name, 'scratch-mcremote');
+    t.equal(hello.params.client.version, '2100.0.0b1', 'client build label is diagnostic only');
     t.end();
 });
 
@@ -85,15 +91,99 @@ test('connectTo forwards the sandbox name in hello params', t =>
     })
 );
 
-test('setBlock is a fire-and-forget notification (no id)', t =>
+test('connectTo default sandbox matches the bridge default target', t => {
+    const blocks = new McRemote({});
+    const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
+    t.equal(connectTo.arguments.NAME.defaultValue, 'sb.mc-remote.com');
+    t.end();
+});
+
+test('build world block uses the fixed dimension menu values', t => {
+    const blocks = new McRemote({});
+    const info = blocks.getInfo();
+    const setWorld = info.blocks.find(block => block.opcode === 'setWorld');
+    t.equal(setWorld.arguments.WORLD.defaultValue, 'overworld');
+    t.same(info.menus.worlds.items.map(item => item.value), ['overworld', 'nether', 'the_end']);
+    t.end();
+});
+
+test('setBuildOrigin block shows the fixed y value', t => {
+    const blocks = new McRemote({});
+    const setBuildOrigin = blocks.getInfo().blocks.find(block => block.opcode === 'setBuildOrigin');
+    t.equal(setBuildOrigin.text, 'set build origin (X, Y, Z) to [X], 0, [Z]');
+    t.same(Object.keys(setBuildOrigin.arguments), ['X', 'Z']);
+    t.end();
+});
+
+test('setWorld is an acknowledged build-state request', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'minecraft:stone'});
+        const result = blocks.setWorld({WORLD: 'nether'});
+        const msg = socket.lastSent();
+        t.equal(msg.jsonrpc, '2.0');
+        t.equal(msg.method, 'build.setWorld');
+        t.equal(msg.id, 2, 'build state changes wait for acknowledgement');
+        t.same(msg.params, ['nether']);
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('setBuildOrigin seals y at 0 for Scratch', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setBuildOrigin({X: 240, Z: 260});
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'build.setOrigin');
+        t.equal(msg.id, 2, 'build state changes wait for acknowledgement');
+        t.same(msg.params, [240, 0, 260]);
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('postToChat is an acknowledged request in b1', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.postToChat({MSG: 'hello'});
+        const msg = socket.lastSent();
+        t.equal(msg.jsonrpc, '2.0');
+        t.equal(msg.method, 'chat.post');
+        t.equal(msg.id, 2, 'chat.post waits for acknowledgement');
+        t.same(msg.params, ['hello']);
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('setBlock is an acknowledged request in b1', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'minecraft:stone'});
         const msg = socket.lastSent();
         t.equal(msg.jsonrpc, '2.0');
         t.equal(msg.method, 'world.setBlock');
-        t.notOk('id' in msg, 'notification omits id');
+        t.equal(msg.id, 2, 'setBlock waits for acknowledgement');
         t.same(msg.params, [1, 2, 3, 'minecraft:stone']);
-        t.end();
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('setBlocks is an acknowledged request in b1', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setBlocks({
+            X1: 1,
+            Y1: 2,
+            Z1: 3,
+            X2: 4,
+            Y2: 5,
+            Z2: 6,
+            BLOCK: 'minecraft:glass'
+        });
+        const msg = socket.lastSent();
+        t.equal(msg.jsonrpc, '2.0');
+        t.equal(msg.method, 'world.setBlocks');
+        t.equal(msg.id, 2, 'setBlocks waits for acknowledgement');
+        t.same(msg.params, [1, 2, 3, 4, 5, 6, 'minecraft:glass']);
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return result.then(() => t.end());
     })
 );
 

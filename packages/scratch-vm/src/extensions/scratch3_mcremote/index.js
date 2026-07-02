@@ -21,6 +21,19 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 const PROTOCOL_VERSION = '21.0.0';
 
 /**
+ * Scratch McRemote client build label for diagnostics. Compatibility is still
+ * negotiated exclusively by PROTOCOL_VERSION.
+ * @type {string}
+ */
+const CLIENT_VERSION = '2100.0.0b1';
+
+const BuildWorld = {
+    OVERWORLD: 'overworld',
+    NETHER: 'nether',
+    THE_END: 'the_end'
+};
+
+/**
  * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 21.0.0,
  * b1). One WebSocket message carries one JSON object.
  *
@@ -32,16 +45,18 @@ const PROTOCOL_VERSION = '21.0.0';
  * `method` is the dot-namespaced command (TCP command names, direct):
  *
  *   hello           object params (auth + build context)        -> reply
- *   chat.post       ["msg"]                                      -> send-only
- *   world.setBlock  [x, y, z, block]                             -> send-only
- *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> send-only
+ *   build.setWorld  [dimension]                                  -> reply
+ *   build.setOrigin [x, y, z]                                    -> reply
+ *   chat.post       ["msg"]                                      -> reply
+ *   world.setBlock  [x, y, z, block]                             -> reply
+ *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> reply
  *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
  *
  * Coordinates are deltas from the build origin; the block argument is a
  * block_state_ref string passed through verbatim (the plugin completes the
- * namespace and canonicalises the reply). setBlock/setBlocks/chat.post are
- * fire-and-forget notifications; getBlock is always a request so its reply and
- * any JSON-RPC error are delivered synchronously.
+ * namespace and canonicalises the reply). Scratch keeps build-origin y sealed
+ * and sends 0 for `build.setOrigin` y. b1 uses id-bearing requests for command
+ * blocks so success/error can be observed during release-gate testing.
  */
 
 /**
@@ -110,8 +125,38 @@ class Scratch3McRemoteBlocks {
                     arguments: {
                         NAME: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'sandbox'
+                            defaultValue: 'sb.mc-remote.com'
                         }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'setWorld',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setWorld',
+                        default: 'set build world to [WORLD]',
+                        description: 'Set the Minecraft dimension used by build commands'
+                    }),
+                    arguments: {
+                        WORLD: {
+                            type: ArgumentType.STRING,
+                            menu: 'worlds',
+                            defaultValue: BuildWorld.OVERWORLD
+                        }
+                    }
+                },
+                {
+                    opcode: 'setBuildOrigin',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setBuildOrigin',
+                        default: 'set build origin (X, Y, Z) to [X], 0, [Z]',
+                        description: 'Set the x and z coordinates of the build origin, with y fixed at 0'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 200},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 200}
                     }
                 },
                 '---',
@@ -177,7 +222,38 @@ class Scratch3McRemoteBlocks {
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 }
-            ]
+            ],
+            menus: {
+                worlds: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.world.overworld',
+                                default: 'overworld',
+                                description: 'Menu label for the Minecraft overworld dimension'
+                            }),
+                            value: BuildWorld.OVERWORLD
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.world.nether',
+                                default: 'nether',
+                                description: 'Menu label for the Minecraft nether dimension'
+                            }),
+                            value: BuildWorld.NETHER
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.world.theEnd',
+                                default: 'the End',
+                                description: 'Menu label for the Minecraft the_end dimension'
+                            }),
+                            value: BuildWorld.THE_END
+                        }
+                    ]
+                }
+            }
         };
     }
 
@@ -222,6 +298,7 @@ class Scratch3McRemoteBlocks {
             protocol: PROTOCOL_VERSION,
             client: {
                 name: 'scratch-mcremote',
+                version: CLIENT_VERSION,
                 locale: formatMessage.setup().locale
             }
         };
@@ -288,18 +365,10 @@ class Scratch3McRemoteBlocks {
         });
     }
 
-    /**
-     * Send a JSON-RPC notification (fire-and-forget, no reply expected).
-     * @param {string} method - the dot-namespaced command name.
-     * @param {Array} params - positional arguments.
-     * @private
-     */
-    _send (method, params) {
-        if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
-            log.warn(`McRemote: ${method} dropped, not connected to bridge`);
-            return;
-        }
-        this._socket.send(JSON.stringify({jsonrpc: '2.0', method, params}));
+    _commandRequest (method, params) {
+        return this._request(method, params).catch(error => {
+            log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
+        });
     }
 
     connect () {
@@ -310,12 +379,26 @@ class Scratch3McRemoteBlocks {
         return this._open(Cast.toString(args.NAME));
     }
 
+    setWorld (args) {
+        return this._commandRequest('build.setWorld', [
+            Cast.toString(args.WORLD)
+        ]);
+    }
+
+    setBuildOrigin (args) {
+        return this._commandRequest('build.setOrigin', [
+            Cast.toNumber(args.X),
+            0,
+            Cast.toNumber(args.Z)
+        ]);
+    }
+
     postToChat (args) {
-        this._send('chat.post', [Cast.toString(args.MSG)]);
+        return this._commandRequest('chat.post', [Cast.toString(args.MSG)]);
     }
 
     setBlock (args) {
-        this._send('world.setBlock', [
+        return this._commandRequest('world.setBlock', [
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z),
@@ -324,7 +407,7 @@ class Scratch3McRemoteBlocks {
     }
 
     setBlocks (args) {
-        this._send('world.setBlocks', [
+        return this._commandRequest('world.setBlocks', [
             Cast.toNumber(args.X1),
             Cast.toNumber(args.Y1),
             Cast.toNumber(args.Z1),

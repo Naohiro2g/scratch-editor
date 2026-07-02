@@ -13,6 +13,8 @@ describe('protocol constants', () => {
   it('uses the TCP dot names as wire methods', () => {
     expect(Method.hello).toBe('hello')
     expect(Method.chatPost).toBe('chat.post')
+    expect(Method.buildSetWorld).toBe('build.setWorld')
+    expect(Method.buildSetOrigin).toBe('build.setOrigin')
     expect(Method.worldSetBlock).toBe('world.setBlock')
     expect(Method.worldSetBlocks).toBe('world.setBlocks')
     expect(Method.worldGetBlock).toBe('world.getBlock')
@@ -26,9 +28,9 @@ describe('error model', () => {
     }
   })
 
-  it('routes ref-validation reasons to invalid params and world-state to the server range', () => {
+  it('routes ref-validation reasons to invalid params and build policy to the server range', () => {
     expect(ERROR_REASON_CODE[ErrorReason.malformedRef]).toBe(ErrorCode.invalidParams)
     expect(ERROR_REASON_CODE[ErrorReason.unknownBlock]).toBe(ErrorCode.invalidParams)
-    expect(ERROR_REASON_CODE[ErrorReason.unloadedChunk]).toBe(ErrorCode.serverError)
+    expect(ERROR_REASON_CODE[ErrorReason.buildDenied]).toBe(ErrorCode.serverError)
   })
 })

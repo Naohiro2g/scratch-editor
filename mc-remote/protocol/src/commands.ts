@@ -3,13 +3,22 @@
  * deltas from the build origin; `block` is a canonical block_state_ref string.
  */
 
-/** `chat.post` — send a chat message. Send-only by default. */
+/** `chat.post` — send a chat message. b1 uses an acknowledged request. */
 export type ChatPostParams = readonly [message: string]
 
-/** `world.setBlock` — place one block. Send-only by default. */
+/** Build dimensions accepted by `build.setWorld`. */
+export type BuildWorld = 'overworld' | 'nether' | 'the_end'
+
+/** `build.setWorld` — update the stream-local build dimension. */
+export type BuildSetWorldParams = readonly [dimension: BuildWorld]
+
+/** `build.setOrigin` — update the stream-local build origin. */
+export type BuildSetOriginParams = readonly [x: number, y: number, z: number]
+
+/** `world.setBlock` — place one block. b1 uses an acknowledged request. */
 export type SetBlockParams = readonly [x: number, y: number, z: number, block: string]
 
-/** `world.setBlocks` — fill a cuboid. Send-only by default. */
+/** `world.setBlocks` — fill a cuboid. b1 uses an acknowledged request. */
 export type SetBlocksParams = readonly [
   x1: number,
   y1: number,

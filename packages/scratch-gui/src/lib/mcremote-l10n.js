@@ -22,6 +22,11 @@ const mcremoteMessages = {
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
         'mcremote.connect': '接続する',
         'mcremote.connectTo': '[NAME] に接続する',
+        'mcremote.setWorld': '建築ワールドを [WORLD] にする',
+        'mcremote.setBuildOrigin': '建築原点(X, Y, Z)を [X], 0, [Z] にする',
+        'mcremote.world.overworld': 'オーバーワールド',
+        'mcremote.world.nether': 'ネザー',
+        'mcremote.world.theEnd': 'エンド',
         'mcremote.postToChat': 'チャットに [MSG] と言う',
         'mcremote.setBlock': 'x:[X] y:[Y] z:[Z] のブロックを [BLOCK] にする',
         // eslint-disable-next-line @stylistic/max-len
