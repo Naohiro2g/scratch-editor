@@ -265,13 +265,13 @@ class Scratch3McRemoteBlocks {
      */
     _open (sandbox) {
         if (this._socket && this._socket.readyState === WebSocket.OPEN) {
-            return this._hello(sandbox);
+            return this._hello(sandbox).then(() => {});
         }
         return new Promise((resolve, reject) => {
             const socket = new WebSocket(DEFAULT_BRIDGE_URL);
             this._socket = socket;
             socket.addEventListener('open', () => {
-                this._hello(sandbox).then(resolve, reject);
+                this._hello(sandbox).then(() => resolve(), reject);
             });
             socket.addEventListener('message', event => this._onMessage(event));
             socket.addEventListener('error', () => {
@@ -366,7 +366,7 @@ class Scratch3McRemoteBlocks {
     }
 
     _commandRequest (method, params) {
-        return this._request(method, params).catch(error => {
+        return this._request(method, params).then(() => {}, error => {
             log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
         });
     }
