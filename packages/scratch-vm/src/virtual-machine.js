@@ -156,6 +156,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot => {
+            this.emit(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 

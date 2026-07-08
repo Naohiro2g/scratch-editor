@@ -1,5 +1,6 @@
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
+const Runtime = require('../../src/engine/runtime');
 
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
@@ -42,9 +43,49 @@ FakeWebSocket.instances = [];
 
 global.WebSocket = FakeWebSocket;
 
-const newConnectedBlocks = () => {
+class FakeLocalStorage {
+    constructor () {
+        this._items = {};
+    }
+    getItem (key) {
+        return Object.prototype.hasOwnProperty.call(this._items, key) ? this._items[key] : null;
+    }
+    setItem (key, value) {
+        this._items[key] = String(value);
+    }
+    removeItem (key) {
+        delete this._items[key];
+    }
+    clear () {
+        this._items = {};
+    }
+}
+
+global.localStorage = new FakeLocalStorage();
+
+const nextTurn = () => Promise.resolve().then(() => {});
+
+const newRuntime = () => ({
+    startedHats: [],
+    emitted: [],
+    emit (event, payload) {
+        this.emitted.push({event, payload});
+    },
+    startHats (opcode) {
+        this.startedHats.push(opcode);
+    }
+});
+
+const observations = runtime => runtime.emitted
+    .filter(event => event.event === Runtime.MCREMOTE_OBSERVATION_UPDATE)
+    .map(event => event.payload);
+
+const latestObservation = runtime => observations(runtime).slice(-1)[0];
+
+const newConnectedBlocks = runtime => {
     FakeWebSocket.instances = [];
-    const blocks = new McRemote({});
+    global.localStorage.clear();
+    const blocks = new McRemote(runtime || {});
     const connected = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
@@ -63,6 +104,7 @@ const newConnectedBlocks = () => {
 
 test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     FakeWebSocket.instances = [];
+    global.localStorage.clear();
     const blocks = new McRemote({});
     blocks.connect();
     const socket = FakeWebSocket.instances[0];
@@ -73,26 +115,216 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, '21.0.0', 'clean protocol semver, no b1 suffix');
+    t.equal(hello.params.protocol, '21.0.0', 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2100.0.0b1', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2100.0.0b2', 'client build label is diagnostic only');
+    t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
 
-test('connectTo forwards the sandbox name in hello params', t =>
-    newConnectedBlocks().then(() => {
-        FakeWebSocket.instances = [];
-        const blocks = new McRemote({});
-        blocks.connectTo({NAME: 'sb2'});
-        const socket = FakeWebSocket.instances[0];
-        socket.fireOpen();
-        t.equal(socket.lastSent().params.sandbox, 'sb2');
+test('hello includes a saved session token when available', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_saved');
+    const blocks = new McRemote({});
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    const hello = socket.lastSent();
+    t.same(hello.params.auth, {token: 'mcrs_saved'});
+    t.end();
+});
+
+test('McRemote observation logs hello frames and redacts session tokens', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_saved');
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    const helloSent = latestObservation(runtime);
+    t.equal(helloSent.status, 'disconnected');
+    t.equal(helloSent.frameLog.length, 1);
+    t.equal(helloSent.frameLog[0].streamId, 'default');
+    t.equal(helloSent.frameLog[0].direction, 'send');
+    t.equal(helloSent.frameLog[0].method, 'hello');
+    t.same(helloSent.frameLog[0].payload.params.auth, {token: '[redacted]'});
+    t.equal(JSON.stringify(helloSent).indexOf('mcrs_saved'), -1, 'saved token is never exposed');
+
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash: null,
+            world_constants: {y_sea: 63},
+            permissions: {build: true}
+        }});
+
+    return result.then(() => {
+        const connected = latestObservation(runtime);
+        t.equal(connected.status, 'connected');
+        t.same(connected.hello, {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            world_constants: {y_sea: 63},
+            permissions: {build: true}
+        });
+        t.equal(connected.frameLog.length, 2);
+        t.equal(connected.frameLog[1].direction, 'receive');
+        t.equal(connected.frameLog[1].method, 'hello');
         t.end();
-    })
-);
+    });
+});
+
+test('McRemote observation normalizes top-level y_sea into world constants', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '26.1.2',
+            supported_mc_versions: ['1.21.11'],
+            y_sea: 63,
+            catalogHash: null,
+            world: 'world',
+            origin: [200, 0, 200]
+        }});
+
+    return result.then(() => {
+        t.same(latestObservation(runtime).hello.world_constants, {y_sea: 63});
+        t.end();
+    });
+});
+
+test('auth_required starts pair flow, stores token, retries hello and fires the hat', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    t.equal(socket.lastSent().method, 'hello');
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        error: {
+            code: -32000,
+            message: 'auth required',
+            data: {reason: 'auth_required'}
+        }});
+
+    return nextTurn()
+        .then(() => {
+            const pairBegin = socket.lastSent();
+            t.equal(pairBegin.method, 'auth.pairBegin');
+            t.same(pairBegin.params.token_type, 'session');
+            t.equal(pairBegin.params.client.name, 'scratch-mcremote');
+            t.equal(latestObservation(runtime).status, 'pairing');
+            socket.fireMessage({jsonrpc: '2.0',
+                id: 2,
+                result: {pairing_id: 'pair-1', pair_code: '827419', expires_in: 120}});
+            return nextTurn();
+        })
+        .then(() => {
+            t.equal(blocks.pairCode(), '827-419');
+            t.equal(blocks.pairCommand(), '/mcremote pair 827-419');
+            t.equal(latestObservation(runtime).pairCode, '827-419');
+            t.equal(latestObservation(runtime).pairCommand, '/mcremote pair 827-419');
+            const pairPoll = socket.lastSent();
+            t.equal(pairPoll.method, 'auth.pairPoll');
+            t.same(pairPoll.params, {pairing_id: 'pair-1'});
+            socket.fireMessage({jsonrpc: '2.0',
+                id: 3,
+                result: {status: 'ok', token: 'mcrs_new'}});
+            return nextTurn();
+        })
+        .then(() => {
+            const retryHello = socket.lastSent();
+            t.equal(retryHello.method, 'hello');
+            t.same(retryHello.params.auth, {token: 'mcrs_new'});
+            t.equal(global.localStorage.getItem('mcremote.sessionToken'), 'mcrs_new');
+            t.same(runtime.startedHats, ['mcremote_whenPaired']);
+            socket.fireMessage({jsonrpc: '2.0',
+                id: 4,
+                result: {
+                    protocol: '21.0.0',
+                    mc_version: '1.21.11',
+                    supported_mc_versions: ['1.21.11'],
+                    catalogHash: null,
+                    world_constants: {y_sea: 63}
+                }});
+            return result;
+        })
+        .then(value => {
+            t.equal(value, void 0);
+            t.equal(latestObservation(runtime).status, 'connected');
+            t.equal(latestObservation(runtime).pairCode, '');
+            t.equal(JSON.stringify(latestObservation(runtime)).indexOf('mcrs_new'), -1, 'new token is never exposed');
+            t.end();
+        });
+});
+
+test('auth errors clear the saved session token', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_bad');
+    const blocks = new McRemote({});
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        error: {
+            code: -32000,
+            message: 'token invalid',
+            data: {reason: 'token_invalid'}
+        }});
+    return nextTurn().then(() => {
+        t.equal(global.localStorage.getItem('mcremote.sessionToken'), null);
+        t.end();
+    });
+});
+
+test('connectTo forwards the sandbox name in the bridge URL query', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    blocks.connectTo({NAME: 'sb2.mc-remote.com'});
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    t.equal(socket.url, 'wss://bridge.mc-remote.com/?sandbox=sb2.mc-remote.com');
+    t.equal(socket.lastSent().params.sandbox, void 0, 'hello payload stays route-free');
+    t.end();
+});
+
+test('connectTo URL-encodes the sandbox route hint', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    blocks.connectTo({NAME: 'sb dev.mc-remote.com'});
+    const socket = FakeWebSocket.instances[0];
+    t.equal(socket.url, 'wss://bridge.mc-remote.com/?sandbox=sb+dev.mc-remote.com');
+    t.end();
+});
 
 test('connect block resolves without exposing the hello result', t => {
     FakeWebSocket.instances = [];
+    global.localStorage.clear();
     const blocks = new McRemote({});
     const result = blocks.connect();
     const socket = FakeWebSocket.instances[0];
@@ -112,6 +344,7 @@ test('connect block resolves without exposing the hello result', t => {
 });
 
 test('connectTo default sandbox matches the bridge default target', t => {
+    global.localStorage.clear();
     const blocks = new McRemote({});
     const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
     t.equal(connectTo.arguments.NAME.defaultValue, 'sb.mc-remote.com');
@@ -119,6 +352,7 @@ test('connectTo default sandbox matches the bridge default target', t => {
 });
 
 test('build world block uses the fixed dimension menu values', t => {
+    global.localStorage.clear();
     const blocks = new McRemote({});
     const info = blocks.getInfo();
     const setWorld = info.blocks.find(block => block.opcode === 'setWorld');
@@ -128,10 +362,21 @@ test('build world block uses the fixed dimension menu values', t => {
 });
 
 test('setBuildOrigin block shows the fixed y value', t => {
+    global.localStorage.clear();
     const blocks = new McRemote({});
     const setBuildOrigin = blocks.getInfo().blocks.find(block => block.opcode === 'setBuildOrigin');
     t.equal(setBuildOrigin.text, 'set build origin (X, Y, Z) to [X], 0, [Z]');
     t.same(Object.keys(setBuildOrigin.arguments), ['X', 'Z']);
+    t.end();
+});
+
+test('pairing reporter blocks are exposed', t => {
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const info = blocks.getInfo();
+    t.ok(info.blocks.find(block => block.opcode === 'pairCode'));
+    t.ok(info.blocks.find(block => block.opcode === 'pairCommand'));
+    t.ok(info.blocks.find(block => block.opcode === 'whenPaired'));
     t.end();
 });
 
@@ -163,7 +408,7 @@ test('setBuildOrigin seals y at 0 for Scratch', t =>
     })
 );
 
-test('postToChat is an acknowledged request in b1', t =>
+test('postToChat is an acknowledged request', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.postToChat({MSG: 'hello'});
         const msg = socket.lastSent();
@@ -176,7 +421,7 @@ test('postToChat is an acknowledged request in b1', t =>
     })
 );
 
-test('setBlock is an acknowledged request in b1', t =>
+test('setBlock is an acknowledged request', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'minecraft:stone'});
         const msg = socket.lastSent();
@@ -189,7 +434,7 @@ test('setBlock is an acknowledged request in b1', t =>
     })
 );
 
-test('setBlocks is an acknowledged request in b1', t =>
+test('setBlocks is an acknowledged request', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setBlocks({
             X1: 1,
@@ -256,6 +501,17 @@ test('a closed socket rejects pending requests instead of hanging', t =>
         );
     })
 );
+
+test('a closed socket emits a closed McRemote observation', t => {
+    const runtime = newRuntime();
+    return newConnectedBlocks(runtime).then(({socket}) => {
+        socket.fireClose();
+        const closed = latestObservation(runtime);
+        t.equal(closed.status, 'closed');
+        t.match(closed.lastError.message, /closed/);
+        t.end();
+    });
+});
 
 test('replies for unknown ids are dropped', t =>
     newConnectedBlocks().then(({blocks, socket}) => {

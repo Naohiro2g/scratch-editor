@@ -686,6 +686,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for McRemote observer snapshot updates.
+     * @constant {string}
+     */
+    static get MCREMOTE_OBSERVATION_UPDATE () {
+        return 'MCREMOTE_OBSERVATION_UPDATE';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @constant {string}
      */

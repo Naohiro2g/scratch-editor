@@ -10,6 +10,16 @@ const RenderedTarget = require('../../src/sprites/rendered-target');
 
 const test = tap.test;
 
+test('McRemote observation updates are emitted from the VM', t => {
+    const vm = new VirtualMachine();
+    const snapshot = {status: 'connected', streamId: 'default'};
+    vm.on(Runtime.MCREMOTE_OBSERVATION_UPDATE, value => {
+        t.same(value, snapshot);
+        t.end();
+    });
+    vm.runtime.emit(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot);
+});
+
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
     const rt = new Runtime();

@@ -143,6 +143,32 @@ GUI.propTypes = {
     isTotallyNormal: PropTypes.bool,
     loadingStateVisible: PropTypes.bool,
     manuallySaveThumbnails: PropTypes.bool,
+    mcremoteObservation: PropTypes.shape({
+        status: PropTypes.string,
+        streamId: PropTypes.string,
+        pairCode: PropTypes.string,
+        pairCommand: PropTypes.string,
+        hello: PropTypes.shape({
+            protocol: PropTypes.string,
+            mc_version: PropTypes.string,
+            supported_mc_versions: PropTypes.arrayOf(PropTypes.string),
+            world_constants: PropTypes.shape({}),
+            permissions: PropTypes.shape({})
+        }),
+        lastError: PropTypes.shape({
+            message: PropTypes.string,
+            code: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+            reason: PropTypes.string
+        }),
+        frameLog: PropTypes.arrayOf(PropTypes.shape({
+            sequence: PropTypes.number,
+            timestamp: PropTypes.number,
+            streamId: PropTypes.string,
+            direction: PropTypes.string,
+            method: PropTypes.string,
+            payload: PropTypes.shape({})
+        }))
+    }),
     onSetManualThumbnail: PropTypes.func,
     onSetManualThumbnailButtonClick: PropTypes.func,
     onProjectLoaded: PropTypes.func,
@@ -197,6 +223,7 @@ const mapStateToProps = (state, ownProps) => {
         isRtl: state.locales.isRtl,
         isShowingProject: getIsShowingProject(loadingState),
         loadingStateVisible: state.scratchGui.modals.loadingProject,
+        mcremoteObservation: state.scratchGui.mcremoteObservation,
         platform: ownProps.platform,
         projectId: state.scratchGui.projectState.projectId,
         soundsTabVisible: state.scratchGui.editorTab.activeTabIndex === SOUNDS_TAB_INDEX,
