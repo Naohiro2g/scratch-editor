@@ -24,7 +24,6 @@
     "vite": "npm:rolldown-vite@7.3.1"
   },
   "dependencies": {
-    "@mc-remote/protocol": "*",
     "ws": "8.18.3"
   },
   "devDependencies": {

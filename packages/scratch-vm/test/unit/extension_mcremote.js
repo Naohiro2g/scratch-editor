@@ -30,9 +30,9 @@ class FakeWebSocket {
     fireMessage (obj) {
         this._emit('message', {data: JSON.stringify(obj)});
     }
-    fireClose () {
+    fireClose (event) {
         this.readyState = 3; // CLOSED
-        this._emit('close');
+        this._emit('close', event);
     }
     lastSent () {
         return JSON.parse(this.sent[this.sent.length - 1]);
@@ -64,6 +64,8 @@ class FakeLocalStorage {
 global.localStorage = new FakeLocalStorage();
 
 const nextTurn = () => Promise.resolve().then(() => {});
+const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
+const sessionTokenKey = sandboxRoute => `mcremote.sessionToken.v1:${encodeURIComponent(sandboxRoute)}`;
 
 const newRuntime = () => ({
     startedHats: [],
@@ -110,7 +112,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
 
-    t.equal(socket.url, 'wss://bridge.mc-remote.com');
+    t.equal(socket.url, `wss://bridge.mc-remote.com/?sandbox=${DEFAULT_SANDBOX_ROUTE}`);
     const hello = socket.lastSent();
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
@@ -122,10 +124,32 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     t.end();
 });
 
+test('connect uses the runtime McRemote connection target', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    runtime.getMcRemoteConnectionTarget = () => ({
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: 'Development Sandbox'
+    });
+    const blocks = new McRemote(runtime);
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    t.equal(socket.url, 'wss://bridge.mc-remote.com/?sandbox=sb-dev.mc-remote.com');
+    t.same(latestObservation(runtime).connectionTarget, {
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: 'Development Sandbox'
+    });
+    t.equal(socket.lastSent().params.sandbox, void 0, 'hello payload stays route-free');
+    t.end();
+});
+
 test('hello includes a saved session token when available', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
-    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_saved');
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_saved');
     const blocks = new McRemote({});
     blocks.connect();
     const socket = FakeWebSocket.instances[0];
@@ -136,10 +160,30 @@ test('hello includes a saved session token when available', t => {
     t.end();
 });
 
+test('hello reads only the token scoped to the current sandbox route', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_default');
+    global.localStorage.setItem(sessionTokenKey('sb-dev.mc-remote.com'), 'mcrs_dev');
+    const runtime = newRuntime();
+    runtime.getMcRemoteConnectionTarget = () => ({
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: ''
+    });
+    const blocks = new McRemote(runtime);
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    const hello = socket.lastSent();
+    t.same(hello.params.auth, {token: 'mcrs_dev'});
+    t.end();
+});
+
 test('McRemote observation logs hello frames and redacts session tokens', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
-    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_saved');
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_saved');
     const runtime = newRuntime();
     const blocks = new McRemote(runtime);
     const result = blocks.connect();
@@ -257,7 +301,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             const retryHello = socket.lastSent();
             t.equal(retryHello.method, 'hello');
             t.same(retryHello.params.auth, {token: 'mcrs_new'});
-            t.equal(global.localStorage.getItem('mcremote.sessionToken'), 'mcrs_new');
+            t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'mcrs_new');
             t.same(runtime.startedHats, ['mcremote_whenPaired']);
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
@@ -279,10 +323,11 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
         });
 });
 
-test('auth errors clear the saved session token', t => {
+test('auth errors clear only the token scoped to the current sandbox route', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
-    global.localStorage.setItem('mcremote.sessionToken', 'mcrs_bad');
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_bad');
+    global.localStorage.setItem(sessionTokenKey('sb-dev.mc-remote.com'), 'mcrs_dev');
     const blocks = new McRemote({});
     blocks.connect();
     const socket = FakeWebSocket.instances[0];
@@ -295,7 +340,68 @@ test('auth errors clear the saved session token', t => {
             data: {reason: 'token_invalid'}
         }});
     return nextTurn().then(() => {
-        t.equal(global.localStorage.getItem('mcremote.sessionToken'), null);
+        t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), null);
+        t.equal(global.localStorage.getItem(sessionTokenKey('sb-dev.mc-remote.com')), 'mcrs_dev');
+        t.end();
+    });
+});
+
+test('non-auth hello errors surface as connection errors without clearing the sandbox token', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_allowed');
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        error: {
+            code: -32003,
+            message: 'permission denied',
+            data: {reason: 'permission_denied'}
+        }});
+
+    return result.then(
+        () => t.fail('should have rejected'),
+        err => {
+            const observation = latestObservation(runtime);
+            t.equal(err.reason, 'permission_denied');
+            t.equal(observation.status, 'error');
+            t.equal(observation.lastError.reason, 'permission_denied');
+            t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'mcrs_allowed');
+            t.end();
+        }
+    );
+});
+
+test('commands are not sent after hello fails before connection is established', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_allowed');
+    const blocks = new McRemote({});
+    const connection = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        error: {
+            code: -32000,
+            message: 'permission_denied',
+            data: {reason: 'permission_denied'}
+        }});
+
+    const command = blocks.postToChat({MSG: 'test'});
+    return Promise.all([
+        connection.then(
+            () => t.fail('connection should have rejected'),
+            err => t.equal(err.reason, 'permission_denied')
+        ),
+        command
+    ]).then(() => {
+        t.equal(socket.sent.length, 1);
+        t.equal(socket.lastSent().method, 'hello');
         t.end();
     });
 });
@@ -343,10 +449,75 @@ test('connect block resolves without exposing the hello result', t => {
     });
 });
 
-test('connectTo default sandbox matches the bridge default target', t => {
+test('commands are not sent before hello completes', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    const result = blocks.postToChat({MSG: 'too early'});
+
+    return result.then(() => {
+        t.equal(socket.sent.length, 1);
+        t.equal(socket.lastSent().method, 'hello');
+        t.end();
+    });
+});
+
+test('connect block reuses an in-flight connection instead of opening a duplicate socket', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const first = blocks.connect();
+    const second = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+
+    t.equal(FakeWebSocket.instances.length, 1);
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            catalogHash: null,
+            world_constants: {y_sea: 63}
+        }});
+    return Promise.all([first, second]).then(() => {
+        t.equal(FakeWebSocket.instances.length, 1);
+        t.end();
+    });
+});
+
+test('connect block reuses an open connection instead of opening a duplicate socket', t =>
+    newConnectedBlocks().then(({blocks}) => blocks.connect().then(() => {
+        t.equal(FakeWebSocket.instances.length, 1);
+        t.end();
+    }))
+);
+
+test('close before hello rejects the connect block instead of hanging', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireClose();
+
+    return result.then(
+        () => t.fail('should have rejected'),
+        err => {
+            t.match(err.message, /closed/);
+            t.end();
+        }
+    );
+});
+
+test('connectTo is kept as a hidden debug block with the default sandbox route', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
     const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
+    t.equal(connectTo.hideFromPalette, true);
     t.equal(connectTo.arguments.NAME.defaultValue, 'sb.mc-remote.com');
     t.end();
 });
@@ -391,6 +562,83 @@ test('setWorld is an acknowledged build-state request', t =>
         socket.fireMessage({jsonrpc: '2.0', id: 2, result: {ok: true}});
         return result.then(value => {
             t.equal(value, void 0);
+            t.end();
+        });
+    })
+);
+
+test('reconnect reuses the sandbox token and starts build state from defaults', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_saved');
+        const setWorld = blocks.setWorld({WORLD: 'nether'});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: {ok: true}});
+        return setWorld.then(() => {
+            socket.fireClose();
+            const reconnect = blocks.connect();
+            const nextSocket = FakeWebSocket.instances[1];
+            nextSocket.fireOpen();
+
+            const hello = nextSocket.lastSent();
+            t.equal(hello.id, 1, 'request ids reset per connection');
+            t.equal(hello.method, 'hello');
+            t.same(hello.params.auth, {token: 'mcrs_saved'});
+            t.equal(nextSocket.sent.length, 1, 'build state is not replayed automatically');
+
+            nextSocket.fireMessage({jsonrpc: '2.0',
+                id: 1,
+                result: {
+                    protocol: '21.0.0',
+                    mc_version: '1.21.11',
+                    supported_mc_versions: ['1.21.11'],
+                    catalogHash: null,
+                    world_constants: {y_sea: 63}
+                }});
+            return reconnect;
+        }).then(() => t.end());
+    })
+);
+
+test('sandbox switch uses the token scoped to the newly selected route', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_default');
+        global.localStorage.setItem(sessionTokenKey('sb-dev.mc-remote.com'), 'mcrs_dev');
+        blocks.runtime.getMcRemoteConnectionTarget = () => ({
+            sandboxRoute: 'sb-dev.mc-remote.com',
+            label: 'Development Sandbox'
+        });
+        socket.fireClose();
+
+        const reconnect = blocks.connect();
+        const nextSocket = FakeWebSocket.instances[1];
+        nextSocket.fireOpen();
+        t.equal(nextSocket.url, 'wss://bridge.mc-remote.com/?sandbox=sb-dev.mc-remote.com');
+        t.same(nextSocket.lastSent().params.auth, {token: 'mcrs_dev'});
+        nextSocket.fireMessage({jsonrpc: '2.0',
+            id: 1,
+            result: {
+                protocol: '21.0.0',
+                mc_version: '1.21.11',
+                supported_mc_versions: ['1.21.11'],
+                catalogHash: null,
+                world_constants: {y_sea: 63}
+            }});
+        return reconnect.then(() => t.end());
+    })
+);
+
+test('permission_denied does not clear the current sandbox token', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_allowed');
+        const result = blocks.setWorld({WORLD: 'nether'});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: 2,
+            error: {
+                code: -32003,
+                message: 'permission denied',
+                data: {reason: 'permission_denied'}
+            }});
+        return result.then(() => {
+            t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'mcrs_allowed');
             t.end();
         });
     })
@@ -505,10 +753,12 @@ test('a closed socket rejects pending requests instead of hanging', t =>
 test('a closed socket emits a closed McRemote observation', t => {
     const runtime = newRuntime();
     return newConnectedBlocks(runtime).then(({socket}) => {
-        socket.fireClose();
+        socket.fireClose({code: 1011, reason: 'sandbox_unreachable'});
         const closed = latestObservation(runtime);
         t.equal(closed.status, 'closed');
         t.match(closed.lastError.message, /closed/);
+        t.equal(closed.lastError.code, 1011);
+        t.equal(closed.lastError.reason, 'sandbox_unreachable');
         t.end();
     });
 });

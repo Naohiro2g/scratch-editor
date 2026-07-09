@@ -3,6 +3,7 @@ const UPDATE = 'scratch-gui/mcremote-observation/UPDATE';
 const initialState = {
     status: 'disconnected',
     streamId: 'default',
+    connectionTarget: null,
     pairCode: '',
     pairCommand: '',
     hello: null,

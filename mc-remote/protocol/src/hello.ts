@@ -30,7 +30,6 @@ export interface HelloParams {
   protocol: string
   client?: HelloClient
   auth?: HelloAuth
-  sandbox?: string
   build?: BuildContext
 }
 

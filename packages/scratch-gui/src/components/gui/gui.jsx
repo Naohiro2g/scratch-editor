@@ -161,6 +161,7 @@ const GUIComponent = props => {
         loading,
         logo,
         manuallySaveThumbnails,
+        mcremoteConnectionTarget,
         mcremoteObservation,
         onSetManualThumbnail,
         onSetManualThumbnailButtonClick,
@@ -489,7 +490,10 @@ const GUIComponent = props => {
                                             vm={vm}
                                             colorMode={colorMode}
                                         />
-                                        <WireScopePanel snapshot={mcremoteObservation} />
+                                        <WireScopePanel
+                                            connectionTarget={mcremoteConnectionTarget}
+                                            snapshot={mcremoteObservation}
+                                        />
                                     </Box>
                                     <ExtensionsButton
                                         intl={intl}
@@ -623,9 +627,16 @@ GUIComponent.propTypes = {
     loading: PropTypes.bool,
     logo: PropTypes.string,
     manuallySaveThumbnails: PropTypes.bool,
+    mcremoteConnectionTarget: PropTypes.shape({
+        sandboxRoute: PropTypes.string
+    }),
     mcremoteObservation: PropTypes.shape({
         status: PropTypes.string,
         streamId: PropTypes.string,
+        connectionTarget: PropTypes.shape({
+            sandboxRoute: PropTypes.string,
+            label: PropTypes.string
+        }),
         pairCode: PropTypes.string,
         pairCommand: PropTypes.string,
         hello: PropTypes.shape({

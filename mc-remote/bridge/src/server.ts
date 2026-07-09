@@ -3,7 +3,7 @@ import { WebSocketServer, type RawData, type WebSocket } from 'ws'
 import { resolveSandbox, type SandboxTarget } from './allowlist.ts'
 import type { BridgeConfig } from './config.ts'
 import { createLineDecoder, frameLine } from './framing.ts'
-import { peekSandbox } from './routing.ts'
+import { parseSandboxQuery } from './routing.ts'
 
 // WS close codes (RFC 6455): policy violation and internal error.
 const CLOSE_POLICY = 1008
@@ -23,33 +23,39 @@ export function createBridge(config: BridgeConfig): WebSocketServer {
     port: config.wsPort,
     verifyClient: ({ origin }: { origin: string }) => config.originAllowlist.includes(origin),
   })
-  wss.on('connection', (ws) => handleConnection(ws, config))
+  wss.on('connection', (ws, request) => handleConnection(ws, config, request.url))
   return wss
 }
 
-function handleConnection(ws: WebSocket, config: BridgeConfig): void {
+function handleConnection(ws: WebSocket, config: BridgeConfig, requestUrl: string | undefined): void {
   const decode = createLineDecoder()
+  const target = resolveSandbox(parseSandboxQuery(requestUrl), config)
   let tcp: net.Socket | null = null
   let ready = false
   const queue: string[] = []
 
+  if (target === null) {
+    ws.close(CLOSE_POLICY, 'sandbox_not_allowed')
+    return
+  }
+
   ws.on('message', (data) => {
     const message = decodeMessage(data)
 
-    // The first message (hello) names the Sandbox to dial. Resolve it against
-    // the allowlist, then connect; later messages relay straight through.
-    if (tcp === null) {
-      const target = resolveSandbox(peekSandbox(message), config)
-      if (target === null) {
-        ws.close(CLOSE_POLICY, 'sandbox_not_allowed')
-        return
-      }
-      tcp = openSandbox(ws, target, decode, () => {
+    tcp ??= openSandbox(
+      ws,
+      target,
+      decode,
+      () => {
         ready = true
         for (const queued of queue) tcp?.write(frameLine(queued))
         queue.length = 0
-      })
-    }
+      },
+      () => {
+        tcp = null
+        ready = false
+      },
+    )
 
     if (ready) tcp.write(frameLine(message))
     else queue.push(message)
@@ -76,6 +82,7 @@ function openSandbox(
   target: SandboxTarget,
   decode: (chunk: Buffer) => string[],
   onReady: () => void,
+  onClose: () => void,
 ): net.Socket {
   const tcp = net.createConnection(target, onReady)
 
@@ -88,9 +95,7 @@ function openSandbox(
     console.error(`McRemote bridge: sandbox ${target.host}:${target.port} unreachable: ${err.message}`)
     if (ws.readyState === ws.OPEN) ws.close(CLOSE_INTERNAL, 'sandbox_unreachable')
   })
-  tcp.on('close', () => {
-    if (ws.readyState === ws.OPEN) ws.close()
-  })
+  tcp.on('close', onClose)
 
   return tcp
 }

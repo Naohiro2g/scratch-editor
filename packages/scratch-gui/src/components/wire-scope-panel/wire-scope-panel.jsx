@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {defineMessages, FormattedMessage, useIntl} from 'react-intl';
 
+import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-targets.js';
 import styles from './wire-scope-panel.css';
 
 const messages = defineMessages({
@@ -45,6 +46,11 @@ const messages = defineMessages({
         id: 'gui.mcremote.wireScope.stream',
         defaultMessage: 'Stream',
         description: 'Label for a McRemote stream identifier'
+    },
+    connectionTarget: {
+        id: 'gui.mcremote.wireScope.connectionTarget',
+        defaultMessage: 'Connection target',
+        description: 'Label for the current McRemote connection target'
     },
     pairCode: {
         id: 'gui.mcremote.wireScope.pairCode',
@@ -130,7 +136,7 @@ const messages = defineMessages({
 
 const EMPTY = '-';
 
-const stringify = value => {
+const stringify = function (value) {
     if (value === null || typeof value === 'undefined' || value === '') {
         return EMPTY;
     }
@@ -144,7 +150,7 @@ const stringify = value => {
     }
 };
 
-const statusInfo = status => {
+const statusInfo = function (status) {
     switch (status) {
     case 'pairing':
         return {message: messages.statusPairing, className: styles.statusPairing, icon: '...'};
@@ -160,19 +166,42 @@ const statusInfo = status => {
     }
 };
 
-const directionLabel = (intl, direction) => {
+const connectionTargetText = function (intl, snapshotTarget, configuredTarget) {
+    let sandboxRoute = '';
+    if (snapshotTarget && snapshotTarget.sandboxRoute) {
+        sandboxRoute = String(snapshotTarget.sandboxRoute).trim();
+    } else if (configuredTarget && configuredTarget.sandboxRoute) {
+        sandboxRoute = String(configuredTarget.sandboxRoute).trim();
+    }
+    if (!sandboxRoute) return EMPTY;
+
+    const knownTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
+    let label = '';
+    if (snapshotTarget && snapshotTarget.label) {
+        label = String(snapshotTarget.label);
+    } else if (knownTarget.sandboxRoute === sandboxRoute) {
+        label = intl.formatMessage(knownTarget.label);
+    }
+    return label ? `${label} - ${sandboxRoute}` : sandboxRoute;
+};
+
+const directionLabel = function (intl, direction) {
     if (direction === 'send') return intl.formatMessage(messages.send);
     if (direction === 'receive') return intl.formatMessage(messages.receive);
     return direction || EMPTY;
 };
 
-const WireScopePanel = ({snapshot}) => {
+const WireScopePanel = ({
+    connectionTarget,
+    snapshot
+}) => {
     const intl = useIntl();
     const state = snapshot || {};
     const hello = state.hello || {};
     const frames = Array.isArray(state.frameLog) ? state.frameLog.slice(-12) : [];
     const currentStatus = statusInfo(state.status);
     const statusText = intl.formatMessage(currentStatus.message);
+    const targetText = connectionTargetText(intl, state.connectionTarget, connectionTarget);
 
     return (
         <aside
@@ -205,6 +234,10 @@ const WireScopePanel = ({snapshot}) => {
                 <div className={styles.summaryItem}>
                     <span><FormattedMessage {...messages.stream} /></span>
                     <strong>{state.streamId || EMPTY}</strong>
+                </div>
+                <div className={styles.summaryItemWide}>
+                    <span><FormattedMessage {...messages.connectionTarget} /></span>
+                    <strong>{targetText}</strong>
                 </div>
                 <div className={styles.summaryItem}>
                     <span><FormattedMessage {...messages.pairCode} /></span>
@@ -251,6 +284,7 @@ const WireScopePanel = ({snapshot}) => {
                                 </tr>
                             </thead>
                             <tbody>
+                                {/* eslint-disable-next-line arrow-parens */}
                                 {frames.map(frame => (
                                     <tr key={frame.sequence || `${frame.direction}-${frame.id}-${frame.timestamp}`}>
                                         <td>{frame.timestamp ? intl.formatTime(frame.timestamp) : EMPTY}</td>
@@ -274,9 +308,16 @@ const WireScopePanel = ({snapshot}) => {
 };
 
 WireScopePanel.propTypes = {
+    connectionTarget: PropTypes.shape({
+        sandboxRoute: PropTypes.string
+    }),
     snapshot: PropTypes.shape({
         status: PropTypes.string,
         streamId: PropTypes.string,
+        connectionTarget: PropTypes.shape({
+            sandboxRoute: PropTypes.string,
+            label: PropTypes.string
+        }),
         pairCode: PropTypes.string,
         pairCommand: PropTypes.string,
         hello: PropTypes.shape({

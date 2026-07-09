@@ -20,11 +20,17 @@
 const mcremoteMessages = {
     ja: {
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
+        'gui.aria.mcremoteConnectionMenu': 'McRemote 接続先メニュー',
+        'gui.menuBar.mcremoteConnection': '接続先',
+        'gui.mcremote.connectionTarget.sandbox': 'Sandbox',
+        'gui.mcremote.connectionTarget.sandboxDev': 'Development Sandbox',
+        'gui.mcremote.connectionTarget.kitako23': 'Kitako 2-3',
         'gui.mcremote.wireScope.direction': '方向',
         'gui.mcremote.wireScope.emptyFrames': 'フレームはまだありません',
         'gui.mcremote.wireScope.frames': 'フレーム',
         'gui.mcremote.wireScope.hello': 'Hello',
         'gui.mcremote.wireScope.lastError': '最後のエラー',
+        'gui.mcremote.wireScope.connectionTarget': '接続先',
         'gui.mcremote.wireScope.mcVersion': 'MC バージョン',
         'gui.mcremote.wireScope.method': 'メソッド',
         'gui.mcremote.wireScope.pairCode': 'ペアコード',
@@ -55,7 +61,6 @@ const mcremoteMessages = {
         'mcremote.world.theEnd': 'エンド',
         'mcremote.postToChat': 'チャットに [MSG] と言う',
         'mcremote.setBlock': 'x:[X] y:[Y] z:[Z] のブロックを [BLOCK] にする',
-        // eslint-disable-next-line @stylistic/max-len
         'mcremote.setBlocks': 'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] までのブロックを [BLOCK] にする',
         'mcremote.getBlock': 'x:[X] y:[Y] z:[Z] のブロック'
     }

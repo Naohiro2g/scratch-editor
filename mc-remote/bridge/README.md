@@ -12,9 +12,9 @@ over `wss://` to this bridge, which relays to the Sandbox's plain TCP port
   (wire-format-design §2). The JSON payload is never inspected or rewritten.
 - **Origin allowlist** — only the stable / dev editor Origins complete the WS
   handshake.
-- **Sandbox allowlist** — the `hello` frame names the Sandbox to dial; anything
-  outside the allowlist is refused, so the bridge can't be used as an SSRF /
-  port-scan relay.
+- **Sandbox allowlist** — the WSS connection URL names the Sandbox to dial
+  (for example, `?sandbox=sb-dev.mc-remote.com`); anything outside the allowlist
+  is refused, so the bridge can't be used as an SSRF / port-scan relay.
 - **Full-duplex, push-transparent** — server→client push passes straight through
   with no request/response coupling or buffering.
 

@@ -14,7 +14,7 @@ export interface BridgeConfig {
    * the bridge can't be used as an SSRF / port-scan relay.
    */
   sandboxAllowlist: readonly string[]
-  /** Sandbox used when `hello` carries no `sandbox` hint. */
+  /** Sandbox used when the WSS connection carries no `sandbox` query. */
   defaultSandbox: string
   /** TCP port every Sandbox listens on. */
   sandboxPort: number

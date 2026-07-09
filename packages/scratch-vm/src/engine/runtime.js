@@ -50,6 +50,11 @@ const defaultBlockPackages = {
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
 
+const DEFAULT_MCREMOTE_CONNECTION_TARGET = {
+    sandboxRoute: 'sb.mc-remote.com',
+    label: ''
+};
+
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
  * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
@@ -355,6 +360,13 @@ class Runtime extends EventEmitter {
          * A list of extensions, used to manage hardware connection.
          */
         this.peripheralExtensions = {};
+
+        /**
+         * Current McRemote Sandbox route selected by the browser environment.
+         * This is runtime state only and is not serialized into projects.
+         * @type {{sandboxRoute: string, label: string}}
+         */
+        this._mcremoteConnectionTarget = Object.assign({}, DEFAULT_MCREMOTE_CONNECTION_TARGET);
 
         /**
          * A runtime profiler that records timed events for later playback to
@@ -2251,6 +2263,41 @@ class Runtime extends EventEmitter {
             this._steppingInterval = null;
             this.start();
         }
+    }
+
+    /**
+     * Set the current McRemote Sandbox route for future McRemote connections.
+     * @param {string|object} target - sandbox route string or target metadata.
+     */
+    setMcRemoteConnectionTarget (target) {
+        this._mcremoteConnectionTarget = this._normalizeMcRemoteConnectionTarget(target);
+    }
+
+    /**
+     * @returns {{sandboxRoute: string, label: string}} current McRemote connection target.
+     */
+    getMcRemoteConnectionTarget () {
+        return Object.assign({}, this._mcremoteConnectionTarget);
+    }
+
+    /**
+     * @param {string|object} target - sandbox route string or target metadata.
+     * @returns {{sandboxRoute: string, label: string}} normalized McRemote connection target.
+     * @private
+     */
+    _normalizeMcRemoteConnectionTarget (target) {
+        if (!target) return Object.assign({}, DEFAULT_MCREMOTE_CONNECTION_TARGET);
+
+        const sandboxRouteValue = typeof target === 'string' ?
+            target :
+            target.sandboxRoute;
+        const sandboxRoute = String(sandboxRouteValue || '').trim();
+        if (!sandboxRoute) return Object.assign({}, DEFAULT_MCREMOTE_CONNECTION_TARGET);
+
+        const label = typeof target === 'object' && target.label ?
+            String(target.label) :
+            '';
+        return {sandboxRoute, label};
     }
 
     /**

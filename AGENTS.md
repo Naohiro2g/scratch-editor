@@ -94,7 +94,7 @@ packages/
 └── scratch-media-lib-scripts/  Build scripts for media library assets
 mc-remote/                  McRemote fork add-ons (@mc-remote/* scope, all private)
 ├── protocol/               @mc-remote/protocol  Wire contract (types + constants), dependency-free leaf
-├── bridge/                 @mc-remote/bridge    Thin wss⇄TCP proxy to a Minecraft Sandbox; depends on protocol
+├── bridge/                 @mc-remote/bridge    Thin wss⇄TCP proxy to a Minecraft Sandbox; payload-transparent
 └── (live/)                 @mc-remote/live      Reserved: observer UI (brand "WireScope"); added in a later beta
 scripts/                    Monorepo-level utility scripts
 ```
@@ -103,7 +103,7 @@ The `mc-remote/` packages are the fork's additions for driving Minecraft from Sc
 of upstream `scratch-editor`. `live/` is reserved by name only — it is not created yet (an empty workspace dir
 would trip the `mc-remote/*` glob), and is added when its implementation begins. The scratch-vm McRemote
 extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm at build time and keeps the wire
-constants inline.
+constants inline. The bridge also avoids protocol imports so that it stays a payload-transparent transport proxy.
 
 ## Packages at a glance
 

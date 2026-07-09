@@ -219,6 +219,22 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Set the current McRemote Sandbox route used by future McRemote connections.
+     * This is browser execution-environment state and is not serialized into projects.
+     * @param {string|object} target The sandbox route string or target metadata.
+     */
+    setMcRemoteConnectionTarget (target) {
+        this.runtime.setMcRemoteConnectionTarget(target);
+    }
+
+    /**
+     * @returns {{sandboxRoute: string, label: string}} current McRemote connection target.
+     */
+    getMcRemoteConnectionTarget () {
+        return this.runtime.getMcRemoteConnectionTarget();
+    }
+
+    /**
      * Stop all threads and running activities.
      */
     stopAll () {

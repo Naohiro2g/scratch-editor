@@ -13,6 +13,10 @@ test('updateMcRemoteObservation stores a full observer snapshot', () => {
     const snapshot = {
         status: 'connected',
         streamId: 'default',
+        connectionTarget: {
+            sandboxRoute: 'sb-dev.mc-remote.com',
+            label: 'Development Sandbox'
+        },
         pairCode: '827-419',
         pairCommand: '/mcremote pair 827-419',
         hello: {

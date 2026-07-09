@@ -28,7 +28,8 @@ const PROTOCOL_VERSION = '21.0.0';
  */
 const CLIENT_VERSION = '2100.0.0b2';
 
-const SESSION_TOKEN_STORAGE_KEY = 'mcremote.sessionToken';
+const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
+const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
 const PAIR_POLL_INTERVAL_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
@@ -104,8 +105,15 @@ class Scratch3McRemoteBlocks {
         this._socket = null;
 
         /**
+         * Connection promise while the WebSocket and hello handshake are in flight.
+         * @type {?Promise}
+         * @private
+         */
+        this._openPromise = null;
+
+        /**
          * Pending requests awaiting a reply, keyed by JSON-RPC id.
-         * @type {Map<number, {resolve: Function, reject: Function}>}
+         * @type {Map<number, {resolve: function(unknown): void, reject: function(Error): void, method: string}>}
          * @private
          */
         this._pending = new Map();
@@ -180,6 +188,13 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._frameSequence = 0;
+
+        /**
+         * Sandbox route snapshot for the active connection.
+         * @type {?{sandboxRoute: string, label: string}}
+         * @private
+         */
+        this._connectionTarget = null;
     }
 
     /**
@@ -206,6 +221,7 @@ class Scratch3McRemoteBlocks {
                 {
                     opcode: 'connectTo',
                     blockType: BlockType.COMMAND,
+                    hideFromPalette: true,
                     text: formatMessage({
                         id: 'mcremote.connectTo',
                         default: 'connect to [NAME]',
@@ -389,6 +405,39 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * @param {string} [sandbox] - optional sandbox override from the debug block.
+     * @returns {{sandboxRoute: string, label: string}} connection target metadata.
+     * @private
+     */
+    _resolveConnectionTarget (sandbox) {
+        const sandboxRoute = typeof sandbox === 'undefined' || sandbox === null ?
+            '' :
+            Cast.toString(sandbox).trim();
+        if (sandboxRoute) return {sandboxRoute, label: ''};
+
+        if (this.runtime && typeof this.runtime.getMcRemoteConnectionTarget === 'function') {
+            const target = this.runtime.getMcRemoteConnectionTarget();
+            const currentRoute = target && Cast.toString(target.sandboxRoute).trim();
+            if (currentRoute) {
+                return {
+                    sandboxRoute: currentRoute,
+                    label: target.label ? Cast.toString(target.label) : ''
+                };
+            }
+        }
+
+        return {sandboxRoute: DEFAULT_SANDBOX_ROUTE, label: ''};
+    }
+
+    /**
+     * @returns {{sandboxRoute: string, label: string}} active or configured connection target.
+     * @private
+     */
+    _currentConnectionTarget () {
+        return this._connectionTarget || this._resolveConnectionTarget();
+    }
+
+    /**
      * Reset stream-local observer data before starting a new connection.
      * @private
      */
@@ -413,6 +462,7 @@ class Scratch3McRemoteBlocks {
         return {
             status: this._connectionStatus,
             streamId: this._streamId,
+            connectionTarget: Object.assign({}, this._currentConnectionTarget()),
             pairCode: this._pairCode,
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
@@ -495,8 +545,8 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
-     * @param {*} value - value copied into observer output.
-     * @returns {*} a JSON-safe clone with bearer tokens redacted.
+     * @param {unknown} value - value copied into observer output.
+     * @returns {unknown} a JSON-safe clone with bearer tokens redacted.
      * @private
      */
     _sanitizeWireValue (value) {
@@ -551,9 +601,13 @@ class Scratch3McRemoteBlocks {
         if (this._socket && this._socket.readyState === WebSocket.OPEN) {
             return Promise.resolve();
         }
+        if (this._openPromise) {
+            return this._openPromise;
+        }
+        this._connectionTarget = this._resolveConnectionTarget(sandbox);
         this._resetObservationForConnection();
-        return new Promise((resolve, reject) => {
-            const socket = new WebSocket(this._bridgeUrl(sandbox));
+        this._openPromise = new Promise((resolve, reject) => {
+            const socket = new WebSocket(this._bridgeUrl(this._connectionTarget.sandboxRoute));
             this._socket = socket;
             socket.addEventListener('open', () => {
                 this._authenticate().then(() => resolve(), reject);
@@ -565,13 +619,25 @@ class Scratch3McRemoteBlocks {
                 this._setConnectionStatus(ConnectionStatus.ERROR, error);
                 reject(error);
             });
-            socket.addEventListener('close', () => {
+            socket.addEventListener('close', event => {
                 const error = new Error('bridge connection closed');
+                error.code = event && event.code;
+                error.reason = event && event.reason;
                 this._socket = null;
                 this._setConnectionStatus(ConnectionStatus.CLOSED, error);
                 this._rejectPending(error);
+                reject(error);
             });
         });
+        this._openPromise.then(
+            () => {
+                this._openPromise = null;
+            },
+            () => {
+                this._openPromise = null;
+            }
+        );
+        return this._openPromise;
     }
 
     /**
@@ -616,7 +682,10 @@ class Scratch3McRemoteBlocks {
      */
     _authenticate () {
         return this._hello().then(() => {}, error => {
-            if (!this._isAuthError(error)) return Promise.reject(error);
+            if (!this._isAuthError(error)) {
+                this._setConnectionStatus(ConnectionStatus.ERROR, error);
+                return Promise.reject(error);
+            }
             this._clearSessionToken();
             this._setConnectionStatus(ConnectionStatus.PAIRING, error);
             return this._pair().then(() => this._hello());
@@ -702,6 +771,15 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * @param {string} method - JSON-RPC method.
+     * @returns {boolean} true when the request is part of session setup.
+     * @private
+     */
+    _isSessionSetupMethod (method) {
+        return method === 'hello' || method.indexOf('auth.') === 0;
+    }
+
+    /**
      * @returns {?Storage} localStorage-like object when available.
      * @private
      */
@@ -718,7 +796,7 @@ class Scratch3McRemoteBlocks {
         const storage = this._storage();
         if (!storage) return '';
         try {
-            return storage.getItem(SESSION_TOKEN_STORAGE_KEY) || '';
+            return storage.getItem(this._sessionTokenStorageKey()) || '';
         } catch {
             return '';
         }
@@ -732,7 +810,7 @@ class Scratch3McRemoteBlocks {
         const storage = this._storage();
         if (!storage) return;
         try {
-            storage.setItem(SESSION_TOKEN_STORAGE_KEY, token);
+            storage.setItem(this._sessionTokenStorageKey(), token);
         } catch {
             // localStorage can be unavailable in private browsing or tests.
         }
@@ -745,10 +823,19 @@ class Scratch3McRemoteBlocks {
         const storage = this._storage();
         if (!storage) return;
         try {
-            storage.removeItem(SESSION_TOKEN_STORAGE_KEY);
+            storage.removeItem(this._sessionTokenStorageKey());
         } catch {
             // localStorage can be unavailable in private browsing or tests.
         }
+    }
+
+    /**
+     * @returns {string} route-scoped session token storage key.
+     * @private
+     */
+    _sessionTokenStorageKey () {
+        const sandboxRoute = this._currentConnectionTarget().sandboxRoute;
+        return `${SESSION_TOKEN_STORAGE_KEY_PREFIX}${encodeURIComponent(sandboxRoute)}`;
     }
 
     /**
@@ -788,6 +875,9 @@ class Scratch3McRemoteBlocks {
             error.data = msg.error.data;
             if (msg.error.data) error.reason = msg.error.data.reason;
             if (this._isAuthError(error)) this._clearSessionToken();
+            if (pending.method === 'hello' && !this._isAuthError(error)) {
+                this._setConnectionStatus(ConnectionStatus.ERROR, error);
+            }
             pending.reject(error);
         } else {
             pending.resolve(msg.result);
@@ -804,6 +894,9 @@ class Scratch3McRemoteBlocks {
     _request (method, params) {
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
             return Promise.reject(new Error('not connected to bridge'));
+        }
+        if (!this._isSessionSetupMethod(method) && this._connectionStatus !== ConnectionStatus.CONNECTED) {
+            return Promise.reject(new Error('not connected to McRemote server'));
         }
         const id = this._nextRequestId++;
         return new Promise((resolve, reject) => {
