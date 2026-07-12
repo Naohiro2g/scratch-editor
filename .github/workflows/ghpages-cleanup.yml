@@ -1,8 +1,6 @@
 name: GitHub Pages Cleanup
 
 on:
-  schedule:
-    - cron: 0 0 * * 6 # midnight on Saturdays
   workflow_dispatch:
 
 concurrency:

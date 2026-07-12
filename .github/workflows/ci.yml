@@ -93,28 +93,3 @@ jobs:
     uses: ./.github/workflows/test-packages.yml
     with:
       packages: ${{ needs.build.outputs.packages }}
-
-  preview:
-    name: Preview
-    needs: build
-    # We don't want to give forks free reign to publish to our GitHub Pages, so run this job only if both:
-    # - any workspace changed (otherwise there's no work to do)
-    # - and either
-    #   - this is not a PR (so it's some other event that happened in our fork, like a push or merge group)
-    #   - or it's a PR from our fork (not some other fork)
-    # - and
-    #   - it's not a Renovate branch (just to reduce noise)
-    if: ${{
-        (needs.build.outputs.any-workspace == 'true') &&
-        (
-          (!github.event.pull_request) ||
-          (github.event.pull_request.head.repo.full_name == github.repository)
-        ) &&
-        (!startsWith((github.head_ref || github.ref_name), 'renovate/'))
-      }}
-    uses: ./.github/workflows/deploy-playground-preview.yml
-    with:
-      # even `develop` should be published to a subdirectory
-      # that way each branch can be updated or cleaned up independently
-      destination_dir: ${{ github.head_ref || github.ref_name }}
-      full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"

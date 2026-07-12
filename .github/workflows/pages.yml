@@ -6,9 +6,6 @@ name: Deploy Editor to GitHub Pages
 # project-pages subpath.
 
 on:
-  push:
-    branches:
-      - develop
   workflow_dispatch:
 
 permissions:
@@ -16,7 +13,7 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment, and let a newer push supersede an older run.
+# Allow one concurrent deployment, and let a newer manual run supersede an older run.
 concurrency:
   group: pages
   cancel-in-progress: true

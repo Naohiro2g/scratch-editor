@@ -159,14 +159,6 @@ jobs:
     with:
       packages: ${{ needs.build.outputs.packages }}
 
-  preview:
-    needs: [release-prep, build]
-    if: needs.release-prep.outputs.do_release == 'true'
-    uses: ./.github/workflows/deploy-playground-preview.yml
-    with:
-      destination_dir: ${{ needs.release-prep.outputs.branch }}
-      full_commit_message: "Build for release ${{ needs.release-prep.outputs.tag }}"
-
   cd:
     name: Publish to npm
     needs:
