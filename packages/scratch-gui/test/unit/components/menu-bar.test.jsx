@@ -14,35 +14,51 @@ import VM from '@scratch/scratch-vm';
 import {MenuRefProvider} from '../../../src/contexts/menu-ref-context.jsx';
 
 describe('MenuBar Component', () => {
-    const store = configureStore()({
-        locales: {
-            isRtl: false,
-            locale: 'en-US'
-        },
-        scratchGui: {
-            menus: menuInitialState,
-            projectState: {
-                loadingState: LoadingState.NOT_LOADED
+    const makeStore = function ({
+        sandboxRoute = 'sb.mc-remote.com',
+        vm = new VM()
+    } = {}) {
+        return configureStore()({
+            locales: {
+                isRtl: false,
+                locale: 'en-US'
             },
-            settings: {
-                colorMode: DEFAULT_MODE
-            },
-            timeTravel: {
-                year: 'NOW'
-            },
-            vm: new VM(),
-            platform: {
-                platform: PLATFORM.WEB
+            scratchGui: {
+                menus: menuInitialState,
+                projectState: {
+                    loadingState: LoadingState.NOT_LOADED
+                },
+                settings: {
+                    colorMode: DEFAULT_MODE
+                },
+                mcremoteConnectionTarget: {
+                    sandboxRoute: sandboxRoute
+                },
+                timeTravel: {
+                    year: 'NOW'
+                },
+                vm: vm,
+                platform: {
+                    platform: PLATFORM.WEB
+                }
             }
-        }
-    });
+        });
+    };
 
-    const getComponent = function (props = {}) {
-        return (<Provider store={store}>
-            <MenuRefProvider>
-                <MenuBar {...props} />
-            </MenuRefProvider>
-        </Provider>);
+    const getComponentWithStore = function (props = {}, storeOptions = {}) {
+        const store = makeStore(storeOptions);
+        return {
+            store,
+            component: (<Provider store={store}>
+                <MenuRefProvider>
+                    <MenuBar {...props} />
+                </MenuRefProvider>
+            </Provider>)
+        };
+    };
+
+    const getComponent = function (props = {}, storeOptions = {}) {
+        return getComponentWithStore(props, storeOptions).component;
     };
 
     test('menu bar with no About handler has no About button', () => {
@@ -70,10 +86,39 @@ describe('MenuBar Component', () => {
     
         test('not clicking on About button does not call the handler', () => {
             const onClickAbout = jest.fn();
-            const {container} = renderWithIntl(getComponent({onClickAbout}));
-            const button = container.querySelector('button[aria-label="About menu"]');
+            renderWithIntl(getComponent({onClickAbout}));
     
             expect(onClickAbout).toHaveBeenCalledTimes(0);
+        });
+    });
+
+    test('McRemote connection menu pushes selected target to VM', () => {
+        const vm = new VM();
+        vm.setMcRemoteConnectionTarget = jest.fn();
+        renderWithIntl(getComponent({}, {
+            sandboxRoute: 'sb-dev.mc-remote.com',
+            vm
+        }));
+
+        expect(vm.setMcRemoteConnectionTarget).toHaveBeenCalledWith({
+            sandboxRoute: 'sb-dev.mc-remote.com',
+            label: 'Development Sandbox'
+        });
+    });
+
+    test('McRemote connection menu saves selected route', () => {
+        localStorage.removeItem('mcremote.connectionTarget.v1');
+        const {component, store} = getComponentWithStore();
+        const {container, getByText} = renderWithIntl(component);
+        const button = container.querySelector('button[aria-label="McRemote connection menu"]');
+
+        fireEvent.click(button);
+        fireEvent.click(getByText('Development Sandbox'));
+
+        expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBe('sb-dev.mc-remote.com');
+        expect(store.getActions()).toContainEqual({
+            type: 'scratch-gui/mcremote-connection-target/SET',
+            sandboxRoute: 'sb-dev.mc-remote.com'
         });
     });
 });

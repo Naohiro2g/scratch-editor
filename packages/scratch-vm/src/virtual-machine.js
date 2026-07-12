@@ -156,6 +156,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot => {
+            this.emit(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
@@ -213,6 +216,22 @@ class VirtualMachine extends EventEmitter {
      */
     setCompatibilityMode (compatibilityModeOn) {
         this.runtime.setCompatibilityMode(!!compatibilityModeOn);
+    }
+
+    /**
+     * Set the current McRemote Sandbox route used by future McRemote connections.
+     * This is browser execution-environment state and is not serialized into projects.
+     * @param {string|object} target The sandbox route string or target metadata.
+     */
+    setMcRemoteConnectionTarget (target) {
+        this.runtime.setMcRemoteConnectionTarget(target);
+    }
+
+    /**
+     * @returns {{sandboxRoute: string, label: string}} current McRemote connection target.
+     */
+    getMcRemoteConnectionTarget () {
+        return this.runtime.getMcRemoteConnectionTarget();
     }
 
     /**

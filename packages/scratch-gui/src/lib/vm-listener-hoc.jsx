@@ -12,6 +12,7 @@ import {setProjectChanged, setProjectUnchanged} from '../reducers/project-change
 import {setRunningState, setTurboState, setStartedState} from '../reducers/vm-status';
 import {showExtensionAlert, showStandardAlert, closeAlertWithId} from '../reducers/alerts';
 import {updateMicIndicator} from '../reducers/mic-indicator';
+import {updateMcRemoteObservation} from '../reducers/mcremote-observation';
 
 /*
  * Higher Order Component to manage events emitted by the VM
@@ -47,6 +48,7 @@ const vmListenerHOC = function (WrappedComponent) {
             this.props.vm.on('PERIPHERAL_CONNECTION_LOST_ERROR', this.props.onShowExtensionAlert);
             this.props.vm.on('MIC_LISTENING', this.props.onMicListeningUpdate);
             this.props.vm.on('EXTENSION_DATA_LOADING', this.props.onExtensionDataLoading);
+            this.props.vm.on('MCREMOTE_OBSERVATION_UPDATE', this.props.onMcRemoteObservationUpdate);
 
         }
         componentDidMount () {
@@ -81,6 +83,7 @@ const vmListenerHOC = function (WrappedComponent) {
             this.props.vm.removeListener('PERIPHERAL_CONNECTION_LOST_ERROR', this.props.onShowExtensionAlert);
             this.props.vm.removeListener('MIC_LISTENING', this.props.onMicListeningUpdate);
             this.props.vm.removeListener('EXTENSION_DATA_LOADING', this.props.onExtensionDataLoading);
+            this.props.vm.removeListener('MCREMOTE_OBSERVATION_UPDATE', this.props.onMcRemoteObservationUpdate);
 
             if (this.props.attachKeyboardEvents) {
                 document.removeEventListener('keydown', this.handleKeyDown);
@@ -145,6 +148,7 @@ const vmListenerHOC = function (WrappedComponent) {
                 onKeyDown,
                 onKeyUp,
                 onMicListeningUpdate,
+                onMcRemoteObservationUpdate,
                 onExtensionDataLoading,
                 onMonitorsUpdate,
                 onTargetsUpdate,
@@ -170,6 +174,7 @@ const vmListenerHOC = function (WrappedComponent) {
         onKeyDown: PropTypes.func,
         onKeyUp: PropTypes.func,
         onMicListeningUpdate: PropTypes.func.isRequired,
+        onMcRemoteObservationUpdate: PropTypes.func.isRequired,
         onMonitorsUpdate: PropTypes.func.isRequired,
         onProjectChanged: PropTypes.func.isRequired,
         onProjectRunStart: PropTypes.func.isRequired,
@@ -227,6 +232,9 @@ const vmListenerHOC = function (WrappedComponent) {
         },
         onMicListeningUpdate: listening => {
             dispatch(updateMicIndicator(listening));
+        },
+        onMcRemoteObservationUpdate: snapshot => {
+            dispatch(updateMcRemoteObservation(snapshot));
         },
         onExtensionDataLoading: loading => {
             if (loading) {

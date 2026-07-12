@@ -75,6 +75,27 @@ describe('VMListenerHOC', () => {
         expect(actions[0].editingTarget).toEqual(editingTarget);
     });
 
+    test('McRemote observation event from vm triggers observation update action', () => {
+        const Component = () => (<div />);
+        const WrappedComponent = vmListenerHOC(Component);
+        render(
+            <WrappedComponent
+                store={store}
+                vm={vm}
+            />
+        );
+        const snapshot = {
+            status: 'connected',
+            streamId: 'default',
+            pairCode: '123456',
+            frameLog: []
+        };
+        vm.emit('MCREMOTE_OBSERVATION_UPDATE', snapshot);
+        const actions = store.getActions();
+        expect(actions[0].type).toEqual('scratch-gui/mcremote-observation/UPDATE');
+        expect(actions[0].snapshot).toEqual(snapshot);
+    });
+
     test('targetsUpdate does not dispatch if the sound recorder is visible', () => {
         const Component = () => (<div />);
         const WrappedComponent = vmListenerHOC(Component);

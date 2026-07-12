@@ -1,25 +1,18 @@
-import { Method } from '@mc-remote/protocol'
-
 /**
- * Read the `sandbox` routing hint from the opening `hello` message
- * (wire-format-design §6.1, scratch-plan §2.4). This is the one field the
- * bridge peeks to decide which Sandbox to dial — transport routing, not
- * protocol or auth semantics. The original message bytes are forwarded
- * untouched; this only parses a copy and only looks at the `hello` frame.
- * @param message The opening WS message (expected to be `hello`).
- * @returns The requested sandbox name, or `undefined` if absent or unparseable.
+ * Read the Sandbox routing hint from the WSS connection URL
+ * (wire-format-design §2). Routing is transport/session metadata: the bridge
+ * validates it against the allowlist, keeps it as route context for the WSS
+ * session, and forwards JSON-RPC payloads untouched.
+ * @param requestUrl The URL path from the WS upgrade request.
+ * @returns The requested sandbox name, or `undefined` if absent or malformed.
  */
-export function peekSandbox(message: string): string | undefined {
-  let parsed: unknown
+export function parseSandboxQuery(requestUrl: string | undefined): string | undefined {
+  if (requestUrl === undefined) return undefined
   try {
-    parsed = JSON.parse(message)
+    const url = new URL(requestUrl, 'ws://bridge.local')
+    const sandbox = url.searchParams.get('sandbox')
+    return sandbox === null || sandbox.length === 0 ? undefined : sandbox
   } catch {
     return undefined
   }
-  if (typeof parsed !== 'object' || parsed === null) return undefined
-  if ((parsed as { method?: unknown }).method !== Method.hello) return undefined
-  const params = (parsed as { params?: unknown }).params
-  if (typeof params !== 'object' || params === null) return undefined
-  const sandbox = (params as { sandbox?: unknown }).sandbox
-  return typeof sandbox === 'string' ? sandbox : undefined
 }

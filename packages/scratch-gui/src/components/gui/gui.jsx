@@ -31,6 +31,7 @@ import Alerts from '../../containers/alerts.jsx';
 import DragLayer from '../../containers/drag-layer.jsx';
 import ConnectionModal from '../../containers/connection-modal.jsx';
 import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
+import WireScopePanel from '../wire-scope-panel/wire-scope-panel.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
 import {resolveStageSize} from '../../lib/screen-utils';
@@ -160,6 +161,8 @@ const GUIComponent = props => {
         loading,
         logo,
         manuallySaveThumbnails,
+        mcremoteConnectionTarget,
+        mcremoteObservation,
         onSetManualThumbnail,
         onSetManualThumbnailButtonClick,
         menuBarHidden,
@@ -487,6 +490,10 @@ const GUIComponent = props => {
                                             vm={vm}
                                             colorMode={colorMode}
                                         />
+                                        <WireScopePanel
+                                            connectionTarget={mcremoteConnectionTarget}
+                                            snapshot={mcremoteObservation}
+                                        />
                                     </Box>
                                     <ExtensionsButton
                                         intl={intl}
@@ -620,6 +627,39 @@ GUIComponent.propTypes = {
     loading: PropTypes.bool,
     logo: PropTypes.string,
     manuallySaveThumbnails: PropTypes.bool,
+    mcremoteConnectionTarget: PropTypes.shape({
+        sandboxRoute: PropTypes.string
+    }),
+    mcremoteObservation: PropTypes.shape({
+        status: PropTypes.string,
+        streamId: PropTypes.string,
+        connectionTarget: PropTypes.shape({
+            sandboxRoute: PropTypes.string,
+            label: PropTypes.string
+        }),
+        pairCode: PropTypes.string,
+        pairCommand: PropTypes.string,
+        hello: PropTypes.shape({
+            protocol: PropTypes.string,
+            mc_version: PropTypes.string,
+            supported_mc_versions: PropTypes.arrayOf(PropTypes.string),
+            world_constants: PropTypes.shape({}),
+            permissions: PropTypes.shape({})
+        }),
+        lastError: PropTypes.shape({
+            message: PropTypes.string,
+            code: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+            reason: PropTypes.string
+        }),
+        frameLog: PropTypes.arrayOf(PropTypes.shape({
+            sequence: PropTypes.number,
+            timestamp: PropTypes.number,
+            streamId: PropTypes.string,
+            direction: PropTypes.string,
+            method: PropTypes.string,
+            payload: PropTypes.shape({})
+        }))
+    }),
     onSetManualThumbnail: PropTypes.func,
     onSetManualThumbnailButtonClick: PropTypes.func,
     menuBarHidden: PropTypes.bool,

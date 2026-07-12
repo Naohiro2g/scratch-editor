@@ -20,7 +20,7 @@ export interface SandboxTarget {
  * Resolve the Sandbox a connection asked for to a TCP target, applying the
  * allowlist (scratch-plan §2.4). A missing hint falls back to the default
  * Sandbox; a name outside the allowlist is refused.
- * @param requested The sandbox named in `hello`, if any.
+ * @param requested The sandbox named by WSS connection metadata, if any.
  * @param config The bridge configuration (allowlist, default, port).
  * @returns The TCP target, or `null` if the requested Sandbox is not allowed.
  */

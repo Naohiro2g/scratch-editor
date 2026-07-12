@@ -10,6 +10,10 @@ import dynamicAssetsReducer, {dynamicAssetsInitialState} from './dynamic-assets'
 import editorTabReducer, {editorTabInitialState} from './editor-tab';
 import hoveredTargetReducer, {hoveredTargetInitialState} from './hovered-target';
 import menuReducer, {menuInitialState} from './menus';
+import mcremoteConnectionTargetReducer, {
+    mcremoteConnectionTargetInitialState
+} from './mcremote-connection-target';
+import mcremoteObservationReducer, {mcremoteObservationInitialState} from './mcremote-observation';
 import micIndicatorReducer, {micIndicatorInitialState} from './mic-indicator';
 import modalReducer, {modalsInitialState} from './modals';
 import modeReducer, {modeInitialState} from './mode';
@@ -52,6 +56,8 @@ const buildInitialState = (config: GUIConfig) => ({
     hoveredTarget: hoveredTargetInitialState,
     stageSize: stageSizeInitialState,
     menus: menuInitialState,
+    mcremoteConnectionTarget: mcremoteConnectionTargetInitialState,
+    mcremoteObservation: mcremoteObservationInitialState,
     micIndicator: micIndicatorInitialState,
     modals: modalsInitialState,
     monitors: monitorsInitialState,
@@ -162,6 +168,8 @@ const guiReducer = combineReducers({
     hoveredTarget: hoveredTargetReducer,
     stageSize: stageSizeReducer,
     menus: menuReducer,
+    mcremoteConnectionTarget: mcremoteConnectionTargetReducer,
+    mcremoteObservation: mcremoteObservationReducer,
     micIndicator: micIndicatorReducer,
     modals: modalReducer,
     monitors: monitorReducer,

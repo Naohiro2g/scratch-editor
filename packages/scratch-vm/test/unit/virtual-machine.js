@@ -10,6 +10,38 @@ const RenderedTarget = require('../../src/sprites/rendered-target');
 
 const test = tap.test;
 
+test('McRemote observation updates are emitted from the VM', t => {
+    const vm = new VirtualMachine();
+    const snapshot = {status: 'connected', streamId: 'default'};
+    vm.on(Runtime.MCREMOTE_OBSERVATION_UPDATE, value => {
+        t.same(value, snapshot);
+        t.end();
+    });
+    vm.runtime.emit(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot);
+});
+
+test('McRemote connection target is runtime state exposed through the VM', t => {
+    const vm = new VirtualMachine();
+    t.same(vm.getMcRemoteConnectionTarget(), {
+        sandboxRoute: 'sb.mc-remote.com',
+        label: ''
+    });
+
+    vm.setMcRemoteConnectionTarget({
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: 'Development Sandbox'
+    });
+    t.same(vm.getMcRemoteConnectionTarget(), {
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: 'Development Sandbox'
+    });
+    t.same(vm.runtime.getMcRemoteConnectionTarget(), {
+        sandboxRoute: 'sb-dev.mc-remote.com',
+        label: 'Development Sandbox'
+    });
+    t.end();
+});
+
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
     const rt = new Runtime();
