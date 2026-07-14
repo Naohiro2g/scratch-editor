@@ -1,0 +1,6 @@
+{
+  "bridge_url": "wss://bridge.mc-remote.com",
+  "default_sandbox": "sb.mc-remote.com",
+  "connection_enabled": true,
+  "release_identity": "local-development"
+}

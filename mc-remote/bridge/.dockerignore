@@ -1,0 +1,8 @@
+*
+!Dockerfile
+!package.json
+!dist/
+!dist/**
+!node_modules/
+!node_modules/ws/
+!node_modules/ws/**
