@@ -30,10 +30,11 @@ runs:
       with:
         path: |
           node_modules
+          mc-remote/*/node_modules
           packages/*/node_modules
           packages/*/src/generated
           packages/scratch-gui/static/microbit
-        key: ${{ runner.os }}-npm-${{ hashFiles('.nvmrc', 'package-lock.json') }}
+        key: ${{ runner.os }}-npm-${{ hashFiles('.nvmrc', 'package-lock.json', '.github/actions/install-dependencies/action.yml') }}
     - if: steps.restore-node-modules-cache.outputs.cache-hit != 'true'
       name: Install NPM dependencies
       shell: bash
@@ -43,7 +44,8 @@ runs:
       with:
         path: |
           node_modules
+          mc-remote/*/node_modules
           packages/*/node_modules
           packages/*/src/generated
           packages/scratch-gui/static/microbit
-        key: ${{ runner.os }}-npm-${{ hashFiles('.nvmrc', 'package-lock.json') }}
+        key: ${{ runner.os }}-npm-${{ hashFiles('.nvmrc', 'package-lock.json', '.github/actions/install-dependencies/action.yml') }}
