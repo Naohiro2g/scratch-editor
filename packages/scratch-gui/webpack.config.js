@@ -218,6 +218,10 @@ const buildConfig = baseConfig.clone()
     .addPlugin(new CopyWebpackPlugin({
         patterns: [
             {
+                from: 'static/mc-remote-runtime-config.json',
+                to: 'mc-remote-runtime-config.json'
+            },
+            {
                 from: 'static',
                 to: 'static'
             },

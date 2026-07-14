@@ -235,6 +235,22 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Set deployment-specific McRemote settings used by future connections.
+     * @param {object} config Normalized runtime configuration.
+     */
+    setMcRemoteRuntimeConfig (config) {
+        this.runtime.setMcRemoteRuntimeConfig(config);
+    }
+
+    /**
+     * @returns {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
+     * current deployment-specific McRemote settings.
+     */
+    getMcRemoteRuntimeConfig () {
+        return this.runtime.getMcRemoteRuntimeConfig();
+    }
+
+    /**
      * Stop all threads and running activities.
      */
     stopAll () {

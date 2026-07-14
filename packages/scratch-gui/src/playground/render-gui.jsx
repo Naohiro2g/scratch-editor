@@ -6,6 +6,7 @@ import AppStateHOC from '../lib/app-state-hoc.jsx';
 import GUI from '../containers/gui.jsx';
 import HashParserHOC from '../lib/hash-parser-hoc.jsx';
 import log from '../lib/log.js';
+import {getMcRemoteRuntimeConfig} from '../lib/mcremote-runtime-config.js';
 import {PLATFORM} from '../lib/platform.js';
 
 const onClickLogo = () => {
@@ -18,6 +19,7 @@ const extensionMatches = window.location.href.match(/[?&]extension=([^&]+)/);
 const autoLoadExtensionId = extensionMatches ? decodeURIComponent(extensionMatches[1]) : null;
 
 const handleVmInit = vm => {
+    vm.setMcRemoteRuntimeConfig(getMcRemoteRuntimeConfig());
     if (autoLoadExtensionId) {
         vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(e => {
             log(`Failed to auto-load extension "${autoLoadExtensionId}": ${e}`);

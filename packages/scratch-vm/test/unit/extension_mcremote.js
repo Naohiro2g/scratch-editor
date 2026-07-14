@@ -146,6 +146,46 @@ test('connect uses the runtime McRemote connection target', t => {
     t.end();
 });
 
+test('connect uses the runtime-configured bridge and default sandbox', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    runtime.getMcRemoteRuntimeConfig = () => ({
+        bridgeUrl: 'wss://bridge.classroom.example/ws',
+        defaultSandbox: 'minecraft.classroom.example',
+        connectionEnabled: true,
+        releaseIdentity: 'test-release'
+    });
+    const blocks = new McRemote(runtime);
+    blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+
+    t.equal(
+        socket.url,
+        'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
+    );
+    t.equal(socket.lastSent().params.client.version, 'test-release');
+    t.end();
+});
+
+test('disabled runtime config refuses before opening a WebSocket', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    runtime.getMcRemoteRuntimeConfig = () => ({
+        bridgeUrl: 'wss://bridge.mc-remote.com',
+        defaultSandbox: DEFAULT_SANDBOX_ROUTE,
+        connectionEnabled: false,
+        releaseIdentity: 'showcase'
+    });
+    const blocks = new McRemote(runtime);
+
+    return t.rejects(blocks.connect(), /disabled by this deployment profile/).then(() => {
+        t.equal(FakeWebSocket.instances.length, 0, 'no connection is attempted');
+    });
+});
+
 test('hello includes a saved session token when available', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();

@@ -55,6 +55,13 @@ const DEFAULT_MCREMOTE_CONNECTION_TARGET = {
     label: ''
 };
 
+const DEFAULT_MCREMOTE_RUNTIME_CONFIG = {
+    bridgeUrl: 'wss://bridge.mc-remote.com',
+    defaultSandbox: 'sb.mc-remote.com',
+    connectionEnabled: true,
+    releaseIdentity: 'embedded-default'
+};
+
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
  * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
@@ -367,6 +374,13 @@ class Runtime extends EventEmitter {
          * @type {{sandboxRoute: string, label: string}}
          */
         this._mcremoteConnectionTarget = Object.assign({}, DEFAULT_MCREMOTE_CONNECTION_TARGET);
+
+        /**
+         * Deployment settings supplied by the embedding application. These are
+         * runtime-only and are not serialized into projects.
+         * @type {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
+         */
+        this._mcremoteRuntimeConfig = Object.assign({}, DEFAULT_MCREMOTE_RUNTIME_CONFIG);
 
         /**
          * A runtime profiler that records timed events for later playback to
@@ -2271,6 +2285,40 @@ class Runtime extends EventEmitter {
      */
     setMcRemoteConnectionTarget (target) {
         this._mcremoteConnectionTarget = this._normalizeMcRemoteConnectionTarget(target);
+    }
+
+    /**
+     * Set deployment-specific McRemote connection settings.
+     * @param {object} config - normalized runtime configuration.
+     */
+    setMcRemoteRuntimeConfig (config) {
+        const requiredStrings = ['bridgeUrl', 'defaultSandbox', 'releaseIdentity'];
+        for (const key of requiredStrings) {
+            if (!config || typeof config[key] !== 'string' || !config[key].trim()) {
+                throw new Error(`Runtime.setMcRemoteRuntimeConfig: ${key} must be a non-empty string`);
+            }
+        }
+        if (typeof config.connectionEnabled !== 'boolean') {
+            throw new Error('Runtime.setMcRemoteRuntimeConfig: connectionEnabled must be a boolean');
+        }
+        this._mcremoteRuntimeConfig = {
+            bridgeUrl: config.bridgeUrl,
+            defaultSandbox: config.defaultSandbox,
+            connectionEnabled: config.connectionEnabled,
+            releaseIdentity: config.releaseIdentity
+        };
+        this._mcremoteConnectionTarget = {
+            sandboxRoute: config.defaultSandbox,
+            label: ''
+        };
+    }
+
+    /**
+     * @returns {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
+     * current deployment-specific McRemote settings.
+     */
+    getMcRemoteRuntimeConfig () {
+        return Object.assign({}, this._mcremoteRuntimeConfig);
     }
 
     /**

@@ -1,6 +1,7 @@
 import {defineMessages} from 'react-intl';
+import {getMcRemoteRuntimeConfig} from './mcremote-runtime-config.js';
 
-const DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE = 'sb.mc-remote.com';
+const DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE = getMcRemoteRuntimeConfig().defaultSandbox;
 
 const connectionTargetLabels = defineMessages({
     sandbox: {

@@ -398,10 +398,28 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _bridgeUrl (sandbox) {
-        if (!sandbox) return DEFAULT_BRIDGE_URL;
-        const url = new URL(DEFAULT_BRIDGE_URL);
+        const bridgeUrl = this._runtimeConfig().bridgeUrl;
+        if (!sandbox) return bridgeUrl;
+        const url = new URL(bridgeUrl);
         url.searchParams.set('sandbox', sandbox);
         return url.toString();
+    }
+
+    /**
+     * @returns {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
+     * deployment settings with defaults for standalone VM consumers.
+     * @private
+     */
+    _runtimeConfig () {
+        if (this.runtime && typeof this.runtime.getMcRemoteRuntimeConfig === 'function') {
+            return this.runtime.getMcRemoteRuntimeConfig();
+        }
+        return {
+            bridgeUrl: DEFAULT_BRIDGE_URL,
+            defaultSandbox: DEFAULT_SANDBOX_ROUTE,
+            connectionEnabled: true,
+            releaseIdentity: CLIENT_VERSION
+        };
     }
 
     /**
@@ -426,7 +444,7 @@ class Scratch3McRemoteBlocks {
             }
         }
 
-        return {sandboxRoute: DEFAULT_SANDBOX_ROUTE, label: ''};
+        return {sandboxRoute: this._runtimeConfig().defaultSandbox, label: ''};
     }
 
     /**
@@ -598,6 +616,11 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _open (sandbox) {
+        if (!this._runtimeConfig().connectionEnabled) {
+            const error = new Error('McRemote connection is disabled by this deployment profile');
+            this._setConnectionStatus(ConnectionStatus.ERROR, error);
+            return Promise.reject(error);
+        }
         if (this._socket && this._socket.readyState === WebSocket.OPEN) {
             return Promise.resolve();
         }
@@ -668,7 +691,7 @@ class Scratch3McRemoteBlocks {
     _clientInfo () {
         return {
             name: 'scratch-mcremote',
-            version: CLIENT_VERSION,
+            version: this._runtimeConfig().releaseIdentity,
             locale: formatMessage.setup().locale
         };
     }

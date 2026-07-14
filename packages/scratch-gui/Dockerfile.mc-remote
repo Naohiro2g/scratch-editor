@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1.18
+
+FROM nginxinc/nginx-unprivileged:1.29.4-alpine@sha256:a6c4f61f456b85b8fdf7ec7ab28cc3e299440e6fb4a9dea520e5fd8fd440025e
+
+ARG SOURCE_REVISION
+ARG RELEASE_VERSION
+LABEL org.opencontainers.image.source="https://github.com/Naohiro2g/scratch-editor" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      org.opencontainers.image.version="${RELEASE_VERSION}" \
+      org.opencontainers.image.title="McRemote Scratch editor" \
+      org.opencontainers.image.licenses="AGPL-3.0-only"
+
+COPY build/ /usr/share/nginx/html/
+
+EXPOSE 8080

@@ -1,0 +1,4 @@
+*
+!Dockerfile.mc-remote
+!build/
+!build/**

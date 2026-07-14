@@ -1,0 +1,117 @@
+name: Build McRemote OCI Images
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: mc-remote-images-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
+        with:
+          cache: npm
+          node-version-file: .nvmrc
+      - uses: ./.github/actions/install-dependencies
+
+      - name: Build Bridge
+        run: npm run build --workspace=@mc-remote/bridge
+
+      - name: Build Scratch editor
+        env:
+          NODE_ENV: production
+        run: npm run build:dev --workspace=@scratch/scratch-gui
+
+      - name: Stamp default runtime identity
+        env:
+          SOURCE_IDENTITY: scratch-editor@${{ github.sha }}
+        run: |
+          jq --arg identity "$SOURCE_IDENTITY" \
+            '.release_identity = $identity' \
+            packages/scratch-gui/build/mc-remote-runtime-config.json \
+            > packages/scratch-gui/build/mc-remote-runtime-config.json.tmp
+          mv packages/scratch-gui/build/mc-remote-runtime-config.json.tmp \
+            packages/scratch-gui/build/mc-remote-runtime-config.json
+
+      - name: Verify image inputs
+        run: |
+          test -f packages/scratch-gui/build/index.html
+          test -f packages/scratch-gui/build/mc-remote-runtime-config.json
+          test -f mc-remote/bridge/dist/main.js
+          test -f mc-remote/bridge/node_modules/ws/package.json
+          test "$(jq -r .release_identity packages/scratch-gui/build/mc-remote-runtime-config.json)" \
+            = "scratch-editor@${GITHUB_SHA}"
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Build and push Scratch image
+        id: scratch
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: packages/scratch-gui
+          file: packages/scratch-gui/Dockerfile.mc-remote
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ghcr.io/naohiro2g/mc-remote-scratch:sha-${{ github.sha }}
+          build-args: |
+            SOURCE_REVISION=${{ github.sha }}
+            RELEASE_VERSION=sha-${{ github.sha }}
+
+      - name: Build and push Bridge image
+        id: bridge
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: mc-remote/bridge
+          file: mc-remote/bridge/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ghcr.io/naohiro2g/mc-remote-bridge:sha-${{ github.sha }}
+          build-args: |
+            SOURCE_REVISION=${{ github.sha }}
+            RELEASE_VERSION=sha-${{ github.sha }}
+
+      - name: Record immutable image identities
+        env:
+          SCRATCH_DIGEST: ${{ steps.scratch.outputs.digest }}
+          BRIDGE_DIGEST: ${{ steps.bridge.outputs.digest }}
+        run: |
+          scratch_ref="ghcr.io/naohiro2g/mc-remote-scratch@${SCRATCH_DIGEST}"
+          bridge_ref="ghcr.io/naohiro2g/mc-remote-bridge@${BRIDGE_DIGEST}"
+          docker buildx imagetools inspect --raw "$scratch_ref" > scratch-manifest.json
+          docker buildx imagetools inspect --raw "$bridge_ref" > bridge-manifest.json
+          jq -n \
+            --arg source_revision "$GITHUB_SHA" \
+            --arg scratch "$scratch_ref" \
+            --arg scratch_amd64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' scratch-manifest.json)" \
+            --arg scratch_arm64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' scratch-manifest.json)" \
+            --arg bridge "$bridge_ref" \
+            --arg bridge_amd64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' bridge-manifest.json)" \
+            --arg bridge_arm64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' bridge-manifest.json)" \
+            '{source_revision: $source_revision, images: {scratch: {index: $scratch, linux_amd64: $scratch_amd64, linux_arm64: $scratch_arm64}, bridge: {index: $bridge, linux_amd64: $bridge_amd64, linux_arm64: $bridge_arm64}}}' \
+            > mc-remote-image-identities.json
+
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+        with:
+          name: mc-remote-image-identities-${{ github.sha }}
+          retention-days: 90
+          path: mc-remote-image-identities.json
+          if-no-files-found: error

@@ -35,3 +35,9 @@ Configuration is via environment variables (see `src/config.ts`):
 `BRIDGE_SANDBOX_ALLOWLIST`, `BRIDGE_DEFAULT_SANDBOX`, `BRIDGE_SANDBOX_PORT`.
 
 Private — not published to npm.
+
+## OCI image
+
+The repository workflow builds the bridge output first, then packages only
+`dist/`, `package.json`, and the lock-installed production `ws` dependency. The
+runtime image does not compile source and runs as the non-root `node` user.

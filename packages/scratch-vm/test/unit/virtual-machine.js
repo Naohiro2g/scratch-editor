@@ -42,6 +42,28 @@ test('McRemote connection target is runtime state exposed through the VM', t => 
     t.end();
 });
 
+test('McRemote deployment runtime config is normalized and exposed through the VM', t => {
+    const vm = new VirtualMachine();
+    vm.setMcRemoteRuntimeConfig({
+        bridgeUrl: 'wss://bridge.classroom.example/ws',
+        defaultSandbox: 'minecraft.classroom.example',
+        connectionEnabled: false,
+        releaseIdentity: 'release-123'
+    });
+
+    t.same(vm.getMcRemoteRuntimeConfig(), {
+        bridgeUrl: 'wss://bridge.classroom.example/ws',
+        defaultSandbox: 'minecraft.classroom.example',
+        connectionEnabled: false,
+        releaseIdentity: 'release-123'
+    });
+    t.same(vm.getMcRemoteConnectionTarget(), {
+        sandboxRoute: 'minecraft.classroom.example',
+        label: ''
+    });
+    t.end();
+});
+
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
     const rt = new Runtime();

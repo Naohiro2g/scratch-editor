@@ -105,6 +105,10 @@ would trip the `mc-remote/*` glob), and is added when its implementation begins.
 extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm at build time and keeps the wire
 constants inline. The bridge also avoids protocol imports so that it stays a payload-transparent transport proxy.
 
+McRemote OCI images are built only by the explicit `mc-remote-images.yml` workflow. Scratch packages the
+prebuilt `scratch-gui/build` directory with `Dockerfile.mc-remote`; Bridge packages its prebuilt `dist` and
+lock-installed runtime dependency. Do not compile source on a deployment host.
+
 ## Packages at a glance
 
 | Package | Language | Bundler | Tests |
