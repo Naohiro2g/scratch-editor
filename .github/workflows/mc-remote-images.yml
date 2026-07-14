@@ -23,19 +23,9 @@ jobs:
           node-version-file: .nvmrc
       - uses: ./.github/actions/install-dependencies
 
-      - name: Build Bridge
-        run: npm run build --workspace=@mc-remote/bridge
-
-      - name: Build Scratch storage
-        run: npm run build --workspace=@scratch/scratch-storage
-
-      - name: Build Scratch VM
-        run: npm run build --workspace=@scratch/scratch-vm
-
-      - name: Build Scratch editor
-        env:
-          NODE_ENV: production
-        run: npm run build:dev --workspace=@scratch/scratch-gui
+      # Workspace packages consume each other's compiled dist in this declared order.
+      - name: Build workspace packages
+        run: npm run build
 
       - name: Stamp default runtime identity
         env:
