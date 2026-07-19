@@ -10,6 +10,27 @@ design, or behavior whose rationale depends on McRemote decisions. Typical paths
 `packages/scratch-vm/src/extensions/scratch3_mcremote/*`, McRemote localization, bridge configuration, and
 Scratch blocks that communicate with McRemote.
 
+First, load only the latest dev agent runtime protocol from the knowledge repository's remote `main`.
+Do not print the entire source file into the conversation.
+
+```bash
+protocol_source="$(mktemp)"
+knowledge_commit="$(gh api repos/Naohiro2g/mc-remote-knowledge/commits/main -q .sha)"
+gh api "repos/Naohiro2g/mc-remote-knowledge/contents/00-hub/dev-repo-protocol_ja.md?ref=$knowledge_commit" \
+  -q .content | base64 -d > "$protocol_source"
+if [ "$(grep -Fxc '<!-- BEGIN: DEV-AGENT-RUNTIME -->' "$protocol_source")" -ne 1 ] || \
+   [ "$(grep -Fxc '<!-- END: DEV-AGENT-RUNTIME -->' "$protocol_source")" -ne 1 ]; then
+  echo "dev agent runtime marker missing or duplicated" >&2
+  exit 1
+fi
+printf 'knowledge commit: %s\n' "$knowledge_commit"
+awk '/^<!-- BEGIN: DEV-AGENT-RUNTIME -->$/{reading=1;next} \
+     /^<!-- END: DEV-AGENT-RUNTIME -->$/{reading=0} \
+     reading' "$protocol_source"
+```
+
+- Related knowledge spokes: `13-scratch-client/`, `10-protocol/`, `14-evidence/`
+
 If `Naohiro2g/mc-remote-knowledge` is not accessible, stop and say so. Do not infer missing McRemote context from
 this repository alone, assistant memory, prior conversations, or local reasoning. Do not proceed with design
 decisions or implementation that depends on McRemote-specific context until SSOT access is available.
