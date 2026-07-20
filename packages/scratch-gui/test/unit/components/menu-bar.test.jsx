@@ -92,7 +92,7 @@ describe('MenuBar Component', () => {
         });
     });
 
-    test('McRemote connection menu pushes selected target to VM', () => {
+    test('McRemote connection menu pushes the deployment default to VM for a removed target', () => {
         const vm = new VM();
         vm.setMcRemoteConnectionTarget = jest.fn();
         renderWithIntl(getComponent({}, {
@@ -101,8 +101,8 @@ describe('MenuBar Component', () => {
         }));
 
         expect(vm.setMcRemoteConnectionTarget).toHaveBeenCalledWith({
-            sandboxRoute: 'sb-dev.mc-remote.com',
-            label: 'Development Sandbox'
+            sandboxRoute: 'sb.mc-remote.com',
+            label: 'Stable'
         });
     });
 
@@ -113,12 +113,12 @@ describe('MenuBar Component', () => {
         const button = container.querySelector('button[aria-label="McRemote connection menu"]');
 
         fireEvent.click(button);
-        fireEvent.click(getByText('Development Sandbox'));
+        fireEvent.click(getByText('sb.mc-remote.com'));
 
-        expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBe('sb-dev.mc-remote.com');
+        expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBe('sb.mc-remote.com');
         expect(store.getActions()).toContainEqual({
             type: 'scratch-gui/mcremote-connection-target/SET',
-            sandboxRoute: 'sb-dev.mc-remote.com'
+            sandboxRoute: 'sb.mc-remote.com'
         });
     });
 });

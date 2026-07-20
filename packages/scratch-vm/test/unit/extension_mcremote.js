@@ -416,6 +416,53 @@ test('non-auth hello errors surface as connection errors without clearing the sa
     );
 });
 
+test('hello accepts a server with a newer compatible protocol minor', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '21.3.99'}});
+
+    return result.then(() => {
+        t.equal(blocks._connectionStatus, 'connected');
+        t.end();
+    });
+});
+
+test('hello rejects an incompatible server protocol before commands can run', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const connection = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '20.9.0'}});
+
+    return Promise.all([
+        connection.then(
+            () => t.fail('connection should have rejected'),
+            error => t.equal(error.reason, 'protocol_mismatch')
+        ),
+        blocks.postToChat({MSG: 'test'})
+    ]).then(() => {
+        const observation = latestObservation(runtime);
+        t.equal(observation.status, 'error');
+        t.equal(observation.lastError.reason, 'protocol_mismatch');
+        t.equal(socket.sent.length, 1);
+        t.end();
+    });
+});
+
+test('hello rejects a server protocol minor older than the client', t => {
+    const blocks = new McRemote({});
+    t.equal(blocks._isProtocolCompatible('21.0.0', '21.1.0'), false);
+    t.equal(blocks._isProtocolCompatible('21.1.0', '21.1.99'), true, 'patch is ignored');
+    t.end();
+});
+
 test('commands are not sent after hello fails before connection is established', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
@@ -559,6 +606,21 @@ test('connectTo is kept as a hidden debug block with the default sandbox route',
     const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
     t.equal(connectTo.hideFromPalette, true);
     t.equal(connectTo.arguments.NAME.defaultValue, 'sb.mc-remote.com');
+    t.end();
+});
+
+test('connectTo debug block uses the runtime-configured default sandbox route', t => {
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    runtime.getMcRemoteRuntimeConfig = () => ({
+        bridgeUrl: 'wss://bridge-beta.mc-remote.com',
+        defaultSandbox: 'sb-beta.mc-remote.com',
+        connectionEnabled: true,
+        releaseIdentity: 'beta'
+    });
+    const blocks = new McRemote(runtime);
+    const connectTo = blocks.getInfo().blocks.find(block => block.opcode === 'connectTo');
+    t.equal(connectTo.arguments.NAME.defaultValue, 'sb-beta.mc-remote.com');
     t.end();
 });
 
