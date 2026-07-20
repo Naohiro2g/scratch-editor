@@ -16,8 +16,12 @@ const detectMcRemoteConnectionTargetRoute = () => {
     if (!localStorage) return DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE;
 
     try {
-        const sandboxRoute = normalizeMcRemoteConnectionTargetRoute(localStorage.getItem(STORAGE_KEY));
-        return getMcRemoteConnectionTargetByRoute(sandboxRoute).sandboxRoute;
+        const storedRoute = normalizeMcRemoteConnectionTargetRoute(localStorage.getItem(STORAGE_KEY));
+        const target = getMcRemoteConnectionTargetByRoute(storedRoute);
+        if (storedRoute && storedRoute !== target.sandboxRoute) {
+            localStorage.setItem(STORAGE_KEY, target.sandboxRoute);
+        }
+        return target.sandboxRoute;
     } catch {
         return DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE;
     }

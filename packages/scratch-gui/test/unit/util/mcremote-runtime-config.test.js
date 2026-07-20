@@ -14,6 +14,10 @@ describe('McRemote runtime config', () => {
             json: () => Promise.resolve({
                 bridge_url: 'wss://bridge.classroom.example/ws',
                 default_sandbox: 'minecraft.classroom.example',
+                connection_targets: [
+                    {id: 'stable', sandbox: 'sb.mc-remote.com'},
+                    {id: 'beta', sandbox: 'minecraft.classroom.example'}
+                ],
                 connection_enabled: true,
                 release_identity: 'release-123'
             })
@@ -23,6 +27,10 @@ describe('McRemote runtime config', () => {
         await expect(loadMcRemoteRuntimeConfig()).resolves.toEqual({
             bridgeUrl: 'wss://bridge.classroom.example/ws',
             defaultSandbox: 'minecraft.classroom.example',
+            connectionTargets: [
+                {id: 'stable', sandboxRoute: 'sb.mc-remote.com'},
+                {id: 'beta', sandboxRoute: 'minecraft.classroom.example'}
+            ],
             connectionEnabled: true,
             releaseIdentity: 'release-123'
         });
@@ -43,6 +51,31 @@ describe('McRemote runtime config', () => {
             releaseIdentity: 'runtime-config-unavailable'
         });
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('loadMcRemoteRuntimeConfig'));
+        warn.mockRestore();
+    });
+
+    test('fails closed when the default sandbox is absent from connection targets', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                bridge_url: 'wss://bridge.mc-remote.com',
+                default_sandbox: 'sb-beta.mc-remote.com',
+                connection_targets: [
+                    {id: 'stable', sandbox: 'sb.mc-remote.com'}
+                ],
+                connection_enabled: true,
+                release_identity: 'beta'
+            })
+        });
+        const log = require('../../../src/lib/log.js').default;
+        const warn = jest.spyOn(log, 'warn').mockImplementation(() => {});
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            connectionEnabled: false,
+            releaseIdentity: 'runtime-config-unavailable'
+        });
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('default_sandbox'));
         warn.mockRestore();
     });
 });

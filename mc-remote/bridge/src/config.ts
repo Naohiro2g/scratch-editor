@@ -23,7 +23,7 @@ export interface BridgeConfig {
 export const defaultConfig: BridgeConfig = {
   wsHost: '127.0.0.1',
   wsPort: 8080,
-  originAllowlist: ['https://scratch.mc-remote.com', 'https://scratch-dev.mc-remote.com'],
+  originAllowlist: ['https://scratch.mc-remote.com'],
   sandboxAllowlist: ['sb.mc-remote.com'],
   defaultSandbox: 'sb.mc-remote.com',
   sandboxPort: 25575,
@@ -49,7 +49,7 @@ function parseList(value: string | undefined): string[] | undefined {
  * @returns The resolved bridge configuration.
  */
 export function loadConfig(env: NodeJS.ProcessEnv): BridgeConfig {
-  return {
+  const config = {
     wsHost: env.BRIDGE_WS_HOST ?? defaultConfig.wsHost,
     wsPort: env.BRIDGE_WS_PORT ? Number(env.BRIDGE_WS_PORT) : defaultConfig.wsPort,
     originAllowlist: parseList(env.BRIDGE_ORIGIN_ALLOWLIST) ?? defaultConfig.originAllowlist,
@@ -57,4 +57,8 @@ export function loadConfig(env: NodeJS.ProcessEnv): BridgeConfig {
     defaultSandbox: env.BRIDGE_DEFAULT_SANDBOX ?? defaultConfig.defaultSandbox,
     sandboxPort: env.BRIDGE_SANDBOX_PORT ? Number(env.BRIDGE_SANDBOX_PORT) : defaultConfig.sandboxPort,
   }
+  if (!config.sandboxAllowlist.includes(config.defaultSandbox)) {
+    throw new Error('BRIDGE_DEFAULT_SANDBOX must be listed in BRIDGE_SANDBOX_ALLOWLIST')
+  }
+  return config
 }

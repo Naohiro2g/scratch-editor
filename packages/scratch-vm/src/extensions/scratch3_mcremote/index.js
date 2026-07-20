@@ -230,7 +230,7 @@ class Scratch3McRemoteBlocks {
                     arguments: {
                         NAME: {
                             type: ArgumentType.STRING,
-                            defaultValue: 'sb.mc-remote.com'
+                            defaultValue: this._runtimeConfig().defaultSandbox
                         }
                     }
                 },
@@ -678,10 +678,46 @@ class Scratch3McRemoteBlocks {
         const token = this._readSessionToken();
         if (token) params.auth = {token};
         return this._request('hello', params).then(result => {
+            this._assertCompatibleProtocol(result && result.protocol);
             this._recordHelloInfo(result);
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
             return result;
         });
+    }
+
+    /**
+     * @param {string} serverProtocol - protocol advertised by the server.
+     * @param {string} [clientProtocol] - client protocol, overridden by tests.
+     * @returns {boolean} whether the server can satisfy this client.
+     * @private
+     */
+    _isProtocolCompatible (serverProtocol, clientProtocol = PROTOCOL_VERSION) {
+        const parse = version => {
+            const match = typeof version === 'string' && /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+            return match ? match.slice(1).map(Number) : null;
+        };
+        const server = parse(serverProtocol);
+        const client = parse(clientProtocol);
+        return Boolean(server && client && server[0] === client[0] && server[1] >= client[1]);
+    }
+
+    /**
+     * Reject a successful hello response that advertises an incompatible wire protocol.
+     * @param {string} serverProtocol - protocol advertised by the server.
+     * @private
+     */
+    _assertCompatibleProtocol (serverProtocol) {
+        if (this._isProtocolCompatible(serverProtocol)) return;
+        const error = new Error(
+            `McRemote protocol mismatch: client ${PROTOCOL_VERSION}, server ${serverProtocol || 'missing'}`
+        );
+        error.reason = 'protocol_mismatch';
+        error.data = {
+            reason: error.reason,
+            client_protocol: PROTOCOL_VERSION,
+            server_protocol: serverProtocol || null
+        };
+        throw error;
     }
 
     /**
