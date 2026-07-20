@@ -14,10 +14,13 @@ permissions:
 jobs:
   CLA-Assistant:
     if: |
-      github.event_name == 'pull_request_target' ||
+      github.repository == 'scratchfoundation/scratch-editor' &&
       (
-        github.event.comment.body == 'recheck' ||
-        github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+        github.event_name == 'pull_request_target' ||
+        (
+          github.event.comment.body == 'recheck' ||
+          github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+        )
       )
     runs-on: ubuntu-latest
     steps:
