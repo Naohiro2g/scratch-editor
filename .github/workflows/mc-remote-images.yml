@@ -105,7 +105,7 @@ jobs:
             '{source_revision: $source_revision, images: {scratch: {index: $scratch, linux_amd64: $scratch_amd64, linux_arm64: $scratch_arm64}, bridge: {index: $bridge, linux_amd64: $bridge_amd64, linux_arm64: $bridge_arm64}}}' \
             > mc-remote-image-identities.json
 
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mc-remote-image-identities-${{ github.sha }}
           retention-days: 90

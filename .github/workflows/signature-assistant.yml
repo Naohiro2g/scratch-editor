@@ -13,11 +13,15 @@ permissions:
 
 jobs:
   CLA-Assistant:
+    # CLA signatures are managed by the source repository; forks do not have the agreements PAT.
     if: |
-      github.event_name == 'pull_request_target' ||
+      github.event.repository.fork == false &&
       (
-        github.event.comment.body == 'recheck' ||
-        github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+        github.event_name == 'pull_request_target' ||
+        (
+          github.event.comment.body == 'recheck' ||
+          github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
+        )
       )
     runs-on: ubuntu-latest
     steps:

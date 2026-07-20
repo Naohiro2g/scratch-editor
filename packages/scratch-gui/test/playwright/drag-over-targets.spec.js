@@ -9,15 +9,21 @@ const {test, expect} = require('@playwright/test');
 // firing on drag targets like sprite tiles and the stage selector.
 
 /**
- * Find a visible flyout block and return its center coordinates.
+ * Find an unobstructed flyout block and return its center coordinates.
  */
 const findVisibleFlyoutBlock = function (page) {
     return page.evaluate(() => {
         const blocks = document.querySelectorAll('.blocklyFlyout .blocklyDraggable');
         for (const b of blocks) {
             const rect = b.getBoundingClientRect();
-            if (rect.y > 80 && rect.y < window.innerHeight && rect.height > 20 && rect.width > 50) {
-                return {x: rect.x + (rect.width / 2), y: rect.y + (rect.height / 2)};
+            const x = rect.x + (rect.width / 2);
+            const y = rect.y + (rect.height / 2);
+            const hitElement = document.elementFromPoint(x, y);
+            if (
+                rect.y > 80 && rect.y < window.innerHeight && rect.height > 20 && rect.width > 50 &&
+                hitElement && b.contains(hitElement)
+            ) {
+                return {x, y};
             }
         }
         return null;
