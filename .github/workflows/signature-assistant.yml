@@ -13,8 +13,9 @@ permissions:
 
 jobs:
   CLA-Assistant:
+    # CLA signatures are managed by the source repository; forks do not have the agreements PAT.
     if: |
-      github.repository == 'scratchfoundation/scratch-editor' &&
+      github.event.repository.fork == false &&
       (
         github.event_name == 'pull_request_target' ||
         (
