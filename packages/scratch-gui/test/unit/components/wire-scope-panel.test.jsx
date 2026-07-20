@@ -41,7 +41,7 @@ describe('WireScopePanel', () => {
         expect(screen.getByText('Development Sandbox - sb-dev.mc-remote.com')).toBeInTheDocument();
     });
 
-    test('renders the selected GUI connection target before an observer snapshot exists', () => {
+    test('renders an unlisted GUI connection target without a guessed label', () => {
         renderPanel(
             {
                 status: 'disconnected',
@@ -50,12 +50,12 @@ describe('WireScopePanel', () => {
             },
             {
                 connectionTarget: {
-                    sandboxRoute: '127.0.0.1'
+                    sandboxRoute: 'minecraft.classroom.example'
                 }
             }
         );
 
-        expect(screen.getByText('Kitako 2-3 - 127.0.0.1')).toBeInTheDocument();
+        expect(screen.getByText('minecraft.classroom.example')).toBeInTheDocument();
     });
 
     test('renders observed hello metadata and frame payloads', () => {
