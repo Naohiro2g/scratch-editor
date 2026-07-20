@@ -90,6 +90,11 @@ jobs:
     name: Test
     needs: build
     if: ${{ needs.build.outputs.any-workspace == 'true' && needs.build.outputs.packages != '[]' }}
+    permissions:
+      checks: write
+      contents: read
+      issues: read
+      pull-requests: write
     uses: ./.github/workflows/test-packages.yml
     with:
       packages: ${{ needs.build.outputs.packages }}
