@@ -13,7 +13,7 @@ describe('planPagesArtifact', () => {
         const plan = planPagesArtifact(ALL_ENTRY_HTML);
 
         expect(plan.keep).toEqual(['index.html']);
-        expect(plan.remove.map(entry => entry.html)).toEqual([
+        expect(plan.remove.map(({html}) => html)).toEqual([
             'standalone.html',
             'blocks-only.html',
             'compatibility-testing.html',
