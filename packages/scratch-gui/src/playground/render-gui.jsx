@@ -19,6 +19,11 @@ const extensionMatches = window.location.href.match(/[?&]extension=([^&]+)/);
 const autoLoadExtensionId = extensionMatches ? decodeURIComponent(extensionMatches[1]) : null;
 
 const handleVmInit = vm => {
+    // Showcase builds ship the blocks but no connectivity. This is fixed at build time and cannot
+    // be undone by the runtime config below, so a mistake in one does not enable the connection.
+    if (process.env.MCREMOTE_SHOWCASE) {
+        vm.disableMcRemoteConnection();
+    }
     vm.setMcRemoteRuntimeConfig(getMcRemoteRuntimeConfig());
     if (autoLoadExtensionId) {
         vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(e => {

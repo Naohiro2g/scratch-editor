@@ -243,6 +243,14 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Turn off McRemote connectivity for the life of this VM. Applications compiled without
+     * connectivity call this at startup, independently of the runtime configuration they fetch.
+     */
+    disableMcRemoteConnection () {
+        this.runtime.disableMcRemoteConnection();
+    }
+
+    /**
      * @returns {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
      * current deployment-specific McRemote settings.
      */

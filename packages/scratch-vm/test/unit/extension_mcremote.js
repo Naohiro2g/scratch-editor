@@ -181,7 +181,7 @@ test('disabled runtime config refuses before opening a WebSocket', t => {
     });
     const blocks = new McRemote(runtime);
 
-    return t.rejects(blocks.connect(), /disabled by this deployment profile/).then(() => {
+    return t.rejects(blocks.connect(), {reason: 'connection_disabled'}).then(() => {
         t.equal(FakeWebSocket.instances.length, 0, 'no connection is attempted');
     });
 });
@@ -873,3 +873,70 @@ test('replies for unknown ids are dropped', t =>
         t.end();
     })
 );
+
+const RealRuntime = require('../../src/engine/runtime');
+
+const enabledConfig = {
+    bridgeUrl: 'wss://bridge.example.test',
+    defaultSandbox: DEFAULT_SANDBOX_ROUTE,
+    connectionEnabled: true,
+    releaseIdentity: 'test-build'
+};
+
+const disabledRuntime = () => Object.assign(newRuntime(), {
+    getMcRemoteRuntimeConfig: () => Object.assign({}, enabledConfig, {connectionEnabled: false})
+});
+
+test('disableMcRemoteConnection turns the connection off for the life of the runtime', t => {
+    const runtime = new RealRuntime();
+    t.equal(runtime.getMcRemoteRuntimeConfig().connectionEnabled, true);
+    runtime.disableMcRemoteConnection();
+    t.equal(runtime.getMcRemoteRuntimeConfig().connectionEnabled, false);
+    t.end();
+});
+
+test('runtime config cannot re-enable a connection disabled at build time', t => {
+    const runtime = new RealRuntime();
+    runtime.disableMcRemoteConnection();
+    runtime.setMcRemoteRuntimeConfig(enabledConfig);
+    t.equal(runtime.getMcRemoteRuntimeConfig().connectionEnabled, false);
+    t.end();
+});
+
+test('connect on a disabled deployment opens no socket and reads no token', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'stored-token');
+    const blocks = new McRemote(disabledRuntime());
+    return blocks.connect().then(
+        () => t.fail('connect should reject on a disabled deployment'),
+        error => {
+            t.equal(FakeWebSocket.instances.length, 0);
+            t.equal(error.reason, 'connection_disabled');
+            t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'stored-token');
+            t.end();
+        }
+    );
+});
+
+test('a disabled deployment is reported as disabled rather than as not connected', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = disabledRuntime();
+    const blocks = new McRemote(runtime);
+    return blocks._request('chat.post', ['hi']).then(
+        () => t.fail('request should reject on a disabled deployment'),
+        error => {
+            t.equal(error.reason, 'connection_disabled');
+            t.notMatch(error.message, /not connected to bridge/);
+            t.end();
+        }
+    );
+});
+
+test('a disabled deployment still shows every block', t => {
+    const enabled = new McRemote(newRuntime()).getInfo();
+    const disabled = new McRemote(disabledRuntime()).getInfo();
+    t.same(disabled.blocks.map(block => block.opcode), enabled.blocks.map(block => block.opcode));
+    t.end();
+});
