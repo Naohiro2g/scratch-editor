@@ -64,4 +64,37 @@ const prunePagesArtifact = buildDir => {
     return plan;
 };
 
-export {planPagesArtifact, prunePagesArtifact};
+/**
+ * Derive the runtime configuration a showcase deployment serves. The build already compiles the
+ * connection off; turning it off here as well is the second half of the guard, so neither one
+ * standing alone decides whether the page can reach a sandbox.
+ * @param {object} config - runtime configuration the build produced.
+ * @param {string} releaseIdentity - identity of the source being published, e.g. a commit SHA.
+ * @returns {object} runtime configuration to serve.
+ * @throws {Error} when the release identity would not identify anything.
+ */
+const showcaseRuntimeConfig = (config, releaseIdentity) => {
+    const identity = typeof releaseIdentity === 'string' ? releaseIdentity.trim() : '';
+    if (!identity) {
+        throw new Error('showcaseRuntimeConfig: a non-empty release identity is required');
+    }
+    return Object.assign({}, config, {
+        connection_enabled: false,
+        release_identity: identity
+    });
+};
+
+/**
+ * Rewrite the served runtime configuration in place for a showcase deployment.
+ * @param {string} buildDir - directory holding the webpack `build` output.
+ * @param {string} releaseIdentity - identity of the source being published.
+ * @returns {object} the configuration written.
+ */
+const writeShowcaseRuntimeConfig = (buildDir, releaseIdentity) => {
+    const configPath = path.join(buildDir, 'mc-remote-runtime-config.json');
+    const showcase = showcaseRuntimeConfig(JSON.parse(fs.readFileSync(configPath, 'utf8')), releaseIdentity);
+    fs.writeFileSync(configPath, `${JSON.stringify(showcase, null, 2)}\n`);
+    return showcase;
+};
+
+export {planPagesArtifact, prunePagesArtifact, showcaseRuntimeConfig, writeShowcaseRuntimeConfig};
