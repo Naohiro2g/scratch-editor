@@ -597,6 +597,22 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Build the rejection used everywhere a deployment ships without McRemote connectivity, so
+     * observers can tell a showcase page apart from a page that simply has not connected yet.
+     * @returns {Error} error carrying the `connection_disabled` reason.
+     * @private
+     */
+    _connectionDisabledError () {
+        const error = new Error(formatMessage({
+            id: 'mcremote.connectionDisabled',
+            default: 'This page is a showcase with the Minecraft connection turned off.',
+            description: 'Shown when McRemote blocks run on a deployment that ships without connectivity'
+        }));
+        error.reason = 'connection_disabled';
+        return error;
+    }
+
+    /**
      * @param {Error} error - source error.
      * @returns {object} observer-safe error summary.
      * @private
@@ -617,7 +633,7 @@ class Scratch3McRemoteBlocks {
      */
     _open (sandbox) {
         if (!this._runtimeConfig().connectionEnabled) {
-            const error = new Error('McRemote connection is disabled by this deployment profile');
+            const error = this._connectionDisabledError();
             this._setConnectionStatus(ConnectionStatus.ERROR, error);
             return Promise.reject(error);
         }
@@ -951,6 +967,9 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _request (method, params) {
+        if (!this._runtimeConfig().connectionEnabled) {
+            return Promise.reject(this._connectionDisabledError());
+        }
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
             return Promise.reject(new Error('not connected to bridge'));
         }

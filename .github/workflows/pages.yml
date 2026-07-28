@@ -29,8 +29,16 @@ jobs:
           cache: 'npm'
           node-version-file: '.nvmrc'
       - uses: ./.github/actions/install-dependencies
+      # Pages is the showcase deployment: same UI and blocks, no Minecraft connection.
       - name: Build Packages
         run: npm run build
+        env:
+          MCREMOTE_SHOWCASE: 'true'
+      # Only `index.html` applies the McRemote runtime config, so the other entries would ignore
+      # a deployment that disables the connection. Fails if a new entry appears unclassified.
+      - name: Drop Entries That Ignore the McRemote Runtime Config
+        run: node scripts/prune-pages-artifact.mjs build
+        working-directory: packages/scratch-gui
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         with:
           enablement: true

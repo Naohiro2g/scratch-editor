@@ -383,6 +383,14 @@ class Runtime extends EventEmitter {
         this._mcremoteRuntimeConfig = Object.assign({}, DEFAULT_MCREMOTE_RUNTIME_CONFIG);
 
         /**
+         * Set by an embedding application that ships without McRemote connectivity, such as a
+         * showcase deployment. This is deliberately one-way: a runtime configuration served to
+         * the page cannot turn the connection back on.
+         * @type {boolean}
+         */
+        this._mcremoteConnectionDisabled = false;
+
+        /**
          * A runtime profiler that records timed events for later playback to
          * diagnose Scratch performance.
          * @type {Profiler}
@@ -2314,11 +2322,21 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Turn off McRemote connectivity for the life of this runtime. Applications compiled without
+     * connectivity call this at startup, independently of the runtime configuration they fetch.
+     */
+    disableMcRemoteConnection () {
+        this._mcremoteConnectionDisabled = true;
+    }
+
+    /**
      * @returns {{bridgeUrl: string, defaultSandbox: string, connectionEnabled: boolean, releaseIdentity: string}}
      * current deployment-specific McRemote settings.
      */
     getMcRemoteRuntimeConfig () {
-        return Object.assign({}, this._mcremoteRuntimeConfig);
+        return Object.assign({}, this._mcremoteRuntimeConfig, this._mcremoteConnectionDisabled ?
+            {connectionEnabled: false} :
+            null);
     }
 
     /**

@@ -76,7 +76,9 @@ const baseConfig = new ScratchWebpackConfigBuilder(
         'process.env.DEBUG': Boolean(process.env.DEBUG),
         'process.env.GA_ID': `"${process.env.GA_ID || 'UA-000000-01'}"`,
         'process.env.GTM_ENV_AUTH': `"${process.env.GTM_ENV_AUTH || ''}"`,
-        'process.env.GTM_ID': process.env.GTM_ID ? `"${process.env.GTM_ID}"` : null
+        'process.env.GTM_ID': process.env.GTM_ID ? `"${process.env.GTM_ID}"` : null,
+        // Build a showcase editor: the blocks are present but the McRemote connection is compiled off.
+        'process.env.MCREMOTE_SHOWCASE': Boolean(process.env.MCREMOTE_SHOWCASE)
     }))
     .addPlugin(new CopyWebpackPlugin({
         patterns: [
