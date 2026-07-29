@@ -1,9 +1,10 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React from 'react';
+import React, {useCallback, useState} from 'react';
 import {defineMessages, FormattedMessage, useIntl} from 'react-intl';
 
 import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-targets.js';
+import {HIGH_CONTRAST_MODE} from '../../lib/settings/color-mode/index.js';
 import styles from './wire-scope-panel.css';
 
 const messages = defineMessages({
@@ -47,10 +48,45 @@ const messages = defineMessages({
         defaultMessage: 'Stream',
         description: 'Label for a McRemote stream identifier'
     },
-    connectionTarget: {
-        id: 'gui.mcremote.wireScope.connectionTarget',
-        defaultMessage: 'Connection target',
-        description: 'Label for the current McRemote connection target'
+    configuredTarget: {
+        id: 'gui.mcremote.wireScope.configuredTarget',
+        defaultMessage: 'Configured target',
+        description: 'Label for the connection target chosen in Settings, whether or not it is currently connected'
+    },
+    actualTarget: {
+        id: 'gui.mcremote.wireScope.actualTarget',
+        defaultMessage: 'Actual target',
+        description: 'Label for the connection target the bridge is actually connected to right now'
+    },
+    reconnectStatus: {
+        id: 'gui.mcremote.wireScope.reconnectStatus',
+        defaultMessage: 'Reconnect',
+        description: 'Label for whether the McRemote connection needs to be (re)established'
+    },
+    reconnectNeeded: {
+        id: 'gui.mcremote.wireScope.reconnectNeeded',
+        defaultMessage: 'Needed',
+        description: 'Shown when the actual connection does not match the configured target'
+    },
+    reconnectNotNeeded: {
+        id: 'gui.mcremote.wireScope.reconnectNotNeeded',
+        defaultMessage: 'Up to date',
+        description: 'Shown when the actual connection already matches the configured target'
+    },
+    reconnectPending: {
+        id: 'gui.mcremote.wireScope.reconnectPending',
+        defaultMessage: 'Pairing…',
+        description: 'Shown while a connection attempt toward the configured target is in progress'
+    },
+    collapse: {
+        id: 'gui.mcremote.wireScope.collapse',
+        defaultMessage: 'Collapse WireScope details',
+        description: 'Accessible label for the control that hides the WireScope detail drawer'
+    },
+    expand: {
+        id: 'gui.mcremote.wireScope.expand',
+        defaultMessage: 'Expand WireScope details',
+        description: 'Accessible label for the control that shows the WireScope detail drawer'
     },
     pairCode: {
         id: 'gui.mcremote.wireScope.pairCode',
@@ -166,23 +202,32 @@ const statusInfo = function (status) {
     }
 };
 
-const connectionTargetText = function (intl, snapshotTarget, configuredTarget) {
-    let sandboxRoute = '';
-    if (snapshotTarget && snapshotTarget.sandboxRoute) {
-        sandboxRoute = String(snapshotTarget.sandboxRoute).trim();
-    } else if (configuredTarget && configuredTarget.sandboxRoute) {
-        sandboxRoute = String(configuredTarget.sandboxRoute).trim();
-    }
+const routeOf = function (target) {
+    return target && target.sandboxRoute ? String(target.sandboxRoute).trim() : '';
+};
+
+const targetText = function (intl, target) {
+    const sandboxRoute = routeOf(target);
     if (!sandboxRoute) return EMPTY;
 
     const knownTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
     let label = '';
-    if (snapshotTarget && snapshotTarget.label) {
-        label = String(snapshotTarget.label);
+    if (target.label) {
+        label = String(target.label);
     } else if (knownTarget.sandboxRoute === sandboxRoute) {
         label = intl.formatMessage(knownTarget.label);
     }
     return label ? `${label} - ${sandboxRoute}` : sandboxRoute;
+};
+
+const reconnectInfo = function (status, configuredRoute, actualRoute) {
+    if (status === 'connected' && configuredRoute && configuredRoute === actualRoute) {
+        return {message: messages.reconnectNotNeeded, className: styles.reconnectOk, icon: 'OK'};
+    }
+    if (status === 'pairing') {
+        return {message: messages.reconnectPending, className: styles.reconnectPending, icon: '...'};
+    }
+    return {message: messages.reconnectNeeded, className: styles.reconnectNeeded, icon: '!'};
 };
 
 const directionLabel = function (intl, direction) {
@@ -193,23 +238,45 @@ const directionLabel = function (intl, direction) {
 
 const WireScopePanel = ({
     connectionTarget,
-    snapshot
+    snapshot,
+    colorMode
 }) => {
     const intl = useIntl();
+    const [isCollapsed, setIsCollapsed] = useState(false);
     const state = snapshot || {};
     const hello = state.hello || {};
     const frames = Array.isArray(state.frameLog) ? state.frameLog.slice(-12) : [];
     const currentStatus = statusInfo(state.status);
     const statusText = intl.formatMessage(currentStatus.message);
-    const targetText = connectionTargetText(intl, state.connectionTarget, connectionTarget);
+    const configuredTargetText = targetText(intl, connectionTarget);
+    const actualTargetText = state.connectionTarget ? targetText(intl, state.connectionTarget) : EMPTY;
+    const reconnect = reconnectInfo(state.status, routeOf(connectionTarget), routeOf(state.connectionTarget));
+    const reconnectText = intl.formatMessage(reconnect.message);
+    const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
+
+    const toggleCollapsed = useCallback(() => {
+        setIsCollapsed(!isCollapsed);
+    }, [isCollapsed]);
 
     return (
         <aside
-            className={classNames(styles.panel, currentStatus.className)}
+            className={classNames(styles.panel, currentStatus.className, {[styles.highContrast]: isHighContrast})}
             aria-label={intl.formatMessage(messages.title)}
+            data-high-contrast={isHighContrast ? 'true' : null}
         >
-            <header className={styles.header}>
+            <button
+                className={styles.header}
+                aria-expanded={!isCollapsed}
+                aria-label={intl.formatMessage(isCollapsed ? messages.expand : messages.collapse)}
+                onClick={toggleCollapsed}
+            >
                 <div className={styles.title}>
+                    <span
+                        className={classNames(styles.collapseCaret, {[styles.collapsed]: isCollapsed})}
+                        aria-hidden="true"
+                    >
+                        {'▾'}
+                    </span>
                     <FormattedMessage {...messages.title} />
                 </div>
                 <div
@@ -225,84 +292,107 @@ const WireScopePanel = ({
                     </span>
                     <span className={styles.statusBadgeText}>{statusText}</span>
                 </div>
-            </header>
-            <section className={styles.summary}>
-                <div className={styles.summaryItem}>
-                    <span><FormattedMessage {...messages.statusLabel} /></span>
-                    <strong>{statusText}</strong>
-                </div>
-                <div className={styles.summaryItem}>
-                    <span><FormattedMessage {...messages.stream} /></span>
-                    <strong>{state.streamId || EMPTY}</strong>
+            </button>
+            <section className={styles.statusStrip}>
+                <div className={styles.summaryItemWide}>
+                    <span><FormattedMessage {...messages.configuredTarget} /></span>
+                    <strong>{configuredTargetText}</strong>
                 </div>
                 <div className={styles.summaryItemWide}>
-                    <span><FormattedMessage {...messages.connectionTarget} /></span>
-                    <strong>{targetText}</strong>
+                    <span><FormattedMessage {...messages.actualTarget} /></span>
+                    <strong>{actualTargetText}</strong>
                 </div>
-                <div className={styles.summaryItem}>
-                    <span><FormattedMessage {...messages.pairCode} /></span>
-                    <strong>{state.pairCode || EMPTY}</strong>
-                </div>
-                <div className={styles.summaryItemWide}>
-                    <span><FormattedMessage {...messages.pairCommand} /></span>
-                    <code>{state.pairCommand || EMPTY}</code>
+                <div className={classNames(styles.summaryItemWide, styles.reconnectItem, reconnect.className)}>
+                    <span
+                        className={styles.reconnectIcon}
+                        aria-hidden="true"
+                    >
+                        {reconnect.icon}
+                    </span>
+                    <span><FormattedMessage {...messages.reconnectStatus} /></span>
+                    <strong>{reconnectText}</strong>
                 </div>
             </section>
-            <section className={styles.section}>
-                <h3><FormattedMessage {...messages.hello} /></h3>
-                <dl className={styles.details}>
-                    <dt>
-                        <FormattedMessage {...messages.mcVersion} />
-                        {' - '}
-                        <FormattedMessage {...messages.protocol} />
-                    </dt>
-                    <dd>{`${hello.mc_version || EMPTY} - ${hello.protocol || EMPTY}`}</dd>
-                    <dt><FormattedMessage {...messages.worldConstants} /></dt>
-                    <dd><code>{stringify(hello.world_constants)}</code></dd>
-                    <dt><FormattedMessage {...messages.permissions} /></dt>
-                    <dd><code>{stringify(hello.permissions)}</code></dd>
-                </dl>
-                {state.lastError ? (
-                    <div className={styles.errorLine}>
-                        <span><FormattedMessage {...messages.lastError} /></span>
-                        <code>{stringify(state.lastError)}</code>
-                    </div>
-                ) : null}
-            </section>
-            <section className={styles.section}>
-                <h3><FormattedMessage {...messages.frames} /></h3>
-                {frames.length ? (
-                    <div className={styles.frameTableWrap}>
-                        <table className={styles.frameTable}>
-                            <thead>
-                                <tr>
-                                    <th><FormattedMessage {...messages.time} /></th>
-                                    <th><FormattedMessage {...messages.stream} /></th>
-                                    <th><FormattedMessage {...messages.direction} /></th>
-                                    <th><FormattedMessage {...messages.method} /></th>
-                                    <th><FormattedMessage {...messages.payload} /></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {/* eslint-disable-next-line arrow-parens */}
-                                {frames.map(frame => (
-                                    <tr key={frame.sequence || `${frame.direction}-${frame.id}-${frame.timestamp}`}>
-                                        <td>{frame.timestamp ? intl.formatTime(frame.timestamp) : EMPTY}</td>
-                                        <td>{frame.streamId || EMPTY}</td>
-                                        <td>{directionLabel(intl, frame.direction)}</td>
-                                        <td>{frame.method || EMPTY}</td>
-                                        <td><code>{stringify(frame.payload)}</code></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className={styles.emptyFrames}>
-                        <FormattedMessage {...messages.emptyFrames} />
-                    </div>
-                )}
-            </section>
+            {!isCollapsed && (
+                <React.Fragment>
+                    <section className={styles.summary}>
+                        <div className={styles.summaryItem}>
+                            <span><FormattedMessage {...messages.statusLabel} /></span>
+                            <strong>{statusText}</strong>
+                        </div>
+                        <div className={styles.summaryItem}>
+                            <span><FormattedMessage {...messages.stream} /></span>
+                            <strong>{state.streamId || EMPTY}</strong>
+                        </div>
+                        <div className={styles.summaryItem}>
+                            <span><FormattedMessage {...messages.pairCode} /></span>
+                            <strong>{state.pairCode || EMPTY}</strong>
+                        </div>
+                        <div className={styles.summaryItemWide}>
+                            <span><FormattedMessage {...messages.pairCommand} /></span>
+                            <code>{state.pairCommand || EMPTY}</code>
+                        </div>
+                    </section>
+                    <section className={styles.section}>
+                        <h3><FormattedMessage {...messages.hello} /></h3>
+                        <dl className={styles.details}>
+                            <dt>
+                                <FormattedMessage {...messages.mcVersion} />
+                                {' - '}
+                                <FormattedMessage {...messages.protocol} />
+                            </dt>
+                            <dd>{`${hello.mc_version || EMPTY} - ${hello.protocol || EMPTY}`}</dd>
+                            <dt><FormattedMessage {...messages.worldConstants} /></dt>
+                            <dd><code>{stringify(hello.world_constants)}</code></dd>
+                            <dt><FormattedMessage {...messages.permissions} /></dt>
+                            <dd><code>{stringify(hello.permissions)}</code></dd>
+                        </dl>
+                        {state.lastError ? (
+                            <div className={styles.errorLine}>
+                                <span><FormattedMessage {...messages.lastError} /></span>
+                                <code>{stringify(state.lastError)}</code>
+                            </div>
+                        ) : null}
+                    </section>
+                    <section className={styles.section}>
+                        <h3><FormattedMessage {...messages.frames} /></h3>
+                        {frames.length ? (
+                            <div className={styles.frameTableWrap}>
+                                <table className={styles.frameTable}>
+                                    <thead>
+                                        <tr>
+                                            <th><FormattedMessage {...messages.time} /></th>
+                                            <th><FormattedMessage {...messages.stream} /></th>
+                                            <th><FormattedMessage {...messages.direction} /></th>
+                                            <th><FormattedMessage {...messages.method} /></th>
+                                            <th><FormattedMessage {...messages.payload} /></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {/* eslint-disable-next-line arrow-parens */}
+                                        {frames.map(frame => (
+                                            <tr
+                                                key={frame.sequence ||
+                                                    `${frame.direction}-${frame.id}-${frame.timestamp}`}
+                                            >
+                                                <td>{frame.timestamp ? intl.formatTime(frame.timestamp) : EMPTY}</td>
+                                                <td>{frame.streamId || EMPTY}</td>
+                                                <td>{directionLabel(intl, frame.direction)}</td>
+                                                <td>{frame.method || EMPTY}</td>
+                                                <td><code>{stringify(frame.payload)}</code></td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className={styles.emptyFrames}>
+                                <FormattedMessage {...messages.emptyFrames} />
+                            </div>
+                        )}
+                    </section>
+                </React.Fragment>
+            )}
         </aside>
     );
 };
@@ -311,6 +401,7 @@ WireScopePanel.propTypes = {
     connectionTarget: PropTypes.shape({
         sandboxRoute: PropTypes.string
     }),
+    colorMode: PropTypes.string,
     snapshot: PropTypes.shape({
         status: PropTypes.string,
         streamId: PropTypes.string,

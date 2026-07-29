@@ -25,7 +25,7 @@ import MenuBarHOC from '../../containers/menu-bar-hoc.jsx';
 import SettingsMenu from './settings-menu.jsx';
 import FileMenu from './file-menu.jsx';
 import EditMenu from './edit-menu.jsx';
-import McRemoteConnectionMenu from './mcremote-connection-menu.jsx';
+import McRemoteConnectionTargetSync from './mcremote-connection-target-sync.jsx';
 import ModeMenu from './mode-menu.jsx';
 import AboutMenu from './about-menu.jsx';
 
@@ -343,15 +343,14 @@ class MenuBar extends React.Component {
                                 src={getScratchLogo(this.props.platform)}
                             />
                         </button>
-                        {(this.props.canChangeColorMode || this.props.canChangeLanguage || this.props.canChangeTheme) &&
-                        (<SettingsMenu
+                        <SettingsMenu
                             canChangeLanguage={this.props.canChangeLanguage}
                             canChangeColorMode={this.props.canChangeColorMode}
                             canChangeTheme={this.props.canChangeTheme}
                             hasActiveMembership={this.props.hasActiveMembership}
                             isRtl={this.props.isRtl}
                             depth={1}
-                        />)}
+                        />
                         {(this.props.canManageFiles) && (<FileMenu
                             onStartSelectingFileUpload={this.props.onStartSelectingFileUpload}
                             onClickNew={this.handleClickNew}
@@ -372,7 +371,7 @@ class MenuBar extends React.Component {
                             restoreOptionMessage={this.restoreOptionMessage}
                             depth={1}
                         />
-                        <McRemoteConnectionMenu depth={1} />
+                        <McRemoteConnectionTargetSync />
                         {this.props.isTotallyNormal && (<ModeMenu
                             onSetMode={this.handleSetMode}
                             modeNow={this.props.modeNow}

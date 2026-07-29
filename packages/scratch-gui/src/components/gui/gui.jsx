@@ -493,6 +493,7 @@ const GUIComponent = props => {
                                         <WireScopePanel
                                             connectionTarget={mcremoteConnectionTarget}
                                             snapshot={mcremoteObservation}
+                                            colorMode={colorMode}
                                         />
                                     </Box>
                                     <ExtensionsButton
