@@ -26,6 +26,7 @@ import SettingsMenu from './settings-menu.jsx';
 import FileMenu from './file-menu.jsx';
 import EditMenu from './edit-menu.jsx';
 import McRemoteConnectionTargetSync from './mcremote-connection-target-sync.jsx';
+import NoticeOverlay from '../notice-overlay/notice-overlay.jsx';
 import ModeMenu from './mode-menu.jsx';
 import AboutMenu from './about-menu.jsx';
 
@@ -328,21 +329,24 @@ class MenuBar extends React.Component {
             >
                 <div className={styles.mainMenu}>
                     <div className={styles.fileGroup}>
-                        <button
-                            aria-label={this.props.intl.formatMessage(ariaMessages.home)}
-                            className={classNames(styles.menuBarItem)}
-                            onClick={this.props.onClickLogo}
-                        >
-                            <img
-                                id="logo_img"
-                                alt="Scratch"
-                                className={classNames(styles.scratchLogo, {
-                                    [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
-                                })}
-                                draggable={false}
-                                src={getScratchLogo(this.props.platform)}
-                            />
-                        </button>
+                        <div className={styles.logoGroup}>
+                            <button
+                                aria-label={this.props.intl.formatMessage(ariaMessages.home)}
+                                className={classNames(styles.menuBarItem)}
+                                onClick={this.props.onClickLogo}
+                            >
+                                <img
+                                    id="logo_img"
+                                    alt="Scratch"
+                                    className={classNames(styles.scratchLogo, {
+                                        [styles.clickable]: typeof this.props.onClickLogo !== 'undefined'
+                                    })}
+                                    draggable={false}
+                                    src={getScratchLogo(this.props.platform)}
+                                />
+                            </button>
+                            <NoticeOverlay colorMode={this.props.colorMode} />
+                        </div>
                         <SettingsMenu
                             canChangeLanguage={this.props.canChangeLanguage}
                             canChangeColorMode={this.props.canChangeColorMode}
@@ -659,6 +663,7 @@ MenuBar.propTypes = {
     canSave: PropTypes.bool,
     canShare: PropTypes.bool,
     className: PropTypes.string,
+    colorMode: PropTypes.string,
     confirmReadyToReplaceProject: PropTypes.func,
     currentLocale: PropTypes.string.isRequired,
     enableCommunity: PropTypes.bool,
@@ -730,6 +735,7 @@ const mapStateToProps = (state, ownProps) => {
     const sessionExists = state.session && typeof state.session.session !== 'undefined';
 
     return {
+        colorMode: state.scratchGui.settings.colorMode,
         currentLocale: state.locales.locale,
         isRtl: state.locales.isRtl,
         isUpdating: getIsUpdating(loadingState),

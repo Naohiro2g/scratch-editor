@@ -27,6 +27,8 @@ const mcremoteMessages = {
         'gui.mcremote.connectionTarget.beta': 'Beta',
         'gui.mcremote.connectionTarget.alpha': 'Alpha',
         'gui.mcremote.connectionTarget.dev': 'Dev',
+        'gui.mcremote.notice.collapse': 'お知らせを閉じる',
+        'gui.mcremote.notice.expand': 'お知らせを開く',
         'gui.mcremote.wireScope.direction': '方向',
         'gui.mcremote.wireScope.emptyFrames': 'フレームはまだありません',
         'gui.mcremote.wireScope.frames': 'フレーム',
