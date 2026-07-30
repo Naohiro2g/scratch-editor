@@ -206,7 +206,7 @@ const routeOf = function (target) {
     return target && target.sandboxRoute ? String(target.sandboxRoute).trim() : '';
 };
 
-const targetText = function (intl, target) {
+const targetText = function (target) {
     const sandboxRoute = routeOf(target);
     if (!sandboxRoute) return EMPTY;
 
@@ -215,7 +215,7 @@ const targetText = function (intl, target) {
     if (target.label) {
         label = String(target.label);
     } else if (knownTarget.sandboxRoute === sandboxRoute) {
-        label = intl.formatMessage(knownTarget.label);
+        label = knownTarget.label;
     }
     return label ? `${label} - ${sandboxRoute}` : sandboxRoute;
 };
@@ -248,8 +248,8 @@ const WireScopePanel = ({
     const frames = Array.isArray(state.frameLog) ? state.frameLog.slice(-12) : [];
     const currentStatus = statusInfo(state.status);
     const statusText = intl.formatMessage(currentStatus.message);
-    const configuredTargetText = targetText(intl, connectionTarget);
-    const actualTargetText = state.connectionTarget ? targetText(intl, state.connectionTarget) : EMPTY;
+    const configuredTargetText = targetText(connectionTarget);
+    const actualTargetText = state.connectionTarget ? targetText(state.connectionTarget) : EMPTY;
     const reconnect = reconnectInfo(state.status, routeOf(connectionTarget), routeOf(state.connectionTarget));
     const reconnectText = intl.formatMessage(reconnect.message);
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;

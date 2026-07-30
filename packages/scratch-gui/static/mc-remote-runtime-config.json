@@ -4,6 +4,7 @@
   "connection_targets": [
     {
       "id": "stable",
+      "label": "Stable",
       "sandbox": "sb.mc-remote.com"
     }
   ],

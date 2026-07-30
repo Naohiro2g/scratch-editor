@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import {useEffect} from 'react';
-import {useIntl} from 'react-intl';
 import {connect} from 'react-redux';
 import VM from '@scratch/scratch-vm';
 
@@ -16,9 +15,8 @@ import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-
  * @returns {null} this component has no UI of its own.
  */
 const McRemoteConnectionTargetSync = ({sandboxRoute, vm}) => {
-    const intl = useIntl();
     const selectedTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
-    const selectedLabel = intl.formatMessage(selectedTarget.label);
+    const selectedLabel = selectedTarget.label;
 
     useEffect(() => {
         if (vm && typeof vm.setMcRemoteConnectionTarget === 'function') {

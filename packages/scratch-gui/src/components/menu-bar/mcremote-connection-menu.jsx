@@ -41,7 +41,7 @@ const McRemoteConnectionMenu = ({
 }) => {
     const intl = useIntl();
     const selectedTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
-    const selectedLabel = intl.formatMessage(selectedTarget.label);
+    const selectedLabel = selectedTarget.label;
 
     const {
         menuRef,
@@ -109,7 +109,7 @@ const McRemoteConnectionMenu = ({
                                 />
                                 <div className={styles.mcremoteConnectionText}>
                                     <span>
-                                        <FormattedMessage {...target.label} />
+                                        {target.label}
                                     </span>
                                     <code>{target.sandboxRoute}</code>
                                 </div>

@@ -1,7 +1,7 @@
 import log from './log.js';
 
 const DEFAULT_CONNECTION_TARGETS = Object.freeze([
-    Object.freeze({id: 'stable', sandboxRoute: 'sb.mc-remote.com'})
+    Object.freeze({id: 'stable', sandboxRoute: 'sb.mc-remote.com', label: 'Stable'})
 ]);
 
 const EMPTY_NOTICES = Object.freeze([]);
@@ -35,8 +35,9 @@ const normalizeConnectionTargets = value => {
         }
         const id = typeof target.id === 'string' ? target.id.trim() : '';
         const sandboxRoute = typeof target.sandbox === 'string' ? target.sandbox.trim() : '';
-        if (!id || !sandboxRoute) {
-            throw new Error(`connection_targets[${index}] must have non-empty id and sandbox values`);
+        const label = typeof target.label === 'string' ? target.label.trim() : '';
+        if (!id || !sandboxRoute || !label) {
+            throw new Error(`connection_targets[${index}] must have non-empty id, label, and sandbox values`);
         }
         if (ids.has(id)) throw new Error(`connection_targets contains duplicate id: ${id}`);
         if (sandboxRoutes.has(sandboxRoute)) {
@@ -44,7 +45,7 @@ const normalizeConnectionTargets = value => {
         }
         ids.add(id);
         sandboxRoutes.add(sandboxRoute);
-        return Object.freeze({id, sandboxRoute});
+        return Object.freeze({id, sandboxRoute, label});
     }));
 };
 
