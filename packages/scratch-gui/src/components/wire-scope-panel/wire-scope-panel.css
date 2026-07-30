@@ -52,14 +52,28 @@
     padding: 0.5rem 0.75rem;
     border-bottom: 1px solid $ui-black-transparent;
     background: $ui-secondary;
+    cursor: pointer;
 }
 
 .title {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
     min-width: 0;
     font-weight: 700;
     font-size: 0.9rem;
     color: $text-primary;
     overflow-wrap: anywhere;
+}
+
+.collapse-caret {
+    display: inline-block;
+    flex: 0 0 auto;
+    transition: transform 0.15s ease;
+}
+
+.collapse-caret.collapsed {
+    transform: rotate(-90deg);
 }
 
 .status-badge {
@@ -136,6 +150,77 @@
     color: $ui-white;
 }
 
+.status-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid $ui-black-transparent;
+}
+
+.reconnect-item {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.reconnect-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+.reconnect-ok .reconnect-icon {
+    background: $ui-green;
+    color: $ui-white;
+}
+
+.reconnect-ok strong {
+    color: $ui-green;
+}
+
+.reconnect-pending .reconnect-icon {
+    background: $control-primary;
+    color: $ui-white;
+}
+
+.reconnect-pending strong {
+    color: $control-primary;
+}
+
+.reconnect-needed .reconnect-icon {
+    background: $ui-orange;
+    color: $ui-white;
+}
+
+.reconnect-needed strong {
+    color: $ui-orange;
+    font-weight: 700;
+}
+
+.panel.high-contrast .reconnect-ok strong,
+.panel.high-contrast .reconnect-pending strong,
+.panel.high-contrast .reconnect-needed strong {
+    text-decoration: underline;
+}
+
+.panel.high-contrast .reconnect-item {
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    padding: 0.125rem 0.375rem;
+}
+
+.panel.high-contrast .status-badge {
+    border-width: 2px;
+}
+
 .summary {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -158,6 +243,7 @@
 }
 
 .summary span,
+.status-strip span,
 .details dt,
 .error-line span {
     color: $text-primary-transparent;
@@ -165,13 +251,15 @@
     font-weight: 700;
 }
 
-.summary span {
+.summary span,
+.status-strip span {
     flex: 0 0 auto;
     white-space: nowrap;
 }
 
 .summary strong,
 .summary code,
+.status-strip strong,
 .details dd,
 .error-line code {
     min-width: 0;
