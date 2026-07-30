@@ -1,15 +1,18 @@
 import log from './log.js';
 
 const DEFAULT_CONNECTION_TARGETS = Object.freeze([
-    Object.freeze({id: 'stable', sandboxRoute: 'sb.mc-remote.com'})
+    Object.freeze({id: 'stable', sandboxRoute: 'sb.mc-remote.com', label: 'Stable'})
 ]);
+
+const EMPTY_NOTICES = Object.freeze([]);
 
 const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     bridgeUrl: 'wss://bridge.mc-remote.com',
     defaultSandbox: 'sb.mc-remote.com',
     connectionTargets: DEFAULT_CONNECTION_TARGETS,
     connectionEnabled: true,
-    releaseIdentity: 'embedded-default'
+    releaseIdentity: 'embedded-default',
+    notices: EMPTY_NOTICES
 });
 
 const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
@@ -32,8 +35,9 @@ const normalizeConnectionTargets = value => {
         }
         const id = typeof target.id === 'string' ? target.id.trim() : '';
         const sandboxRoute = typeof target.sandbox === 'string' ? target.sandbox.trim() : '';
-        if (!id || !sandboxRoute) {
-            throw new Error(`connection_targets[${index}] must have non-empty id and sandbox values`);
+        const label = typeof target.label === 'string' ? target.label.trim() : '';
+        if (!id || !sandboxRoute || !label) {
+            throw new Error(`connection_targets[${index}] must have non-empty id, label, and sandbox values`);
         }
         if (ids.has(id)) throw new Error(`connection_targets contains duplicate id: ${id}`);
         if (sandboxRoutes.has(sandboxRoute)) {
@@ -41,7 +45,47 @@ const normalizeConnectionTargets = value => {
         }
         ids.add(id);
         sandboxRoutes.add(sandboxRoute);
-        return Object.freeze({id, sandboxRoute});
+        return Object.freeze({id, sandboxRoute, label});
+    }));
+};
+
+const normalizeNoticeLink = (link, index) => {
+    if (typeof link === 'undefined' || link === null) return null;
+    if (typeof link !== 'object') {
+        throw new Error(`notices[${index}].link must be an object`);
+    }
+    const href = typeof link.href === 'string' ? link.href.trim() : '';
+    const label = typeof link.label === 'string' ? link.label.trim() : '';
+    if (!href || !label) {
+        throw new Error(`notices[${index}].link must have non-empty href and label`);
+    }
+    let url;
+    try {
+        url = new URL(href);
+    } catch {
+        throw new Error(`notices[${index}].link.href must be an absolute URL`);
+    }
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+        throw new Error(`notices[${index}].link.href must use http or https`);
+    }
+    return Object.freeze({href: url.toString(), label});
+};
+
+const normalizeNotices = value => {
+    if (typeof value === 'undefined') return EMPTY_NOTICES;
+    if (!Array.isArray(value)) {
+        throw new Error('notices must be an array');
+    }
+    return Object.freeze(value.map((notice, index) => {
+        if (!notice || typeof notice !== 'object') {
+            throw new Error(`notices[${index}] must be an object`);
+        }
+        const heading = typeof notice.heading === 'string' ? notice.heading.trim() : '';
+        const body = typeof notice.body === 'string' ? notice.body.trim() : '';
+        if (!heading || !body) {
+            throw new Error(`notices[${index}] must have non-empty heading and body`);
+        }
+        return Object.freeze({heading, body, link: normalizeNoticeLink(notice.link, index)});
     }));
 };
 
@@ -67,12 +111,14 @@ const normalizeRuntimeConfig = value => {
     if (typeof value.release_identity !== 'string' || !value.release_identity.trim()) {
         throw new Error('release_identity must be a non-empty string');
     }
+    const notices = normalizeNotices(value.notices);
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
         connectionTargets,
         connectionEnabled: value.connection_enabled,
-        releaseIdentity: value.release_identity.trim()
+        releaseIdentity: value.release_identity.trim(),
+        notices
     });
 };
 

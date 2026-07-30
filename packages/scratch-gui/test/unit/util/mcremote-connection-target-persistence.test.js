@@ -17,8 +17,8 @@ describe('McRemote connection target persistence', () => {
                 bridge_url: 'wss://bridge-beta.mc-remote.com',
                 default_sandbox: 'sb-beta.mc-remote.com',
                 connection_targets: [
-                    {id: 'stable', sandbox: 'sb.mc-remote.com'},
-                    {id: 'beta', sandbox: 'sb-beta.mc-remote.com'}
+                    {id: 'stable', label: 'Stable', sandbox: 'sb.mc-remote.com'},
+                    {id: 'beta', label: 'Beta', sandbox: 'sb-beta.mc-remote.com'}
                 ],
                 connection_enabled: true,
                 release_identity: 'beta'
