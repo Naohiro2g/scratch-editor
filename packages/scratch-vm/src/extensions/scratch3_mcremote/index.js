@@ -31,6 +31,17 @@ const CLIENT_VERSION = '2100.0.0b2';
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
 const PAIR_POLL_INTERVAL_MS = 1000;
+
+/**
+ * Minimum time between live `player.getPos` requests made on behalf of a
+ * checked stage monitor. A monitor's reporter is re-evaluated every runtime
+ * step (about 30 times per second); without a floor here, checking a player
+ * position monitor would flood the bridge with that many requests per
+ * second. Explicit script calls (util.thread.updateMonitor is false) are
+ * never throttled.
+ * @type {number}
+ */
+const PLAYER_POS_MONITOR_THROTTLE_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
 const REDACTED = '[redacted]';
@@ -75,14 +86,19 @@ const BuildWorld = {
  *   world.setBlock  [x, y, z, block]                             -> reply
  *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> reply
  *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
+ *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
+ *   player.setPos   [world, x, y, z]                               -> reply
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
  * Coordinates are deltas from the build origin; the block argument is a
  * block_state_ref string passed through verbatim (the plugin completes the
  * namespace and canonicalises the reply). Scratch keeps build-origin y sealed
- * and sends 0 for `build.setOrigin` y. Command blocks use id-bearing requests
- * so success/error can be observed during release-gate testing.
+ * and sends 0 for `build.setOrigin` y. `player.*` coordinates share the same
+ * build-origin delta but do not depend on the world set by `build.setWorld`;
+ * the world is explicit in both `player.getPos`'s result and `player.setPos`'s
+ * params. Command blocks use id-bearing requests so success/error can be
+ * observed during release-gate testing.
  */
 
 /**
@@ -195,6 +211,16 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._connectionTarget = null;
+
+        /**
+         * Last `player.getPos` result and when it was fetched, reused for
+         * monitor-driven `playerAttribute` polls within
+         * PLAYER_POS_MONITOR_THROTTLE_MS so a checked stage monitor does not
+         * issue a fresh request on every runtime step.
+         * @type {?{result: object, fetchedAt: number}}
+         * @private
+         */
+        this._playerPosCache = null;
     }
 
     /**
@@ -354,9 +380,95 @@ class Scratch3McRemoteBlocks {
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
+                },
+                '---',
+                {
+                    opcode: 'playerAttribute',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.playerAttribute',
+                        default: 'player\'s [PROPERTY]',
+                        description: 'Report an attribute of the paired Minecraft player'
+                    }),
+                    arguments: {
+                        PROPERTY: {
+                            type: ArgumentType.STRING,
+                            menu: 'playerAttributes'
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPlayerPos',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerPos',
+                        default: 'move player to [WORLD] x:[X] y:[Y] z:[Z]',
+                        description: 'Teleport the paired player to a dimension and position'
+                    }),
+                    arguments: {
+                        WORLD: {
+                            type: ArgumentType.STRING,
+                            menu: 'worlds',
+                            defaultValue: BuildWorld.OVERWORLD
+                        },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setPlayerXYZ',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerXYZ',
+                        default: 'move player to x:[X] y:[Y] z:[Z]',
+                        description: 'Teleport the paired player within the player\'s current dimension'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
                 }
             ],
             menus: {
+                playerAttributes: {
+                    acceptReporters: false,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.world',
+                                default: 'dimension',
+                                description: 'Menu label for the paired player\'s current Minecraft dimension'
+                            }),
+                            value: 'world'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.x',
+                                default: 'x position',
+                                description: 'Menu label for the paired player\'s x position'
+                            }),
+                            value: 'x'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.y',
+                                default: 'y position',
+                                description: 'Menu label for the paired player\'s y position'
+                            }),
+                            value: 'y'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.z',
+                                default: 'z position',
+                                description: 'Menu label for the paired player\'s z position'
+                            }),
+                            value: 'z'
+                        }
+                    ]
+                },
                 worlds: {
                     acceptReporters: true,
                     items: [
@@ -469,6 +581,7 @@ class Scratch3McRemoteBlocks {
         this._nextRequestId = 1;
         this._pairCode = '';
         this._pairCommand = '';
+        this._playerPosCache = null;
         this._emitObservation();
     }
 
@@ -1057,6 +1170,63 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.Z)
         ]).then(result => (typeof result === 'undefined' ? '' : result),
             () => '');
+    }
+
+    /**
+     * Fetch the paired player's current world/position. Monitor-driven calls
+     * (a checked stage monitor re-evaluates its reporter on every runtime
+     * step) reuse a cached result for PLAYER_POS_MONITOR_THROTTLE_MS instead
+     * of issuing a fresh bridge request; explicit script calls always fetch.
+     * @param {BlockUtility} util - execution context for this block call.
+     * @returns {Promise} resolves with the `player.getPos` result.
+     * @private
+     */
+    _getPlayerPos (util) {
+        const isMonitorPoll = Boolean(util && util.thread && util.thread.updateMonitor);
+        if (isMonitorPoll && this._playerPosCache &&
+            (Date.now() - this._playerPosCache.fetchedAt) < PLAYER_POS_MONITOR_THROTTLE_MS) {
+            return Promise.resolve(this._playerPosCache.result);
+        }
+        return this._request('player.getPos', []).then(result => {
+            this._playerPosCache = {result, fetchedAt: Date.now()};
+            return result;
+        });
+    }
+
+    playerAttribute (args, util) {
+        return this._getPlayerPos(util).then(result => {
+            const property = Cast.toString(args.PROPERTY);
+            if (property === 'world') {
+                return result && result.world ? result.world : '';
+            }
+            const index = {x: 0, y: 1, z: 2}[property];
+            return result && Array.isArray(result.pos) && typeof index !== 'undefined' ?
+                result.pos[index] :
+                '';
+        }, () => '');
+    }
+
+    setPlayerPos (args) {
+        return this._commandRequest('player.setPos', [
+            Cast.toString(args.WORLD),
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]);
+    }
+
+    setPlayerXYZ (args) {
+        return this._request('player.getPos', []).then(
+            result => this._commandRequest('player.setPos', [
+                result && result.world,
+                Cast.toNumber(args.X),
+                Cast.toNumber(args.Y),
+                Cast.toNumber(args.Z)
+            ]),
+            error => {
+                log.warn(`McRemote: player.getPos failed before setPlayerXYZ: ${error.reason || error.message}`);
+            }
+        );
     }
 }
 

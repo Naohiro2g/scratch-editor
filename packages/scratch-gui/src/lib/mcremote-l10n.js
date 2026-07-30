@@ -64,7 +64,14 @@ const mcremoteMessages = {
         'mcremote.postToChat': 'チャットに [MSG] と言う',
         'mcremote.setBlock': 'x:[X] y:[Y] z:[Z] のブロックを [BLOCK] にする',
         'mcremote.setBlocks': 'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] までのブロックを [BLOCK] にする',
-        'mcremote.getBlock': 'x:[X] y:[Y] z:[Z] のブロック'
+        'mcremote.getBlock': 'x:[X] y:[Y] z:[Z] のブロック',
+        'mcremote.playerAttribute': 'プレイヤーの [PROPERTY]',
+        'mcremote.playerAttribute.world': '次元',
+        'mcremote.playerAttribute.x': 'x座標',
+        'mcremote.playerAttribute.y': 'y座標',
+        'mcremote.playerAttribute.z': 'z座標',
+        'mcremote.setPlayerPos': 'プレイヤーを [WORLD] x:[X] y:[Y] z:[Z] へ移動する',
+        'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へ移動する'
     }
 };
 

@@ -838,6 +838,111 @@ test('getBlock swallows a JSON-RPC error into empty string', t =>
     })
 );
 
+test('playerAttribute reports world and position from player.getPos', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.playerAttribute({PROPERTY: 'x'});
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'player.getPos');
+        t.same(msg.params, []);
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'overworld', pos: [5, 6, 7]}});
+        return result.then(value => {
+            t.equal(value, 5);
+            t.end();
+        });
+    })
+);
+
+test('playerAttribute resolves the world property', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.playerAttribute({PROPERTY: 'world'});
+        const msg = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'nether', pos: [0, 64, 0]}});
+        return result.then(value => {
+            t.equal(value, 'nether');
+            t.end();
+        });
+    })
+);
+
+test('playerAttribute swallows a JSON-RPC error into empty string', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.playerAttribute({PROPERTY: 'y'});
+        const msg = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0',
+            id: msg.id,
+            error: {code: -32000, message: 'player offline', data: {reason: 'player_offline'}}});
+        return result.then(value => {
+            t.equal(value, '');
+            t.end();
+        });
+    })
+);
+
+test('playerAttribute throttles monitor-driven polls to one bridge request', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const monitorUtil = {thread: {updateMonitor: true}};
+        const first = blocks.playerAttribute({PROPERTY: 'x'}, monitorUtil);
+        const requestMsg = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0', id: requestMsg.id, result: {world: 'overworld', pos: [5, 6, 7]}});
+        return first.then(value => {
+            t.equal(value, 5);
+            const sentBefore = socket.sent.length;
+            const second = blocks.playerAttribute({PROPERTY: 'y'}, monitorUtil);
+            t.equal(socket.sent.length, sentBefore, 'cached result reused, no new bridge request sent');
+            return second.then(secondValue => {
+                t.equal(secondValue, 6, 'cached pos still answers a different property');
+                t.end();
+            });
+        });
+    })
+);
+
+test('playerAttribute does not throttle explicit (non-monitor) calls', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const first = blocks.playerAttribute({PROPERTY: 'world'});
+        const firstMsg = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0', id: firstMsg.id, result: {world: 'overworld', pos: [0, 0, 0]}});
+        return first.then(() => {
+            const second = blocks.playerAttribute({PROPERTY: 'world'});
+            const secondMsg = socket.lastSent();
+            t.not(secondMsg.id, firstMsg.id, 'a second explicit call sends its own request');
+            socket.fireMessage({jsonrpc: '2.0', id: secondMsg.id, result: {world: 'nether', pos: [0, 0, 0]}});
+            return second.then(value => {
+                t.equal(value, 'nether');
+                t.end();
+            });
+        });
+    })
+);
+
+test('setPlayerPos is an acknowledged request with an explicit world', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setPlayerPos({WORLD: 'nether', X: 10, Y: 20, Z: 30});
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'player.setPos');
+        t.same(msg.params, ['nether', 10, 20, 30]);
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'nether', pos: [10, 20, 30]}});
+        return result.then(() => t.end());
+    })
+);
+
+test('setPlayerXYZ fetches the current world before teleporting', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setPlayerXYZ({X: 10, Y: 20, Z: 30});
+        const getPosMsg = socket.lastSent();
+        t.equal(getPosMsg.method, 'player.getPos');
+        t.same(getPosMsg.params, []);
+        socket.fireMessage({jsonrpc: '2.0', id: getPosMsg.id, result: {world: 'nether', pos: [1, 2, 3]}});
+        return nextTurn().then(() => {
+            const setPosMsg = socket.lastSent();
+            t.equal(setPosMsg.method, 'player.setPos');
+            t.same(setPosMsg.params, ['nether', 10, 20, 30]);
+            socket.fireMessage({jsonrpc: '2.0', id: setPosMsg.id, result: {world: 'nether', pos: [10, 20, 30]}});
+            return result.then(() => t.end());
+        });
+    })
+);
+
 test('a closed socket rejects pending requests instead of hanging', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const pending = blocks._request('world.getBlock', [0, 0, 0]);
