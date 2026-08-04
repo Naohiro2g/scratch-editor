@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
 const Runtime = require('../../src/engine/runtime');
+const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
 
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
@@ -83,6 +85,47 @@ const observations = runtime => runtime.emitted
     .map(event => event.payload);
 
 const latestObservation = runtime => observations(runtime).slice(-1)[0];
+
+const catalogs = runtime => runtime.emitted
+    .filter(event => event.event === Runtime.MCREMOTE_CATALOG_UPDATE)
+    .map(event => event.payload);
+
+const latestCatalog = runtime => catalogs(runtime).slice(-1)[0];
+
+const actionableErrors = runtime => runtime.emitted
+    .filter(event => event.event === Runtime.MCREMOTE_ACTIONABLE_ERROR)
+    .map(event => event.payload);
+
+const waitFor = predicate => new Promise((resolve, reject) => {
+    let attempts = 100;
+    const check = () => {
+        if (predicate()) return resolve();
+        if (--attempts === 0) return reject(new Error('condition was not met'));
+        setImmediate(check);
+    };
+    check();
+});
+
+const catalogBody = {
+    block: {
+        'examplemod:ruby_block': {
+            states: {},
+            default_state: {}
+        },
+        'minecraft:oak_log': {
+            states: {axis: ['x', 'y', 'z']},
+            default_state: {axis: 'y'}
+        }
+    },
+    entity: {'minecraft:allay': {}},
+    particle: {'minecraft:ash': {}}
+};
+
+const catalogHash = crypto.createHash('sha256')
+    .update(canonicalStringify(catalogBody), 'utf8')
+    .digest('hex');
+
+const catalogResult = Object.assign({catalogHash}, catalogBody);
 
 const newConnectedBlocks = runtime => {
     FakeWebSocket.instances = [];
@@ -232,6 +275,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
 
     const helloSent = latestObservation(runtime);
     t.equal(helloSent.status, 'disconnected');
+    t.equal(helloSent.displayAlias, '', 'alias is not issued before authenticated hello succeeds');
     t.equal(helloSent.frameLog.length, 1);
     t.equal(helloSent.frameLog[0].streamId, 'default');
     t.equal(helloSent.frameLog[0].direction, 'send');
@@ -253,9 +297,12 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     return result.then(() => {
         const connected = latestObservation(runtime);
         t.equal(connected.status, 'connected');
+        t.equal(connected.sourceKind, 'scratch');
+        t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
             protocol: '21.0.0',
             mc_version: '1.21.11',
+            catalogHash: null,
             supported_mc_versions: ['1.21.11'],
             world_constants: {y_sea: 63},
             permissions: {build: true}
@@ -550,6 +597,46 @@ test('commands are not sent before hello completes', t => {
         t.equal(socket.lastSent().method, 'hello');
         t.end();
     });
+});
+
+test('disconnected commands emit connection guidance only once per disconnected period', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+
+    await blocks.postToChat({MSG: 'one'});
+    await blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone'});
+
+    t.equal(actionableErrors(runtime).length, 1);
+    t.equal(actionableErrors(runtime)[0].reason, 'not_connected');
+    t.equal(latestObservation(runtime).lastError.reason, 'not_connected');
+});
+
+test('successful reconnect resets disconnected command guidance', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    await blocks.postToChat({MSG: 'before connection'});
+
+    const connected = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            catalogHash: null
+        }
+    });
+    await connected;
+    socket.fireClose({code: 1006, reason: 'network_lost'});
+    await blocks.postToChat({MSG: 'after disconnect'});
+
+    t.equal(actionableErrors(runtime).length, 2);
+    t.equal(actionableErrors(runtime)[1].reason, 'not_connected');
 });
 
 test('connect block reuses an in-flight connection instead of opening a duplicate socket', t => {
@@ -963,6 +1050,7 @@ test('a closed socket emits a closed McRemote observation', t => {
         socket.fireClose({code: 1011, reason: 'sandbox_unreachable'});
         const closed = latestObservation(runtime);
         t.equal(closed.status, 'closed');
+        t.equal(closed.displayAlias, '');
         t.match(closed.lastError.message, /closed/);
         t.equal(closed.lastError.code, 1011);
         t.equal(closed.lastError.reason, 'sandbox_unreachable');
@@ -978,6 +1066,152 @@ test('replies for unknown ids are dropped', t =>
         t.end();
     })
 );
+
+test('hello uses a validated hash-matched catalog cache without a network request', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    blocks._catalogCache = {
+        get: hash => Promise.resolve({catalog: catalogResult, fetchedAt: 1234, hash}),
+        set: () => Promise.resolve(true)
+    };
+
+    const connected = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash,
+            world_constants: {y_sea: 63}
+        }
+    });
+
+    await connected;
+    await waitFor(() => latestCatalog(runtime).status === 'current');
+    t.equal(socket.sent.length, 1, 'catalog.get is skipped on a valid cache hit');
+    t.equal(latestCatalog(runtime).source, 'cache');
+    t.equal(latestCatalog(runtime).fetchedAt, 1234);
+    t.same(latestCatalog(runtime).catalog, catalogResult);
+});
+
+test('catalog cache miss fetches after hello without delaying connection', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const writes = [];
+    const blocks = new McRemote(runtime);
+    blocks._catalogCache = {
+        get: () => Promise.resolve(null),
+        set: (hash, record) => {
+            writes.push({hash, record});
+            return Promise.resolve(true);
+        }
+    };
+
+    const connected = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash,
+            world_constants: {y_sea: 63}
+        }
+    });
+
+    await connected;
+    t.equal(latestCatalog(runtime).status, 'not_acquired', 'connect resolves before catalog response');
+    await waitFor(() => socket.lastSent().method === 'catalog.get');
+    const request = socket.lastSent();
+    t.same(request.params, []);
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: catalogResult});
+
+    await waitFor(() => latestCatalog(runtime).status === 'current');
+    t.equal(latestCatalog(runtime).source, 'network');
+    t.equal(writes.length, 1);
+    t.equal(writes[0].hash, catalogHash);
+    t.same(writes[0].record.catalog, catalogResult);
+});
+
+test('invalid catalog is unavailable but leaves the connection usable', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    blocks._catalogCache = {
+        get: () => Promise.resolve(null),
+        set: () => Promise.resolve(true)
+    };
+
+    const connected = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash,
+            world_constants: {y_sea: 63}
+        }
+    });
+    await connected;
+    await waitFor(() => socket.lastSent().method === 'catalog.get');
+    const request = socket.lastSent();
+    const changedCatalog = Object.assign({}, catalogResult, {
+        particle: {'minecraft:campfire_cosy_smoke': {}}
+    });
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: changedCatalog});
+
+    await waitFor(() => latestCatalog(runtime).status === 'unavailable');
+    t.equal(latestObservation(runtime).status, 'connected');
+    t.equal(blocks._socket, socket);
+});
+
+test('disconnect hides catalog data and ignores an in-flight acquisition', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    blocks._catalogCache = {
+        get: () => Promise.resolve(null),
+        set: () => Promise.resolve(true)
+    };
+
+    const connected = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '21.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash,
+            world_constants: {y_sea: 63}
+        }
+    });
+    await connected;
+    await waitFor(() => socket.lastSent().method === 'catalog.get');
+    socket.fireClose({code: 1006, reason: 'network_lost'});
+
+    await nextTurn();
+    t.equal(latestCatalog(runtime).status, 'not_acquired');
+    t.equal(latestCatalog(runtime).catalog, null);
+});
 
 const RealRuntime = require('../../src/engine/runtime');
 
@@ -1037,6 +1271,17 @@ test('a disabled deployment is reported as disabled rather than as not connected
             t.end();
         }
     );
+});
+
+test('a disabled deployment emits showcase guidance instead of a connect prompt', async t => {
+    const runtime = disabledRuntime();
+    const blocks = new McRemote(runtime);
+
+    await blocks.postToChat({MSG: 'hi'});
+    await blocks.postToChat({MSG: 'again'});
+
+    t.equal(actionableErrors(runtime).length, 1);
+    t.equal(actionableErrors(runtime)[0].reason, 'connection_disabled');
 });
 
 test('a disabled deployment still shows every block', t => {

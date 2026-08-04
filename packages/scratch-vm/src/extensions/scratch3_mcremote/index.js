@@ -4,6 +4,12 @@ const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
+const {
+    CatalogSource,
+    CatalogStatus,
+    IndexedDBCatalogCache,
+    validateCatalogResult
+} = require('./catalog');
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -45,6 +51,9 @@ const PLAYER_POS_MONITOR_THROTTLE_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
 const REDACTED = '[redacted]';
+const BLOCK_PICKER_ICON = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E' +
+    '%3Cpath fill="%23fff" d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h3v3h-3v-3z' +
+    'm5 0h2v7h-2v-7zm-5 5h3v2h-3v-2z"/%3E%3C/svg%3E';
 
 const ConnectionStatus = {
     DISCONNECTED: 'disconnected',
@@ -61,6 +70,26 @@ const AUTH_REASONS = [
     'token_not_found',
     'token_invalid'
 ];
+
+const DISPLAY_ALIAS_WORDS = [
+    'MOSS', 'ORBIT', 'EMBER', 'RIVER', 'MAPLE', 'COMET', 'CORAL', 'NOVA',
+    'PINE', 'CLOUD', 'FERN', 'LUNAR', 'CEDAR', 'SOLAR', 'WAVE', 'FLINT'
+];
+
+const randomUint32 = () => {
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        return crypto.getRandomValues(new Uint32Array(1))[0];
+    }
+    return Math.floor(Math.random() * 0x100000000);
+};
+
+const createDisplayAlias = () => {
+    const first = randomUint32();
+    const second = randomUint32();
+    return `${DISPLAY_ALIAS_WORDS[first % DISPLAY_ALIAS_WORDS.length]}-` +
+        `${DISPLAY_ALIAS_WORDS[second % DISPLAY_ALIAS_WORDS.length]}-${String((second >>> 8) % 1000000)
+            .padStart(6, '0')}`;
+};
 
 const BuildWorld = {
     OVERWORLD: 'overworld',
@@ -178,11 +207,48 @@ class Scratch3McRemoteBlocks {
         this._streamId = DEFAULT_STREAM_ID;
 
         /**
+         * Non-secret label used only to match this observation target across
+         * screens during one connection epoch.
+         * @type {string}
+         * @private
+         */
+        this._displayAlias = '';
+
+        /**
          * Last successful hello response summary.
          * @type {?object}
          * @private
          */
         this._helloInfo = null;
+
+        /**
+         * Catalog state exposed to the Scratch picker. Catalog data exists only
+         * while a hello-confirmed connection advertises the matching hash.
+         * @type {object}
+         * @private
+         */
+        this._catalogState = {
+            status: CatalogStatus.NOT_ACQUIRED,
+            mcVersion: '',
+            catalogHash: null,
+            source: null,
+            fetchedAt: null,
+            catalog: null
+        };
+
+        /**
+         * IndexedDB cache and connection generation used by catalog acquisition.
+         * @private
+         */
+        this._catalogCache = new IndexedDBCatalogCache();
+        this._catalogGeneration = 0;
+
+        /**
+         * Suppress repeated connection guidance during one disconnected period.
+         * @type {boolean}
+         * @private
+         */
+        this._disconnectedCommandNoticeShown = false;
 
         /**
          * Last connection/auth error summary.
@@ -339,14 +405,15 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlock',
-                        default: 'set block at x:[X] y:[Y] z:[Z] to [BLOCK]',
+                        default: 'set block at x:[X] y:[Y] z:[Z] to [BLOCK] [PICKER]',
                         description: 'Set a single block'
                     }),
                     arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'}
+                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
                 {
@@ -354,7 +421,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlocks',
-                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK]',
+                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK] [PICKER]',
                         description: 'Fill a cuboid of blocks'
                     }),
                     arguments: {
@@ -364,7 +431,8 @@ class Scratch3McRemoteBlocks {
                         X2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z2: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'}
+                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
                 {
@@ -574,6 +642,7 @@ class Scratch3McRemoteBlocks {
     _resetObservationForConnection () {
         this._connectionStatus = ConnectionStatus.DISCONNECTED;
         this._streamId = DEFAULT_STREAM_ID;
+        this._displayAlias = '';
         this._helloInfo = null;
         this._lastError = null;
         this._frameLog = [];
@@ -582,7 +651,129 @@ class Scratch3McRemoteBlocks {
         this._pairCode = '';
         this._pairCommand = '';
         this._playerPosCache = null;
+        this._resetCatalog();
         this._emitObservation();
+    }
+
+    /**
+     * Clear picker data at every connection boundary. Cached catalogs remain in
+     * IndexedDB but are not usable until a later hello confirms their hash.
+     * @private
+     */
+    _resetCatalog () {
+        this._catalogGeneration++;
+        this._catalogState = {
+            status: CatalogStatus.NOT_ACQUIRED,
+            mcVersion: '',
+            catalogHash: null,
+            source: null,
+            fetchedAt: null,
+            catalog: null
+        };
+        this._emitCatalog();
+    }
+
+    /**
+     * @returns {object} current catalog state for the picker UI.
+     */
+    getCatalogState () {
+        return Object.assign({}, this._catalogState);
+    }
+
+    /**
+     * Emit a full catalog snapshot. Catalog data is runtime-only and is not
+     * serialized into a Scratch project.
+     * @private
+     */
+    _emitCatalog () {
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_CATALOG_UPDATE, this.getCatalogState());
+        }
+    }
+
+    /**
+     * @param {number} generation connection generation captured after hello.
+     * @param {string} catalogHash hello-advertised hash.
+     * @returns {boolean} whether an asynchronous catalog result is still current.
+     * @private
+     */
+    _isCurrentCatalogRequest (generation, catalogHash) {
+        return generation === this._catalogGeneration &&
+            this._connectionStatus === ConnectionStatus.CONNECTED &&
+            this._helloInfo && this._helloInfo.catalogHash === catalogHash;
+    }
+
+    /**
+     * Acquire the hello-advertised catalog from a validated cache entry or the
+     * active server. Failure is non-fatal to the McRemote connection.
+     * @param {object} helloResult successful hello result.
+     * @returns {Promise<void>} resolves after best-effort acquisition.
+     * @private
+     */
+    _acquireCatalog (helloResult) {
+        const advertisedHash = helloResult && typeof helloResult.catalogHash === 'string' ?
+            helloResult.catalogHash.toLowerCase() : '';
+        if (!advertisedHash) return Promise.resolve();
+
+        const generation = this._catalogGeneration;
+        const mcVersion = helloResult.mc_version || '';
+        const publish = (catalog, source, fetchedAt) => {
+            if (!this._isCurrentCatalogRequest(generation, advertisedHash)) return false;
+            this._catalogState = {
+                status: CatalogStatus.CURRENT,
+                mcVersion,
+                catalogHash: advertisedHash,
+                source,
+                fetchedAt: fetchedAt || null,
+                catalog
+            };
+            this._emitCatalog();
+            return true;
+        };
+        const fetchFromServer = () => this._request('catalog.get', [])
+            .then(result => validateCatalogResult(result, advertisedHash))
+            .then(catalog => {
+                const fetchedAt = Date.now();
+                if (!publish(catalog, CatalogSource.NETWORK, fetchedAt)) return;
+                this._catalogCache.set(advertisedHash, {catalog, fetchedAt}).catch(error => {
+                    log.warn(`McRemote: catalog cache write failed: ${error.message}`);
+                });
+            });
+
+        return this._catalogCache.get(advertisedHash)
+            .catch(error => {
+                log.warn(`McRemote: catalog cache read failed: ${error.message}`);
+                return null;
+            })
+            .then(record => {
+                if (!record || !record.catalog) return null;
+                return validateCatalogResult(record.catalog, advertisedHash)
+                    .then(catalog => ({catalog, fetchedAt: record.fetchedAt || null}))
+                    .catch(error => {
+                        log.warn(`McRemote: cached catalog rejected: ${error.reason || error.message}`);
+                        return null;
+                    });
+            })
+            .then(cached => {
+                if (cached) {
+                    publish(cached.catalog, CatalogSource.CACHE, cached.fetchedAt);
+                    return;
+                }
+                return fetchFromServer();
+            })
+            .catch(error => {
+                if (!this._isCurrentCatalogRequest(generation, advertisedHash)) return;
+                this._catalogState = {
+                    status: CatalogStatus.UNAVAILABLE,
+                    mcVersion,
+                    catalogHash: advertisedHash,
+                    source: null,
+                    fetchedAt: null,
+                    catalog: null
+                };
+                this._emitCatalog();
+                log.warn(`McRemote: catalog acquisition failed: ${error.reason || error.message}`);
+            });
     }
 
     /**
@@ -593,6 +784,8 @@ class Scratch3McRemoteBlocks {
         return {
             status: this._connectionStatus,
             streamId: this._streamId,
+            sourceKind: 'scratch',
+            displayAlias: this._displayAlias,
             connectionTarget: Object.assign({}, this._currentConnectionTarget()),
             pairCode: this._pairCode,
             pairCommand: this._pairCommand,
@@ -632,7 +825,7 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
-     * Store the hello fields surfaced by WireScope v0.
+     * Store observer-safe hello fields for internal connection diagnostics.
      * @param {object} result - hello response payload.
      * @private
      */
@@ -645,6 +838,7 @@ class Scratch3McRemoteBlocks {
         this._helloInfo = result && typeof result === 'object' ? {
             protocol: result.protocol || '',
             mc_version: result.mc_version || '',
+            catalogHash: typeof result.catalogHash === 'string' ? result.catalogHash.toLowerCase() : null,
             supported_mc_versions: Array.isArray(result.supported_mc_versions) ?
                 result.supported_mc_versions.slice() :
                 [],
@@ -739,6 +933,23 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Notify the GUI once when a command is attempted without a usable
+     * connection. A successful hello starts a fresh connection epoch.
+     * @param {Error} error rejected command error.
+     * @private
+     */
+    _notifyDisconnectedCommand (error) {
+        if (this._disconnectedCommandNoticeShown) return;
+        if (!error || (error.reason !== 'not_connected' && error.reason !== 'connection_disabled')) return;
+        this._disconnectedCommandNoticeShown = true;
+        this._lastError = this._errorInfo(error);
+        this._emitObservation();
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+        }
+    }
+
+    /**
      * Open the wss connection to the bridge and perform the hello handshake.
      * @param {string} [sandbox] - optional named sandbox to target.
      * @returns {Promise} resolves once the handshake completes.
@@ -776,7 +987,9 @@ class Scratch3McRemoteBlocks {
                 error.code = event && event.code;
                 error.reason = event && event.reason;
                 this._socket = null;
+                this._displayAlias = '';
                 this._setConnectionStatus(ConnectionStatus.CLOSED, error);
+                this._resetCatalog();
                 this._rejectPending(error);
                 reject(error);
             });
@@ -809,7 +1022,10 @@ class Scratch3McRemoteBlocks {
         return this._request('hello', params).then(result => {
             this._assertCompatibleProtocol(result && result.protocol);
             this._recordHelloInfo(result);
+            if (!this._displayAlias) this._displayAlias = createDisplayAlias();
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
+            this._disconnectedCommandNoticeShown = false;
+            this._acquireCatalog(result);
             return result;
         });
     }
@@ -1081,13 +1297,21 @@ class Scratch3McRemoteBlocks {
      */
     _request (method, params) {
         if (!this._runtimeConfig().connectionEnabled) {
-            return Promise.reject(this._connectionDisabledError());
+            const error = this._connectionDisabledError();
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
-            return Promise.reject(new Error('not connected to bridge'));
+            const error = new Error('not connected to bridge');
+            error.reason = 'not_connected';
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         if (!this._isSessionSetupMethod(method) && this._connectionStatus !== ConnectionStatus.CONNECTED) {
-            return Promise.reject(new Error('not connected to McRemote server'));
+            const error = new Error('not connected to McRemote server');
+            error.reason = 'not_connected';
+            this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         const id = this._nextRequestId++;
         return new Promise((resolve, reject) => {

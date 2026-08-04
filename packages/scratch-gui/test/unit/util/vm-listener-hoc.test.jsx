@@ -96,6 +96,48 @@ describe('VMListenerHOC', () => {
         expect(actions[0].snapshot).toEqual(snapshot);
     });
 
+    test('McRemote catalog event from vm triggers catalog update action', () => {
+        const Component = () => (<div />);
+        const WrappedComponent = vmListenerHOC(Component);
+        render(
+            <WrappedComponent
+                store={store}
+                vm={vm}
+            />
+        );
+        const snapshot = {
+            status: 'current',
+            catalogHash: 'abc',
+            source: 'cache',
+            catalog: {block: {}}
+        };
+        vm.emit('MCREMOTE_CATALOG_UPDATE', snapshot);
+        const actions = store.getActions();
+        expect(actions[0].type).toEqual('scratch-gui/mcremote-catalog/UPDATE');
+        expect(actions[0].snapshot).toEqual(snapshot);
+    });
+
+    test('McRemote actionable error selects connection or showcase guidance', () => {
+        jest.useFakeTimers();
+        const Component = () => (<div />);
+        const WrappedComponent = vmListenerHOC(Component);
+        render(
+            <WrappedComponent
+                store={store}
+                vm={vm}
+            />
+        );
+
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'not_connected'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'connection_disabled'});
+
+        const actions = store.getActions();
+        expect(actions[0].alertId).toEqual('mcremoteNotConnected');
+        expect(actions[1].alertId).toEqual('mcremoteConnectionDisabled');
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+    });
+
     test('targetsUpdate does not dispatch if the sound recorder is visible', () => {
         const Component = () => (<div />);
         const WrappedComponent = vmListenerHOC(Component);

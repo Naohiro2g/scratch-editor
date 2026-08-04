@@ -10,6 +10,7 @@ import dynamicAssetsReducer, {dynamicAssetsInitialState} from './dynamic-assets'
 import editorTabReducer, {editorTabInitialState} from './editor-tab';
 import hoveredTargetReducer, {hoveredTargetInitialState} from './hovered-target';
 import menuReducer, {menuInitialState} from './menus';
+import mcremoteCatalogReducer, {mcremoteCatalogInitialState} from './mcremote-catalog';
 import mcremoteConnectionTargetReducer, {
     mcremoteConnectionTargetInitialState
 } from './mcremote-connection-target';
@@ -56,6 +57,7 @@ const buildInitialState = (config: GUIConfig) => ({
     hoveredTarget: hoveredTargetInitialState,
     stageSize: stageSizeInitialState,
     menus: menuInitialState,
+    mcremoteCatalog: mcremoteCatalogInitialState,
     mcremoteConnectionTarget: mcremoteConnectionTargetInitialState,
     mcremoteObservation: mcremoteObservationInitialState,
     micIndicator: micIndicatorInitialState,
@@ -168,6 +170,7 @@ const guiReducer = combineReducers({
     hoveredTarget: hoveredTargetReducer,
     stageSize: stageSizeReducer,
     menus: menuReducer,
+    mcremoteCatalog: mcremoteCatalogReducer,
     mcremoteConnectionTarget: mcremoteConnectionTargetReducer,
     mcremoteObservation: mcremoteObservationReducer,
     micIndicator: micIndicatorReducer,

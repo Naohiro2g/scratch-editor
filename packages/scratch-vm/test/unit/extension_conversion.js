@@ -175,6 +175,7 @@ const testInlineImage = function (t, inlineImage) {
         // %1 in message0: the block icon
         {
             type: 'field_image',
+            name: 'IMAGE',
             src: 'invalid image URI',
             width: 24,
             height: 24,

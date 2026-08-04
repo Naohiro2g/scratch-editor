@@ -13,6 +13,8 @@ test('updateMcRemoteObservation stores a full observer snapshot', () => {
     const snapshot = {
         status: 'connected',
         streamId: 'default',
+        sourceKind: 'scratch',
+        displayAlias: 'MOSS-ORBIT-27',
         connectionTarget: {
             sandboxRoute: 'sb-dev.mc-remote.com',
             label: 'Development Sandbox'

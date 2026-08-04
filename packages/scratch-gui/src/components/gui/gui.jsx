@@ -634,6 +634,8 @@ GUIComponent.propTypes = {
     mcremoteObservation: PropTypes.shape({
         status: PropTypes.string,
         streamId: PropTypes.string,
+        sourceKind: PropTypes.string,
+        displayAlias: PropTypes.string,
         connectionTarget: PropTypes.shape({
             sandboxRoute: PropTypes.string,
             label: PropTypes.string
