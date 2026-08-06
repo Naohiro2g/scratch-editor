@@ -11,6 +11,8 @@
 
 搬送時 knowledge 参照 commit: `371a7823ac057945571e0f2dff625f29348bd97b`
 
+着地済み knowledge commit: `ede3dcc0eec1e052ff48662cc7905105f684e7da`
+
 ## 1. 確定した構成
 
 独立 WireScope は、共通の `@mc-remote/live` web app と、Scratch／Python それぞれの
