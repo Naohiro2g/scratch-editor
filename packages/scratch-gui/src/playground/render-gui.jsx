@@ -6,6 +6,8 @@ import AppStateHOC from '../lib/app-state-hoc.jsx';
 import GUI from '../containers/gui.jsx';
 import HashParserHOC from '../lib/hash-parser-hoc.jsx';
 import log from '../lib/log.js';
+import {detectMcRemoteConnectionTargetRoute} from '../lib/mcremote-connection-target-persistence.js';
+import {getMcRemoteConnectionTargetByRoute} from '../lib/mcremote-connection-targets.js';
 import {getMcRemoteRuntimeConfig} from '../lib/mcremote-runtime-config.js';
 import {PLATFORM} from '../lib/platform.js';
 
@@ -18,19 +20,26 @@ const onClickLogo = () => {
 const extensionMatches = window.location.href.match(/[?&]extension=([^&]+)/);
 const autoLoadExtensionId = extensionMatches ? decodeURIComponent(extensionMatches[1]) : null;
 
-const handleVmInit = vm => {
+function handleVmInit (vm) {
     // Showcase builds ship the blocks but no connectivity. This is fixed at build time and cannot
     // be undone by the runtime config below, so a mistake in one does not enable the connection.
     if (process.env.MCREMOTE_SHOWCASE) {
         vm.disableMcRemoteConnection();
     }
     vm.setMcRemoteRuntimeConfig(getMcRemoteRuntimeConfig());
+    const connectionTarget = getMcRemoteConnectionTargetByRoute(detectMcRemoteConnectionTargetRoute());
+    vm.setMcRemoteConnectionTarget({
+        sandboxRoute: connectionTarget.sandboxRoute,
+        label: connectionTarget.label
+    });
     if (autoLoadExtensionId) {
         vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(e => {
             log(`Failed to auto-load extension "${autoLoadExtensionId}": ${e}`);
         });
     }
-};
+}
+
+export {handleVmInit};
 
 const handleTelemetryModalCancel = () => {
     log('User canceled telemetry modal');
@@ -49,7 +58,7 @@ const handleTelemetryModalOptOut = () => {
  * that instantiates the VM causes unsupported browsers to crash
  * {object} appTarget - the DOM element to render to
  */
-export default appTarget => {
+export default function renderGUI (appTarget) {
     GUI.setAppElement(appTarget);
 
     // note that redux's 'compose' function is just being used as a general utility to make
@@ -107,4 +116,4 @@ export default appTarget => {
                 onClickLogo={onClickLogo}
             />
     );
-};
+}
