@@ -38,11 +38,11 @@ const NoticeOverlay = ({colorMode}) => {
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
 
     const toggleOpen = useCallback(() => {
-        setIsOpen(open => !open);
+        setIsOpen((...[open]) => !open);
     }, []);
 
-    const handleBodyKeyDown = useCallback(event => {
-        if (event.key !== 'Escape') return;
+    const handleBodyKeyDown = useCallback(({key}) => {
+        if (key !== 'Escape') return;
         setIsOpen(false);
         if (triggerRef.current) triggerRef.current.focus();
     }, []);
@@ -51,8 +51,8 @@ const NoticeOverlay = ({colorMode}) => {
         if (!isOpen) return;
         // Matches containers/menu.jsx: the Blockly workspace suppresses compat events
         // like `click`/`mouseup`, so outside-click detection listens for `pointerup`.
-        const handlePointerUp = event => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        const handlePointerUp = ({target}) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(target)) {
                 setIsOpen(false);
             }
         };

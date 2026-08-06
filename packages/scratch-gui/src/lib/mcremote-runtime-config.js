@@ -5,6 +5,7 @@ const DEFAULT_CONNECTION_TARGETS = Object.freeze([
 ]);
 
 const EMPTY_NOTICES = Object.freeze([]);
+const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     bridgeUrl: 'wss://bridge.mc-remote.com',
@@ -23,7 +24,15 @@ const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
 
 let currentRuntimeConfig = DEFAULT_RUNTIME_CONFIG;
 
-const normalizeConnectionTargets = value => {
+const isAllowedBridgeUrl = (bridgeUrl, pageUrl) => bridgeUrl.protocol === 'wss:' || (
+    bridgeUrl.protocol === 'ws:' &&
+    pageUrl.protocol === 'http:' &&
+    LOOPBACK_HOSTNAMES.has(pageUrl.hostname) &&
+    LOOPBACK_HOSTNAMES.has(bridgeUrl.hostname)
+);
+
+// Rest destructuring preserves single-argument semantics under both active arrow-parens rules.
+const normalizeConnectionTargets = (...[value]) => {
     if (!Array.isArray(value) || value.length === 0) {
         throw new Error('connection_targets must be a non-empty array');
     }
@@ -71,7 +80,7 @@ const normalizeNoticeLink = (link, index) => {
     return Object.freeze({href: url.toString(), label});
 };
 
-const normalizeNotices = value => {
+const normalizeNotices = (...[value]) => {
     if (typeof value === 'undefined') return EMPTY_NOTICES;
     if (!Array.isArray(value)) {
         throw new Error('notices must be an array');
@@ -89,20 +98,24 @@ const normalizeNotices = value => {
     }));
 };
 
-const normalizeRuntimeConfig = value => {
+const normalizeRuntimeConfig = (...[value]) => {
     if (!value || typeof value !== 'object') {
         throw new Error('configuration must be an object');
     }
     const bridgeUrl = new URL(value.bridge_url);
-    if (bridgeUrl.protocol !== 'wss:' || bridgeUrl.username || bridgeUrl.password || bridgeUrl.hash) {
-        throw new Error('bridge_url must be a WSS URL without credentials or a fragment');
+    const pageUrl = new URL(window.location.href);
+    if (!isAllowedBridgeUrl(bridgeUrl, pageUrl) || bridgeUrl.username || bridgeUrl.password || bridgeUrl.hash) {
+        throw new Error(
+            'bridge_url must be WSS, or WS between an HTTP loopback page and loopback bridge, ' +
+            'without credentials or a fragment'
+        );
     }
     if (typeof value.default_sandbox !== 'string' || !value.default_sandbox.trim()) {
         throw new Error('default_sandbox must be a non-empty string');
     }
     const defaultSandbox = value.default_sandbox.trim();
     const connectionTargets = normalizeConnectionTargets(value.connection_targets);
-    if (!connectionTargets.some(target => target.sandboxRoute === defaultSandbox)) {
+    if (!connectionTargets.some(({sandboxRoute}) => sandboxRoute === defaultSandbox)) {
         throw new Error('default_sandbox must be listed in connection_targets');
     }
     if (typeof value.connection_enabled !== 'boolean') {
@@ -128,16 +141,16 @@ const loadMcRemoteRuntimeConfig = () => {
     const url = runtimeConfigUrl();
     return Promise.resolve()
         .then(() => fetch(url, {cache: 'no-store', credentials: 'same-origin'}))
-        .then(response => {
+        .then((...[response]) => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
-        .then(value => {
+        .then((...[value]) => {
             currentRuntimeConfig = normalizeRuntimeConfig(value);
             return currentRuntimeConfig;
         })
-        .catch(error => {
-            log.warn(`loadMcRemoteRuntimeConfig: ${url}: ${error.message}`);
+        .catch(({message}) => {
+            log.warn(`loadMcRemoteRuntimeConfig: ${url}: ${message}`);
             currentRuntimeConfig = UNAVAILABLE_RUNTIME_CONFIG;
             return currentRuntimeConfig;
         });
@@ -147,5 +160,6 @@ const getMcRemoteRuntimeConfig = () => currentRuntimeConfig;
 
 export {
     getMcRemoteRuntimeConfig,
+    isAllowedBridgeUrl,
     loadMcRemoteRuntimeConfig
 };

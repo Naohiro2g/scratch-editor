@@ -5,7 +5,7 @@ const DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE = getMcRemoteRuntimeConfig().defa
 const MCREMOTE_CONNECTION_TARGETS = getMcRemoteRuntimeConfig().connectionTargets;
 
 const DEFAULT_MCREMOTE_CONNECTION_TARGET = MCREMOTE_CONNECTION_TARGETS.find(
-    target => target.sandboxRoute === DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE
+    ({sandboxRoute}) => sandboxRoute === DEFAULT_MCREMOTE_CONNECTION_TARGET_ROUTE
 );
 
 const normalizeMcRemoteConnectionTargetRoute = function (route) {
@@ -14,8 +14,7 @@ const normalizeMcRemoteConnectionTargetRoute = function (route) {
 
 const getMcRemoteConnectionTargetByRoute = function (route) {
     const sandboxRoute = normalizeMcRemoteConnectionTargetRoute(route);
-    // eslint-disable-next-line arrow-parens
-    return MCREMOTE_CONNECTION_TARGETS.find(target => target.sandboxRoute === sandboxRoute) ||
+    return MCREMOTE_CONNECTION_TARGETS.find(({sandboxRoute: targetRoute}) => targetRoute === sandboxRoute) ||
         DEFAULT_MCREMOTE_CONNECTION_TARGET;
 };
 
