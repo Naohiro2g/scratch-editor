@@ -20,7 +20,11 @@ const onClickLogo = () => {
 const extensionMatches = window.location.href.match(/[?&]extension=([^&]+)/);
 const autoLoadExtensionId = extensionMatches ? decodeURIComponent(extensionMatches[1]) : null;
 
-function handleVmInit (vm) {
+const logExtensionLoadFailure = function (error) {
+    log(`Failed to auto-load extension "${autoLoadExtensionId}": ${error}`);
+};
+
+const handleVmInit = function (vm) {
     // Showcase builds ship the blocks but no connectivity. This is fixed at build time and cannot
     // be undone by the runtime config below, so a mistake in one does not enable the connection.
     if (process.env.MCREMOTE_SHOWCASE) {
@@ -33,11 +37,9 @@ function handleVmInit (vm) {
         label: connectionTarget.label
     });
     if (autoLoadExtensionId) {
-        vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(e => {
-            log(`Failed to auto-load extension "${autoLoadExtensionId}": ${e}`);
-        });
+        vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(logExtensionLoadFailure);
     }
-}
+};
 
 export {handleVmInit};
 
@@ -58,7 +60,7 @@ const handleTelemetryModalOptOut = () => {
  * that instantiates the VM causes unsupported browsers to crash
  * {object} appTarget - the DOM element to render to
  */
-export default function renderGUI (appTarget) {
+const renderGUI = function (appTarget) {
     GUI.setAppElement(appTarget);
 
     // note that redux's 'compose' function is just being used as a general utility to make
@@ -116,4 +118,6 @@ export default function renderGUI (appTarget) {
                 onClickLogo={onClickLogo}
             />
     );
-}
+};
+
+export default renderGUI;
