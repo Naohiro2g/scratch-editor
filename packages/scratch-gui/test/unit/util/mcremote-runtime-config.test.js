@@ -41,6 +41,46 @@ describe('McRemote runtime config', () => {
         );
     });
 
+    test('allows a plain WebSocket bridge only for HTTP loopback development', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                bridge_url: 'ws://127.0.0.1:8080',
+                default_sandbox: '127.0.0.1',
+                connection_targets: [
+                    {id: 'local', label: 'Localhost', sandbox: '127.0.0.1'}
+                ],
+                connection_enabled: true,
+                release_identity: 'local-development'
+            })
+        });
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            bridgeUrl: 'ws://127.0.0.1:8080/',
+            defaultSandbox: '127.0.0.1',
+            connectionEnabled: true,
+            releaseIdentity: 'local-development'
+        });
+    });
+
+    test('rejects a plain WebSocket bridge outside loopback development', () => {
+        const {isAllowedBridgeUrl} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        expect(isAllowedBridgeUrl(
+            new URL('ws://127.0.0.1:8080'),
+            new URL('https://localhost:8601')
+        )).toBe(false);
+        expect(isAllowedBridgeUrl(
+            new URL('ws://bridge.example.test'),
+            new URL('http://localhost:8601')
+        )).toBe(false);
+        expect(isAllowedBridgeUrl(
+            new URL('ws://127.0.0.1:8080'),
+            new URL('http://scratch.example.test')
+        )).toBe(false);
+    });
+
     test('fails closed when the deployment JSON cannot be loaded', async () => {
         global.fetch.mockResolvedValue({ok: false, status: 404});
         const log = require('../../../src/lib/log.js').default;
