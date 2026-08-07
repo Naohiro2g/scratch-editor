@@ -155,6 +155,32 @@
     padding: 0.65rem;
 }
 
+.launch {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.2rem;
+    padding: 0.5rem 0.6rem;
+    border: 1px solid $motion-primary;
+    border-radius: 6px;
+    background: $motion-primary;
+    color: $ui-white;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.launch:hover {
+    background: $motion-tertiary;
+}
+
+.launch:focus-visible {
+    outline: 0.125rem solid $ui-white;
+    outline-offset: -0.25rem;
+}
+
 .detail-row,
 .detail-column {
     min-width: 0;

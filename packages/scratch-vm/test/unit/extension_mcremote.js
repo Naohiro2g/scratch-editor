@@ -336,7 +336,16 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
         }});
 
     return result.then(() => {
-        t.same(latestObservation(runtime).hello.world_constants, {y_sea: 63});
+        t.same(latestObservation(runtime).hello, {
+            protocol: '21.0.0',
+            mc_version: '26.1.2',
+            catalogHash: null,
+            supported_mc_versions: ['1.21.11'],
+            world_constants: {y_sea: 63},
+            permissions: null,
+            world: 'world',
+            origin: [200, 0, 200]
+        });
         t.end();
     });
 });

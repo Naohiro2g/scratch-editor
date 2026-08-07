@@ -12,6 +12,7 @@ const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     defaultSandbox: 'sb.mc-remote.com',
     connectionTargets: DEFAULT_CONNECTION_TARGETS,
     connectionEnabled: true,
+    wireScopeUrl: null,
     releaseIdentity: 'embedded-default',
     notices: EMPTY_NOTICES
 });
@@ -30,6 +31,15 @@ const isAllowedBridgeUrl = (bridgeUrl, pageUrl) => bridgeUrl.protocol === 'wss:'
     LOOPBACK_HOSTNAMES.has(pageUrl.hostname) &&
     LOOPBACK_HOSTNAMES.has(bridgeUrl.hostname)
 );
+
+const isAllowedWireScopeUrl = (wireScopeUrl, pageUrl) => wireScopeUrl.origin !== pageUrl.origin && (
+    wireScopeUrl.protocol === 'https:' || (
+        wireScopeUrl.protocol === 'http:' &&
+        pageUrl.protocol === 'http:' &&
+        LOOPBACK_HOSTNAMES.has(pageUrl.hostname) &&
+        LOOPBACK_HOSTNAMES.has(wireScopeUrl.hostname)
+    )
+) && !wireScopeUrl.username && !wireScopeUrl.password && !wireScopeUrl.search && !wireScopeUrl.hash;
 
 // Rest destructuring preserves single-argument semantics under both active arrow-parens rules.
 const normalizeConnectionTargets = (...[value]) => {
@@ -124,12 +134,24 @@ const normalizeRuntimeConfig = (...[value]) => {
     if (typeof value.release_identity !== 'string' || !value.release_identity.trim()) {
         throw new Error('release_identity must be a non-empty string');
     }
+    let wireScopeUrl = null;
+    if (typeof value.wirescope_url !== 'undefined' && value.wirescope_url !== null) {
+        const candidate = new URL(value.wirescope_url);
+        if (!isAllowedWireScopeUrl(candidate, pageUrl)) {
+            throw new Error(
+                'wirescope_url must be a distinct HTTPS origin, or a distinct HTTP loopback origin, ' +
+                'without credentials, query, or fragment'
+            );
+        }
+        wireScopeUrl = candidate.toString();
+    }
     const notices = normalizeNotices(value.notices);
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
         connectionTargets,
         connectionEnabled: value.connection_enabled,
+        wireScopeUrl,
         releaseIdentity: value.release_identity.trim(),
         notices
     });
@@ -161,5 +183,6 @@ const getMcRemoteRuntimeConfig = () => currentRuntimeConfig;
 export {
     getMcRemoteRuntimeConfig,
     isAllowedBridgeUrl,
+    isAllowedWireScopeUrl,
     loadMcRemoteRuntimeConfig
 };

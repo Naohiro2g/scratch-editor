@@ -24,7 +24,8 @@
     "packages/scratch-gui",
     "packages/scratch-media-lib-scripts",
     "mc-remote/protocol",
-    "mc-remote/bridge"
+    "mc-remote/bridge",
+    "mc-remote/live"
   ],
   "scripts": {
     "build": "cross-env NODE_ENV=production npm run --workspaces build",

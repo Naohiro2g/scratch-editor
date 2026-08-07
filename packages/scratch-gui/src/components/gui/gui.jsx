@@ -34,6 +34,7 @@ import TelemetryModal from '../telemetry-modal/telemetry-modal.jsx';
 import WireScopePanel from '../wire-scope-panel/wire-scope-panel.jsx';
 
 import layout, {STAGE_SIZE_MODES} from '../../lib/layout-constants';
+import {getMcRemoteRuntimeConfig} from '../../lib/mcremote-runtime-config';
 import {resolveStageSize} from '../../lib/screen-utils';
 import {colorModeMap} from '../../lib/settings/color-mode/index.js';
 import {DEFAULT_THEME, themeMap} from '../../lib/settings/theme/index.js';
@@ -494,6 +495,7 @@ const GUIComponent = props => {
                                             connectionTarget={mcremoteConnectionTarget}
                                             snapshot={mcremoteObservation}
                                             colorMode={colorMode}
+                                            wireScopeUrl={getMcRemoteRuntimeConfig().wireScopeUrl}
                                         />
                                     </Box>
                                     <ExtensionsButton

@@ -1,0 +1,203 @@
+import {
+    createWireScopeSource,
+    toWireScopeSnapshot
+} from '../../../src/lib/mcremote-wirescope-source';
+
+const connectedObservation = () => ({
+    status: 'connected',
+    streamId: 'default',
+    sourceKind: 'scratch',
+    displayAlias: 'MOSS-ORBIT-000027',
+    pairCode: '123-456',
+    pairCommand: '/mcremote pair 123-456',
+    hello: {
+        protocol: '21.0.0',
+        mc_version: '1.21.11',
+        supported_mc_versions: ['1.21.11'],
+        catalogHash: null,
+        world_constants: {y_sea: 62, future_secret: 'no'},
+        world: 'overworld',
+        origin: [200, 0, 200],
+        player: 'player-uuid',
+        permissions: {
+            online: true,
+            offline: false,
+            buildRange: 100,
+            credential_id: 'credential-1'
+        }
+    },
+    frameLog: [{
+        sequence: 1,
+        timestamp: 1000,
+        streamId: 'default',
+        direction: 'send',
+        id: 1,
+        method: 'hello',
+        payload: {
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'hello',
+            params: {
+                protocol: '21.0.0',
+                client: {name: 'scratch-mcremote', version: 'build-1'},
+                auth: {token: 'mcrs_secret'},
+                device_label: 'classroom laptop'
+            }
+        }
+    }, {
+        sequence: 2,
+        timestamp: 1001,
+        streamId: 'default',
+        direction: 'receive',
+        id: 2,
+        method: 'auth.pairPoll',
+        payload: {result: {token: 'mcrs_secret'}}
+    }, {
+        sequence: 3,
+        timestamp: 1002,
+        streamId: 'default',
+        direction: 'send',
+        id: 3,
+        method: 'world.setBlock',
+        payload: {params: [1, 2, 3, 'minecraft:stone']}
+    }]
+});
+
+describe('McRemote WireScope source adapter', () => {
+    test('projects a connected Scratch observation through a generation-side allowlist', () => {
+        const snapshot = toWireScopeSnapshot(connectedObservation(), 'target-01', 2000);
+
+        expect(snapshot).toMatchObject({
+            schema: 'mcremote.observer',
+            schema_version: 1,
+            emitted_at: 2000,
+            target: {
+                id: 'target-01',
+                display_alias: 'MOSS-ORBIT-000027',
+                source_kind: 'scratch'
+            },
+            streams: [{
+                id: 'main',
+                kind: 'main',
+                hello: {
+                    protocol: '21.0.0',
+                    world: 'overworld',
+                    origin: [200, 0, 200],
+                    permissions: {online: true, offline: false, build_range: 100}
+                }
+            }]
+        });
+        expect(snapshot.streams[0].frames).toHaveLength(2);
+        expect(snapshot.streams[0].frames.map((...[frame]) => frame.method)).toEqual([
+            'hello',
+            'world.setBlock'
+        ]);
+        const serialized = JSON.stringify(snapshot);
+        for (const forbidden of [
+            'mcrs_secret', 'pairCode', 'pair_code', 'pairCommand', 'player-uuid',
+            'credential_id', 'device_label', 'future_secret', 'auth.pairPoll', 'auth'
+        ]) {
+            expect(serialized).not.toContain(forbidden);
+        }
+    });
+
+    test('does not project pairing or disconnected observations', () => {
+        expect(toWireScopeSnapshot({status: 'pairing'}, 'target-01', 2000)).toBeNull();
+        expect(toWireScopeSnapshot({status: 'closed'}, 'target-01', 2000)).toBeNull();
+    });
+
+    test('hands a one-time grant over MessageChannel and ends it with the target', () => {
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const port2 = {};
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2})),
+            crypto: {getRandomValues: function (array) {
+                array.fill(7);
+                return array;
+            }},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(function () {
+                if (this !== sourceWindow) throw new TypeError('Illegal invocation');
+                return 9;
+            }),
+            clearTimeout: jest.fn(function () {
+                if (this !== sourceWindow) throw new TypeError('Illegal invocation');
+            })
+        };
+        const source = createWireScopeSource(environment);
+        source.update(connectedObservation());
+
+        expect(source.launch('https://live.example/wirescope')).toBe(true);
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://attacker.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        expect(environment.MessageChannel).not.toHaveBeenCalled();
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+
+        expect(observerWindow.postMessage).toHaveBeenCalledWith({
+            type: 'mcremote.wirescope.attach',
+            protocol_version: 1
+        }, 'https://live.example', [port2]);
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        expect(grantMessage).toMatchObject({
+            type: 'mcremote.wirescope.grant',
+            protocol_version: 1,
+            expires_at: 20000
+        });
+        expect(grantMessage.grant).toHaveLength(48);
+        expect(JSON.stringify(observerWindow.postMessage.mock.calls)).not.toContain(grantMessage.grant);
+
+        port1.listener({
+            data: {
+                type: 'mcremote.wirescope.redeem',
+                protocol_version: 1,
+                grant: grantMessage.grant
+            }
+        });
+        expect(port1.postMessage.mock.calls[1][0]).toMatchObject({
+            type: 'mcremote.wirescope.snapshot',
+            protocol_version: 1,
+            snapshot: {schema: 'mcremote.observer'}
+        });
+
+        port1.listener({
+            data: {
+                type: 'mcremote.wirescope.redeem',
+                protocol_version: 1,
+                grant: grantMessage.grant
+            }
+        });
+        expect(port1.postMessage).toHaveBeenCalledTimes(2);
+
+        source.update({status: 'closed'});
+        expect(port1.postMessage.mock.calls[2][0]).toEqual({
+            type: 'mcremote.wirescope.end',
+            protocol_version: 1,
+            reason: 'target-ended'
+        });
+        expect(port1.close).toHaveBeenCalled();
+    });
+});

@@ -19,6 +19,7 @@ import {
 import {updateMicIndicator} from '../reducers/mic-indicator';
 import {updateMcRemoteCatalog} from '../reducers/mcremote-catalog';
 import {updateMcRemoteObservation} from '../reducers/mcremote-observation';
+import {updateWireScopeObservation} from './mcremote-wirescope-source';
 
 /*
  * Higher Order Component to manage events emitted by the VM
@@ -248,6 +249,7 @@ const vmListenerHOC = function (WrappedComponent) {
             dispatch(updateMicIndicator(listening));
         },
         onMcRemoteObservationUpdate: snapshot => {
+            updateWireScopeObservation(snapshot);
             dispatch(updateMcRemoteObservation(snapshot));
         },
         onMcRemoteCatalogUpdate: snapshot => {

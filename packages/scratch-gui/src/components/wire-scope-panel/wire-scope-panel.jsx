@@ -4,6 +4,7 @@ import React, {useCallback, useState} from 'react';
 import {defineMessages, FormattedMessage, useIntl} from 'react-intl';
 
 import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-targets.js';
+import {launchWireScope} from '../../lib/mcremote-wirescope-source';
 import {HIGH_CONTRAST_MODE} from '../../lib/settings/color-mode/index.js';
 import styles from './wire-scope-panel.css';
 
@@ -127,6 +128,11 @@ const messages = defineMessages({
         id: 'gui.mcremote.wireScope.actionRetry',
         defaultMessage: 'Check the connection and try again.',
         description: 'Fallback action shown for a McRemote connection error'
+    },
+    openIndependent: {
+        id: 'gui.mcremote.wireScope.openIndependent',
+        defaultMessage: 'Open WireScope',
+        description: 'Button that opens the independent read-only WireScope observer'
     }
 });
 
@@ -192,7 +198,7 @@ const actionMessage = function (lastError) {
     return messages.actionRetry;
 };
 
-const WireScopePanel = ({connectionTarget, snapshot, colorMode}) => {
+const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) => {
     const intl = useIntl();
     const [isCollapsed, setIsCollapsed] = useState(true);
     const state = snapshot || {};
@@ -207,6 +213,9 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode}) => {
     const toggleCollapsed = useCallback(() => {
         setIsCollapsed(!isCollapsed);
     }, [isCollapsed]);
+    const openIndependent = useCallback(() => {
+        launchWireScope(wireScopeUrl);
+    }, [wireScopeUrl]);
 
     return (
         <aside
@@ -290,6 +299,15 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode}) => {
                             <strong><FormattedMessage {...nextAction} /></strong>
                         </div>
                     ) : null}
+                    {state.status === 'connected' && state.displayAlias && wireScopeUrl ? (
+                        <button
+                            className={styles.launch}
+                            onClick={openIndependent}
+                        >
+                            <FormattedMessage {...messages.openIndependent} />
+                            <span aria-hidden="true">{'↗'}</span>
+                        </button>
+                    ) : null}
                 </section>
             )}
         </aside>
@@ -301,6 +319,7 @@ WireScopePanel.propTypes = {
         sandboxRoute: PropTypes.string
     }),
     colorMode: PropTypes.string,
+    wireScopeUrl: PropTypes.string,
     snapshot: PropTypes.shape({
         status: PropTypes.string,
         sourceKind: PropTypes.string,

@@ -19,6 +19,7 @@ describe('McRemote runtime config', () => {
                     {id: 'beta', label: 'Classroom', sandbox: 'minecraft.classroom.example'}
                 ],
                 connection_enabled: true,
+                wirescope_url: 'https://wirescope.classroom.example/live',
                 release_identity: 'release-123'
             })
         });
@@ -32,6 +33,7 @@ describe('McRemote runtime config', () => {
                 {id: 'beta', sandboxRoute: 'minecraft.classroom.example', label: 'Classroom'}
             ],
             connectionEnabled: true,
+            wireScopeUrl: 'https://wirescope.classroom.example/live',
             releaseIdentity: 'release-123',
             notices: []
         });
@@ -78,6 +80,27 @@ describe('McRemote runtime config', () => {
         expect(isAllowedBridgeUrl(
             new URL('ws://127.0.0.1:8080'),
             new URL('http://scratch.example.test')
+        )).toBe(false);
+    });
+
+    test('allows WireScope only on a distinct trusted origin', () => {
+        const {isAllowedWireScopeUrl} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        expect(isAllowedWireScopeUrl(
+            new URL('https://live.example.test/wirescope'),
+            new URL('https://scratch.example.test/editor')
+        )).toBe(true);
+        expect(isAllowedWireScopeUrl(
+            new URL('https://scratch.example.test/wirescope'),
+            new URL('https://scratch.example.test/editor')
+        )).toBe(false);
+        expect(isAllowedWireScopeUrl(
+            new URL('http://127.0.0.1:4173'),
+            new URL('http://localhost:8601')
+        )).toBe(true);
+        expect(isAllowedWireScopeUrl(
+            new URL('https://live.example.test/?grant=secret'),
+            new URL('https://scratch.example.test/editor')
         )).toBe(false);
     });
 

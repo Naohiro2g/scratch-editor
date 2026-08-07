@@ -1,6 +1,6 @@
 import {detectLocale} from '../../../src/lib/detect-locale.js';
 
-const supportedLocales = ['en', 'es', 'pt-br', 'de', 'it'];
+const supportedLocales = ['en', 'es', 'pt-br', 'de', 'it', 'ja-Hira'];
 
 /**
  * @type {jest.SpyInstance}
@@ -18,6 +18,7 @@ const mockWindowNavigator = {
 };
 
 beforeEach(() => {
+    mockWindowNavigator.language = 'en-US';
     windowSpy = jest.spyOn(global, 'window', 'get');
     locationSpy = jest.spyOn(global, 'location', 'get');
 
@@ -46,6 +47,11 @@ describe('detectLocale', () => {
         expect(detectLocale(supportedLocales)).toEqual('pt-br');
     });
 
+    test('preserves the canonical case of a mixed-case locale id', () => {
+        mockWindowLocation.search = '?locale=ja-Hira';
+        expect(detectLocale(supportedLocales)).toEqual('ja-Hira');
+    });
+
     test('also accepts lang from the URL when present', () => {
         mockWindowLocation.search = '?lang=it';
         expect(detectLocale(supportedLocales)).toEqual('it');
@@ -64,6 +70,12 @@ describe('detectLocale', () => {
     test('uses navigator language property for default if supported', () => {
         mockWindowNavigator.language = 'pt-BR';
         expect(detectLocale(supportedLocales)).toEqual('pt-br');
+    });
+
+    test('preserves a mixed-case locale id from navigator language', () => {
+        mockWindowLocation.search = '';
+        mockWindowNavigator.language = 'ja-Hira';
+        expect(detectLocale(supportedLocales)).toEqual('ja-Hira');
     });
 
     test('ignores navigator language property if unsupported', () => {

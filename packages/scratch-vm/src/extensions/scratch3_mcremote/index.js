@@ -843,7 +843,9 @@ class Scratch3McRemoteBlocks {
                 result.supported_mc_versions.slice() :
                 [],
             world_constants: worldConstants,
-            permissions: result.permissions || null
+            permissions: result.permissions || null,
+            ...(typeof result.world === 'string' ? {world: result.world} : {}),
+            ...(Array.isArray(result.origin) && result.origin.length === 3 ? {origin: result.origin.slice()} : {})
         } : null;
     }
 

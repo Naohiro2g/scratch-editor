@@ -149,5 +149,16 @@ WireScope は別の進行線として前倒しするが、b3 release blocker に
 - knowledge `13-scratch-client/scratch-execution-model-design_ja.md`
 - knowledge `12-python-client/python-client-guide_ja.md`
 
-現時点では設計確定のみ。独立 WireScope の実装、unit、integration、live 接続試験は未着手である。
-搬送時 worktree にある localhost WS 対応の未 commit 差分は本ロードマップの実装ではなく、本文の実装済み範囲へ含めない。
+2026-08-08 時点で、Scratch 参照実装の最初の縦切りは worktree に実装済みである。共通
+`@mc-remote/live` app、`streams[]` を持つ schema v1、Scratch main stream fixture、generation-side
+allowlist adapter、別 originへの exact-origin `MessageChannel` handoff、有効期限 15 秒の one-time
+grant、WireScope mini からの起動導線、hello 由来の初期 world／origin 表示、main／substream を選ぶ
+タブ、狭幅2カラムの read-only UI を含む。
+
+protocol 21.0.0／Minecraft 1.21.11 のローカル環境を使う live-human E2E で、Scratch→Bridge→Minecraft
+→独立 WireScope の `hello` と `chat.post` の request／response、および同一 main stream の継続更新を
+確認した。ja-Hira と、Minecraft／Scratch／WireScope を横並びにする狭幅UIも人間確認済みである。
+
+未実装／未検証は、配信 artifact と応答ヘッダ（CSP／COOP／cache）の deploy gate、Python adapter／
+local relay、実際の複数 connection を使う multi-stream E2E である。初期 handshake を不変に保ったまま
+現在 world／origin を最大40fpsで投影する `current_build_state` は、schema v1へ混ぜず次のschema sliceで扱う。
