@@ -36,7 +36,11 @@ The current Scratch transport remains a distinct-origin `MessageChannel` adapter
 absolute referrer makes Scratch only a candidate. The adapter must receive an exact source, origin, protocol, and
 single-port attach within the 2,000 ms Scratch selection window. Once that port is accepted, the client never
 falls back to another adapter. If the window expires, the client removes the Scratch listener and delegates to
-the optional station adapter boundary. The same-origin HTTP station adapter is not implemented in this slice.
+the same-origin station adapter. The station adapter validates the versioned bootstrap response, accepts the
+short-lived code only through an in-memory browser form, and parses the successful bounded NDJSON stream into
+the same observer session core. `test/fixtures/station-attach-v1.json` fixes the initial bootstrap, attach,
+bounded error, framing-limit, and response-header contract for Python conformance. The Python loopback HTTP
+server and real-browser E2E remain separate follow-up slices.
 
 ## Immutable app artifact
 
@@ -62,6 +66,8 @@ manifest.
   bearer tokens, pair codes, player UUIDs, credential identifiers or hashes, or device labels.
 - Target identity, grants, sessions, aliases, and observed history remain in memory. They are not written to URL
   parameters, project data, `localStorage`, IndexedDB, or `BroadcastChannel`.
+- The station adapter sends the normalized attach code only in the same-origin `POST` body with credentials
+  omitted. It rejects redirects, unversioned bootstrap data, unbounded responses, and invalid NDJSON framing.
 
 The observer contract is versioned independently as `mcremote.observer` schema version 1. Its initial shape uses
 `streams[]` even though the Scratch reference adapter currently exposes one `main` stream.

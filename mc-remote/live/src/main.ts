@@ -2,6 +2,8 @@ import { startObserverClient, type ObserverClientErrorCode, type ObserverClientS
 import { resolveLocale, translate, type Locale, type MessageKey } from './l10n'
 import type { ObserverFrame, ObserverHello, ObserverSnapshot, ObserverStream } from './observer'
 import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
+import type { StationAttachErrorCode } from './station'
+import { createSameOriginStationAdapter, type StationAdapterStatus } from './station-adapter'
 import './styles.css'
 import { selectActiveStream } from './view-state'
 
@@ -36,12 +38,31 @@ const statusDot = make('span', 'status-dot')
 const statusText = make('span')
 status.append(statusDot, statusText)
 
+const stationAttach = make('form', 'station-attach hidden')
+const stationAttachCopy = make('div', 'station-attach-copy')
+const stationAttachTitle = make('strong')
+const stationAttachHelp = make('span', 'muted')
+stationAttachCopy.append(stationAttachTitle, stationAttachHelp)
+const stationAttachControls = make('div', 'station-attach-controls')
+const stationAttachInput = make('input', 'station-attach-input')
+stationAttachInput.type = 'text'
+stationAttachInput.maxLength = 9
+stationAttachInput.autocomplete = 'off'
+stationAttachInput.autocapitalize = 'characters'
+stationAttachInput.spellcheck = false
+const stationAttachButton = make('button', 'station-attach-button')
+stationAttachButton.type = 'submit'
+stationAttachControls.append(stationAttachInput, stationAttachButton)
+stationAttach.append(stationAttachCopy, stationAttachControls)
+
 const content = make('section', 'content empty')
-shell.append(header, status, content)
+shell.append(header, status, stationAttach, content)
 root.append(shell)
 
 type ViewStatus =
   | { kind: 'client'; status: ObserverClientStatus | 'starting' }
+  | { kind: 'station'; status: StationAdapterStatus }
+  | { kind: 'attach-error'; code: StationAttachErrorCode }
   | { kind: 'observing'; count: number }
   | { kind: 'ended'; reason: ObserverSessionEndReason }
   | { kind: 'error'; code: ObserverClientErrorCode }
@@ -51,6 +72,7 @@ let currentSnapshot: ObserverSnapshot | null = null
 let currentHistoryWindow: ObserverHistoryWindow = { dropped_frames: 0 }
 let currentStatus: ViewStatus = { kind: 'client', status: 'starting' }
 let activeStreamId: string | null = null
+let stationMode = false
 
 const t = (key: MessageKey, values?: Readonly<Record<string, string | number>>): string =>
   translate(locale, key, values)
@@ -176,7 +198,10 @@ const renderStreamTabs = (streams: readonly ObserverStream[], activeStream: Obse
 
 const renderEmpty = (): void => {
   content.className = 'content empty'
-  content.replaceChildren(make('h1', '', t('emptyTitle')), make('p', '', t('emptyBody')))
+  content.replaceChildren(
+    make('h1', '', t(stationMode ? 'stationEmptyTitle' : 'emptyTitle')),
+    make('p', '', t(stationMode ? 'stationEmptyBody' : 'emptyBody')),
+  )
 }
 
 const renderSnapshot = (snapshot: ObserverSnapshot): void => {
@@ -220,6 +245,23 @@ const errorStatusKey: Record<ObserverClientErrorCode, MessageKey> = {
   'invalid-snapshot': 'errorInvalidSnapshot',
 }
 
+const stationStatusKey: Record<StationAdapterStatus, MessageKey> = {
+  'station-ready': 'statusStationReady',
+  'station-target-not-ready': 'statusStationTargetNotReady',
+  'station-attaching': 'statusStationAttaching',
+  'station-attached': 'statusStationAttached',
+}
+
+const attachErrorStatusKey: Record<StationAttachErrorCode, MessageKey> = {
+  'target-not-ready': 'attachErrorTargetNotReady',
+  'malformed-code': 'attachErrorMalformedCode',
+  'invalid-code': 'attachErrorInvalidCode',
+  'attempts-exhausted': 'attachErrorAttemptsExhausted',
+  'code-expired': 'attachErrorCodeExpired',
+  'already-redeemed': 'attachErrorAlreadyRedeemed',
+  'invalid-request': 'attachErrorInvalidRequest',
+}
+
 const endStatusKey: Record<ObserverSessionEndReason, MessageKey> = {
   'target-ended': 'endTarget',
   'source-closed': 'endSource',
@@ -240,6 +282,16 @@ const renderStatus = (): void => {
     statusText.textContent = t(clientStatusKey[currentStatus.status])
     return
   }
+  if (currentStatus.kind === 'station') {
+    statusText.textContent = t(stationStatusKey[currentStatus.status])
+    if (currentStatus.status === 'station-attached') statusDot.className = 'status-dot connected'
+    return
+  }
+  if (currentStatus.kind === 'attach-error') {
+    statusDot.className = 'status-dot ended'
+    statusText.textContent = t(attachErrorStatusKey[currentStatus.code])
+    return
+  }
   if (currentStatus.kind === 'observing') {
     statusDot.className = 'status-dot connected'
     statusText.textContent = t('statusObserving', {
@@ -253,6 +305,22 @@ const renderStatus = (): void => {
     currentStatus.kind === 'ended' ? t(endStatusKey[currentStatus.reason]) : t(errorStatusKey[currentStatus.code])
 }
 
+const renderStationAttach = (): void => {
+  const visible =
+    stationMode &&
+    (currentStatus.kind === 'attach-error' ||
+      (currentStatus.kind === 'station' && currentStatus.status !== 'station-attached'))
+  stationAttach.classList.toggle('hidden', !visible)
+  const attaching = currentStatus.kind === 'station' && currentStatus.status === 'station-attaching'
+  stationAttachInput.disabled = attaching
+  stationAttachButton.disabled = attaching
+  stationAttachTitle.textContent = t('stationAttachTitle')
+  stationAttachHelp.textContent = t('stationAttachHelp')
+  stationAttachInput.placeholder = t('stationAttachPlaceholder')
+  stationAttachInput.setAttribute('aria-label', t('stationAttachInputLabel'))
+  stationAttachButton.textContent = t('stationAttachSubmit')
+}
+
 const refreshLocale = (): void => {
   document.documentElement.lang = locale
   document.title = t('documentTitle')
@@ -263,6 +331,7 @@ const refreshLocale = (): void => {
   languageSwitch.lang = nextLocale[locale]
   if (currentSnapshot) renderSnapshot(currentSnapshot)
   else renderEmpty()
+  renderStationAttach()
   renderStatus()
 }
 
@@ -273,16 +342,43 @@ languageSwitch.addEventListener('click', () => {
 
 refreshLocale()
 
+const stationAdapter = createSameOriginStationAdapter(
+  { currentOrigin: window.location.origin },
+  {
+    onStatus: (stationStatus) => {
+      stationMode = true
+      currentStatus = { kind: 'station', status: stationStatus }
+      refreshLocale()
+    },
+    onAttachError: (code) => {
+      stationMode = true
+      currentStatus = { kind: 'attach-error', code }
+      renderStationAttach()
+      renderStatus()
+    },
+  },
+)
+
+stationAttach.addEventListener('submit', (event) => {
+  event.preventDefault()
+  const value = stationAttachInput.value
+  stationAttachInput.value = ''
+  stationAdapter.submitAttachCode(value)
+})
+
 const cleanup = startObserverClient(
   {
     currentOrigin: window.location.origin,
     opener: window.opener as Window | null,
     referrer: document.referrer,
     windowTarget: window,
+    stationAdapter,
   },
   {
     onStatus: (clientStatus) => {
+      stationMode = false
       currentStatus = { kind: 'client', status: clientStatus }
+      renderStationAttach()
       renderStatus()
     },
     onSnapshot: (snapshot, historyWindow) => {
@@ -293,6 +389,7 @@ const cleanup = startObserverClient(
     },
     onEnd: (reason) => {
       currentStatus = { kind: 'ended', reason }
+      renderStationAttach()
       renderStatus()
     },
     onError: (error) => {
@@ -301,6 +398,7 @@ const cleanup = startObserverClient(
         message: error.message,
       })
       currentStatus = { kind: 'error', code: error.code }
+      renderStationAttach()
       renderStatus()
     },
   },

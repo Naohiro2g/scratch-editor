@@ -28,7 +28,7 @@ export interface ObserverClientCallbacks {
 }
 
 export interface ObserverStationAdapterCallbacks {
-  onEnvelope: (envelope: unknown) => void
+  onEnvelope: (envelope: unknown) => boolean
   onTransportLost: () => void
   onUnavailable: () => void
 }
@@ -99,6 +99,7 @@ export const startObserverClient = (
       onEnvelope: (envelope) => {
         session.receive(envelope)
         if (stopped) startState.active = false
+        return stopped
       },
       onTransportLost: () => {
         session.transportLost()
