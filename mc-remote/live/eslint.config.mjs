@@ -19,5 +19,11 @@ export default eslintConfigScratch.defineConfig(
       globals: globals.node,
     },
   },
+  {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
   globalIgnores(['coverage/**', 'dist/**', 'node_modules/**']),
 )

@@ -1,12 +1,13 @@
 import type { ObserverSnapshot } from './observer'
+import { OBSERVER_SESSION_END, OBSERVER_SESSION_SNAPSHOT } from './session'
 
 export const HANDOFF_PROTOCOL_VERSION = 1 as const
 export const HANDOFF_READY = 'mcremote.wirescope.ready' as const
 export const HANDOFF_ATTACH = 'mcremote.wirescope.attach' as const
 export const HANDOFF_GRANT = 'mcremote.wirescope.grant' as const
 export const HANDOFF_REDEEM = 'mcremote.wirescope.redeem' as const
-export const OBSERVER_SNAPSHOT = 'mcremote.wirescope.snapshot' as const
-export const OBSERVER_END = 'mcremote.wirescope.end' as const
+export const OBSERVER_SNAPSHOT = OBSERVER_SESSION_SNAPSHOT
+export const OBSERVER_END = OBSERVER_SESSION_END
 
 export interface HandoffReadyMessage {
   type: typeof HANDOFF_READY
