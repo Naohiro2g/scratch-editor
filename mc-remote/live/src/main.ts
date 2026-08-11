@@ -1,7 +1,7 @@
 import { startObserverClient, type ObserverClientErrorCode, type ObserverClientStatus } from './client'
-import type { ObserverEndMessage } from './handoff'
 import { resolveLocale, translate, type Locale, type MessageKey } from './l10n'
 import type { ObserverFrame, ObserverHello, ObserverSnapshot, ObserverStream } from './observer'
+import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
 import './styles.css'
 import { selectActiveStream } from './view-state'
 
@@ -43,11 +43,12 @@ root.append(shell)
 type ViewStatus =
   | { kind: 'client'; status: ObserverClientStatus | 'starting' }
   | { kind: 'observing'; count: number }
-  | { kind: 'ended'; reason: ObserverEndMessage['reason'] }
+  | { kind: 'ended'; reason: ObserverSessionEndReason }
   | { kind: 'error'; code: ObserverClientErrorCode }
 
 let locale: Locale = resolveLocale(navigator.languages.length ? navigator.languages : [navigator.language])
 let currentSnapshot: ObserverSnapshot | null = null
+let currentHistoryWindow: ObserverHistoryWindow = { dropped_frames: 0 }
 let currentStatus: ViewStatus = { kind: 'client', status: 'starting' }
 let activeStreamId: string | null = null
 
@@ -189,6 +190,11 @@ const renderSnapshot = (snapshot: ObserverSnapshot): void => {
   )
   target.append(heading, make('span', 'read-only-badge', t('readOnly')))
   content.append(target)
+  if (currentHistoryWindow.dropped_frames > 0) {
+    content.append(
+      make('p', 'history-window-notice', t('historyWindowTruncated', { count: currentHistoryWindow.dropped_frames })),
+    )
+  }
   const streams = make('section', 'streams')
   const activeStream = selectActiveStream(snapshot.streams, activeStreamId)
   activeStreamId = activeStream.id
@@ -209,7 +215,17 @@ const errorStatusKey: Record<ObserverClientErrorCode, MessageKey> = {
   'grant-expired': 'errorGrantExpired',
   'target-changed': 'errorTargetChanged',
   'invalid-end': 'errorInvalidEnd',
+  'invalid-history-window': 'errorInvalidHistoryWindow',
+  'invalid-session': 'errorInvalidSession',
   'invalid-snapshot': 'errorInvalidSnapshot',
+}
+
+const endStatusKey: Record<ObserverSessionEndReason, MessageKey> = {
+  'target-ended': 'endTarget',
+  'source-closed': 'endSource',
+  backpressure: 'endBackpressure',
+  'capacity-exhausted': 'endCapacityExhausted',
+  'transport-lost': 'endTransportLost',
 }
 
 const nextLocale: Record<Locale, Locale> = {
@@ -234,9 +250,7 @@ const renderStatus = (): void => {
   }
   statusDot.className = 'status-dot ended'
   statusText.textContent =
-    currentStatus.kind === 'ended'
-      ? t(currentStatus.reason === 'target-ended' ? 'endTarget' : 'endSource')
-      : t(errorStatusKey[currentStatus.code])
+    currentStatus.kind === 'ended' ? t(endStatusKey[currentStatus.reason]) : t(errorStatusKey[currentStatus.code])
 }
 
 const refreshLocale = (): void => {
@@ -271,8 +285,9 @@ const cleanup = startObserverClient(
       currentStatus = { kind: 'client', status: clientStatus }
       renderStatus()
     },
-    onSnapshot: (snapshot) => {
+    onSnapshot: (snapshot, historyWindow) => {
       currentSnapshot = snapshot
+      currentHistoryWindow = historyWindow
       currentStatus = { kind: 'observing', count: snapshot.streams.length }
       refreshLocale()
     },

@@ -22,6 +22,7 @@ describe('WireScope localization', () => {
     expect(translate('ja', 'fieldWorldConstants')).toBe('世界定数')
     expect(translate('ja', 'fieldWorld')).toBe('初期ワールド')
     expect(translate('ja', 'fieldOrigin')).toBe('初期原点')
+    expect(translate('ja', 'historyWindowTruncated', { count: 12 })).toContain('12 件')
   })
 
   test('provides a kanji-free Japanese Hiragana locale', () => {

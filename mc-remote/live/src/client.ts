@@ -1,22 +1,20 @@
+import type { ObserverSnapshot } from './observer'
 import {
-  HANDOFF_ATTACH,
-  HANDOFF_GRANT,
-  HANDOFF_PROTOCOL_VERSION,
-  HANDOFF_READY,
-  HANDOFF_REDEEM,
-  OBSERVER_END,
-  OBSERVER_SNAPSHOT,
-  type HandoffAttachMessage,
-  type HandoffGrantMessage,
-  type HandoffReadyMessage,
-  type ObserverEndMessage,
-  type ObserverSnapshotMessage,
-} from './handoff'
-import { parseObserverSnapshot, type ObserverSnapshot } from './observer'
+  startScratchMessageChannelAdapter,
+  type ScratchAdapterErrorCode,
+  type ScratchAdapterStatus,
+} from './scratch-adapter'
+import {
+  createObserverSession,
+  type ObserverHistoryWindow,
+  type ObserverSessionEndReason,
+  type ObserverSessionErrorCode,
+} from './session'
 
-export type ObserverClientStatus = 'direct-navigation' | 'waiting-for-source' | 'channel-attached' | 'grant-redeemed'
+export const SCRATCH_SELECTION_WINDOW_MS = 2_000
 
-export type ObserverClientErrorCode = 'grant-expired' | 'target-changed' | 'invalid-end' | 'invalid-snapshot'
+export type ObserverClientStatus = 'direct-navigation' | ScratchAdapterStatus
+export type ObserverClientErrorCode = ScratchAdapterErrorCode | ObserverSessionErrorCode
 
 export interface ObserverClientError extends Error {
   code: ObserverClientErrorCode
@@ -24,9 +22,19 @@ export interface ObserverClientError extends Error {
 
 export interface ObserverClientCallbacks {
   onStatus: (status: ObserverClientStatus) => void
-  onSnapshot: (snapshot: ObserverSnapshot) => void
-  onEnd: (reason: ObserverEndMessage['reason']) => void
+  onSnapshot: (snapshot: ObserverSnapshot, historyWindow: ObserverHistoryWindow) => void
+  onEnd: (reason: ObserverSessionEndReason) => void
   onError: (error: ObserverClientError) => void
+}
+
+export interface ObserverStationAdapterCallbacks {
+  onEnvelope: (envelope: unknown) => void
+  onTransportLost: () => void
+  onUnavailable: () => void
+}
+
+export interface ObserverStationAdapter {
+  start: (callbacks: ObserverStationAdapterCallbacks) => () => void
 }
 
 export interface ObserverClientEnvironment {
@@ -35,6 +43,9 @@ export interface ObserverClientEnvironment {
   referrer: string
   windowTarget: Pick<Window, 'addEventListener' | 'removeEventListener'>
   now?: () => number
+  setTimeout?: (callback: () => void, delay: number) => ReturnType<typeof setTimeout>
+  clearTimeout?: (timer: ReturnType<typeof setTimeout>) => void
+  stationAdapter?: ObserverStationAdapter
 }
 
 export const sourceOriginFromReferrer = (referrer: string, currentOrigin: string): string | null => {
@@ -47,139 +58,110 @@ export const sourceOriginFromReferrer = (referrer: string, currentOrigin: string
   }
 }
 
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-
-const isProtocolMessage = (value: unknown, type: string): boolean =>
-  isObject(value) && value.type === type && value.protocol_version === HANDOFF_PROTOCOL_VERSION
-
-const clientError = (code: ObserverClientErrorCode, message: string): ObserverClientError =>
-  Object.assign(new Error(message), { code })
-
-const isObserverClientError = (error: unknown): error is ObserverClientError =>
-  error instanceof Error &&
-  'code' in error &&
-  (error.code === 'grant-expired' ||
-    error.code === 'target-changed' ||
-    error.code === 'invalid-end' ||
-    error.code === 'invalid-snapshot')
-
-const grantMessage = (value: unknown): HandoffGrantMessage | null => {
-  if (!isProtocolMessage(value, HANDOFF_GRANT) || !isObject(value)) return null
-  if (
-    typeof value.grant !== 'string' ||
-    value.grant.length < 32 ||
-    typeof value.expires_at !== 'number' ||
-    !Number.isFinite(value.expires_at)
-  ) {
-    return null
-  }
-  return value as unknown as HandoffGrantMessage
-}
-
 export const startObserverClient = (
   environment: ObserverClientEnvironment,
   callbacks: ObserverClientCallbacks,
 ): (() => void) => {
   const sourceOrigin = sourceOriginFromReferrer(environment.referrer, environment.currentOrigin)
-  const sourceWindow = environment.opener
-  const now = environment.now ?? Date.now
-  let port: MessagePort | null = null
-  let targetId: string | null = null
-  let ended = false
+  const setTimer = environment.setTimeout ?? setTimeout
+  const clearTimer = environment.clearTimeout ?? clearTimeout
+  let stopped = false
+  let selection: 'scratch-candidate' | 'scratch' | 'station' | 'none' = 'none'
+  let selectionTimer: ReturnType<typeof setTimeout> | null = null
+  let activeAdapterCleanup = (): void => {}
 
-  const fail = (error: ObserverClientError): void => {
-    if (ended) return
-    ended = true
-    port?.close()
-    callbacks.onError(error)
+  const finish = (action: () => void): void => {
+    if (stopped) return
+    stopped = true
+    if (selectionTimer !== null) clearTimer(selectionTimer)
+    selectionTimer = null
+    activeAdapterCleanup()
+    activeAdapterCleanup = () => {}
+    action()
   }
 
-  const onPortMessage = (event: MessageEvent): void => {
-    const grant = grantMessage(event.data)
-    if (grant) {
-      if (grant.expires_at <= now()) {
-        fail(clientError('grant-expired', 'The observation grant expired before redemption.'))
-        return
-      }
-      const redeem = {
-        type: HANDOFF_REDEEM,
-        protocol_version: HANDOFF_PROTOCOL_VERSION,
-        grant: grant.grant,
-      }
-      port?.postMessage(redeem)
-      callbacks.onStatus('grant-redeemed')
+  const session = createObserverSession({
+    onSnapshot: callbacks.onSnapshot,
+    onEnd: (reason) => finish(() => callbacks.onEnd(reason)),
+    onError: (error) => finish(() => callbacks.onError(error)),
+  })
+
+  const startStationOrDirectNavigation = (): void => {
+    if (stopped) return
+    if (!environment.stationAdapter) {
+      selection = 'none'
+      callbacks.onStatus('direct-navigation')
       return
     }
-    if (isProtocolMessage(event.data, OBSERVER_SNAPSHOT) && isObject(event.data)) {
-      try {
-        const snapshot = parseObserverSnapshot(event.data.snapshot)
-        if (targetId && snapshot.target.id !== targetId) {
-          throw clientError('target-changed', 'The source changed observation targets within one session.')
-        }
-        targetId = snapshot.target.id
-        callbacks.onSnapshot(snapshot)
-      } catch (error) {
-        fail(
-          isObserverClientError(error)
-            ? error
-            : clientError('invalid-snapshot', error instanceof Error ? error.message : String(error)),
-        )
-      }
-      return
-    }
-    if (isProtocolMessage(event.data, OBSERVER_END) && isObject(event.data)) {
-      const reason = event.data.reason
-      if (reason !== 'target-ended' && reason !== 'source-closed') {
-        fail(clientError('invalid-end', 'The source sent an invalid observer end reason.'))
-        return
-      }
-      ended = true
-      port?.close()
-      callbacks.onEnd(reason)
-    }
+    selection = 'station'
+    const startState = { active: true }
+    const cleanup = environment.stationAdapter.start({
+      onEnvelope: (envelope) => {
+        session.receive(envelope)
+        if (stopped) startState.active = false
+      },
+      onTransportLost: () => {
+        session.transportLost()
+        if (stopped) startState.active = false
+      },
+      onUnavailable: () => {
+        startState.active = false
+        if (stopped || selection !== 'station') return
+        selection = 'none'
+        const stopAdapter = activeAdapterCleanup
+        activeAdapterCleanup = () => {}
+        stopAdapter()
+        callbacks.onStatus('direct-navigation')
+      },
+    })
+    if (startState.active) activeAdapterCleanup = cleanup
+    else cleanup()
   }
 
-  const onWindowMessage = (event: MessageEvent): void => {
-    if (
-      ended ||
-      !sourceWindow ||
-      !sourceOrigin ||
-      event.source !== sourceWindow ||
-      event.origin !== sourceOrigin ||
-      !isProtocolMessage(event.data, HANDOFF_ATTACH) ||
-      event.ports.length !== 1 ||
-      port
-    ) {
-      return
+  if (environment.opener && sourceOrigin) {
+    selection = 'scratch-candidate'
+    const startState = { selected: false }
+    const scratchCleanup = startScratchMessageChannelAdapter(
+      {
+        opener: environment.opener,
+        sourceOrigin,
+        windowTarget: environment.windowTarget,
+        now: environment.now,
+      },
+      {
+        onSelected: () => {
+          if (stopped || selection !== 'scratch-candidate') return
+          startState.selected = true
+          selection = 'scratch'
+          if (selectionTimer !== null) clearTimer(selectionTimer)
+          selectionTimer = null
+        },
+        onStatus: callbacks.onStatus,
+        onEnvelope: session.receive,
+        onTransportLost: session.transportLost,
+        onError: (error) => finish(() => callbacks.onError(error)),
+      },
+    )
+    activeAdapterCleanup = scratchCleanup
+    if (!startState.selected) {
+      selectionTimer = setTimer(() => {
+        if (stopped || selection !== 'scratch-candidate') return
+        activeAdapterCleanup()
+        activeAdapterCleanup = () => {}
+        startStationOrDirectNavigation()
+      }, SCRATCH_SELECTION_WINDOW_MS)
     }
-    port = event.ports[0] ?? null
-    port.addEventListener('message', onPortMessage)
-    port.start()
-    callbacks.onStatus('channel-attached')
-  }
-
-  environment.windowTarget.addEventListener('message', onWindowMessage as EventListener)
-  if (!sourceWindow || !sourceOrigin) {
-    callbacks.onStatus('direct-navigation')
   } else {
-    const ready: HandoffReadyMessage = {
-      type: HANDOFF_READY,
-      protocol_version: HANDOFF_PROTOCOL_VERSION,
-    }
-    sourceWindow.postMessage(ready, sourceOrigin)
-    callbacks.onStatus('waiting-for-source')
+    startStationOrDirectNavigation()
   }
 
   return () => {
-    ended = true
-    port?.close()
-    environment.windowTarget.removeEventListener('message', onWindowMessage as EventListener)
+    if (stopped) return
+    stopped = true
+    if (selectionTimer !== null) clearTimer(selectionTimer)
+    selectionTimer = null
+    activeAdapterCleanup()
+    activeAdapterCleanup = () => {}
+    session.close()
   }
 }
-
-export const isAttachMessage = (value: unknown): value is HandoffAttachMessage =>
-  isProtocolMessage(value, HANDOFF_ATTACH)
-
-export const isSnapshotMessage = (value: unknown): value is ObserverSnapshotMessage =>
-  isProtocolMessage(value, OBSERVER_SNAPSHOT)
