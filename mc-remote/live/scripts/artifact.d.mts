@@ -55,6 +55,7 @@ export interface BuildWireScopeArtifactResult {
 
 export const ARCHIVE_FILENAME: 'wirescope-app.zip'
 export const MANIFEST_FILENAME: 'wirescope-app.manifest.json'
+export const ARTIFACT_DELIVERY_FILENAMES: readonly ['wirescope-app.zip', 'wirescope-app.manifest.json']
 
 export function assertSourceCheckout(options: { sourceCommit: string; head: string; status: string }): void
 

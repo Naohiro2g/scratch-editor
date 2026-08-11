@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto'
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import JSZip from 'jszip'
 import { afterEach, describe, expect, test } from 'vitest'
 import {
   ARCHIVE_FILENAME,
+  ARTIFACT_DELIVERY_FILENAMES,
   assertSourceCheckout,
   buildWireScopeArtifact,
   MANIFEST_FILENAME,
@@ -78,6 +79,15 @@ describe('detached WireScope app artifact', () => {
     expect(readFileSync(first.manifestPath)).toEqual(readFileSync(second.manifestPath))
     expect(first.archiveSha256).toBe(sha256(readFileSync(first.archivePath)))
     expect(first.manifestSha256).toBe(sha256(readFileSync(first.manifestPath)))
+  })
+
+  test('delivers exactly the detached archive and manifest under canonical filenames', async () => {
+    const inputs = fixture()
+    const outputDirectory = join(inputs.distDirectory, 'artifact')
+
+    await buildWireScopeArtifact({ ...inputs, outputDirectory })
+
+    expect(readdirSync(outputDirectory).sort()).toEqual([...ARTIFACT_DELIVERY_FILENAMES].sort())
   })
 
   test('keeps the manifest detached and inventories every archived asset', async () => {

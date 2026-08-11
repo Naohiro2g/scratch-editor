@@ -5,6 +5,7 @@ import JSZip from 'jszip'
 
 export const ARCHIVE_FILENAME = 'wirescope-app.zip'
 export const MANIFEST_FILENAME = 'wirescope-app.manifest.json'
+export const ARTIFACT_DELIVERY_FILENAMES = Object.freeze([ARCHIVE_FILENAME, MANIFEST_FILENAME])
 
 const FIXED_ZIP_DATE = new Date('1980-01-01T00:00:00.000Z')
 const SOURCE_REPOSITORY = 'https://github.com/Naohiro2g/scratch-editor'

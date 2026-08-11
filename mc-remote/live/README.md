@@ -58,6 +58,24 @@ asset SHA-256 values, exact corresponding source, build inputs and toolchain, pr
 `AGPL-3.0-only` component license. Consumers must pin and verify the SHA-256 of both detached files outside the
 manifest.
 
+### Consumer handoff unit
+
+Scratch hands the app to another repository as exactly these two files, with their bytes and canonical filenames
+unchanged:
+
+- `wirescope-app.zip`
+- `wirescope-app.manifest.json`
+
+The pair is not wrapped in another archive and no generated lock file is added. The receiving distribution owns
+the outer trust boundary: it pins both file hashes in its build input and verifies them again in its package
+inventory (for a Python wheel, `RECORD`). A temporary cross-repository transfer may place the pair under
+`handoff-materials/<handoff-id>/materials/` with a human-readable handoff manifest that records both hashes and
+byte counts; that handoff directory is not a public artifact channel or a release identity.
+
+GitHub Releases, npm packages, and GitHub Actions artifacts are not designated as the public distribution channel
+by this handoff contract. Selecting and validating a public channel remains part of the later license and artifact
+distribution gate.
+
 ## Security boundary
 
 - The source validates the configured WireScope origin and popup window before transferring a `MessagePort`.
