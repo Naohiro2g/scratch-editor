@@ -32,6 +32,11 @@ atomically. The session core accepts the wire end reasons `target-ended`, `sourc
 The transport-neutral `test/fixtures/observer-session-lifecycle.ndjson` fixture fixes the initial serialized
 envelope shape for adapter conformance.
 
+The shared `test/fixtures/display-alias-v1.json` fixture fixes the vocabulary and `WORD-WORD-NNNNNN` shape for
+source-side alias conformance. The Scratch generator is checked against it. The alias is display-only: it is not
+a discovery key, target identity, attach capability, or authorization input. Observer schema v1 continues to
+accept existing non-empty aliases so recorded sessions and other source implementations can migrate independently.
+
 The current Scratch transport remains a distinct-origin `MessageChannel` adapter. An opener plus a distinct
 absolute referrer makes Scratch only a candidate. The adapter must receive an exact source, origin, protocol, and
 single-port attach within the 2,000 ms Scratch selection window. Once that port is accepted, the client never
