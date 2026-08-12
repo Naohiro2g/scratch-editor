@@ -1,8 +1,13 @@
 const crypto = require('crypto');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
+const {
+    DISPLAY_ALIAS_WORDS,
+    createDisplayAlias
+} = require('../../src/extensions/scratch3_mcremote/display-alias');
 const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
+const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
@@ -104,6 +109,13 @@ const waitFor = predicate => new Promise((resolve, reject) => {
         setImmediate(check);
     };
     check();
+});
+
+test('McRemote display aliases use the shared WireScope vocabulary', t => {
+    t.same(DISPLAY_ALIAS_WORDS, displayAliasFixture.words);
+    const values = [0, (27 << 8) + 1];
+    t.equal(createDisplayAlias(() => values.shift()), displayAliasFixture.example);
+    t.end();
 });
 
 const catalogBody = {
