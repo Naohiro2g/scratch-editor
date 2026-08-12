@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { ObserverStream } from '../src/observer'
-import { selectActiveStream } from '../src/view-state'
+import { selectActiveStream, streamViewStatus } from '../src/view-state'
 
 const stream = (id: string): ObserverStream =>
   ({
@@ -23,5 +23,16 @@ describe('WireScope stream tabs', () => {
 
     expect(selectActiveStream(streams, 'events').id).toBe('main')
     expect(selectActiveStream(streams, null).id).toBe('main')
+  })
+})
+
+describe('stream view status', () => {
+  test('does not leave the last snapshot connected after the observer session ends', () => {
+    expect(streamViewStatus('connected', true)).toBe('ended')
+  })
+
+  test('preserves live snapshot statuses before terminal state', () => {
+    expect(streamViewStatus('connected', false)).toBe('connected')
+    expect(streamViewStatus('error', false)).toBe('error')
   })
 })

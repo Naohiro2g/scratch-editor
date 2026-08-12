@@ -299,6 +299,11 @@ p {
   color: #62e4bd;
 }
 
+.stream-status.ended {
+  border-color: #7a4147;
+  color: #f18d96;
+}
+
 .content:not(.empty),
 .streams {
   display: flex;

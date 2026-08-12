@@ -5,7 +5,7 @@ import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
 import type { StationAttachErrorCode } from './station'
 import { createSameOriginStationAdapter, type StationAdapterStatus } from './station-adapter'
 import './styles.css'
-import { selectActiveStream } from './view-state'
+import { selectActiveStream, streamViewStatus } from './view-state'
 
 const root = document.querySelector<HTMLElement>('#app')
 if (!root) throw new Error('WireScope app root is missing')
@@ -185,14 +185,13 @@ const renderStreamTabs = (streams: readonly ObserverStream[], activeStream: Obse
     })
     tabs.append(tab)
   })
-  toolbar.append(
-    tabs,
-    make(
-      'span',
-      `stream-status ${activeStream.status}`,
-      t(activeStream.status === 'connected' ? 'streamConnected' : 'streamError'),
-    ),
-  )
+  const displayStatus = streamViewStatus(activeStream.status, currentStatus.kind === 'ended')
+  const displayStatusKey: Record<typeof displayStatus, MessageKey> = {
+    connected: 'streamConnected',
+    error: 'streamError',
+    ended: 'streamEnded',
+  }
+  toolbar.append(tabs, make('span', `stream-status ${displayStatus}`, t(displayStatusKey[displayStatus])))
   return toolbar
 }
 
@@ -389,8 +388,7 @@ const cleanup = startObserverClient(
     },
     onEnd: (reason) => {
       currentStatus = { kind: 'ended', reason }
-      renderStationAttach()
-      renderStatus()
+      refreshLocale()
     },
     onError: (error) => {
       console.error('startObserverClient: invalid observer session data', {
