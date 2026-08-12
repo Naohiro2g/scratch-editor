@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
+const {createDisplayAlias} = require('./display-alias');
 const {
     CatalogSource,
     CatalogStatus,
@@ -70,26 +71,6 @@ const AUTH_REASONS = [
     'token_not_found',
     'token_invalid'
 ];
-
-const DISPLAY_ALIAS_WORDS = [
-    'MOSS', 'ORBIT', 'EMBER', 'RIVER', 'MAPLE', 'COMET', 'CORAL', 'NOVA',
-    'PINE', 'CLOUD', 'FERN', 'LUNAR', 'CEDAR', 'SOLAR', 'WAVE', 'FLINT'
-];
-
-const randomUint32 = () => {
-    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
-        return crypto.getRandomValues(new Uint32Array(1))[0];
-    }
-    return Math.floor(Math.random() * 0x100000000);
-};
-
-const createDisplayAlias = () => {
-    const first = randomUint32();
-    const second = randomUint32();
-    return `${DISPLAY_ALIAS_WORDS[first % DISPLAY_ALIAS_WORDS.length]}-` +
-        `${DISPLAY_ALIAS_WORDS[second % DISPLAY_ALIAS_WORDS.length]}-${String((second >>> 8) % 1000000)
-            .padStart(6, '0')}`;
-};
 
 const BuildWorld = {
     OVERWORLD: 'overworld',
