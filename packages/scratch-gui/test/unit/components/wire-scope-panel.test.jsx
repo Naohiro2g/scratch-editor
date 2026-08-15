@@ -1,119 +1,129 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import {screen} from '@testing-library/react';
+import {screen, fireEvent} from '@testing-library/react';
 
 import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import WireScopePanel from '../../../src/components/wire-scope-panel/wire-scope-panel';
 import mcremoteMessages from '../../../src/lib/mcremote-l10n';
+import {HIGH_CONTRAST_MODE} from '../../../src/lib/settings/color-mode/index.js';
+import {launchWireScope} from '../../../src/lib/mcremote-wirescope-source';
+
+jest.mock('../../../src/lib/mcremote-wirescope-source', () => ({
+    launchWireScope: jest.fn()
+}));
 
 describe('WireScopePanel', () => {
-    const renderPanel = function (snapshot, props = {}) {
+    const renderPanel = function (snapshot, props = {}, locale = 'ja') {
         return renderWithIntl(
             <WireScopePanel
                 snapshot={snapshot}
                 {...props}
             />,
             {
-                locale: 'ja',
+                locale,
                 messages: {
-                    ...mcremoteMessages.ja,
-                    'gui.mcremote.wireScope.title': 'WireScope'
+                    ...mcremoteMessages[locale],
+                    'gui.mcremote.wireScope.title': 'WireScope mini'
                 }
             }
         );
     };
 
-    test('renders the active connection target from the observer snapshot', () => {
+    test('renders the mini in the Japanese Hiragana locale', () => {
+        renderPanel({
+            status: 'pairing',
+            sourceKind: 'scratch',
+            displayAlias: 'MOSS-ORBIT-27'
+        }, {}, 'ja-Hira');
+
+        expect(screen.getByRole('status', {name: 'じょうたい: ペアリングまち'})).toBeInTheDocument();
+    });
+
+    const expand = () => {
+        fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を開く'}));
+    };
+
+    test('starts compact with only the current connection status visible', () => {
+        renderPanel({
+            status: 'pairing',
+            sourceKind: 'scratch',
+            displayAlias: 'MOSS-ORBIT-27',
+            pairCode: '827-419',
+            pairCommand: '/mcremote pair 827-419'
+        });
+
+        expect(screen.getByRole('status', {name: '状態: ペアリング待ち'})).toBeInTheDocument();
+        expect(screen.queryByText('827-419')).not.toBeInTheDocument();
+    });
+
+    test('shows configured and actual targets when expanded', () => {
         renderPanel({
             status: 'connected',
-            streamId: 'default',
             connectionTarget: {
                 sandboxRoute: 'sb-dev.mc-remote.com',
                 label: 'Development Sandbox'
-            },
-            pairCode: '827-419',
-            pairCommand: '/mcremote pair 827-419',
-            hello: null,
-            frameLog: []
-        });
-
-        expect(screen.getByText('接続先')).toBeInTheDocument();
-        expect(screen.getByText('Development Sandbox - sb-dev.mc-remote.com')).toBeInTheDocument();
-    });
-
-    test('renders an unlisted GUI connection target without a guessed label', () => {
-        renderPanel(
-            {
-                status: 'disconnected',
-                streamId: 'default',
-                frameLog: []
-            },
-            {
-                connectionTarget: {
-                    sandboxRoute: 'minecraft.classroom.example'
-                }
             }
-        );
+        }, {
+            connectionTarget: {sandboxRoute: 'sb-dev.mc-remote.com'}
+        });
+        expand();
 
-        expect(screen.getByText('minecraft.classroom.example')).toBeInTheDocument();
+        expect(screen.getByText('設定先')).toBeInTheDocument();
+        expect(screen.getByText('実接続先')).toBeInTheDocument();
+        expect(screen.getByText('Development Sandbox - sb-dev.mc-remote.com')).toBeInTheDocument();
+        expect(screen.getByText('不要')).toBeInTheDocument();
     });
 
-    test('renders observed hello metadata and frame payloads', () => {
+    test('shows pairing instructions but no detailed observer payload', () => {
         renderPanel({
-            status: 'connected',
-            streamId: 'default',
-            connectionTarget: {
-                sandboxRoute: 'sb.mc-remote.com',
-                label: 'Sandbox'
-            },
+            status: 'pairing',
+            sourceKind: 'scratch',
+            displayAlias: 'MOSS-ORBIT-27',
             pairCode: '827-419',
             pairCommand: '/mcremote pair 827-419',
             hello: {
                 protocol: '21.0.0',
-                mc_version: '26.1.2',
-                supported_mc_versions: ['1.21.11'],
+                mc_version: '1.21.11',
                 world_constants: {y_sea: 63},
                 permissions: {build: true}
             },
-            frameLog: [
-                {
-                    sequence: 1,
-                    timestamp: 1710000000000,
-                    streamId: 'default',
-                    direction: 'send',
-                    method: 'hello',
-                    payload: {jsonrpc: '2.0', id: 1, method: 'hello'}
-                },
-                {
-                    sequence: 2,
-                    timestamp: 1710000001000,
-                    streamId: 'default',
-                    direction: 'receive',
-                    method: 'hello',
-                    payload: {jsonrpc: '2.0', id: 1, result: {y_sea: 63}}
-                }
-            ]
+            frameLog: [{
+                sequence: 1,
+                method: 'hello',
+                payload: {jsonrpc: '2.0'}
+            }]
         });
+        expand();
 
-        const badge = screen.getByRole('status', {name: '状態: 接続'});
-        expect(badge).toHaveTextContent('OK');
-        expect(badge).toHaveTextContent('接続');
-
-        expect(screen.getByText('Sandbox - sb.mc-remote.com')).toBeInTheDocument();
-        expect(screen.getByText('26.1.2 - 21.0.0')).toBeInTheDocument();
-        expect(screen.getByText('{"y_sea":63}')).toBeInTheDocument();
-        expect(screen.getByText('{"build":true}')).toBeInTheDocument();
+        expect(screen.getByText('827-419')).toBeInTheDocument();
         expect(screen.getByText('/mcremote pair 827-419')).toBeInTheDocument();
-        expect(screen.getByText('送信')).toBeInTheDocument();
-        expect(screen.getByText('受信')).toBeInTheDocument();
-        expect(screen.getByText('{"jsonrpc":"2.0","id":1,"method":"hello"}')).toBeInTheDocument();
-        expect(screen.getByText('{"jsonrpc":"2.0","id":1,"result":{"y_sea":63}}')).toBeInTheDocument();
+        expect(screen.getByText('Scratch · MOSS-ORBIT-27')).toBeInTheDocument();
+        expect(screen.queryByText('21.0.0')).not.toBeInTheDocument();
+        expect(screen.queryByText('{"y_sea":63}')).not.toBeInTheDocument();
+        expect(screen.queryByText('{"jsonrpc":"2.0"}')).not.toBeInTheDocument();
+    });
+
+    test.each([
+        ['not_connected', 'まず「接続する」ブロックを実行してください。'],
+        ['connection_disabled', 'このショーケースページでは Minecraft の操作が無効です。'],
+        ['token_expired', '「接続する」ブロックを実行し、もう一度ペアリングしてください。'],
+        ['protocol_mismatch', 'Scratch と McRemote サーバーのバージョンを揃えてください。'],
+        ['unknown', '接続を確認して、もう一度試してください。']
+    ])('projects stable reason %s into an actionable message', (reason, expected) => {
+        renderPanel({
+            status: 'error',
+            lastError: {reason, message: 'raw transport detail'}
+        });
+        expand();
+
+        expect(screen.getByText(expected)).toBeInTheDocument();
+        expect(screen.queryByText('raw transport detail')).not.toBeInTheDocument();
     });
 
     test('renders a status badge for each connection state', () => {
         const expectations = [
             ['disconnected', '状態: 未接続', '-'],
-            ['pairing', '状態: pair 待ち', '...'],
+            ['pairing', '状態: ペアリング待ち', '...'],
             ['connected', '状態: 接続', 'OK'],
             ['closed', '状態: 切断', 'X'],
             ['error', '状態: エラー', '!']
@@ -123,8 +133,45 @@ describe('WireScopePanel', () => {
             const {unmount} = renderPanel({status});
             const badge = screen.getByRole('status', {name: label});
             expect(badge).toHaveTextContent(icon);
-            expect(badge).toHaveTextContent(label.replace('状態: ', ''));
             unmount();
         }
+    });
+
+    test('collapses back to the status bar', () => {
+        renderPanel({
+            status: 'pairing',
+            pairCode: '827-419'
+        });
+        expand();
+        expect(screen.getByText('827-419')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を閉じる'}));
+
+        expect(screen.queryByText('827-419')).not.toBeInTheDocument();
+        expect(screen.getByRole('status', {name: '状態: ペアリング待ち'})).toBeInTheDocument();
+    });
+
+    test('flags high contrast when Color Mode is high contrast', () => {
+        const {container} = renderPanel(
+            {status: 'connected'},
+            {colorMode: HIGH_CONTRAST_MODE}
+        );
+
+        expect(container.querySelector('aside[data-high-contrast="true"]')).toBeInTheDocument();
+    });
+
+    test('opens independent WireScope only for a connected target', () => {
+        renderPanel({
+            status: 'connected',
+            sourceKind: 'scratch',
+            displayAlias: 'MOSS-ORBIT-000027'
+        }, {
+            wireScopeUrl: 'https://live.example/wirescope'
+        });
+        expand();
+
+        fireEvent.click(screen.getByRole('button', {name: 'WireScope を開く'}));
+
+        expect(launchWireScope).toHaveBeenCalledWith('https://live.example/wirescope');
     });
 });

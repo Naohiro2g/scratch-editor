@@ -4,9 +4,21 @@
   "connection_targets": [
     {
       "id": "stable",
+      "label": "Stable",
       "sandbox": "sb.mc-remote.com"
     }
   ],
   "connection_enabled": true,
-  "release_identity": "local-development"
+  "wirescope_url": "http://127.0.0.1:4173/",
+  "release_identity": "local-development",
+  "notices": [
+    {
+      "heading": "New: player.getPos / player.setPos",
+      "body": "Read and teleport the paired player's position from Scratch blocks.",
+      "link": {
+        "href": "https://mc-remote.com/",
+        "label": "Learn more"
+      }
+    }
+  ]
 }

@@ -116,15 +116,15 @@ packages/
 mc-remote/                  McRemote fork add-ons (@mc-remote/* scope, all private)
 ├── protocol/               @mc-remote/protocol  Wire contract (types + constants), dependency-free leaf
 ├── bridge/                 @mc-remote/bridge    Thin wss⇄TCP proxy to a Minecraft Sandbox; payload-transparent
-└── (live/)                 @mc-remote/live      Reserved: observer UI (brand "WireScope"); added in a later beta
+└── live/                   @mc-remote/live      Read-only observer UI and shared observer schema (brand "WireScope")
 scripts/                    Monorepo-level utility scripts
 ```
 
 The `mc-remote/` packages are the fork's additions for driving Minecraft from Scratch blocks; they are not part
-of upstream `scratch-editor`. `live/` is reserved by name only — it is not created yet (an empty workspace dir
-would trip the `mc-remote/*` glob), and is added when its implementation begins. The scratch-vm McRemote
-extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm at build time and keeps the wire
-constants inline. The bridge also avoids protocol imports so that it stays a payload-transparent transport proxy.
+of upstream `scratch-editor`. `live/` owns the independent WireScope web app, observer schema, and lifecycle
+fixture. The scratch-vm McRemote extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm
+at build time and keeps the wire constants inline. The bridge also avoids protocol imports so that it stays a
+payload-transparent transport proxy.
 
 McRemote OCI images are built only by the explicit `mc-remote-images.yml` workflow. Scratch packages the
 prebuilt `scratch-gui/build` directory with `Dockerfile.mc-remote`; Bridge packages its prebuilt `dist` and
@@ -142,6 +142,7 @@ lock-installed runtime dependency. Do not compile source on a deployment host.
 | `scratch-media-lib-scripts` | JavaScript | — | Jest |
 | `@mc-remote/protocol` | TypeScript | Vite (lib) | Vitest |
 | `@mc-remote/bridge` | TypeScript | Vite (Node bundle) | Vitest |
+| `@mc-remote/live` | TypeScript | Vite (web app + lib) | Vitest |
 
 `task-herder` represents the target stack for new packages (TypeScript + Vite + Vitest). The other packages
 reflect the legacy stack and are being migrated incrementally.

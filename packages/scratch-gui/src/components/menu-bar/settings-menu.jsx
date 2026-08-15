@@ -6,6 +6,7 @@ import {connect} from 'react-redux';
 import useMenuNavigation from '../../hooks/use-menu-navigation';
 
 import LanguageMenu from './language-menu.jsx';
+import McRemoteConnectionMenu from './mcremote-connection-menu.jsx';
 import MenuBarMenu from './menu-bar-menu.jsx';
 import {MenuSection} from '../menu/menu.jsx';
 import PreferenceMenu from './preference-menu.jsx';
@@ -126,6 +127,10 @@ const SettingsMenu = ({
                     isRtl={isRtl}
                     depth={depth + 1}
                 />}
+                <McRemoteConnectionMenu
+                    isRtl={isRtl}
+                    depth={depth + 1}
+                />
             </MenuSection>
         </MenuBarMenu>
     </button>);

@@ -4,6 +4,13 @@ const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
+const {createDisplayAlias} = require('./display-alias');
+const {
+    CatalogSource,
+    CatalogStatus,
+    IndexedDBCatalogCache,
+    validateCatalogResult
+} = require('./catalog');
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -31,9 +38,23 @@ const CLIENT_VERSION = '2100.0.0b2';
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
 const PAIR_POLL_INTERVAL_MS = 1000;
+
+/**
+ * Minimum time between live `player.getPos` requests made on behalf of a
+ * checked stage monitor. A monitor's reporter is re-evaluated every runtime
+ * step (about 30 times per second); without a floor here, checking a player
+ * position monitor would flood the bridge with that many requests per
+ * second. Explicit script calls (util.thread.updateMonitor is false) are
+ * never throttled.
+ * @type {number}
+ */
+const PLAYER_POS_MONITOR_THROTTLE_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
 const REDACTED = '[redacted]';
+const BLOCK_PICKER_ICON = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"%3E' +
+    '%3Cpath fill="%23fff" d="M3 3h7v7H3V3zm11 0h7v7h-7V3zM3 14h7v7H3v-7zm11 0h3v3h-3v-3z' +
+    'm5 0h2v7h-2v-7zm-5 5h3v2h-3v-2z"/%3E%3C/svg%3E';
 
 const ConnectionStatus = {
     DISCONNECTED: 'disconnected',
@@ -75,14 +96,19 @@ const BuildWorld = {
  *   world.setBlock  [x, y, z, block]                             -> reply
  *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> reply
  *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
+ *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
+ *   player.setPos   [world, x, y, z]                               -> reply
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
  * Coordinates are deltas from the build origin; the block argument is a
  * block_state_ref string passed through verbatim (the plugin completes the
  * namespace and canonicalises the reply). Scratch keeps build-origin y sealed
- * and sends 0 for `build.setOrigin` y. Command blocks use id-bearing requests
- * so success/error can be observed during release-gate testing.
+ * and sends 0 for `build.setOrigin` y. `player.*` coordinates share the same
+ * build-origin delta but do not depend on the world set by `build.setWorld`;
+ * the world is explicit in both `player.getPos`'s result and `player.setPos`'s
+ * params. Command blocks use id-bearing requests so success/error can be
+ * observed during release-gate testing.
  */
 
 /**
@@ -162,11 +188,48 @@ class Scratch3McRemoteBlocks {
         this._streamId = DEFAULT_STREAM_ID;
 
         /**
+         * Non-secret label used only to match this observation target across
+         * screens during one connection epoch.
+         * @type {string}
+         * @private
+         */
+        this._displayAlias = '';
+
+        /**
          * Last successful hello response summary.
          * @type {?object}
          * @private
          */
         this._helloInfo = null;
+
+        /**
+         * Catalog state exposed to the Scratch picker. Catalog data exists only
+         * while a hello-confirmed connection advertises the matching hash.
+         * @type {object}
+         * @private
+         */
+        this._catalogState = {
+            status: CatalogStatus.NOT_ACQUIRED,
+            mcVersion: '',
+            catalogHash: null,
+            source: null,
+            fetchedAt: null,
+            catalog: null
+        };
+
+        /**
+         * IndexedDB cache and connection generation used by catalog acquisition.
+         * @private
+         */
+        this._catalogCache = new IndexedDBCatalogCache();
+        this._catalogGeneration = 0;
+
+        /**
+         * Suppress repeated connection guidance during one disconnected period.
+         * @type {boolean}
+         * @private
+         */
+        this._disconnectedCommandNoticeShown = false;
 
         /**
          * Last connection/auth error summary.
@@ -195,6 +258,16 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._connectionTarget = null;
+
+        /**
+         * Last `player.getPos` result and when it was fetched, reused for
+         * monitor-driven `playerAttribute` polls within
+         * PLAYER_POS_MONITOR_THROTTLE_MS so a checked stage monitor does not
+         * issue a fresh request on every runtime step.
+         * @type {?{result: object, fetchedAt: number}}
+         * @private
+         */
+        this._playerPosCache = null;
     }
 
     /**
@@ -313,14 +386,15 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlock',
-                        default: 'set block at x:[X] y:[Y] z:[Z] to [BLOCK]',
+                        default: 'set block at x:[X] y:[Y] z:[Z] to [BLOCK] [PICKER]',
                         description: 'Set a single block'
                     }),
                     arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'}
+                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
                 {
@@ -328,7 +402,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlocks',
-                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK]',
+                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK] [PICKER]',
                         description: 'Fill a cuboid of blocks'
                     }),
                     arguments: {
@@ -338,7 +412,8 @@ class Scratch3McRemoteBlocks {
                         X2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z2: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'}
+                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
                 {
@@ -354,9 +429,95 @@ class Scratch3McRemoteBlocks {
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
+                },
+                '---',
+                {
+                    opcode: 'playerAttribute',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.playerAttribute',
+                        default: 'player\'s [PROPERTY]',
+                        description: 'Report an attribute of the paired Minecraft player'
+                    }),
+                    arguments: {
+                        PROPERTY: {
+                            type: ArgumentType.STRING,
+                            menu: 'playerAttributes'
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPlayerPos',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerPos',
+                        default: 'move player to [WORLD] x:[X] y:[Y] z:[Z]',
+                        description: 'Teleport the paired player to a dimension and position'
+                    }),
+                    arguments: {
+                        WORLD: {
+                            type: ArgumentType.STRING,
+                            menu: 'worlds',
+                            defaultValue: BuildWorld.OVERWORLD
+                        },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setPlayerXYZ',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerXYZ',
+                        default: 'move player to x:[X] y:[Y] z:[Z]',
+                        description: 'Teleport the paired player within the player\'s current dimension'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
                 }
             ],
             menus: {
+                playerAttributes: {
+                    acceptReporters: false,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.world',
+                                default: 'dimension',
+                                description: 'Menu label for the paired player\'s current Minecraft dimension'
+                            }),
+                            value: 'world'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.x',
+                                default: 'x position',
+                                description: 'Menu label for the paired player\'s x position'
+                            }),
+                            value: 'x'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.y',
+                                default: 'y position',
+                                description: 'Menu label for the paired player\'s y position'
+                            }),
+                            value: 'y'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.z',
+                                default: 'z position',
+                                description: 'Menu label for the paired player\'s z position'
+                            }),
+                            value: 'z'
+                        }
+                    ]
+                },
                 worlds: {
                     acceptReporters: true,
                     items: [
@@ -462,6 +623,7 @@ class Scratch3McRemoteBlocks {
     _resetObservationForConnection () {
         this._connectionStatus = ConnectionStatus.DISCONNECTED;
         this._streamId = DEFAULT_STREAM_ID;
+        this._displayAlias = '';
         this._helloInfo = null;
         this._lastError = null;
         this._frameLog = [];
@@ -469,7 +631,130 @@ class Scratch3McRemoteBlocks {
         this._nextRequestId = 1;
         this._pairCode = '';
         this._pairCommand = '';
+        this._playerPosCache = null;
+        this._resetCatalog();
         this._emitObservation();
+    }
+
+    /**
+     * Clear picker data at every connection boundary. Cached catalogs remain in
+     * IndexedDB but are not usable until a later hello confirms their hash.
+     * @private
+     */
+    _resetCatalog () {
+        this._catalogGeneration++;
+        this._catalogState = {
+            status: CatalogStatus.NOT_ACQUIRED,
+            mcVersion: '',
+            catalogHash: null,
+            source: null,
+            fetchedAt: null,
+            catalog: null
+        };
+        this._emitCatalog();
+    }
+
+    /**
+     * @returns {object} current catalog state for the picker UI.
+     */
+    getCatalogState () {
+        return Object.assign({}, this._catalogState);
+    }
+
+    /**
+     * Emit a full catalog snapshot. Catalog data is runtime-only and is not
+     * serialized into a Scratch project.
+     * @private
+     */
+    _emitCatalog () {
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_CATALOG_UPDATE, this.getCatalogState());
+        }
+    }
+
+    /**
+     * @param {number} generation connection generation captured after hello.
+     * @param {string} catalogHash hello-advertised hash.
+     * @returns {boolean} whether an asynchronous catalog result is still current.
+     * @private
+     */
+    _isCurrentCatalogRequest (generation, catalogHash) {
+        return generation === this._catalogGeneration &&
+            this._connectionStatus === ConnectionStatus.CONNECTED &&
+            this._helloInfo && this._helloInfo.catalogHash === catalogHash;
+    }
+
+    /**
+     * Acquire the hello-advertised catalog from a validated cache entry or the
+     * active server. Failure is non-fatal to the McRemote connection.
+     * @param {object} helloResult successful hello result.
+     * @returns {Promise<void>} resolves after best-effort acquisition.
+     * @private
+     */
+    _acquireCatalog (helloResult) {
+        const advertisedHash = helloResult && typeof helloResult.catalogHash === 'string' ?
+            helloResult.catalogHash.toLowerCase() : '';
+        if (!advertisedHash) return Promise.resolve();
+
+        const generation = this._catalogGeneration;
+        const mcVersion = helloResult.mc_version || '';
+        const publish = (catalog, source, fetchedAt) => {
+            if (!this._isCurrentCatalogRequest(generation, advertisedHash)) return false;
+            this._catalogState = {
+                status: CatalogStatus.CURRENT,
+                mcVersion,
+                catalogHash: advertisedHash,
+                source,
+                fetchedAt: fetchedAt || null,
+                catalog
+            };
+            this._emitCatalog();
+            return true;
+        };
+        const fetchFromServer = () => this._request('catalog.get', [])
+            .then(result => validateCatalogResult(result, advertisedHash))
+            .then(catalog => {
+                const fetchedAt = Date.now();
+                if (!publish(catalog, CatalogSource.NETWORK, fetchedAt)) return;
+                this._catalogCache.set(advertisedHash, {catalog, fetchedAt}).catch(error => {
+                    log.warn(`McRemote: catalog cache write failed: ${error.message}`);
+                });
+            });
+
+        return this._catalogCache.get(advertisedHash)
+            .catch(error => {
+                log.warn(`McRemote: catalog cache read failed: ${error.message}`);
+                return null;
+            })
+            .then(record => {
+                if (!record || !record.catalog) return null;
+                return validateCatalogResult(record.catalog, advertisedHash)
+                    .then(catalog => ({catalog, fetchedAt: record.fetchedAt || null}))
+                    .catch(error => {
+                        log.warn(`McRemote: cached catalog rejected: ${error.reason || error.message}`);
+                        return null;
+                    });
+            })
+            .then(cached => {
+                if (cached) {
+                    publish(cached.catalog, CatalogSource.CACHE, cached.fetchedAt);
+                    return;
+                }
+                return fetchFromServer();
+            })
+            .catch(error => {
+                if (!this._isCurrentCatalogRequest(generation, advertisedHash)) return;
+                this._catalogState = {
+                    status: CatalogStatus.UNAVAILABLE,
+                    mcVersion,
+                    catalogHash: advertisedHash,
+                    source: null,
+                    fetchedAt: null,
+                    catalog: null
+                };
+                this._emitCatalog();
+                log.warn(`McRemote: catalog acquisition failed: ${error.reason || error.message}`);
+            });
     }
 
     /**
@@ -480,6 +765,8 @@ class Scratch3McRemoteBlocks {
         return {
             status: this._connectionStatus,
             streamId: this._streamId,
+            sourceKind: 'scratch',
+            displayAlias: this._displayAlias,
             connectionTarget: Object.assign({}, this._currentConnectionTarget()),
             pairCode: this._pairCode,
             pairCommand: this._pairCommand,
@@ -519,7 +806,7 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
-     * Store the hello fields surfaced by WireScope v0.
+     * Store observer-safe hello fields for internal connection diagnostics.
      * @param {object} result - hello response payload.
      * @private
      */
@@ -532,11 +819,14 @@ class Scratch3McRemoteBlocks {
         this._helloInfo = result && typeof result === 'object' ? {
             protocol: result.protocol || '',
             mc_version: result.mc_version || '',
+            catalogHash: typeof result.catalogHash === 'string' ? result.catalogHash.toLowerCase() : null,
             supported_mc_versions: Array.isArray(result.supported_mc_versions) ?
                 result.supported_mc_versions.slice() :
                 [],
             world_constants: worldConstants,
-            permissions: result.permissions || null
+            permissions: result.permissions || null,
+            ...(typeof result.world === 'string' ? {world: result.world} : {}),
+            ...(Array.isArray(result.origin) && result.origin.length === 3 ? {origin: result.origin.slice()} : {})
         } : null;
     }
 
@@ -626,6 +916,23 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Notify the GUI once when a command is attempted without a usable
+     * connection. A successful hello starts a fresh connection epoch.
+     * @param {Error} error rejected command error.
+     * @private
+     */
+    _notifyDisconnectedCommand (error) {
+        if (this._disconnectedCommandNoticeShown) return;
+        if (!error || (error.reason !== 'not_connected' && error.reason !== 'connection_disabled')) return;
+        this._disconnectedCommandNoticeShown = true;
+        this._lastError = this._errorInfo(error);
+        this._emitObservation();
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+        }
+    }
+
+    /**
      * Open the wss connection to the bridge and perform the hello handshake.
      * @param {string} [sandbox] - optional named sandbox to target.
      * @returns {Promise} resolves once the handshake completes.
@@ -663,7 +970,9 @@ class Scratch3McRemoteBlocks {
                 error.code = event && event.code;
                 error.reason = event && event.reason;
                 this._socket = null;
+                this._displayAlias = '';
                 this._setConnectionStatus(ConnectionStatus.CLOSED, error);
+                this._resetCatalog();
                 this._rejectPending(error);
                 reject(error);
             });
@@ -696,7 +1005,10 @@ class Scratch3McRemoteBlocks {
         return this._request('hello', params).then(result => {
             this._assertCompatibleProtocol(result && result.protocol);
             this._recordHelloInfo(result);
+            if (!this._displayAlias) this._displayAlias = createDisplayAlias();
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
+            this._disconnectedCommandNoticeShown = false;
+            this._acquireCatalog(result);
             return result;
         });
     }
@@ -968,13 +1280,21 @@ class Scratch3McRemoteBlocks {
      */
     _request (method, params) {
         if (!this._runtimeConfig().connectionEnabled) {
-            return Promise.reject(this._connectionDisabledError());
+            const error = this._connectionDisabledError();
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
-            return Promise.reject(new Error('not connected to bridge'));
+            const error = new Error('not connected to bridge');
+            error.reason = 'not_connected';
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         if (!this._isSessionSetupMethod(method) && this._connectionStatus !== ConnectionStatus.CONNECTED) {
-            return Promise.reject(new Error('not connected to McRemote server'));
+            const error = new Error('not connected to McRemote server');
+            error.reason = 'not_connected';
+            this._notifyDisconnectedCommand(error);
+            return Promise.reject(error);
         }
         const id = this._nextRequestId++;
         return new Promise((resolve, reject) => {
@@ -1057,6 +1377,63 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.Z)
         ]).then(result => (typeof result === 'undefined' ? '' : result),
             () => '');
+    }
+
+    /**
+     * Fetch the paired player's current world/position. Monitor-driven calls
+     * (a checked stage monitor re-evaluates its reporter on every runtime
+     * step) reuse a cached result for PLAYER_POS_MONITOR_THROTTLE_MS instead
+     * of issuing a fresh bridge request; explicit script calls always fetch.
+     * @param {BlockUtility} util - execution context for this block call.
+     * @returns {Promise} resolves with the `player.getPos` result.
+     * @private
+     */
+    _getPlayerPos (util) {
+        const isMonitorPoll = Boolean(util && util.thread && util.thread.updateMonitor);
+        if (isMonitorPoll && this._playerPosCache &&
+            (Date.now() - this._playerPosCache.fetchedAt) < PLAYER_POS_MONITOR_THROTTLE_MS) {
+            return Promise.resolve(this._playerPosCache.result);
+        }
+        return this._request('player.getPos', []).then(result => {
+            this._playerPosCache = {result, fetchedAt: Date.now()};
+            return result;
+        });
+    }
+
+    playerAttribute (args, util) {
+        return this._getPlayerPos(util).then(result => {
+            const property = Cast.toString(args.PROPERTY);
+            if (property === 'world') {
+                return result && result.world ? result.world : '';
+            }
+            const index = {x: 0, y: 1, z: 2}[property];
+            return result && Array.isArray(result.pos) && typeof index !== 'undefined' ?
+                result.pos[index] :
+                '';
+        }, () => '');
+    }
+
+    setPlayerPos (args) {
+        return this._commandRequest('player.setPos', [
+            Cast.toString(args.WORLD),
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]);
+    }
+
+    setPlayerXYZ (args) {
+        return this._request('player.getPos', []).then(
+            result => this._commandRequest('player.setPos', [
+                result && result.world,
+                Cast.toNumber(args.X),
+                Cast.toNumber(args.Y),
+                Cast.toNumber(args.Z)
+            ]),
+            error => {
+                log.warn(`McRemote: player.getPos failed before setPlayerXYZ: ${error.reason || error.message}`);
+            }
+        );
     }
 }
 

@@ -42,6 +42,10 @@
 .inactive {
     opacity: 0;
 }
+.logo-group {
+    position: relative;
+}
+
 .scratch-logo {
     height:  1.6rem;
     vertical-align: middle;
@@ -145,8 +149,8 @@
 }
 
 .mcremote-connection-text code {
-    color: $text-primary;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: $ui-white;
+    font-family: Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     font-size: .75rem;
     font-weight: normal;
 }

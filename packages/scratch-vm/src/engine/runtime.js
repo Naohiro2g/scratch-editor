@@ -728,6 +728,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for McRemote catalog picker state updates.
+     * @constant {string}
+     */
+    static get MCREMOTE_CATALOG_UPDATE () {
+        return 'MCREMOTE_CATALOG_UPDATE';
+    }
+
+    /**
+     * Event name for actionable McRemote command guidance.
+     * @constant {string}
+     */
+    static get MCREMOTE_ACTIONABLE_ERROR () {
+        return 'MCREMOTE_ACTIONABLE_ERROR';
+    }
+
+    /**
      * Event name for reporting that blocksInfo was updated.
      * @constant {string}
      */
@@ -1354,6 +1370,7 @@ class Runtime extends EventEmitter {
         // check if this is not one of those cases. E.g. an inline image on a block.
         if (argTypeInfo.fieldType === 'field_image') {
             argJSON = this._constructInlineImageJson(argInfo);
+            argJSON.name = placeholder;
         } else {
             // Construct input value
 

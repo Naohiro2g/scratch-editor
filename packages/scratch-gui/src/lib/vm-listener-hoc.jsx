@@ -10,9 +10,16 @@ import {updateBlockDrag} from '../reducers/block-drag';
 import {updateMonitors} from '../reducers/monitors';
 import {setProjectChanged, setProjectUnchanged} from '../reducers/project-changed';
 import {setRunningState, setTurboState, setStartedState} from '../reducers/vm-status';
-import {showExtensionAlert, showStandardAlert, closeAlertWithId} from '../reducers/alerts';
+import {
+    closeAlertWithId,
+    showAlertWithTimeout,
+    showExtensionAlert,
+    showStandardAlert
+} from '../reducers/alerts';
 import {updateMicIndicator} from '../reducers/mic-indicator';
+import {updateMcRemoteCatalog} from '../reducers/mcremote-catalog';
 import {updateMcRemoteObservation} from '../reducers/mcremote-observation';
+import {updateWireScopeObservation} from './mcremote-wirescope-source';
 
 /*
  * Higher Order Component to manage events emitted by the VM
@@ -49,6 +56,8 @@ const vmListenerHOC = function (WrappedComponent) {
             this.props.vm.on('MIC_LISTENING', this.props.onMicListeningUpdate);
             this.props.vm.on('EXTENSION_DATA_LOADING', this.props.onExtensionDataLoading);
             this.props.vm.on('MCREMOTE_OBSERVATION_UPDATE', this.props.onMcRemoteObservationUpdate);
+            this.props.vm.on('MCREMOTE_CATALOG_UPDATE', this.props.onMcRemoteCatalogUpdate);
+            this.props.vm.on('MCREMOTE_ACTIONABLE_ERROR', this.props.onMcRemoteActionableError);
 
         }
         componentDidMount () {
@@ -84,6 +93,8 @@ const vmListenerHOC = function (WrappedComponent) {
             this.props.vm.removeListener('MIC_LISTENING', this.props.onMicListeningUpdate);
             this.props.vm.removeListener('EXTENSION_DATA_LOADING', this.props.onExtensionDataLoading);
             this.props.vm.removeListener('MCREMOTE_OBSERVATION_UPDATE', this.props.onMcRemoteObservationUpdate);
+            this.props.vm.removeListener('MCREMOTE_CATALOG_UPDATE', this.props.onMcRemoteCatalogUpdate);
+            this.props.vm.removeListener('MCREMOTE_ACTIONABLE_ERROR', this.props.onMcRemoteActionableError);
 
             if (this.props.attachKeyboardEvents) {
                 document.removeEventListener('keydown', this.handleKeyDown);
@@ -148,6 +159,8 @@ const vmListenerHOC = function (WrappedComponent) {
                 onKeyDown,
                 onKeyUp,
                 onMicListeningUpdate,
+                onMcRemoteActionableError,
+                onMcRemoteCatalogUpdate,
                 onMcRemoteObservationUpdate,
                 onExtensionDataLoading,
                 onMonitorsUpdate,
@@ -174,6 +187,8 @@ const vmListenerHOC = function (WrappedComponent) {
         onKeyDown: PropTypes.func,
         onKeyUp: PropTypes.func,
         onMicListeningUpdate: PropTypes.func.isRequired,
+        onMcRemoteActionableError: PropTypes.func.isRequired,
+        onMcRemoteCatalogUpdate: PropTypes.func.isRequired,
         onMcRemoteObservationUpdate: PropTypes.func.isRequired,
         onMonitorsUpdate: PropTypes.func.isRequired,
         onProjectChanged: PropTypes.func.isRequired,
@@ -234,7 +249,16 @@ const vmListenerHOC = function (WrappedComponent) {
             dispatch(updateMicIndicator(listening));
         },
         onMcRemoteObservationUpdate: snapshot => {
+            updateWireScopeObservation(snapshot);
             dispatch(updateMcRemoteObservation(snapshot));
+        },
+        onMcRemoteCatalogUpdate: snapshot => {
+            dispatch(updateMcRemoteCatalog(snapshot));
+        },
+        onMcRemoteActionableError: error => {
+            const alertId = error && error.reason === 'connection_disabled' ?
+                'mcremoteConnectionDisabled' : 'mcremoteNotConnected';
+            showAlertWithTimeout(dispatch, alertId);
         },
         onExtensionDataLoading: loading => {
             if (loading) {

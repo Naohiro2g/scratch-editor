@@ -159,6 +159,12 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot => {
             this.emit(Runtime.MCREMOTE_OBSERVATION_UPDATE, snapshot);
         });
+        this.runtime.on(Runtime.MCREMOTE_CATALOG_UPDATE, snapshot => {
+            this.emit(Runtime.MCREMOTE_CATALOG_UPDATE, snapshot);
+        });
+        this.runtime.on(Runtime.MCREMOTE_ACTIONABLE_ERROR, error => {
+            this.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, error);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 

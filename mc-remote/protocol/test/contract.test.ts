@@ -12,6 +12,7 @@ describe('protocol constants', () => {
 
   it('uses the TCP dot names as wire methods', () => {
     expect(Method.hello).toBe('hello')
+    expect(Method.catalogGet).toBe('catalog.get')
     expect(Method.chatPost).toBe('chat.post')
     expect(Method.buildSetWorld).toBe('build.setWorld')
     expect(Method.buildSetOrigin).toBe('build.setOrigin')

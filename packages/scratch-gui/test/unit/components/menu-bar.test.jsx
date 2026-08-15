@@ -110,6 +110,8 @@ describe('MenuBar Component', () => {
         localStorage.removeItem('mcremote.connectionTarget.v1');
         const {component, store} = getComponentWithStore();
         const {container, getByText} = renderWithIntl(component);
+        const settingsButton = container.querySelector('button[aria-label="Settings menu"]');
+        fireEvent.click(settingsButton);
         const button = container.querySelector('button[aria-label="McRemote connection menu"]');
 
         fireEvent.click(button);

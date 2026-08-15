@@ -219,6 +219,36 @@ const alerts = [
         level: AlertLevels.SUCCESS
     },
     {
+        alertId: 'mcremoteNotConnected',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['mcremoteNotConnected', 'mcremoteConnectionDisabled'],
+        content: (
+            <FormattedMessage
+                defaultMessage="Run the McRemote connect block first."
+                description="Guidance after a Minecraft command runs without a connection"
+                id="gui.alerts.mcremoteNotConnected"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 5
+    },
+    {
+        alertId: 'mcremoteConnectionDisabled',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['mcremoteNotConnected', 'mcremoteConnectionDisabled'],
+        content: (
+            <FormattedMessage
+                defaultMessage="Minecraft commands are turned off in this showcase."
+                description="Guidance after a Minecraft command runs in a connection-disabled showcase"
+                id="gui.alerts.mcremoteConnectionDisabled"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 5
+    },
+    {
         alertId: 'loadingExtensionData',
         alertType: AlertTypes.STANDARD,
         clearList: ['loadingExtensionData'],

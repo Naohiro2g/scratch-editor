@@ -78,4 +78,25 @@ describe('showcaseRuntimeConfig', () => {
     test('rejects a release identity that would not identify anything', () => {
         expect(() => showcaseRuntimeConfig(deployed, '   ')).toThrow(/release identity/i);
     });
+
+    test('prepends the showcase disclaimer notice when none are configured', () => {
+        const showcase = showcaseRuntimeConfig(deployed, 'abc123');
+
+        expect(showcase.notices).toEqual([
+            {heading: 'Showcase build', body: 'This page is a showcase with the Minecraft connection turned off.'}
+        ]);
+    });
+
+    test('prepends the showcase disclaimer ahead of configured notices, keeping them intact', () => {
+        const withNotices = Object.assign({}, deployed, {
+            notices: [{heading: 'New blocks', body: 'player.getPos and player.setPos are here.'}]
+        });
+
+        const showcase = showcaseRuntimeConfig(withNotices, 'abc123');
+
+        expect(showcase.notices).toEqual([
+            {heading: 'Showcase build', body: 'This page is a showcase with the Minecraft connection turned off.'},
+            {heading: 'New blocks', body: 'player.getPos and player.setPos are here.'}
+        ]);
+    });
 });

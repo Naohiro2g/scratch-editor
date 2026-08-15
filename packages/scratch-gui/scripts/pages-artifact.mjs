@@ -65,9 +65,22 @@ const prunePagesArtifact = buildDir => {
 };
 
 /**
+ * Notice prepended ahead of any configured notices on a showcase deployment, so a viewer sees
+ * the disclaimer first regardless of what else is configured. Wording matches the
+ * `connection_disabled` block rejection (`mcremote.connectionDisabled` in the McRemote extension)
+ * for consistency between the two surfaces.
+ */
+const SHOWCASE_NOTICE = Object.freeze({
+    heading: 'Showcase build',
+    body: 'This page is a showcase with the Minecraft connection turned off.'
+});
+
+/**
  * Derive the runtime configuration a showcase deployment serves. The build already compiles the
  * connection off; turning it off here as well is the second half of the guard, so neither one
- * standing alone decides whether the page can reach a sandbox.
+ * standing alone decides whether the page can reach a sandbox. Notices behave the same way as a
+ * container deployment (whatever is configured is shown as-is), except the showcase disclaimer is
+ * always prepended so a viewer is not left thinking a stalled connection is a real one.
  * @param {object} config - runtime configuration the build produced.
  * @param {string} releaseIdentity - identity of the source being published, e.g. a commit SHA.
  * @returns {object} runtime configuration to serve.
@@ -78,9 +91,11 @@ const showcaseRuntimeConfig = (config, releaseIdentity) => {
     if (!identity) {
         throw new Error('showcaseRuntimeConfig: a non-empty release identity is required');
     }
+    const configuredNotices = Array.isArray(config.notices) ? config.notices : [];
     return Object.assign({}, config, {
         connection_enabled: false,
-        release_identity: identity
+        release_identity: identity,
+        notices: [SHOWCASE_NOTICE, ...configuredNotices]
     });
 };
 

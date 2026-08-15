@@ -11,6 +11,7 @@ import analytics from '../lib/analytics';
 import log from '../lib/log.js';
 import Prompt from './prompt.jsx';
 import BlocksComponent from '../components/blocks/blocks.jsx';
+import McRemoteBlockPicker from '../components/mcremote-block-picker/mcremote-block-picker.jsx';
 import ExtensionLibrary from './extension-library.jsx';
 import extensionData from '../lib/libraries/extensions/index.jsx';
 import CustomProcedures from './custom-procedures.jsx';
@@ -78,6 +79,9 @@ class Blocks extends React.Component {
             'handleMonitorsUpdate',
             'handleExtensionAdded',
             'handleBlocksInfoUpdate',
+            'handleMcRemoteBlockPickerApply',
+            'handleMcRemoteBlockPickerClose',
+            'handleMcRemoteBlockPickerStart',
             'onTargetsUpdate',
             'onVisualReport',
             'onWorkspaceUpdate',
@@ -93,7 +97,8 @@ class Blocks extends React.Component {
         this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
 
         this.state = {
-            prompt: null
+            prompt: null,
+            mcRemoteBlockPicker: null
         };
         this.onTargetsUpdate = debounce(this.onTargetsUpdate, 100);
         this.toolboxUpdateQueue = [];
@@ -192,13 +197,15 @@ class Blocks extends React.Component {
     shouldComponentUpdate (nextProps, nextState) {
         return (
             this.state.prompt !== nextState.prompt ||
+            this.state.mcRemoteBlockPicker !== nextState.mcRemoteBlockPicker ||
             this.props.isVisible !== nextProps.isVisible ||
             this._renderedToolboxXML !== nextProps.toolboxXML ||
             this.props.extensionLibraryVisible !== nextProps.extensionLibraryVisible ||
             this.props.customProceduresVisible !== nextProps.customProceduresVisible ||
             this.props.locale !== nextProps.locale ||
             this.props.anyModalVisible !== nextProps.anyModalVisible ||
-            this.props.stageSize !== nextProps.stageSize
+            this.props.stageSize !== nextProps.stageSize ||
+            this.props.mcRemoteCatalog !== nextProps.mcRemoteCatalog
         );
     }
     componentDidUpdate (prevProps) {
@@ -558,6 +565,7 @@ class Blocks extends React.Component {
                 .map(fieldTypeName => categoryInfo.customFieldTypes[fieldTypeName].scratchBlocksDefinition));
         defineBlocks(categoryInfo.menus);
         defineBlocks(categoryInfo.blocks);
+        this.installMcRemoteBlockPicker(categoryInfo);
         // Note that Blockly uses the UK spelling of "colour", so fields that
         // interact directly with Blockly follow that convention, while Scratch
         // code uses the US spelling of "color".
@@ -600,6 +608,48 @@ class Blocks extends React.Component {
     handleBlocksInfoUpdate (categoryInfo) {
         // @todo Later we should replace this to avoid all the warnings from redefining blocks.
         this.handleExtensionAdded(categoryInfo);
+    }
+    installMcRemoteBlockPicker (categoryInfo) {
+        if (categoryInfo.id !== 'mcremote') return;
+        const openPicker = this.handleMcRemoteBlockPickerStart;
+        ['mcremote_setBlock', 'mcremote_setBlocks'].forEach(type => {
+            const definition = this.ScratchBlocks.Blocks[type];
+            if (!definition || typeof definition.init !== 'function') {
+                throw new Error(`Blocks.installMcRemoteBlockPicker: missing block definition ${type}`);
+            }
+            const originalInit = definition.init;
+            definition.init = function () {
+                originalInit.call(this);
+                const pickerField = this.getField('PICKER');
+                if (!pickerField) {
+                    throw new Error(`Blocks.installMcRemoteBlockPicker: ${type} is missing PICKER`);
+                }
+                pickerField.setOnClickHandler(() => openPicker(this));
+            };
+        });
+    }
+    handleMcRemoteBlockPickerStart (block) {
+        const input = block.getInput('BLOCK');
+        const inputBlock = input && input.connection ? input.connection.targetBlock() : null;
+        const literalField = inputBlock && inputBlock.isShadow() ? inputBlock.getField('TEXT') : null;
+        this.setState({
+            mcRemoteBlockPicker: {
+                literalField,
+                initialValue: literalField ? literalField.getValue() : ''
+            }
+        });
+    }
+    handleMcRemoteBlockPickerApply (value) {
+        const picker = this.state.mcRemoteBlockPicker;
+        if (!picker || !picker.literalField) {
+            log.warn('Blocks.handleMcRemoteBlockPickerApply: no editable literal field');
+            return;
+        }
+        picker.literalField.setValue(value);
+        this.handleMcRemoteBlockPickerClose();
+    }
+    handleMcRemoteBlockPickerClose () {
+        this.setState({mcRemoteBlockPicker: null});
     }
     handleCategorySelected (categoryId) {
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
@@ -679,6 +729,7 @@ class Blocks extends React.Component {
             vm,
             isRtl,
             isVisible,
+            mcRemoteCatalog,
             onActivateColorPicker,
             onOpenConnectionModal,
             onOpenSoundRecorder,
@@ -715,6 +766,15 @@ class Blocks extends React.Component {
                         onOk={this.handlePromptCallback}
                     />
                 ) : null}
+                {this.state.mcRemoteBlockPicker ? (
+                    <McRemoteBlockPicker
+                        canApply={Boolean(this.state.mcRemoteBlockPicker.literalField)}
+                        catalogState={mcRemoteCatalog}
+                        initialValue={this.state.mcRemoteBlockPicker.initialValue}
+                        onApply={this.handleMcRemoteBlockPickerApply}
+                        onCancel={this.handleMcRemoteBlockPickerClose}
+                    />
+                ) : null}
                 {extensionLibraryVisible ? (
                     <ExtensionLibrary
                         vm={vm}
@@ -745,6 +805,7 @@ Blocks.propTypes = {
     isVisible: PropTypes.bool,
     locale: PropTypes.string.isRequired,
     messages: PropTypes.objectOf(PropTypes.string),
+    mcRemoteCatalog: PropTypes.object,
     onActivateColorPicker: PropTypes.func,
     onActivateCustomProcedures: PropTypes.func,
     onOpenConnectionModal: PropTypes.func,
@@ -810,6 +871,7 @@ const mapStateToProps = state => ({
     isRtl: state.locales.isRtl,
     locale: state.locales.locale,
     messages: state.locales.messages,
+    mcRemoteCatalog: state.scratchGui.mcremoteCatalog,
     toolboxXML: state.scratchGui.toolbox.toolboxXML,
     customProceduresVisible: state.scratchGui.customProcedures.active,
     workspaceMetrics: state.scratchGui.workspaceMetrics,
