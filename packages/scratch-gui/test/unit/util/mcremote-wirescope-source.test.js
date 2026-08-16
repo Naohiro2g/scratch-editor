@@ -133,13 +133,8 @@ describe('McRemote WireScope source adapter', () => {
                 return array;
             }},
             now: jest.fn(() => 5000),
-            setTimeout: jest.fn(function () {
-                if (this !== sourceWindow) throw new TypeError('Illegal invocation');
-                return 9;
-            }),
-            clearTimeout: jest.fn(function () {
-                if (this !== sourceWindow) throw new TypeError('Illegal invocation');
-            })
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
         };
         const source = createWireScopeSource(environment);
         source.update(connectedObservation());
@@ -169,6 +164,7 @@ describe('McRemote WireScope source adapter', () => {
         });
         expect(grantMessage.grant).toHaveLength(48);
         expect(JSON.stringify(observerWindow.postMessage.mock.calls)).not.toContain(grantMessage.grant);
+        expect(environment.setTimeout.mock.contexts[0]).toBe(sourceWindow);
 
         port1.listener({
             data: {
@@ -191,6 +187,7 @@ describe('McRemote WireScope source adapter', () => {
             }
         });
         expect(port1.postMessage).toHaveBeenCalledTimes(2);
+        expect(environment.clearTimeout.mock.contexts[0]).toBe(sourceWindow);
 
         source.update({status: 'closed'});
         expect(port1.postMessage.mock.calls[2][0]).toEqual({
