@@ -88,7 +88,11 @@ const mcremoteMessages = {
         'mcremote.playerAttribute.x': 'x座標',
         'mcremote.playerAttribute.y': 'y座標',
         'mcremote.playerAttribute.z': 'z座標',
+        'mcremote.playerAttribute.yaw': '水平方向',
+        'mcremote.playerAttribute.pitch': '上下方向',
         'mcremote.setPlayerPos': 'プレイヤーを [WORLD] x:[X] y:[Y] z:[Z] へ移動する',
+        'mcremote.setPlayerPose':
+            'プレイヤーを [WORLD] x:[X] y:[Y] z:[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する',
         'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へ移動する'
     },
     'ja-Hira': {
@@ -165,7 +169,11 @@ const mcremoteMessages = {
         'mcremote.playerAttribute.x': 'xざひょう',
         'mcremote.playerAttribute.y': 'yざひょう',
         'mcremote.playerAttribute.z': 'zざひょう',
+        'mcremote.playerAttribute.yaw': 'よこのむき',
+        'mcremote.playerAttribute.pitch': 'うえしたのむき',
         'mcremote.setPlayerPos': 'プレイヤーを [WORLD] x:[X] y:[Y] z:[Z] へうごかす',
+        'mcremote.setPlayerPose':
+            'プレイヤーを [WORLD] x:[X] y:[Y] z:[Z] よこのむき:[YAW] うえしたのむき:[PITCH] へうごかす',
         'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へうごかす'
     }
 };

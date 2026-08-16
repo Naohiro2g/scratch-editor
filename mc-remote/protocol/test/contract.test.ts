@@ -19,6 +19,8 @@ describe('protocol constants', () => {
     expect(Method.worldSetBlock).toBe('world.setBlock')
     expect(Method.worldSetBlocks).toBe('world.setBlocks')
     expect(Method.worldGetBlock).toBe('world.getBlock')
+    expect(Method.playerGetPose).toBe('player.getPose')
+    expect(Method.playerSetPose).toBe('player.setPose')
   })
 })
 

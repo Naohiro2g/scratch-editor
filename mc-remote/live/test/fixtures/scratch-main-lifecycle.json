@@ -59,6 +59,29 @@
             "request_id": 2,
             "method": "world.setBlock",
             "payload": { "params": [1, 2, 3, "minecraft:stone"] }
+          },
+          {
+            "sequence": 4,
+            "observed_at": 1786032000200,
+            "direction": "send",
+            "request_id": 3,
+            "method": "player.setPose",
+            "payload": { "params": ["overworld", 5, 6, 7, 135, -20] }
+          },
+          {
+            "sequence": 5,
+            "observed_at": 1786032000300,
+            "direction": "receive",
+            "request_id": 3,
+            "method": "player.setPose",
+            "payload": {
+              "result": {
+                "world": "overworld",
+                "pos": [5, 6, 7],
+                "yaw": 135,
+                "pitch": -20
+              }
+            }
           }
         ]
       }

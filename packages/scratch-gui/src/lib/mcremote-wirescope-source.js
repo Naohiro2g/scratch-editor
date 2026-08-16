@@ -16,7 +16,9 @@ const OBSERVED_METHODS = new Set([
     'world.setBlocks',
     'world.getBlock',
     'player.getPos',
-    'player.setPos'
+    'player.setPos',
+    'player.getPose',
+    'player.setPose'
 ]);
 
 const isObject = function (value) {
@@ -114,6 +116,12 @@ const allowPosition = function (value) {
     return world && pos ? {world, pos} : null;
 };
 
+const allowPose = function (value) {
+    const position = allowPosition(value);
+    if (!position || !finiteNumber(value.yaw) || !finiteNumber(value.pitch)) return null;
+    return Object.assign(position, {yaw: value.yaw, pitch: value.pitch});
+};
+
 const allowError = function (value) {
     if (!isObject(value)) return null;
     const code = typeof value.code === 'string' || finiteNumber(value.code) ? value.code : null;
@@ -147,6 +155,10 @@ const allowFramePayload = function (frame) {
     }
     if (frame.method === 'player.getPos' || frame.method === 'player.setPos') {
         const result = allowPosition(payload.result);
+        return result ? {result} : null;
+    }
+    if (frame.method === 'player.getPose' || frame.method === 'player.setPose') {
+        const result = allowPose(payload.result);
         return result ? {result} : null;
     }
     if (frame.method === 'world.getBlock') {

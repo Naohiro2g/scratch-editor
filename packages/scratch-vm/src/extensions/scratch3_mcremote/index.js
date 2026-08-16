@@ -49,6 +49,7 @@ const PAIR_POLL_INTERVAL_MS = 1000;
  * @type {number}
  */
 const PLAYER_POS_MONITOR_THROTTLE_MS = 1000;
+const PLAYER_POSE_MONITOR_THROTTLE_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
 const REDACTED = '[redacted]';
@@ -98,6 +99,8 @@ const BuildWorld = {
  *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
  *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
  *   player.setPos   [world, x, y, z]                               -> reply
+ *   player.getPose  []         => {world, pos:[x,y,z], yaw, pitch} -> reply
+ *   player.setPose  [world, x, y, z, yaw, pitch]                   -> reply
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
@@ -268,6 +271,15 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._playerPosCache = null;
+
+        /**
+         * Last `player.getPose` result and when it was fetched, kept separate
+         * from the position cache so existing position reporters continue to
+         * use `player.getPos`.
+         * @type {?{result: object, fetchedAt: number}}
+         * @private
+         */
+        this._playerPoseCache = null;
     }
 
     /**
@@ -466,6 +478,27 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'setPlayerPose',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerPose',
+                        default: 'move player to [WORLD] x:[X] y:[Y] z:[Z] yaw:[YAW] pitch:[PITCH]',
+                        description: 'Teleport the paired player to a dimension, position and orientation'
+                    }),
+                    arguments: {
+                        WORLD: {
+                            type: ArgumentType.STRING,
+                            menu: 'worlds',
+                            defaultValue: BuildWorld.OVERWORLD
+                        },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
                     opcode: 'setPlayerXYZ',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -515,6 +548,22 @@ class Scratch3McRemoteBlocks {
                                 description: 'Menu label for the paired player\'s z position'
                             }),
                             value: 'z'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.yaw',
+                                default: 'yaw',
+                                description: 'Menu label for the paired player\'s horizontal orientation'
+                            }),
+                            value: 'yaw'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.playerAttribute.pitch',
+                                default: 'pitch',
+                                description: 'Menu label for the paired player\'s vertical orientation'
+                            }),
+                            value: 'pitch'
                         }
                     ]
                 },
@@ -632,6 +681,7 @@ class Scratch3McRemoteBlocks {
         this._pairCode = '';
         this._pairCommand = '';
         this._playerPosCache = null;
+        this._playerPoseCache = null;
         this._resetCatalog();
         this._emitObservation();
     }
@@ -1400,11 +1450,37 @@ class Scratch3McRemoteBlocks {
         });
     }
 
+    /**
+     * Fetch the paired player's current world, position and orientation.
+     * Monitor-driven calls share a short-lived pose cache; explicit script
+     * calls always fetch.
+     * @param {BlockUtility} util - execution context for this block call.
+     * @returns {Promise} resolves with the `player.getPose` result.
+     * @private
+     */
+    _getPlayerPose (util) {
+        const isMonitorPoll = Boolean(util && util.thread && util.thread.updateMonitor);
+        if (isMonitorPoll && this._playerPoseCache &&
+            (Date.now() - this._playerPoseCache.fetchedAt) < PLAYER_POSE_MONITOR_THROTTLE_MS) {
+            return Promise.resolve(this._playerPoseCache.result);
+        }
+        return this._request('player.getPose', []).then(result => {
+            this._playerPoseCache = {result, fetchedAt: Date.now()};
+            return result;
+        });
+    }
+
     playerAttribute (args, util) {
-        return this._getPlayerPos(util).then(result => {
-            const property = Cast.toString(args.PROPERTY);
+        const property = Cast.toString(args.PROPERTY);
+        const request = property === 'yaw' || property === 'pitch' ?
+            this._getPlayerPose(util) :
+            this._getPlayerPos(util);
+        return request.then(result => {
             if (property === 'world') {
                 return result && result.world ? result.world : '';
+            }
+            if (property === 'yaw' || property === 'pitch') {
+                return result && typeof result[property] === 'number' ? result[property] : '';
             }
             const index = {x: 0, y: 1, z: 2}[property];
             return result && Array.isArray(result.pos) && typeof index !== 'undefined' ?
@@ -1419,6 +1495,17 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z)
+        ]);
+    }
+
+    setPlayerPose (args) {
+        return this._commandRequest('player.setPose', [
+            Cast.toString(args.WORLD),
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z),
+            Cast.toNumber(args.YAW),
+            Cast.toNumber(args.PITCH)
         ]);
     }
 
