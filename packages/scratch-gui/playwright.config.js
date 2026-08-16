@@ -37,8 +37,10 @@ module.exports = defineConfig({
 
     use: {
         // Resolve relative `page.goto()` URLs against the playground
-        // build output in `build/`.
-        baseURL: `${pathToFileURL(path.resolve(__dirname, 'build'))}/`,
+        // build output in `build/`, or against `PLAYWRIGHT_BASE_URL` when set
+        // (e.g. to point specs at a running dev server instead).
+        baseURL: process.env.PLAYWRIGHT_BASE_URL ||
+            `${pathToFileURL(path.resolve(__dirname, 'build'))}/`,
 
         // Capture a trace on the first retry so CI failures are
         // debuggable without re-running tests locally.
