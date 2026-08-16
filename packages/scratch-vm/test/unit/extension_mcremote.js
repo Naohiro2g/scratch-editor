@@ -972,6 +972,35 @@ test('playerAttribute resolves the world property', t =>
     })
 );
 
+test('playerAttribute reports yaw and pitch from player.getPose', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const yaw = blocks.playerAttribute({PROPERTY: 'yaw'});
+        const yawMessage = socket.lastSent();
+        t.equal(yawMessage.method, 'player.getPose');
+        t.same(yawMessage.params, []);
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: yawMessage.id,
+            result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
+        });
+        return yaw.then(yawValue => {
+            t.equal(yawValue, 135);
+            const pitch = blocks.playerAttribute({PROPERTY: 'pitch'});
+            const pitchMessage = socket.lastSent();
+            t.equal(pitchMessage.method, 'player.getPose');
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: pitchMessage.id,
+                result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
+            });
+            return pitch.then(pitchValue => {
+                t.equal(pitchValue, -20);
+                t.end();
+            });
+        });
+    })
+);
+
 test('playerAttribute swallows a JSON-RPC error into empty string', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.playerAttribute({PROPERTY: 'y'});
@@ -1005,6 +1034,41 @@ test('playerAttribute throttles monitor-driven polls to one bridge request', t =
     })
 );
 
+test('playerAttribute throttles monitor-driven pose polls separately from position polls', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const monitorUtil = {thread: {updateMonitor: true}};
+        const first = blocks.playerAttribute({PROPERTY: 'yaw'}, monitorUtil);
+        const requestMsg = socket.lastSent();
+        t.equal(requestMsg.method, 'player.getPose');
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: requestMsg.id,
+            result: {world: 'overworld', pos: [5, 6, 7], yaw: 90, pitch: 15}
+        });
+        return first.then(value => {
+            t.equal(value, 90);
+            const sentBefore = socket.sent.length;
+            const second = blocks.playerAttribute({PROPERTY: 'pitch'}, monitorUtil);
+            t.equal(socket.sent.length, sentBefore, 'cached pose reused, no new bridge request sent');
+            return second.then(secondValue => {
+                t.equal(secondValue, 15);
+                const position = blocks.playerAttribute({PROPERTY: 'x'}, monitorUtil);
+                const positionMessage = socket.lastSent();
+                t.equal(positionMessage.method, 'player.getPos', 'position retains the existing wire method');
+                socket.fireMessage({
+                    jsonrpc: '2.0',
+                    id: positionMessage.id,
+                    result: {world: 'overworld', pos: [8, 9, 10]}
+                });
+                return position.then(positionValue => {
+                    t.equal(positionValue, 8);
+                    t.end();
+                });
+            });
+        });
+    })
+);
+
 test('playerAttribute does not throttle explicit (non-monitor) calls', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const first = blocks.playerAttribute({PROPERTY: 'world'});
@@ -1030,6 +1094,28 @@ test('setPlayerPos is an acknowledged request with an explicit world', t =>
         t.equal(msg.method, 'player.setPos');
         t.same(msg.params, ['nether', 10, 20, 30]);
         socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'nether', pos: [10, 20, 30]}});
+        return result.then(() => t.end());
+    })
+);
+
+test('setPlayerPose sends world, position, yaw and pitch in one acknowledged request', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setPlayerPose({
+            WORLD: 'nether',
+            X: 10,
+            Y: 20,
+            Z: 30,
+            YAW: 135,
+            PITCH: -20
+        });
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'player.setPose');
+        t.same(msg.params, ['nether', 10, 20, 30, 135, -20]);
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: msg.id,
+            result: {world: 'nether', pos: [10, 20, 30], yaw: 135, pitch: -20}
+        });
         return result.then(() => t.end());
     })
 );

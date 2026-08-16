@@ -11,6 +11,8 @@ export const OBSERVED_METHODS = [
   'world.getBlock',
   'player.getPos',
   'player.setPos',
+  'player.getPose',
+  'player.setPose',
 ] as const
 
 export type ObservedMethod = (typeof OBSERVED_METHODS)[number]
@@ -307,9 +309,21 @@ const parsePosition = (value: unknown): { world: string; pos: [number, number, n
   }
 }
 
+const parsePose = (value: unknown): { world: string; pos: [number, number, number]; yaw: number; pitch: number } => {
+  const pose = objectValue(value, 'frame.payload.result')
+  exactFields(pose, ['world', 'pos', 'yaw', 'pitch'], 'frame.payload.result')
+  return {
+    world: requiredString(pose.world, 'frame.payload.result.world'),
+    pos: numberTuple(pose.pos, 'frame.payload.result.pos'),
+    yaw: finiteNumber(pose.yaw, 'frame.payload.result.yaw'),
+    pitch: finiteNumber(pose.pitch, 'frame.payload.result.pitch'),
+  }
+}
+
 const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') return parseHello(value)
   if (method === 'player.getPos' || method === 'player.setPos') return parsePosition(value)
+  if (method === 'player.getPose' || method === 'player.setPose') return parsePose(value)
   if (method === 'world.getBlock') {
     if (typeof value !== 'string') throw new Error('frame.payload.result must be a string')
     return value

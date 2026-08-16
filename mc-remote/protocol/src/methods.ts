@@ -11,6 +11,8 @@ export const Method = {
   worldSetBlock: 'world.setBlock',
   worldSetBlocks: 'world.setBlocks',
   worldGetBlock: 'world.getBlock',
+  playerGetPose: 'player.getPose',
+  playerSetPose: 'player.setPose',
 } as const
 
 export type Method = (typeof Method)[keyof typeof Method]

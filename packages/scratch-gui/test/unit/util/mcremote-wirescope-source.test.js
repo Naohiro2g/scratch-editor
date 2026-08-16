@@ -106,6 +106,44 @@ describe('McRemote WireScope source adapter', () => {
         expect(toWireScopeSnapshot({status: 'closed'}, 'target-01', 2000)).toBeNull();
     });
 
+    test('projects player pose requests and strict pose results', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'player.getPose',
+            payload: {params: []}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'player.getPose',
+            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames.slice(-2)).toEqual([{
+            sequence: 4,
+            observed_at: 1003,
+            direction: 'send',
+            request_id: 4,
+            method: 'player.getPose',
+            payload: {params: []}
+        }, {
+            sequence: 5,
+            observed_at: 1004,
+            direction: 'receive',
+            request_id: 4,
+            method: 'player.getPose',
+            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+        }]);
+    });
+
     test('hands a one-time grant over MessageChannel and ends it with the target', () => {
         const windowListeners = {};
         const observerWindow = {postMessage: jest.fn()};
