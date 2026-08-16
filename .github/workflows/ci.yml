@@ -86,6 +86,15 @@ jobs:
             packages/**/dist
             packages/**/playground
 
+      - name: Store McRemote Bridge Artifact
+        if: ${{ steps.filter.outputs.any-workspace == 'true' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mc-remote-bridge-${{ github.sha }}
+          retention-days: 90
+          path: mc-remote/bridge/dist
+          if-no-files-found: error
+
   test:
     name: Test
     needs: build

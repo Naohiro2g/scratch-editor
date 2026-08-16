@@ -46,12 +46,17 @@ function handleConnection(ws: WebSocket, config: BridgeConfig, requestUrl: strin
       ws,
       target,
       decode,
-      () => {
+      (socket) => {
+        if (tcp !== socket) {
+          socket.destroy()
+          return
+        }
         ready = true
-        for (const queued of queue) tcp?.write(frameLine(queued))
+        for (const queued of queue) socket.write(frameLine(queued))
         queue.length = 0
       },
-      () => {
+      (socket) => {
+        if (tcp !== socket) return
         tcp = null
         ready = false
       },
@@ -81,10 +86,10 @@ function openSandbox(
   ws: WebSocket,
   target: SandboxTarget,
   decode: (chunk: Buffer) => string[],
-  onReady: () => void,
-  onClose: () => void,
+  onReady: (tcp: net.Socket) => void,
+  onUnavailable: (tcp: net.Socket) => void,
 ): net.Socket {
-  const tcp = net.createConnection(target, onReady)
+  const tcp = net.createConnection(target, () => onReady(tcp))
 
   tcp.on('data', (chunk: Buffer) => {
     for (const line of decode(chunk)) {
@@ -95,7 +100,13 @@ function openSandbox(
     console.error(`McRemote bridge: sandbox ${target.host}:${target.port} unreachable: ${err.message}`)
     if (ws.readyState === ws.OPEN) ws.close(CLOSE_INTERNAL, 'sandbox_unreachable')
   })
-  tcp.on('close', onClose)
+  // A forwarder may delay close after relaying a peer's final response and EOF.
+  // Retire at EOF so the next WS frame opens a fresh TCP connection.
+  tcp.on('end', () => {
+    onUnavailable(tcp)
+    tcp.destroy()
+  })
+  tcp.on('close', () => onUnavailable(tcp))
 
   return tcp
 }
