@@ -330,7 +330,7 @@ const createWireScopeSource = function (environment) {
 
 const defaultEnvironment = () => ({
     window,
-    MessageChannel,
+    MessageChannel: window.MessageChannel,
     crypto,
     now: Date.now,
     setTimeout,
