@@ -298,7 +298,7 @@ const createWireScopeSource = function (environment) {
         listening = true;
     };
 
-    return {
+    const sourceApi = {
         update (observation) {
             currentObservation = observation;
             const connected = isObject(observation) && observation.status === 'connected' &&
@@ -338,6 +338,8 @@ const createWireScopeSource = function (environment) {
             listening = false;
         }
     };
+    environment.window.addEventListener('pagehide', sourceApi.destroy);
+    return sourceApi;
 };
 
 const defaultEnvironment = () => ({

@@ -235,4 +235,60 @@ describe('McRemote WireScope source adapter', () => {
         });
         expect(port1.close).toHaveBeenCalled();
     });
+
+    test('ends an active observer with source-closed when the Scratch page is hidden', () => {
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2: {}})),
+            crypto: {getRandomValues: function (array) {
+                array.fill(7);
+                return array;
+            }},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
+        };
+        const source = createWireScopeSource(environment);
+        source.update(connectedObservation());
+        source.launch('https://live.example/wirescope');
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        port1.listener({
+            data: {
+                type: 'mcremote.wirescope.redeem',
+                protocol_version: 1,
+                grant: grantMessage.grant
+            }
+        });
+
+        windowListeners.pagehide();
+
+        expect(port1.postMessage.mock.calls[2][0]).toEqual({
+            type: 'mcremote.wirescope.end',
+            protocol_version: 1,
+            reason: 'source-closed'
+        });
+        expect(port1.close).toHaveBeenCalled();
+    });
 });
