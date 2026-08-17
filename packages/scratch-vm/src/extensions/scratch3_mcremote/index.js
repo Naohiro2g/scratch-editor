@@ -38,6 +38,11 @@ const CLIENT_VERSION = '2100.0.0b2';
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
 const PAIR_POLL_INTERVAL_MS = 1000;
+const BRIDGE_TRANSPORT_PROBE_PROTOCOL = 'mcremote.bridge.probe.v1';
+const BRIDGE_TRANSPORT_PROTOCOL = 'mcremote.bridge.one-shot.v1';
+const ONE_SHOT_HINT_KEY = 'mcremote_bridge_transport';
+const ONE_SHOT_HINT = 'one-shot-v1';
+const ONE_SHOT_METHODS = new Set(['auth.pairBegin', 'auth.pairPoll']);
 
 /**
  * Minimum time between live `player.getPos` requests made on behalf of a
@@ -81,7 +86,9 @@ const BuildWorld = {
 
 /**
  * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 21.0.0).
- * One WebSocket message carries one JSON object.
+ * One WebSocket message carries either one raw JSON-RPC object or, for the
+ * pre-auth pairing methods only, one Bridge transport envelope containing the
+ * untouched JSON-RPC string.
  *
  *   request       {jsonrpc:"2.0", id, method, params}  -> reply with id
  *   notification  {jsonrpc:"2.0",     method, params}  -> no reply (id omitted)
@@ -1003,9 +1010,20 @@ class Scratch3McRemoteBlocks {
         this._connectionTarget = this._resolveConnectionTarget(sandbox);
         this._resetObservationForConnection();
         this._openPromise = new Promise((resolve, reject) => {
-            const socket = new WebSocket(this._bridgeUrl(this._connectionTarget.sandboxRoute));
+            const socket = new WebSocket(this._bridgeUrl(this._connectionTarget.sandboxRoute), [
+                BRIDGE_TRANSPORT_PROBE_PROTOCOL,
+                BRIDGE_TRANSPORT_PROTOCOL
+            ]);
             this._socket = socket;
             socket.addEventListener('open', () => {
+                if (socket.protocol !== BRIDGE_TRANSPORT_PROTOCOL) {
+                    const error = new Error('McRemote Bridge transport is incompatible');
+                    error.reason = 'bridge_transport_incompatible';
+                    this._setConnectionStatus(ConnectionStatus.ERROR, error);
+                    socket.close(1002, error.reason);
+                    reject(error);
+                    return;
+                }
                 this._authenticate().then(() => resolve(), reject);
             });
             socket.addEventListener('message', event => this._onMessage(event));
@@ -1351,7 +1369,11 @@ class Scratch3McRemoteBlocks {
             const message = {jsonrpc: '2.0', id, method, params};
             this._pending.set(id, {resolve, reject, method});
             this._appendFrame('send', message);
-            this._socket.send(JSON.stringify(message));
+            const payload = JSON.stringify(message);
+            this._socket.send(ONE_SHOT_METHODS.has(method) ? JSON.stringify({
+                [ONE_SHOT_HINT_KEY]: ONE_SHOT_HINT,
+                payload
+            }) : payload);
         });
     }
 

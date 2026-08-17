@@ -8,19 +8,26 @@ over `wss://` to this bridge, which relays to the Sandbox's plain TCP port
 
 ## What it does
 
-- **Frame translation** — one WS message ⇔ one `\n`-terminated TCP line
-  (wire-format-design §2). The JSON payload is never inspected or rewritten.
+- **Frame translation** — a normal WS message becomes one `\n`-terminated TCP
+  line (wire-format-design §2). For pre-auth pairing only, the Bridge removes a
+  `one-shot-v1` transport envelope and sends its embedded JSON-RPC string
+  unchanged on a fresh TCP generation.
+- **Exact browser transport** — the editor and Bridge negotiate
+  `mcremote.bridge.one-shot.v1` as a WebSocket subprotocol. Old/new artifact
+  mixtures fail before `hello` instead of silently losing a pairing request.
 - **Origin allowlist** — only editor Origins configured for that channel
   complete the WS handshake.
 - **Sandbox allowlist** — the WSS connection URL names the Sandbox to dial
   (for example, `?sandbox=sb-beta.mc-remote.com`); anything outside the allowlist
   is refused, so the bridge can't be used as an SSRF / port-scan relay.
-- **Full-duplex, push-transparent** — server→client push passes straight through
-  with no request/response coupling or buffering.
+- **Persistent-path push transparency** — `hello`, authenticated commands, and
+  credential management remain full-duplex and pass server→client messages
+  through without interpreting JSON-RPC semantics.
 
-It does **not** parse protocol semantics or interpret auth; the McRemote plugin
-remains the source of truth. TLS is terminated by Caddy in front, so the bridge
-listens on plain ws on localhost.
+It does **not** parse protocol methods, params, results, or auth. Scratch chooses
+which pairing requests carry the transport hint; the McRemote plugin remains
+the protocol source of truth. The hint never reaches plugin TCP. TLS is
+terminated by Caddy in front, so the bridge listens on plain ws on localhost.
 
 ## Run
 

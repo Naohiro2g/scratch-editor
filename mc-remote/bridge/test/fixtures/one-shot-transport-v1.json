@@ -1,0 +1,8 @@
+{
+  "probe_protocol": "mcremote.bridge.probe.v1",
+  "selected_protocol": "mcremote.bridge.one-shot.v1",
+  "hint_key": "mcremote_bridge_transport",
+  "hint": "one-shot-v1",
+  "sample_payload": "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"auth.pairBegin\",\"params\":{\"token_type\":\"session\"}}",
+  "sample_message": "{\"mcremote_bridge_transport\":\"one-shot-v1\",\"payload\":\"{\\\"jsonrpc\\\":\\\"2.0\\\",\\\"id\\\":2,\\\"method\\\":\\\"auth.pairBegin\\\",\\\"params\\\":{\\\"token_type\\\":\\\"session\\\"}}\"}"
+}

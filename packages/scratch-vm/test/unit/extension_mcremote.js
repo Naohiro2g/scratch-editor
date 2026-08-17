@@ -8,14 +8,17 @@ const {
 const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
+const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
 
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
  * only uses addEventListener, send, readyState and the static OPEN constant.
  */
 class FakeWebSocket {
-    constructor (url) {
+    constructor (url, protocols) {
         this.url = url;
+        this.protocols = protocols;
+        this.protocol = oneShotTransportFixture.selected_protocol;
         this.readyState = 0; // CONNECTING
         this.sent = [];
         this._listeners = {};
@@ -26,6 +29,9 @@ class FakeWebSocket {
     }
     send (data) {
         this.sent.push(data);
+    }
+    close (code, reason) {
+        this.fireClose({code, reason});
     }
     _emit (type, event) {
         (this._listeners[type] || []).forEach(cb => cb(event));
@@ -42,6 +48,10 @@ class FakeWebSocket {
         this._emit('close', event);
     }
     lastSent () {
+        const message = JSON.parse(this.sent[this.sent.length - 1]);
+        return message[oneShotTransportFixture.hint_key] ? JSON.parse(message.payload) : message;
+    }
+    lastTransportMessage () {
         return JSON.parse(this.sent[this.sent.length - 1]);
     }
 }
@@ -168,6 +178,10 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     socket.fireOpen();
 
     t.equal(socket.url, `wss://bridge.mc-remote.com/?sandbox=${DEFAULT_SANDBOX_ROUTE}`);
+    t.same(socket.protocols, [
+        oneShotTransportFixture.probe_protocol,
+        oneShotTransportFixture.selected_protocol
+    ]);
     const hello = socket.lastSent();
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
@@ -177,6 +191,21 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     t.equal(hello.params.client.version, '2100.0.0b2', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
+});
+
+test('connect fails closed when the Bridge does not select the one-shot transport', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.protocol = oneShotTransportFixture.probe_protocol;
+    socket.fireOpen();
+
+    return t.rejects(result, {reason: 'bridge_transport_incompatible'}).then(() => {
+        t.equal(socket.sent.length, 0, 'hello is not sent through an incompatible Bridge');
+        t.end();
+    });
 });
 
 test('connect uses the runtime McRemote connection target', t => {
@@ -383,6 +412,10 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
     return nextTurn()
         .then(() => {
             const pairBegin = socket.lastSent();
+            t.same(socket.lastTransportMessage(), {
+                [oneShotTransportFixture.hint_key]: oneShotTransportFixture.hint,
+                payload: JSON.stringify(pairBegin)
+            });
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
@@ -398,6 +431,10 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(latestObservation(runtime).pairCode, '827-419');
             t.equal(latestObservation(runtime).pairCommand, '/mcremote pair 827-419');
             const pairPoll = socket.lastSent();
+            t.same(socket.lastTransportMessage(), {
+                [oneShotTransportFixture.hint_key]: oneShotTransportFixture.hint,
+                payload: JSON.stringify(pairPoll)
+            });
             t.equal(pairPoll.method, 'auth.pairPoll');
             t.same(pairPoll.params, {pairing_id: 'pair-1'});
             socket.fireMessage({jsonrpc: '2.0',
@@ -407,6 +444,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
         })
         .then(() => {
             const retryHello = socket.lastSent();
+            t.equal(socket.lastTransportMessage().jsonrpc, '2.0', 'retry hello stays on the persistent transport');
             t.equal(retryHello.method, 'hello');
             t.same(retryHello.params.auth, {token: 'mcrs_new'});
             t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'mcrs_new');
@@ -427,6 +465,11 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(latestObservation(runtime).status, 'connected');
             t.equal(latestObservation(runtime).pairCode, '');
             t.equal(JSON.stringify(latestObservation(runtime)).indexOf('mcrs_new'), -1, 'new token is never exposed');
+            t.equal(
+                JSON.stringify(observations(runtime)).indexOf(oneShotTransportFixture.hint_key),
+                -1,
+                'Bridge transport hints are never exposed to WireScope observations'
+            );
             t.end();
         });
 });
@@ -451,6 +494,17 @@ test('auth errors clear only the token scoped to the current sandbox route', t =
         t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), null);
         t.equal(global.localStorage.getItem(sessionTokenKey('sb-dev.mc-remote.com')), 'mcrs_dev');
         t.end();
+    });
+});
+
+test('credential management methods stay on the persistent transport', t => {
+    return newConnectedBlocks().then(({blocks, socket}) => {
+        const response = blocks._request('auth.listCredentials', []);
+        const request = socket.lastTransportMessage();
+        t.equal(request.method, 'auth.listCredentials');
+        t.equal(request[oneShotTransportFixture.hint_key], void 0);
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: {credentials: []}});
+        return response.then(() => t.end());
     });
 });
 

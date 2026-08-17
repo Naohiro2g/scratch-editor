@@ -2,7 +2,8 @@
  * Frame translation between the two transports the bridge straddles
  * (wire-format-design §2):
  *
- * - browser link: one JSON-RPC value per WS message
+ * - browser link: one raw JSON-RPC value, after any Bridge-only transport
+ *   envelope has been removed by `transport.ts`
  * - direct TCP link: one JSON-RPC value per `\n`-terminated line
  *
  * The JSON payload itself is never inspected or rewritten here.
