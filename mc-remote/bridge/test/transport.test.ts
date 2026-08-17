@@ -54,6 +54,10 @@ describe('one-shot browser transport', () => {
         JSON.stringify({ [ONE_SHOT_HINT_KEY]: ONE_SHOT_HINT, payload: fixture.sample_payload, extra: true }),
       ),
     ).toEqual({ ok: false, reason: 'invalid_transport_envelope' })
+    expect(decodeBrowserMessage(`{"${ONE_SHOT_HINT_KEY}":`)).toEqual({
+      ok: false,
+      reason: 'invalid_transport_envelope',
+    })
     expect(
       decodeBrowserMessage(
         JSON.stringify({ [ONE_SHOT_HINT_KEY]: ONE_SHOT_HINT, payload: 'x'.repeat(64 * 1024 + 1) }),

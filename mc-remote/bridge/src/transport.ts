@@ -14,6 +14,7 @@ export type BrowserMessageResult =
   | { ok: false; reason: 'invalid_transport_envelope' | 'one_shot_payload_too_large' | 'unsupported_transport_hint' }
 
 const MAX_ONE_SHOT_PAYLOAD_BYTES = 64 * 1024
+const ONE_SHOT_ENVELOPE_PREFIX = /^\s*\{\s*"mcremote_bridge_transport"\s*:/
 
 /**
  * Check that the browser offered the exact Bridge transport implemented by
@@ -37,21 +38,20 @@ export function offersBridgeTransport(header: string | undefined): boolean {
  * @returns The transport mode and untouched plugin payload, or a close reason.
  */
 export function decodeBrowserMessage(rawMessage: string): BrowserMessageResult {
+  if (!ONE_SHOT_ENVELOPE_PREFIX.test(rawMessage)) return persistent(rawMessage)
+
   let candidate: unknown
   try {
     candidate = JSON.parse(rawMessage)
   } catch {
-    return persistent(rawMessage)
+    return { ok: false, reason: 'invalid_transport_envelope' }
   }
 
   if (candidate === null || Array.isArray(candidate) || typeof candidate !== 'object') {
-    return persistent(rawMessage)
+    return { ok: false, reason: 'invalid_transport_envelope' }
   }
 
   const envelope = candidate as Record<string, unknown>
-  if (!Object.prototype.hasOwnProperty.call(envelope, ONE_SHOT_HINT_KEY)) {
-    return persistent(rawMessage)
-  }
   if (envelope[ONE_SHOT_HINT_KEY] !== ONE_SHOT_HINT) {
     return { ok: false, reason: 'unsupported_transport_hint' }
   }
