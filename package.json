@@ -1,6 +1,6 @@
 {
   "name": "scratch-editor",
-  "version": "14.1.0",
+  "version": "15.0.1",
   "private": "true",
   "description": "Scratch editor mono-repository",
   "keywords": [],
@@ -51,8 +51,8 @@
     "cross-env": "7.0.3",
     "globals": "16.5.0",
     "husky": "8.0.3",
-    "npm": "10.9.8",
-    "semantic-release": "25.0.5",
+    "npm": "10.9.9",
+    "semantic-release": "25.0.9",
     "ts-node": "10.9.2"
   }
 }

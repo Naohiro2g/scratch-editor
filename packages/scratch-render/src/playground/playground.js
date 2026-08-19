@@ -37,8 +37,8 @@ image.src = 'https://cdn.assets.scratch.mit.edu/internalapi/asset/7e24c99c1b853e
 
 // SVG (cat 1-a)
 const xhr = new XMLHttpRequest();
-xhr.addEventListener('load', () => {
-    const skinId = renderer.createSVGSkin(xhr.responseText);
+xhr.addEventListener('load', async () => {
+    const skinId = await renderer.createSVGSkin(xhr.responseText);
     if (wantedSkin === WantedSkinType.vector) {
         renderer.updateDrawableProperties(drawableID2, {
             skinId: skinId

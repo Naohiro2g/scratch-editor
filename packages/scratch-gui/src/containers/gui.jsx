@@ -4,6 +4,7 @@ import {compose} from 'redux';
 import {connect} from 'react-redux';
 import ReactModal from 'react-modal';
 import VM from '@scratch/scratch-vm';
+import {prewarmPaperSandbox} from '@scratch/scratch-paint';
 import {injectIntl} from 'react-intl';
 import intlShape from '../lib/intlShape.js';
 
@@ -63,11 +64,15 @@ class GUI extends React.Component {
         if (this.props.dynamicAssets) {
             this.props.onUpdateDynamicAssets(this.props.dynamicAssets);
         }
+        this.maybePrewarmPaperSandbox();
     }
     componentDidUpdate (prevProps) {
         if (this.props.dynamicAssets !== prevProps.dynamicAssets) {
             this.props.onUpdateDynamicAssets(this.props.dynamicAssets);
         }
+        // A session may start player-only and later enter the editor; warm the
+        // paint sandbox on that transition too.
+        this.maybePrewarmPaperSandbox();
         if (this.props.projectId !== prevProps.projectId) {
             if (this.props.projectId !== null) {
                 this.props.onUpdateProjectId(this.props.projectId);
@@ -83,6 +88,20 @@ class GUI extends React.Component {
         if (this.props.shouldStopProject && !prevProps.shouldStopProject) {
             this.props.vm.stopAll();
         }
+    }
+    // Once per editor session, build and warm the Paper.js sandbox during idle
+    // time so the first costume import in the paint editor is not slowed by the
+    // iframe creation and Paper.js evaluation cold-start. Skipped in player-only
+    // sessions, which never open the paint editor.
+    maybePrewarmPaperSandbox () {
+        if (this._paperSandboxWarmed || this.props.isPlayerOnly) return;
+        this._paperSandboxWarmed = true;
+        // Some browsers (e.g. Safari) don't support requestIdleCallback, so fall back to setTimeout.
+        const scheduleIdle = window.requestIdleCallback ?
+            window.requestIdleCallback.bind(window) :
+            callback => setTimeout(() => callback(), 0);
+
+        scheduleIdle(() => prewarmPaperSandbox());
     }
     render () {
         if (this.props.isError) {
@@ -139,6 +158,7 @@ GUI.propTypes = {
     intl: intlShape,
     isError: PropTypes.bool,
     isLoading: PropTypes.bool,
+    isPlayerOnly: PropTypes.bool,
     isShowingProject: PropTypes.bool,
     isTotallyNormal: PropTypes.bool,
     loadingStateVisible: PropTypes.bool,
@@ -196,6 +216,7 @@ GUI.propTypes = {
     shouldStopProject: PropTypes.bool,
     telemetryModalVisible: PropTypes.bool,
     username: PropTypes.string,
+    avatarBadge: PropTypes.number,
     userOwnsProject: PropTypes.bool,
     // TODO: Is this unused?
     hideTutorialProjects: PropTypes.bool,

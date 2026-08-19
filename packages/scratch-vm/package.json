@@ -1,6 +1,6 @@
 {
   "name": "@scratch/scratch-vm",
-  "version": "14.1.0",
+  "version": "15.0.1",
   "description": "Virtual Machine for Scratch 3.0",
   "keywords": [],
   "homepage": "https://github.com/scratchfoundation/scratch-vm#readme",
@@ -60,9 +60,9 @@
     "allow-incomplete-coverage": true
   },
   "dependencies": {
-    "@scratch/scratch-render": "14.1.0",
-    "@scratch/scratch-storage": "14.1.0",
-    "@scratch/scratch-svg-renderer": "14.1.0",
+    "@scratch/scratch-render": "15.0.1",
+    "@scratch/scratch-storage": "15.0.1",
+    "@scratch/scratch-svg-renderer": "15.0.1",
     "@vernier/godirect": "1.8.3",
     "arraybuffer-loader": "1.0.8",
     "atob": "2.1.2",
@@ -75,11 +75,11 @@
     "immutable": "3.8.3",
     "jszip": "3.10.1",
     "scratch-audio": "2.0.268",
-    "scratch-parser": "6.0.0",
-    "scratch-sb1-converter": "2.0.279",
+    "scratch-parser": "6.0.1",
+    "scratch-sb1-converter": "2.0.280",
     "scratch-translate-extension-languages": "1.0.7",
     "text-encoding": "0.7.0",
-    "tslog": "4.10.2",
+    "tslog": "4.11.0",
     "uuid": "8.3.2"
   },
   "devDependencies": {
@@ -90,8 +90,8 @@
     "callsite": "1.0.0",
     "copy-webpack-plugin": "6.4.1",
     "docdash": "1.2.0",
-    "eslint": "9.39.4",
-    "eslint-config-scratch": "14.1.31",
+    "eslint": "9.39.5",
+    "eslint-config-scratch": "14.1.60",
     "expose-loader": "1.0.3",
     "file-loader": "6.2.0",
     "format-message-cli": "6.2.4",
@@ -100,16 +100,16 @@
     "js-md5": "0.7.3",
     "pngjs": "3.4.0",
     "scratch-blocks": "2.1.19",
-    "scratch-l10n": "6.1.88",
+    "scratch-l10n": "6.1.110",
     "scratch-render-fonts": "1.0.252",
     "scratch-webpack-configuration": "3.1.2",
     "script-loader": "0.7.2",
     "stats.js": "0.17.0",
-    "tap": "21.7.4",
+    "tap": "21.7.5",
     "tiny-worker": "2.3.0",
     "typedoc": "0.28.18",
-    "webpack": "5.107.2",
+    "webpack": "5.109.2",
     "webpack-cli": "4.10.0",
-    "webpack-dev-server": "5.2.5"
+    "webpack-dev-server": "5.2.6"
   }
 }
