@@ -1,6 +1,6 @@
 {
   "name": "@scratch/scratch-paint",
-  "version": "14.1.0",
+  "version": "15.0.1",
   "description": "Graphical User Interface for the Scratch 3.0 paint editor, which is used to make and edit sprites for use in projects.",
   "homepage": "https://github.com/scratchfoundation/scratch-paint#readme",
   "repository": {
@@ -17,6 +17,12 @@
   },
   "main": "./dist/web/scratch-paint.js",
   "browser": "./src/index.js",
+  "files": [
+    "dist",
+    "src",
+    "LICENSE",
+    "TRADEMARK"
+  ],
   "scripts": {
     "build": "npm run clean && webpack --progress --bail",
     "clean": "rimraf ./dist && mkdirp dist && rimraf ./playground && mkdirp playground",
@@ -26,7 +32,7 @@
     "prepublishOnly": "echo \"Please publish through CI only.\" && exit 1",
     "start": "webpack serve",
     "test": "npm run unit",
-    "unit": "jest --reporters=default",
+    "unit": "jest",
     "watch": "webpack --progress --watch"
   },
   "browserslist": [
@@ -49,14 +55,20 @@
     },
     "transformIgnorePatterns": [
       "/node_modules/(?!intl-messageformat|intl-messageformat-parser).+\\.js$"
+    ],
+    "reporters": [
+      "default",
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "test-results"
+        }
+      ]
     ]
-  },
-  "jest-junit": {
-    "outputDirectory": "./test/results"
   },
   "dependencies": {
     "@scratch/paper": "0.11.20221201200345",
-    "@scratch/scratch-svg-renderer": "14.1.0",
+    "@scratch/scratch-svg-renderer": "15.0.1",
     "classnames": "2.5.1",
     "keymirror": "0.1.1",
     "lodash.bindall": "4.4.0",
@@ -78,11 +90,11 @@
     "babel-plugin-react-intl": "3.5.1",
     "canvas": "3.2.3",
     "css-loader": "5.2.7",
-    "eslint": "9.39.4",
-    "eslint-config-scratch": "14.1.31",
+    "eslint": "9.39.5",
+    "eslint-config-scratch": "14.1.60",
     "gh-pages": "3.2.3",
     "globals": "16.5.0",
-    "html-webpack-plugin": "5.6.7",
+    "html-webpack-plugin": "5.6.8",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
     "jest-junit": "13.2.0",
@@ -97,12 +109,12 @@
     "redux-throttle": "0.1.1",
     "regenerator-runtime": "0.13.9",
     "rimraf": "2.7.1",
-    "scratch-l10n": "6.1.88",
+    "scratch-l10n": "6.1.110",
     "scratch-webpack-configuration": "3.1.2",
     "style-loader": "4.0.0",
-    "webpack": "5.107.2",
+    "webpack": "5.109.2",
     "webpack-cli": "5.1.4",
-    "webpack-dev-server": "5.2.5"
+    "webpack-dev-server": "5.2.6"
   },
   "peerDependencies": {
     "react": "^18",

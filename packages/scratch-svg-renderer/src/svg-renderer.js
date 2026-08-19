@@ -77,11 +77,12 @@ class SvgRenderer {
      * @param {!string} svgString String of SVG data to draw in quirks-mode.
      * @param {?boolean} fromVersion2 True if we should perform conversion from
      *     version 2 to version 3 svg.
+     * @returns {Promise<void>} Resolves when the SVG has been loaded and normalized.
      */
-    loadString (svgString, fromVersion2) {
+    async loadString (svgString, fromVersion2) {
         // New svg string invalidates the cached image
         this._cachedImage = null;
-        const svgTag = loadSvgString(svgString, fromVersion2);
+        const svgTag = await loadSvgString(svgString, fromVersion2);
 
         this._svgTag = svgTag;
         this._measurements = {
@@ -97,10 +98,12 @@ class SvgRenderer {
      * @param {!string} svgString String of SVG data to draw in quirks-mode.
      * @param {?boolean} fromVersion2 True if we should perform conversion from version 2 to version 3 svg.
      * @param {Function} [onFinish] - An optional callback to call when the SVG is loaded and can be rendered.
+     * @returns {Promise<void>} Resolves once the SVG is loaded and its image has been prepared.
      */
     loadSVG (svgString, fromVersion2, onFinish) {
-        this.loadString(svgString, fromVersion2);
-        this._createSVGImage(onFinish);
+        return this.loadString(svgString, fromVersion2).then(() => {
+            this._createSVGImage(onFinish);
+        });
     }
 
     /**

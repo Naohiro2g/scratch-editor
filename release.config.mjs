@@ -38,7 +38,11 @@ export default {
                     'package-lock.json',
                     'packages/*/package.json'
                 ],
-                message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}'
+                // git commit -m passes the message as a single argv, which the kernel caps at
+                // MAX_ARG_STRLEN (131072 bytes on Linux, including the terminating NUL). Releases
+                // with very large notes overflow that and fail with E2BIG. Truncate the notes to
+                // 120000 bytes, leaving headroom for the header.
+                message: 'chore(release): ${nextRelease.version} [skip ci]\n\n${Buffer.from(nextRelease.notes).toString("utf8", 0, 120000)}'
             }
         ]
     ]
