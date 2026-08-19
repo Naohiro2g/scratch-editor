@@ -80,7 +80,9 @@ const SHOWCASE_NOTICE = Object.freeze({
  * connection off; turning it off here as well is the second half of the guard, so neither one
  * standing alone decides whether the page can reach a sandbox. Notices behave the same way as a
  * container deployment (whatever is configured is shown as-is), except the showcase disclaimer is
- * always prepended so a viewer is not left thinking a stalled connection is a real one.
+ * always prepended so a viewer is not left thinking a stalled connection is a real one. The
+ * development WireScope URL is cleared because an HTTP loopback endpoint is not valid runtime
+ * configuration for the HTTPS Pages origin.
  * @param {object} config - runtime configuration the build produced.
  * @param {string} releaseIdentity - identity of the source being published, e.g. a commit SHA.
  * @returns {object} runtime configuration to serve.
@@ -94,6 +96,7 @@ const showcaseRuntimeConfig = (config, releaseIdentity) => {
     const configuredNotices = Array.isArray(config.notices) ? config.notices : [];
     return Object.assign({}, config, {
         connection_enabled: false,
+        wirescope_url: null,
         release_identity: identity,
         notices: [SHOWCASE_NOTICE, ...configuredNotices]
     });

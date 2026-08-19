@@ -56,6 +56,7 @@ describe('showcaseRuntimeConfig', () => {
         default_sandbox: 'sb.example.test',
         connection_targets: [{id: 'stable', sandbox: 'sb.example.test'}],
         connection_enabled: true,
+        wirescope_url: 'http://127.0.0.1:4173/',
         release_identity: 'local-development'
     };
 
@@ -67,7 +68,11 @@ describe('showcaseRuntimeConfig', () => {
         expect(showcaseRuntimeConfig(deployed, 'abc123').release_identity).toBe('abc123');
     });
 
-    test('leaves the rest of the configuration alone', () => {
+    test('removes the development WireScope endpoint from the HTTPS showcase', () => {
+        expect(showcaseRuntimeConfig(deployed, 'abc123').wirescope_url).toBeNull();
+    });
+
+    test('preserves the configured connection routing', () => {
         const showcase = showcaseRuntimeConfig(deployed, 'abc123');
 
         expect(showcase.bridge_url).toBe(deployed.bridge_url);
