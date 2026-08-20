@@ -20,6 +20,7 @@ class FakeWebSocket {
         this.protocols = protocols;
         this.protocol = oneShotTransportFixture.selected_protocol;
         this.readyState = 0; // CONNECTING
+        this.bufferedAmount = 0;
         this.sent = [];
         this._listeners = {};
         FakeWebSocket.instances.push(this);
@@ -31,6 +32,8 @@ class FakeWebSocket {
         this.sent.push(data);
     }
     close (code, reason) {
+        this.closeCode = code;
+        this.closeReason = reason;
         this.fireClose({code, reason});
     }
     _emit (type, event) {
@@ -160,7 +163,7 @@ const newConnectedBlocks = runtime => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -169,7 +172,7 @@ const newConnectedBlocks = runtime => {
     return connected.then(() => ({blocks, socket}));
 };
 
-test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
+test('hello uses a JSON-RPC 2.0 request with protocol 22.0.0', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -186,9 +189,9 @@ test('hello uses a JSON-RPC 2.0 request with protocol 21.0.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, '21.0.0', 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, '22.0.0', 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2100.0.0b2', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2200.0.0b5', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
@@ -327,7 +330,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -341,7 +344,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
         t.equal(connected.sourceKind, 'scratch');
         t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -367,7 +370,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '26.1.2',
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
@@ -378,7 +381,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
 
     return result.then(() => {
         t.same(latestObservation(runtime).hello, {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '26.1.2',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -452,7 +455,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
-                    protocol: '21.0.0',
+                    protocol: '22.0.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -545,7 +548,7 @@ test('hello accepts a server with a newer compatible protocol minor', t => {
     const result = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '21.3.99'}});
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '22.3.99'}});
 
     return result.then(() => {
         t.equal(blocks._connectionStatus, 'connected');
@@ -580,8 +583,8 @@ test('hello rejects an incompatible server protocol before commands can run', t 
 
 test('hello rejects a server protocol minor older than the client', t => {
     const blocks = new McRemote({});
-    t.equal(blocks._isProtocolCompatible('21.0.0', '21.1.0'), false);
-    t.equal(blocks._isProtocolCompatible('21.1.0', '21.1.99'), true, 'patch is ignored');
+    t.equal(blocks._isProtocolCompatible('22.0.0', '22.1.0'), false);
+    t.equal(blocks._isProtocolCompatible('22.1.0', '22.1.99'), true, 'patch is ignored');
     t.end();
 });
 
@@ -647,7 +650,7 @@ test('connect block resolves without exposing the hello result', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -702,7 +705,7 @@ test('successful reconnect resets disconnected command guidance', async t => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             catalogHash: null
         }
     });
@@ -727,7 +730,7 @@ test('connect block reuses an in-flight connection instead of opening a duplicat
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -805,6 +808,19 @@ test('setBuildOrigin block shows the fixed y value', t => {
     t.end();
 });
 
+test('build mode and flush command blocks expose one shared stream control surface', t => {
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const info = blocks.getInfo();
+    const setBuildMode = info.blocks.find(block => block.opcode === 'setBuildMode');
+    const flushBuildCommands = info.blocks.find(block => block.opcode === 'flushBuildCommands');
+    t.equal(setBuildMode.arguments.MODE.defaultValue, 'DEBUG');
+    t.equal(setBuildMode.arguments.TRACE_DELAY.defaultValue, 0.25);
+    t.same(info.menus.buildModes.items.map(item => item.value), ['DEBUG', 'TRACE', 'FAST']);
+    t.ok(flushBuildCommands, 'explicit connection.flush command is visible');
+    t.end();
+});
+
 test('pairing reporter blocks are exposed', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -851,7 +867,7 @@ test('reconnect reuses the sandbox token and starts build state from defaults', 
             nextSocket.fireMessage({jsonrpc: '2.0',
                 id: 1,
                 result: {
-                    protocol: '21.0.0',
+                    protocol: '22.0.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -880,7 +896,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
         nextSocket.fireMessage({jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '21.0.0',
+                protocol: '22.0.0',
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash: null,
@@ -933,20 +949,21 @@ test('postToChat is an acknowledged request', t =>
     })
 );
 
-test('setBlock is an acknowledged request', t =>
+test('setBlock sends a structured BlockSpec and waits for a null result in DEBUG mode', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        const result = blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'minecraft:stone'});
+        blocks._catalogState = {status: 'current', catalog: catalogBody};
+        const result = blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'oak_log', STATE: 'axis=z'});
         const msg = socket.lastSent();
         t.equal(msg.jsonrpc, '2.0');
         t.equal(msg.method, 'world.setBlock');
         t.equal(msg.id, 2, 'setBlock waits for acknowledgement');
-        t.same(msg.params, [1, 2, 3, 'minecraft:stone']);
+        t.same(msg.params, [1, 2, 3, {block_id: 'oak_log', state: {axis: 'z'}}]);
         socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
         return result.then(() => t.end());
     })
 );
 
-test('setBlocks is an acknowledged request', t =>
+test('setBlocks sends an empty state object without requiring a catalog', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setBlocks({
             X1: 1,
@@ -955,26 +972,253 @@ test('setBlocks is an acknowledged request', t =>
             X2: 4,
             Y2: 5,
             Z2: 6,
-            BLOCK: 'minecraft:glass'
+            BLOCK: 'minecraft:glass',
+            STATE: ''
         });
         const msg = socket.lastSent();
         t.equal(msg.jsonrpc, '2.0');
         t.equal(msg.method, 'world.setBlocks');
         t.equal(msg.id, 2, 'setBlocks waits for acknowledgement');
-        t.same(msg.params, [1, 2, 3, 4, 5, 6, 'minecraft:glass']);
+        t.same(msg.params, [1, 2, 3, 4, 5, 6, {block_id: 'minecraft:glass', state: {}}]);
         socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
         return result.then(() => t.end());
     })
 );
 
-test('getBlock is a request and resolves to the canonical ref', t =>
+test('FAST mode is applied after a flush fence and sends setters as notifications', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        const flush = socket.lastSent();
+        t.equal(flush.method, 'connection.flush');
+        t.same(flush.params, []);
+        t.type(flush.id, 'number');
+
+        const settingBlock = blocks.setBlock({X: 1, Y: 2, Z: 3, BLOCK: 'stone', STATE: ''});
+        t.equal(socket.sent.length, 2, 'later setter is fenced until flush succeeds');
+        socket.fireMessage({jsonrpc: '2.0', id: flush.id, result: null});
+
+        return changingMode.then(() => settingBlock).then(() => {
+            const notification = socket.lastSent();
+            t.equal(notification.method, 'world.setBlock');
+            t.equal(notification.id, void 0, 'FAST omits the JSON-RPC id');
+            t.same(notification.params, [1, 2, 3, {block_id: 'stone', state: {}}]);
+            t.end();
+        });
+    })
+);
+
+test('TRACE waits once after a successful setter response', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const delays = [];
+        blocks._delay = ms => {
+            delays.push(ms);
+            return Promise.resolve();
+        };
+        const changingMode = blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 0.25});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return changingMode.then(() => {
+            const settingBlocks = blocks.setBlocks({
+                X1: 0, Y1: 0, Z1: 0, X2: 2, Y2: 2, Z2: 2, BLOCK: 'stone', STATE: ''
+            });
+            const request = socket.lastSent();
+            t.equal(request.method, 'world.setBlocks');
+            t.type(request.id, 'number');
+            t.same(delays, [], 'TRACE waits only after success');
+            socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+            return settingBlocks;
+        }).then(() => {
+            t.same(delays, [250], 'one setBlocks call causes one delay');
+            t.end();
+        });
+    })
+);
+
+test('TRACE reports a setter error immediately without applying its delay', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const delays = [];
+        blocks._delay = ms => {
+            delays.push(ms);
+            return Promise.resolve();
+        };
+        const changingMode = blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 0.25});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return changingMode.then(() => {
+            const settingBlock = blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''});
+            const request = socket.lastSent();
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: request.id,
+                error: {code: -32602, message: 'invalid block', data: {reason: 'invalid_block_state'}}
+            });
+            return settingBlock;
+        }).then(() => {
+            t.same(delays, [], 'failed setter does not delay the calling Scratch thread');
+            t.end();
+        });
+    })
+);
+
+test('invalid TRACE delay leaves the current mode unchanged', t =>
+    newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
+        const result = blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 'not-a-number'});
+        return result.then(() => {
+            t.equal(socket.sent.length, 1, 'invalid input does not send connection.flush');
+            const settingBlock = blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''});
+            const request = socket.lastSent();
+            t.type(request.id, 'number', 'DEBUG remains active');
+            socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+            return settingBlock;
+        }).then(() => t.end());
+    })
+);
+
+test('TRACE delay accepts 60 seconds and rejects a larger runtime value', t =>
+    newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
+        const accepted = blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: 60});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return accepted.then(() => {
+            t.equal(blocks._traceDelaySeconds, 60);
+            const before = socket.sent.length;
+            return blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 60.1}).then(() => {
+                t.equal(socket.sent.length, before, 'out-of-range delay sends no flush');
+                t.equal(blocks._buildMode, 'DEBUG');
+                t.equal(blocks._traceDelaySeconds, 60);
+                t.end();
+            });
+        });
+    })
+);
+
+test('failed mode transition retains DEBUG and releases later registrations', t =>
+    newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
+        const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        const flush = socket.lastSent();
+        const settingBlock = blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: flush.id,
+            error: {code: -32000, message: 'flush failed', data: {reason: 'transport_lost'}}});
+        return changingMode.then(() => {
+            const request = socket.lastSent();
+            t.equal(request.method, 'world.setBlock');
+            t.type(request.id, 'number', 'old DEBUG mode remains active');
+            t.equal(blocks._lastError.reason, 'transport_lost');
+            socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+            return settingBlock;
+        }).then(() => t.end());
+    })
+);
+
+test('FAST applies finite WebSocket backpressure without dropping the notification', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return changingMode.then(() => {
+            socket.bufferedAmount = 1024 * 1024;
+            const settingBlock = blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''});
+            t.equal(socket.sent.length, 2, 'notification waits while the browser buffer is full');
+            socket.bufferedAmount = 0;
+            return settingBlock;
+        }).then(() => {
+            const notification = socket.lastSent();
+            t.equal(notification.method, 'world.setBlock');
+            t.equal(notification.id, void 0);
+            t.end();
+        });
+    })
+);
+
+test('a saturated outbound registration queue closes the connection without silent drops', t => {
+    const runtime = newRuntime();
+    return newConnectedBlocks(runtime).then(({blocks, socket}) => {
+        const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        let x = 0;
+        const placements = Array.from({length: 257}, () => blocks.setBlock({
+            X: x++,
+            Y: 0,
+            Z: 0,
+            BLOCK: 'stone',
+            STATE: ''
+        }));
+
+        return Promise.all([changingMode, ...placements]).then(() => {
+            t.equal(socket.closeCode, 1011);
+            t.equal(socket.closeReason, 'backpressure');
+            t.equal(blocks._connectionStatus, 'closed');
+            t.equal(actionableErrors(runtime).length, 1, 'delivery guidance is emitted once per connection');
+            t.equal(actionableErrors(runtime)[0].reason, 'backpressure');
+            t.end();
+        });
+    });
+});
+
+test('FAST notification is observable with a null request id and no synthetic response', t =>
+    newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
+        const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return changingMode.then(() => blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''})).then(() => {
+            const frames = blocks._frameLog;
+            const notification = frames[frames.length - 1];
+            t.equal(notification.direction, 'send');
+            t.equal(notification.id, void 0);
+            t.equal(notification.method, 'world.setBlock');
+            t.same(notification.payload, {
+                jsonrpc: '2.0',
+                method: 'world.setBlock',
+                params: [0, 0, 0, {block_id: 'stone', state: {}}]
+            });
+            t.end();
+        });
+    })
+);
+
+test('flushBuildCommands sends the exact connection.flush request', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.flushBuildCommands();
+        const request = socket.lastSent();
+        t.equal(request.method, 'connection.flush');
+        t.same(request.params, []);
+        t.type(request.id, 'number');
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('leaving FAST flushes earlier notifications before applying DEBUG', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const enteringFast = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        return enteringFast
+            .then(() => blocks.setBlock({
+                X: 0, Y: 0, Z: 0, BLOCK: 'stone', STATE: ''
+            }))
+            .then(() => {
+                const notification = socket.lastSent();
+                t.equal(notification.method, 'world.setBlock');
+                t.equal(notification.id, void 0);
+
+                const leavingFast = blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: 0.25});
+                const flush = socket.lastSent();
+                t.equal(flush.method, 'connection.flush');
+                t.ok(socket.sent.indexOf(JSON.stringify(notification)) < socket.sent.length - 1,
+                    'notification precedes the transition flush');
+                socket.fireMessage({jsonrpc: '2.0', id: flush.id, result: null});
+                return leavingFast;
+            })
+            .then(() => {
+                t.equal(blocks._buildMode, 'DEBUG');
+                t.end();
+            });
+    })
+);
+
+test('getBlock makes one request and resolves to canonical BlockInfoText', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.getBlock({X: 0, Y: 0, Z: 0});
         const msg = socket.lastSent();
         t.equal(msg.method, 'world.getBlock');
         t.equal(msg.id, 2, 'second request on the connection');
         socket.fireMessage({
-            jsonrpc: '2.0', id: 2, result: 'minecraft:oak_log[axis=y]'
+            jsonrpc: '2.0', id: 2, result: {block_id: 'minecraft:oak_log', state: {axis: 'y'}}
         });
         return result.then(value => {
             t.equal(value, 'minecraft:oak_log[axis=y]');
@@ -983,7 +1227,155 @@ test('getBlock is a request and resolves to the canonical ref', t =>
     })
 );
 
-test('getBlock swallows a JSON-RPC error into empty string', t =>
+test('getBlocks atomically replaces the selected list with ordered BlockInfoText values', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const list = {value: ['previous'], _monitorUpToDate: true};
+        const util = {
+            target: {
+                lookupOrCreateList (id, name) {
+                    t.equal(id, 'list-id');
+                    t.equal(name, 'block list');
+                    return list;
+                }
+            }
+        };
+        const result = blocks.getBlocks({
+            X1: 1,
+            Y1: 2,
+            Z1: 3,
+            X2: 1,
+            Y2: 2,
+            Z2: 4,
+            LIST: {id: 'list-id', name: 'block list'}
+        }, util);
+        const request = socket.lastSent();
+        t.equal(request.method, 'world.getBlocks');
+        t.same(request.params, [1, 2, 3, 1, 2, 4]);
+        t.same(list.value, ['previous'], 'destination is unchanged while the response is pending');
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            result: [
+                {block_id: 'minecraft:stone', state: {}},
+                {block_id: 'minecraft:oak_log', state: {axis: 'z'}}
+            ]
+        });
+        return result.then(() => {
+            t.same(list.value, ['minecraft:stone', 'minecraft:oak_log[axis=z]']);
+            t.equal(list._monitorUpToDate, false);
+            t.end();
+        });
+    })
+);
+
+test('getBlocks preserves the selected list when any returned block value is malformed', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const list = {value: ['last known good'], _monitorUpToDate: true};
+        const util = {target: {lookupOrCreateList: () => list}};
+        const result = blocks.getBlocks({
+            X1: 0,
+            Y1: 0,
+            Z1: 0,
+            X2: 0,
+            Y2: 0,
+            Z2: 1,
+            LIST: {id: 'list-id', name: 'block list'}
+        }, util);
+        const request = socket.lastSent();
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            result: [
+                {block_id: 'minecraft:stone', state: {}},
+                {block_id: 'minecraft:oak_log'}
+            ]
+        });
+        return result.then(() => {
+            t.same(list.value, ['last known good']);
+            t.equal(list._monitorUpToDate, true);
+            t.end();
+        });
+    })
+);
+
+test('getHeight returns an integer and uses the optional maxY as an inclusive third parameter', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.getHeightBelow({X: 7, Z: 9, MAX_Y: 20}, {});
+        const request = socket.lastSent();
+        t.equal(request.method, 'world.getHeight');
+        t.same(request.params, [7, 9, 20]);
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: -1});
+        return result.then(value => {
+            t.equal(value, -1, 'negative relative heights remain valid values');
+            t.end();
+        });
+    })
+);
+
+test('getHeight returns ErrorText and emits one actionable hint for height_not_found', t => {
+    const runtime = newRuntime();
+    return newConnectedBlocks(runtime).then(({blocks, socket}) => {
+        const first = blocks.getHeight({X: 7, Z: 9}, {});
+        let request = socket.lastSent();
+        t.same(request.params, [7, 9]);
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            error: {code: -32000, message: 'not found', data: {reason: 'height_not_found'}}
+        });
+        return first.then(value => {
+            t.equal(value, '⟦mcr-error:height_not_found⟧');
+            const second = blocks.getHeight({X: 7, Z: 9}, {});
+            request = socket.lastSent();
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: request.id,
+                error: {code: -32000, message: 'not found', data: {reason: 'height_not_found'}}
+            });
+            return second;
+        }).then(value => {
+            t.equal(value, '⟦mcr-error:height_not_found⟧');
+            t.equal(actionableErrors(runtime).filter(error => error.reason === 'height_not_found').length, 1);
+            t.end();
+        });
+    });
+});
+
+test('spawnEntity writes its epoch handle or ErrorText to the selected scalar variable', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const variable = {value: 'previous', isCloud: false};
+        const util = {target: {lookupOrCreateVariable: () => variable}};
+        const args = {
+            ENTITY: 'minecraft:allay',
+            X: 1,
+            Y: 2,
+            Z: 3,
+            VARIABLE: {id: 'variable-id', name: 'spawned entity'}
+        };
+        const success = blocks.spawnEntity(args, util);
+        let request = socket.lastSent();
+        t.equal(request.method, 'world.spawnEntity');
+        t.same(request.params, ['minecraft:allay', 1, 2, 3]);
+        t.equal(variable.value, 'previous', 'output changes only after the response');
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: 'mceh_example'});
+        return success.then(() => {
+            t.equal(variable.value, 'mceh_example');
+            const failure = blocks.spawnEntity(args, util);
+            request = socket.lastSent();
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: request.id,
+                error: {code: -32000, message: 'capacity', data: {reason: 'entity_capacity_exhausted'}}
+            });
+            return failure;
+        }).then(() => {
+            t.equal(variable.value, '⟦mcr-error:entity_capacity_exhausted⟧');
+            t.end();
+        });
+    })
+);
+
+test('getBlock returns allowlisted ErrorText for a JSON-RPC error', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.getBlock({X: 0, Y: 0, Z: 0});
         socket.fireMessage({jsonrpc: '2.0',
@@ -991,10 +1383,117 @@ test('getBlock swallows a JSON-RPC error into empty string', t =>
             error: {
                 code: -32602,
                 message: 'invalid params',
-                data: {reason: 'unknown_block', ref: 'minecraft:nope'}
+                data: {reason: 'unknown_block', block_id: 'minecraft:nope'}
             }});
         return result.then(value => {
-            t.equal(value, '');
+            t.equal(value, '⟦mcr-error:unknown_block⟧');
+            t.end();
+        });
+    })
+);
+
+test('getBlock folds unknown remote reasons without reflecting server messages', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.getBlock({X: 0, Y: 0, Z: 0});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: 2,
+            error: {
+                code: -32000,
+                message: 'secret server detail',
+                data: {reason: 'future_reason'}
+            }});
+        return result.then(value => {
+            t.equal(value, '⟦mcr-error:remote_error⟧');
+            t.equal(value.indexOf('secret'), -1);
+            t.end();
+        });
+    })
+);
+
+test('block information accessors are pure and never send another request', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const before = socket.sent.length;
+        const info = 'minecraft:repeater[delay=3,facing=east,locked=false,powered=true]';
+        t.equal(blocks.blockInfoId({BLOCK_INFO: info}), 'minecraft:repeater');
+        t.equal(blocks.blockInfoState({BLOCK_INFO: info}), 'delay=3,facing=east,locked=false,powered=true');
+        t.equal(blocks.blockInfoStateProperty({BLOCK_INFO: info, PROPERTY: 'facing'}), 'east');
+        t.equal(blocks.blockInfoHasStateProperty({BLOCK_INFO: info, PROPERTY: 'powered'}), true);
+        t.equal(blocks.isMcRemoteError({VALUE: info}), false);
+        t.equal(blocks.isMcRemoteError({VALUE: '⟦mcr-error:unknown_block⟧'}), true);
+        t.equal(socket.sent.length, before);
+        t.end();
+    })
+);
+
+test('getBlock coalesces monitor requests but explicit calls always fetch', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const monitor = {thread: {updateMonitor: true}};
+        const first = blocks.getBlock({X: 1, Y: 2, Z: 3}, monitor);
+        const second = blocks.getBlock({X: 1, Y: 2, Z: 3}, monitor);
+        t.equal(socket.sent.length, 2, 'hello plus one coalesced getBlock request');
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: 2,
+            result: {block_id: 'minecraft:stone', state: {}}
+        });
+        return Promise.all([first, second]).then(values => {
+            t.same(values, ['minecraft:stone', 'minecraft:stone']);
+            const explicit = blocks.getBlock({X: 1, Y: 2, Z: 3}, {thread: {updateMonitor: false}});
+            t.equal(socket.sent.length, 3, 'explicit call bypasses the monitor cache');
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: 3,
+                result: {block_id: 'minecraft:gold_block', state: {}}
+            });
+            return explicit.then(value => {
+                t.equal(value, 'minecraft:gold_block');
+                t.end();
+            });
+        });
+    })
+);
+
+test('disconnect clears block information monitor cache and pending requests', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const monitor = {thread: {updateMonitor: true}};
+        const result = blocks.getBlock({X: 1, Y: 2, Z: 3}, monitor);
+        t.equal(blocks._blockInfoMonitorPending.size, 1);
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: 2,
+            result: {block_id: 'minecraft:stone', state: {}}
+        });
+        return result.then(() => {
+            t.equal(blocks._blockInfoMonitorCache.size, 1);
+            socket.fireClose();
+            t.equal(blocks._blockInfoMonitorCache.size, 0);
+            t.equal(blocks._blockInfoMonitorPending.size, 0);
+            t.end();
+        });
+    })
+);
+
+test('an in-flight monitor response cannot repopulate cache after disconnect', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.getBlock({X: 1, Y: 2, Z: 3}, {thread: {updateMonitor: true}});
+        t.equal(blocks._blockInfoMonitorPending.size, 1);
+        socket.fireClose();
+        return result.then(value => {
+            t.equal(value, '⟦mcr-error:remote_error⟧');
+            t.equal(blocks._blockInfoMonitorCache.size, 0);
+            t.equal(blocks._blockInfoMonitorPending.size, 0);
+            t.end();
+        });
+    })
+);
+
+test('malformed StateText is not sent and emits an actionable local reason', t =>
+    newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
+        blocks._catalogState = {status: 'current', catalog: catalogBody};
+        const before = socket.sent.length;
+        return blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'oak_log', STATE: 'axis=z,'}).then(() => {
+            t.equal(socket.sent.length, before);
+            t.equal(blocks._lastError.reason, 'invalid_block_state');
             t.end();
         });
     })
@@ -1245,7 +1744,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -1282,7 +1781,7 @@ test('catalog cache miss fetches after hello without delaying connection', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -1321,7 +1820,7 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -1358,7 +1857,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '21.0.0',
+            protocol: '22.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,

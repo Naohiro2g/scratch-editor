@@ -16,7 +16,13 @@ describe('McRemote Japanese localization', () => {
                 '利用不可 — 接続先からカタログを取得できませんでした。',
             'gui.mcremote.wireScope.statusPairing': 'ペアリング待ち',
             'mcremote.connect': '接続する',
-            'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。'
+            'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。',
+            'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
+            'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
+            'mcremote.buildMode.trace': 'TRACE（過程）',
+            'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から60秒の数値にしてください。',
+            'gui.alerts.mcremoteBuildDeliveryFailed':
+                'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。'
         });
     });
 
@@ -43,7 +49,10 @@ describe('McRemote Japanese localization', () => {
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',
-            'mcremote.setWorld': 'けんちくワールドを [WORLD] にする'
+            'mcremote.setWorld': 'けんちくワールドを [WORLD] にする',
+            'mcremote.setBuildMode':
+                'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
+            'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ'
         });
         for (const message of Object.values(mcremoteMessages['ja-Hira'])) {
             expect(message).not.toMatch(/[\u3400-\u9fff]/u);

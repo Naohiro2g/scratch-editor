@@ -11,6 +11,17 @@ const {
     IndexedDBCatalogCache,
     validateCatalogResult
 } = require('./catalog');
+const {
+    blockInfoHasStateProperty,
+    blockInfoId,
+    blockInfoState,
+    blockInfoStateProperty,
+    formatBlockInfoText,
+    isErrorText,
+    makeErrorText,
+    parseStateText,
+    remoteErrorText
+} = require('./block-value');
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -22,18 +33,18 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
- * protocol contract version (21.0.0); the package/channel suffix is not
+ * protocol contract version (22.0.0); the package/channel suffix is not
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '21.0.0';
+const PROTOCOL_VERSION = '22.0.0';
 
 /**
  * Scratch McRemote client build label for diagnostics. Compatibility is still
  * negotiated exclusively by PROTOCOL_VERSION.
  * @type {string}
  */
-const CLIENT_VERSION = '2100.0.0b2';
+const CLIENT_VERSION = '2200.0.0b5';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
@@ -43,6 +54,12 @@ const BRIDGE_TRANSPORT_PROTOCOL = 'mcremote.bridge.one-shot.v1';
 const ONE_SHOT_HINT_KEY = 'mcremote_bridge_transport';
 const ONE_SHOT_HINT = 'one-shot-v1';
 const ONE_SHOT_METHODS = new Set(['auth.pairBegin', 'auth.pairPoll']);
+const DEFAULT_TRACE_DELAY_SECONDS = 0.25;
+const MAX_TRACE_DELAY_SECONDS = 60;
+const OUTBOUND_QUEUE_LIMIT = 256;
+const OUTBOUND_BUFFER_LIMIT_BYTES = 1024 * 1024;
+const OUTBOUND_BACKPRESSURE_POLL_MS = 4;
+const OUTBOUND_BACKPRESSURE_TIMEOUT_MS = 5000;
 
 /**
  * Minimum time between live `player.getPos` requests made on behalf of a
@@ -55,6 +72,8 @@ const ONE_SHOT_METHODS = new Set(['auth.pairBegin', 'auth.pairPoll']);
  */
 const PLAYER_POS_MONITOR_THROTTLE_MS = 1000;
 const PLAYER_POSE_MONITOR_THROTTLE_MS = 1000;
+const BLOCK_INFO_MONITOR_THROTTLE_MS = 1000;
+const HEIGHT_MONITOR_THROTTLE_MS = 1000;
 const FRAME_LOG_LIMIT = 100;
 const DEFAULT_STREAM_ID = 'default';
 const REDACTED = '[redacted]';
@@ -84,8 +103,14 @@ const BuildWorld = {
     THE_END: 'the_end'
 };
 
+const BuildMode = {
+    DEBUG: 'DEBUG',
+    TRACE: 'TRACE',
+    FAST: 'FAST'
+};
+
 /**
- * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 21.0.0).
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 22.0.0).
  * One WebSocket message carries either one raw JSON-RPC object or, for the
  * pre-auth pairing methods only, one Bridge transport envelope containing the
  * untouched JSON-RPC string.
@@ -101,9 +126,13 @@ const BuildWorld = {
  *   build.setWorld  [dimension]                                  -> reply
  *   build.setOrigin [x, y, z]                                    -> reply
  *   chat.post       ["msg"]                                      -> reply
- *   world.setBlock  [x, y, z, block]                             -> reply
- *   world.setBlocks [x1, y1, z1, x2, y2, z2, block]             -> reply
- *   world.getBlock  [x, y, z]  => canonical block_state_ref      -> reply
+ *   world.setBlock  [x, y, z, {block_id,state}]                  -> null
+ *   world.setBlocks [x1, y1, z1, x2, y2, z2, {block_id,state}]  -> null
+ *   world.getBlock  [x, y, z]                                   -> BlockValue
+ *   world.getBlocks [x1, y1, z1, x2, y2, z2]                    -> BlockValue[]
+ *   world.getHeight [x, z] or [x, z, maxY]                       -> integer
+ *   world.spawnEntity [entity, x, y, z]                          -> entity handle
+ *   connection.flush []                                          -> null
  *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
  *   player.setPos   [world, x, y, z]                               -> reply
  *   player.getPose  []         => {world, pos:[x,y,z], yaw, pitch} -> reply
@@ -111,14 +140,17 @@ const BuildWorld = {
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
- * Coordinates are deltas from the build origin; the block argument is a
- * block_state_ref string passed through verbatim (the plugin completes the
- * namespace and canonicalises the reply). Scratch keeps build-origin y sealed
+ * Coordinates are deltas from the build origin. Scratch resolves StateText to
+ * JSON-native values with the hello-matched catalog before sending BlockSpec;
+ * the plugin performs final registry validation and returns full BlockValue.
+ * Scratch keeps build-origin y sealed
  * and sends 0 for `build.setOrigin` y. `player.*` coordinates share the same
  * build-origin delta but do not depend on the world set by `build.setWorld`;
  * the world is explicit in both `player.getPos`'s result and `player.setPos`'s
  * params. Command blocks use id-bearing requests so success/error can be
- * observed during release-gate testing.
+ * observed during release-gate testing. FAST sends setters as notifications;
+ * DEBUG and TRACE use requests, and TRACE waits on the calling Scratch thread
+ * after a successful response.
  */
 
 /**
@@ -153,6 +185,24 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._pending = new Map();
+
+        /**
+         * Bounded registration queue for the current connection send order.
+         * Normal requests only serialize their send; mode transitions hold the
+         * queue until their connection.flush response completes.
+         * @private
+         */
+        this._outboundQueue = [];
+        this._outboundQueueBusy = false;
+        this._outboundQueueGeneration = 0;
+
+        /**
+         * Build execution policy for the current main-stream connection.
+         * Project loading does not write these runtime-only fields.
+         * @private
+         */
+        this._buildMode = BuildMode.DEBUG;
+        this._traceDelaySeconds = DEFAULT_TRACE_DELAY_SECONDS;
 
         /**
          * Current pairing code, formatted for humans as NNN-NNN.
@@ -242,11 +292,20 @@ class Scratch3McRemoteBlocks {
         this._disconnectedCommandNoticeShown = false;
 
         /**
+         * Suppress repeated delivery failure guidance after one connection is
+         * closed to preserve the finite outbound boundary.
+         * @type {boolean}
+         * @private
+         */
+        this._buildDeliveryNoticeShown = false;
+
+        /**
          * Last connection/auth error summary.
          * @type {?object}
          * @private
          */
         this._lastError = null;
+        this._buildDeliveryNoticeShown = false;
 
         /**
          * Recent client send/receive frames for WireScope v0.
@@ -287,6 +346,23 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._playerPoseCache = null;
+
+        /**
+         * Monitor-only block information cache and same-coordinate in-flight
+         * requests. Explicit script calls never reuse either collection.
+         * @private
+         */
+        this._blockInfoMonitorCache = new Map();
+        this._blockInfoMonitorPending = new Map();
+
+        /**
+         * Monitor-only height cache, same-parameter in-flight requests, and
+         * per-connection suppression for repeated height-not-found guidance.
+         * @private
+         */
+        this._heightMonitorCache = new Map();
+        this._heightMonitorPending = new Map();
+        this._heightNotFoundNoticeKeys = new Set();
     }
 
     /**
@@ -384,6 +460,35 @@ class Scratch3McRemoteBlocks {
                         Z: {type: ArgumentType.NUMBER, defaultValue: 200}
                     }
                 },
+                {
+                    opcode: 'setBuildMode',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setBuildMode',
+                        default: 'set build mode to [MODE] (TRACE delay [TRACE_DELAY] seconds)',
+                        description: 'Set the execution mode and TRACE delay for block placement commands'
+                    }),
+                    arguments: {
+                        MODE: {
+                            type: ArgumentType.STRING,
+                            menu: 'buildModes',
+                            defaultValue: BuildMode.DEBUG
+                        },
+                        TRACE_DELAY: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: DEFAULT_TRACE_DELAY_SECONDS
+                        }
+                    }
+                },
+                {
+                    opcode: 'flushBuildCommands',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.flushBuildCommands',
+                        default: 'wait for sent block placements to finish',
+                        description: 'Wait for earlier block placement commands on this connection to finish'
+                    })
+                },
                 '---',
                 {
                     opcode: 'postToChat',
@@ -405,14 +510,15 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlock',
-                        default: 'set block at x:[X] y:[Y] z:[Z] to [BLOCK] [PICKER]',
-                        description: 'Set a single block'
+                        default: 'set block at x:[X] y:[Y] z:[Z] to ID [BLOCK] state [STATE] [PICKER]',
+                        description: 'Set a single block using separate block ID and StateText inputs'
                     }),
                     arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0},
                         BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        STATE: {type: ArgumentType.STRING, defaultValue: ''},
                         PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
@@ -421,8 +527,9 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlocks',
-                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] as [BLOCK] [PICKER]',
-                        description: 'Fill a cuboid of blocks'
+                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] ' +
+                            'as ID [BLOCK] state [STATE] [PICKER]',
+                        description: 'Fill a cuboid using separate block ID and StateText inputs'
                     }),
                     arguments: {
                         X1: {type: ArgumentType.NUMBER, defaultValue: 0},
@@ -432,6 +539,7 @@ class Scratch3McRemoteBlocks {
                         Y2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z2: {type: ArgumentType.NUMBER, defaultValue: 0},
                         BLOCK: {type: ArgumentType.STRING, defaultValue: 'stone'},
+                        STATE: {type: ArgumentType.STRING, defaultValue: ''},
                         PICKER: {type: ArgumentType.IMAGE, dataURI: BLOCK_PICKER_ICON}
                     }
                 },
@@ -440,13 +548,137 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.getBlock',
-                        default: 'block at x:[X] y:[Y] z:[Z]',
-                        description: 'Get the block id at a position'
+                        default: 'block information at x:[X] y:[Y] z:[Z]',
+                        description: 'Get one immutable block information snapshot at a position'
                     }),
                     arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'getBlocks',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.getBlocks',
+                        default: 'put block information from x:[X1] y:[Y1] z:[Z1] to ' +
+                            'x:[X2] y:[Y2] z:[Z2] in [LIST]',
+                        description: 'Replace a selected Scratch list with one bounded block information query'
+                    }),
+                    arguments: {
+                        X1: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y1: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z1: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        X2: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y2: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z2: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'block list'}
+                    }
+                },
+                {
+                    opcode: 'getHeight',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getHeight',
+                        default: 'ground height at x:[X] z:[Z]',
+                        description: 'Get the highest ground surface in one Minecraft column'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'getHeightBelow',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getHeightBelow',
+                        default: 'ground height at x:[X] z:[Z] at or below y:[MAX_Y]',
+                        description: 'Get the highest ground surface at or below an inclusive maximum y'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        MAX_Y: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'blockInfoId',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.blockInfoId',
+                        default: 'block ID of [BLOCK_INFO]',
+                        description: 'Read the block ID from McRemote BlockInfoText without network access'
+                    }),
+                    arguments: {
+                        BLOCK_INFO: {type: ArgumentType.STRING, defaultValue: 'minecraft:stone'}
+                    }
+                },
+                {
+                    opcode: 'blockInfoState',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.blockInfoState',
+                        default: 'state of [BLOCK_INFO]',
+                        description: 'Read the full StateText from McRemote BlockInfoText without network access'
+                    }),
+                    arguments: {
+                        BLOCK_INFO: {type: ArgumentType.STRING, defaultValue: 'minecraft:oak_log[axis=y]'}
+                    }
+                },
+                {
+                    opcode: 'blockInfoStateProperty',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.blockInfoStateProperty',
+                        default: 'state [PROPERTY] of [BLOCK_INFO]',
+                        description: 'Read one state property from McRemote BlockInfoText without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, defaultValue: 'axis'},
+                        BLOCK_INFO: {type: ArgumentType.STRING, defaultValue: 'minecraft:oak_log[axis=y]'}
+                    }
+                },
+                {
+                    opcode: 'blockInfoHasStateProperty',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.blockInfoHasStateProperty',
+                        default: '[BLOCK_INFO] has state [PROPERTY]',
+                        description: 'Check whether McRemote BlockInfoText contains a state property'
+                    }),
+                    arguments: {
+                        BLOCK_INFO: {type: ArgumentType.STRING, defaultValue: 'minecraft:oak_log[axis=y]'},
+                        PROPERTY: {type: ArgumentType.STRING, defaultValue: 'axis'}
+                    }
+                },
+                {
+                    opcode: 'isMcRemoteError',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.isMcRemoteError',
+                        default: '[VALUE] is a McRemote error',
+                        description: 'Check the exact reserved McRemote ErrorText grammar'
+                    }),
+                    arguments: {
+                        VALUE: {type: ArgumentType.STRING, defaultValue: makeErrorText('unknown_block')}
+                    }
+                },
+                {
+                    opcode: 'spawnEntity',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.spawnEntity',
+                        default: 'spawn entity [ENTITY] at x:[X] y:[Y] z:[Z] and put its handle in [VARIABLE]',
+                        description: 'Spawn one entity and store its connection-scoped handle in a variable'
+                    }),
+                    arguments: {
+                        ENTITY: {type: ArgumentType.STRING, defaultValue: 'minecraft:allay'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        VARIABLE: {type: ArgumentType.VARIABLE, defaultValue: 'entity handle'}
                     }
                 },
                 '---',
@@ -521,6 +753,35 @@ class Scratch3McRemoteBlocks {
                 }
             ],
             menus: {
+                buildModes: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.buildMode.debug',
+                                default: 'DEBUG',
+                                description: 'Build mode that waits for and reports each command result'
+                            }),
+                            value: BuildMode.DEBUG
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.buildMode.trace',
+                                default: 'TRACE',
+                                description: 'Build mode that pauses after each successful placement command'
+                            }),
+                            value: BuildMode.TRACE
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.buildMode.fast',
+                                default: 'FAST',
+                                description: 'Build mode that sends placement commands without individual replies'
+                            }),
+                            value: BuildMode.FAST
+                        }
+                    ]
+                },
                 playerAttributes: {
                     acceptReporters: false,
                     items: [
@@ -677,6 +938,9 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _resetObservationForConnection () {
+        const resetError = new Error('McRemote connection epoch reset');
+        resetError.reason = 'connection_reset';
+        this._rejectOutboundQueue(resetError);
         this._connectionStatus = ConnectionStatus.DISCONNECTED;
         this._streamId = DEFAULT_STREAM_ID;
         this._displayAlias = '';
@@ -687,8 +951,15 @@ class Scratch3McRemoteBlocks {
         this._nextRequestId = 1;
         this._pairCode = '';
         this._pairCommand = '';
+        this._buildMode = BuildMode.DEBUG;
+        this._traceDelaySeconds = DEFAULT_TRACE_DELAY_SECONDS;
         this._playerPosCache = null;
         this._playerPoseCache = null;
+        this._blockInfoMonitorCache.clear();
+        this._blockInfoMonitorPending.clear();
+        this._heightMonitorCache.clear();
+        this._heightMonitorPending.clear();
+        this._heightNotFoundNoticeKeys.clear();
         this._resetCatalog();
         this._emitObservation();
     }
@@ -1039,9 +1310,15 @@ class Scratch3McRemoteBlocks {
                 error.reason = event && event.reason;
                 this._socket = null;
                 this._displayAlias = '';
+                this._blockInfoMonitorCache.clear();
+                this._blockInfoMonitorPending.clear();
+                this._heightMonitorCache.clear();
+                this._heightMonitorPending.clear();
+                this._heightNotFoundNoticeKeys.clear();
                 this._setConnectionStatus(ConnectionStatus.CLOSED, error);
                 this._resetCatalog();
                 this._rejectPending(error);
+                this._rejectOutboundQueue(error);
                 reject(error);
             });
         });
@@ -1307,6 +1584,20 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Reject registrations which have not reached the active connection yet.
+     * An incremented generation prevents a late transition completion from
+     * draining work into a replacement connection.
+     * @param {Error} error - rejection reason.
+     * @private
+     */
+    _rejectOutboundQueue (error) {
+        this._outboundQueueGeneration++;
+        for (const entry of this._outboundQueue) entry.reject(error);
+        this._outboundQueue = [];
+        this._outboundQueueBusy = false;
+    }
+
+    /**
      * Handle an inbound JSON-RPC message from the bridge, correlating replies
      * by id. Non-JSON messages and replies for unknown ids are dropped.
      * @param {MessageEvent} event - the socket message event.
@@ -1340,6 +1631,236 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Reject a send before assigning a request id when the active connection
+     * cannot accept commands.
+     * @param {string} method - JSON-RPC method.
+     * @returns {?Error} error when sending is unavailable.
+     * @private
+     */
+    _sendGuardError (method) {
+        if (!this._runtimeConfig().connectionEnabled) {
+            const error = this._connectionDisabledError();
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return error;
+        }
+        if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
+            const error = new Error('not connected to bridge');
+            error.reason = 'not_connected';
+            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
+            return error;
+        }
+        if (!this._isSessionSetupMethod(method) && this._connectionStatus !== ConnectionStatus.CONNECTED) {
+            const error = new Error('not connected to McRemote server');
+            error.reason = 'not_connected';
+            this._notifyDisconnectedCommand(error);
+            return error;
+        }
+        return null;
+    }
+
+    /**
+     * @param {string} payload - encoded WebSocket message.
+     * @returns {number} UTF-8 byte length.
+     * @private
+     */
+    _payloadByteLength (payload) {
+        return new TextEncoder().encode(payload).byteLength;
+    }
+
+    /**
+     * Wait until the browser WebSocket's finite outbound buffer can accept the
+     * payload. A stalled transport fails the connection instead of silently
+     * discarding a FAST notification or growing an application queue forever.
+     * @param {WebSocket} socket - connection generation which owns the send.
+     * @param {number} payloadBytes - encoded payload size.
+     * @returns {?Promise} null when capacity is already available.
+     * @private
+     */
+    _waitForOutboundCapacity (socket, payloadBytes) {
+        if (payloadBytes > OUTBOUND_BUFFER_LIMIT_BYTES) {
+            const error = new Error('McRemote outbound message exceeds the transport limit');
+            error.reason = 'capacity_exhausted';
+            if (socket && socket.readyState === WebSocket.OPEN) socket.close(1011, error.reason);
+            return Promise.reject(error);
+        }
+        const hasCapacity = () => socket === this._socket &&
+            socket.readyState === WebSocket.OPEN &&
+            socket.bufferedAmount + payloadBytes <= OUTBOUND_BUFFER_LIMIT_BYTES;
+        if (hasCapacity()) return null;
+
+        const startedAt = Date.now();
+        const poll = () => {
+            if (socket !== this._socket || socket.readyState !== WebSocket.OPEN) {
+                const error = new Error('McRemote connection closed during backpressure');
+                error.reason = 'transport_lost';
+                return Promise.reject(error);
+            }
+            if (hasCapacity()) return Promise.resolve();
+            if (Date.now() - startedAt >= OUTBOUND_BACKPRESSURE_TIMEOUT_MS) {
+                const error = new Error('McRemote outbound transport remained full');
+                error.reason = 'backpressure';
+                socket.close(1011, error.reason);
+                return Promise.reject(error);
+            }
+            return this._delay(OUTBOUND_BACKPRESSURE_POLL_MS).then(poll);
+        };
+        return poll();
+    }
+
+    /**
+     * Send one observer-visible JSON-RPC frame, waiting only when browser
+     * transport capacity is currently exhausted.
+     * @param {object} message - raw JSON-RPC message.
+     * @returns {?Promise} null for an immediate send, otherwise send completion.
+     * @private
+     */
+    _sendJsonRpc (message) {
+        const socket = this._socket;
+        const payload = JSON.stringify(message);
+        const wirePayload = ONE_SHOT_METHODS.has(message.method) ? JSON.stringify({
+            [ONE_SHOT_HINT_KEY]: ONE_SHOT_HINT,
+            payload
+        }) : payload;
+        const send = () => {
+            if (socket !== this._socket || socket.readyState !== WebSocket.OPEN) {
+                const error = new Error('McRemote connection changed before send');
+                error.reason = 'transport_lost';
+                throw error;
+            }
+            this._appendFrame('send', message);
+            socket.send(wirePayload);
+        };
+        const waiting = this._waitForOutboundCapacity(socket, this._payloadByteLength(wirePayload));
+        if (!waiting) {
+            send();
+            return null;
+        }
+        return waiting.then(send);
+    }
+
+    /**
+     * Start one request immediately on the current connection.
+     * @param {string} method - JSON-RPC method.
+     * @param {Array|object} params - request params.
+     * @returns {{release: ?Promise, completion: Promise}} local-send and response promises.
+     * @private
+     */
+    _startRequest (method, params) {
+        const guardError = this._sendGuardError(method);
+        if (guardError) return {release: null, completion: Promise.reject(guardError)};
+
+        const id = this._nextRequestId++;
+        let resolveResponse;
+        let rejectResponse;
+        const response = new Promise((resolve, reject) => {
+            resolveResponse = resolve;
+            rejectResponse = reject;
+        });
+        const message = {jsonrpc: '2.0', id, method, params};
+        this._pending.set(id, {resolve: resolveResponse, reject: rejectResponse, method});
+
+        let release;
+        try {
+            release = this._sendJsonRpc(message);
+        } catch (error) {
+            this._pending.delete(id);
+            rejectResponse(error);
+            return {release: null, completion: response};
+        }
+        if (!release) return {release: null, completion: response};
+
+        const sent = release.catch(error => {
+            const pending = this._pending.get(id);
+            if (pending) {
+                this._pending.delete(id);
+                pending.reject(error);
+            }
+            throw error;
+        });
+        return {
+            release: sent,
+            completion: Promise.all([sent, response]).then(values => values[1])
+        };
+    }
+
+    /**
+     * Start one JSON-RPC notification. Its completion confirms only local
+     * transport acceptance, never server-side success.
+     * @param {string} method - JSON-RPC method.
+     * @param {Array} params - positional params.
+     * @returns {{release: ?Promise, completion: Promise}} send operation.
+     * @private
+     */
+    _startNotification (method, params) {
+        const guardError = this._sendGuardError(method);
+        if (guardError) return {release: null, completion: Promise.reject(guardError)};
+        let release;
+        try {
+            release = this._sendJsonRpc({jsonrpc: '2.0', method, params});
+        } catch (error) {
+            return {release: null, completion: Promise.reject(error)};
+        }
+        return {
+            release,
+            completion: release || Promise.resolve()
+        };
+    }
+
+    /**
+     * Register a send operation in connection order. `release` fences later
+     * registrations; `completion` controls only the invoking Scratch block.
+     * @param {function(): {release: ?Promise, completion: Promise}} start - operation factory.
+     * @returns {Promise} operation completion.
+     * @private
+     */
+    _enqueueOutbound (start) {
+        if (this._outboundQueue.length >= OUTBOUND_QUEUE_LIMIT) {
+            const error = new Error('McRemote outbound registration queue is full');
+            error.reason = 'backpressure';
+            if (this._socket && this._socket.readyState === WebSocket.OPEN) {
+                this._socket.close(1011, error.reason);
+            }
+            return Promise.reject(error);
+        }
+        return new Promise((resolve, reject) => {
+            this._outboundQueue.push({start, resolve, reject});
+            this._drainOutboundQueue();
+        });
+    }
+
+    /**
+     * Drain registrations synchronously until a send or mode-transition fence
+     * requires waiting.
+     * @private
+     */
+    _drainOutboundQueue () {
+        if (this._outboundQueueBusy) return;
+        while (this._outboundQueue.length) {
+            const entry = this._outboundQueue.shift();
+            let operation;
+            try {
+                operation = entry.start();
+            } catch (error) {
+                entry.reject(error);
+                continue;
+            }
+            Promise.resolve(operation.completion).then(entry.resolve, entry.reject);
+            if (operation.release) {
+                const generation = this._outboundQueueGeneration;
+                this._outboundQueueBusy = true;
+                Promise.resolve(operation.release)
+                    .then(() => {}, () => {})
+                    .then(() => {
+                        if (generation !== this._outboundQueueGeneration) return;
+                        this._outboundQueueBusy = false;
+                        this._drainOutboundQueue();
+                    });
+                return;
+            }
+        }
+    }
+
+    /**
      * Send a JSON-RPC request and await its reply.
      * @param {string} method - the dot-namespaced command name.
      * @param {Array|object} params - positional args (object for hello).
@@ -1347,34 +1868,8 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _request (method, params) {
-        if (!this._runtimeConfig().connectionEnabled) {
-            const error = this._connectionDisabledError();
-            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
-            return Promise.reject(error);
-        }
-        if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
-            const error = new Error('not connected to bridge');
-            error.reason = 'not_connected';
-            if (!this._isSessionSetupMethod(method)) this._notifyDisconnectedCommand(error);
-            return Promise.reject(error);
-        }
-        if (!this._isSessionSetupMethod(method) && this._connectionStatus !== ConnectionStatus.CONNECTED) {
-            const error = new Error('not connected to McRemote server');
-            error.reason = 'not_connected';
-            this._notifyDisconnectedCommand(error);
-            return Promise.reject(error);
-        }
-        const id = this._nextRequestId++;
-        return new Promise((resolve, reject) => {
-            const message = {jsonrpc: '2.0', id, method, params};
-            this._pending.set(id, {resolve, reject, method});
-            this._appendFrame('send', message);
-            const payload = JSON.stringify(message);
-            this._socket.send(ONE_SHOT_METHODS.has(method) ? JSON.stringify({
-                [ONE_SHOT_HINT_KEY]: ONE_SHOT_HINT,
-                payload
-            }) : payload);
-        });
+        if (this._isSessionSetupMethod(method)) return this._startRequest(method, params).completion;
+        return this._enqueueOutbound(() => this._startRequest(method, params));
     }
 
     _commandRequest (method, params) {
@@ -1417,38 +1912,345 @@ class Scratch3McRemoteBlocks {
         ]);
     }
 
+    /**
+     * @param {unknown} value - Scratch mode input.
+     * @returns {string} one BuildMode value.
+     * @throws {Error} when the input is not a supported mode.
+     * @private
+     */
+    _parseBuildMode (value) {
+        const mode = Cast.toString(value)
+            .trim()
+            .toUpperCase();
+        if (Object.prototype.hasOwnProperty.call(BuildMode, mode)) return mode;
+        const error = new Error('Build mode must be DEBUG, TRACE, or FAST');
+        error.reason = 'invalid_build_mode';
+        throw error;
+    }
+
+    /**
+     * @param {unknown} value - Scratch TRACE delay input in seconds.
+     * @returns {number} finite non-negative seconds.
+     * @throws {Error} when the value cannot be applied exactly.
+     * @private
+     */
+    _parseTraceDelay (value) {
+        const text = typeof value === 'number' ? String(value) : Cast.toString(value).trim();
+        const delay = text === '' ? NaN : Number(text);
+        if (Number.isFinite(delay) && delay >= 0 && delay <= MAX_TRACE_DELAY_SECONDS) return delay;
+        const error = new Error(`TRACE delay must be between 0 and ${MAX_TRACE_DELAY_SECONDS} seconds`);
+        error.reason = 'invalid_trace_delay';
+        throw error;
+    }
+
+    /**
+     * Surface a local input or delivery failure. Delivery failures are shown
+     * once for the connection which was closed to preserve finite buffering.
+     * @param {string} method - local block or wire method.
+     * @param {Error} error - failure.
+     * @returns {Promise} resolved command-block completion.
+     * @private
+     */
+    _actionableCommandError (method, error) {
+        const isDeliveryFailure = error.reason === 'backpressure' || error.reason === 'capacity_exhausted';
+        if (isDeliveryFailure && this._buildDeliveryNoticeShown) return Promise.resolve();
+        if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
+        log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
+        this._lastError = this._errorInfo(error);
+        this._emitObservation();
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+        }
+        return Promise.resolve();
+    }
+
+    setBuildMode (args) {
+        let mode;
+        let traceDelaySeconds;
+        try {
+            mode = this._parseBuildMode(args.MODE);
+            traceDelaySeconds = this._parseTraceDelay(args.TRACE_DELAY);
+        } catch (error) {
+            return this._actionableCommandError('setBuildMode', error);
+        }
+
+        return this._enqueueOutbound(() => {
+            const flush = this._startRequest('connection.flush', []);
+            const transition = flush.completion.then(() => {
+                this._buildMode = mode;
+                this._traceDelaySeconds = traceDelaySeconds;
+            });
+            return {release: transition, completion: transition};
+        }).then(() => {}, error => this._actionableCommandError('setBuildMode', error));
+    }
+
+    flushBuildCommands () {
+        return this._request('connection.flush', []).then(
+            () => {},
+            error => this._actionableCommandError('connection.flush', error)
+        );
+    }
+
     postToChat (args) {
         return this._commandRequest('chat.post', [Cast.toString(args.MSG)]);
     }
 
+    _blockSpec (args) {
+        const blockId = Cast.toString(args.BLOCK);
+        const currentCatalog = this._catalogState.status === CatalogStatus.CURRENT &&
+            this._catalogState.catalog && this._catalogState.catalog.block ?
+            this._catalogState.catalog.block :
+            null;
+        return {
+            block_id: blockId,
+            state: parseStateText(
+                typeof args.STATE === 'undefined' ? '' : Cast.toString(args.STATE),
+                blockId,
+                currentCatalog
+            ).state
+        };
+    }
+
+    /**
+     * Register one setter using the mode in force at its position in the
+     * connection send sequence.
+     * @param {string} method - world.setBlock or world.setBlocks.
+     * @param {Array} params - positional wire params.
+     * @returns {Promise} command completion for the calling Scratch thread.
+     * @private
+     */
+    _setBlockCommand (method, params) {
+        return this._enqueueOutbound(() => {
+            const mode = this._buildMode;
+            const traceDelaySeconds = this._traceDelaySeconds;
+            if (mode === BuildMode.FAST) return this._startNotification(method, params);
+
+            const request = this._startRequest(method, params);
+            if (mode !== BuildMode.TRACE) return request;
+            return {
+                release: request.release,
+                completion: request.completion.then(() => this._delay(traceDelaySeconds * 1000))
+            };
+        }).then(() => {}, error => {
+            if (error.reason === 'backpressure' || error.reason === 'capacity_exhausted') {
+                this._actionableCommandError(method, error);
+            } else {
+                log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
+            }
+        });
+    }
+
     setBlock (args) {
-        return this._commandRequest('world.setBlock', [
+        let blockSpec;
+        try {
+            blockSpec = this._blockSpec(args);
+        } catch (error) {
+            return this._actionableCommandError('world.setBlock', error);
+        }
+        return this._setBlockCommand('world.setBlock', [
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z),
-            Cast.toString(args.BLOCK)
+            blockSpec
         ]);
     }
 
     setBlocks (args) {
-        return this._commandRequest('world.setBlocks', [
+        let blockSpec;
+        try {
+            blockSpec = this._blockSpec(args);
+        } catch (error) {
+            return this._actionableCommandError('world.setBlocks', error);
+        }
+        return this._setBlockCommand('world.setBlocks', [
             Cast.toNumber(args.X1),
             Cast.toNumber(args.Y1),
             Cast.toNumber(args.Z1),
             Cast.toNumber(args.X2),
             Cast.toNumber(args.Y2),
             Cast.toNumber(args.Z2),
-            Cast.toString(args.BLOCK)
+            blockSpec
         ]);
     }
 
-    getBlock (args) {
-        return this._request('world.getBlock', [
+    _getBlockInfo (args, util) {
+        const params = [
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z)
-        ]).then(result => (typeof result === 'undefined' ? '' : result),
-            () => '');
+        ];
+        const isMonitorPoll = Boolean(util && util.thread && util.thread.updateMonitor);
+        const cacheKey = params.join(',');
+        if (isMonitorPoll) {
+            const cached = this._blockInfoMonitorCache.get(cacheKey);
+            if (cached && (Date.now() - cached.fetchedAt) < BLOCK_INFO_MONITOR_THROTTLE_MS) {
+                return Promise.resolve(cached.value);
+            }
+            const pending = this._blockInfoMonitorPending.get(cacheKey);
+            if (pending) return pending;
+        }
+        const request = this._request('world.getBlock', params).then(result => {
+            try {
+                return formatBlockInfoText(result);
+            } catch (error) {
+                return makeErrorText(error && error.reason ? error.reason : 'invalid_block_info');
+            }
+        }, error => remoteErrorText(error));
+        if (!isMonitorPoll) return request;
+        const monitored = request.then(value => {
+            if (this._blockInfoMonitorPending.get(cacheKey) !== monitored) return value;
+            this._blockInfoMonitorPending.delete(cacheKey);
+            this._blockInfoMonitorCache.set(cacheKey, {value, fetchedAt: Date.now()});
+            return value;
+        });
+        this._blockInfoMonitorPending.set(cacheKey, monitored);
+        return monitored;
+    }
+
+    getBlock (args, util) {
+        return this._getBlockInfo(args, util);
+    }
+
+    getBlocks (args, util) {
+        const params = [
+            Cast.toNumber(args.X1),
+            Cast.toNumber(args.Y1),
+            Cast.toNumber(args.Z1),
+            Cast.toNumber(args.X2),
+            Cast.toNumber(args.Y2),
+            Cast.toNumber(args.Z2)
+        ];
+        const listReference = args.LIST;
+        const list = util && util.target && listReference &&
+            typeof util.target.lookupOrCreateList === 'function' ?
+            util.target.lookupOrCreateList(listReference.id, listReference.name) :
+            null;
+        if (!list) {
+            const error = new Error('McRemote block list is unavailable');
+            error.reason = 'invalid_output_list';
+            return this._actionableCommandError('world.getBlocks', error);
+        }
+
+        return this._request('world.getBlocks', params).then(result => {
+            try {
+                if (!Array.isArray(result)) throw new Error('world.getBlocks result must be an array');
+                const values = result.map(formatBlockInfoText);
+                if (params.every(Number.isInteger)) {
+                    const expectedLength = (Math.abs(params[3] - params[0]) + 1) *
+                        (Math.abs(params[4] - params[1]) + 1) *
+                        (Math.abs(params[5] - params[2]) + 1);
+                    if (values.length !== expectedLength) {
+                        throw new Error('world.getBlocks result length does not match its inclusive bounds');
+                    }
+                }
+                list.value = values;
+                list._monitorUpToDate = false;
+            } catch (error) {
+                error.reason = error.reason || 'invalid_block_info';
+                return this._actionableCommandError('world.getBlocks', error);
+            }
+        }, error => this._actionableCommandError('world.getBlocks', error));
+    }
+
+    _getHeight (params, util) {
+        const isMonitorPoll = Boolean(util && util.thread && util.thread.updateMonitor);
+        const cacheKey = params.join(',');
+        if (isMonitorPoll) {
+            const cached = this._heightMonitorCache.get(cacheKey);
+            if (cached && (Date.now() - cached.fetchedAt) < HEIGHT_MONITOR_THROTTLE_MS) {
+                return Promise.resolve(cached.value);
+            }
+            const pending = this._heightMonitorPending.get(cacheKey);
+            if (pending) return pending;
+        }
+
+        const request = this._request('world.getHeight', params).then(result => {
+            if (!Number.isInteger(result)) return makeErrorText('remote_error');
+            this._heightNotFoundNoticeKeys.delete(cacheKey);
+            return result;
+        }, error => {
+            if (error.reason === 'height_not_found' && !this._heightNotFoundNoticeKeys.has(cacheKey)) {
+                this._heightNotFoundNoticeKeys.add(cacheKey);
+                this._actionableCommandError('world.getHeight', error);
+            }
+            return remoteErrorText(error);
+        });
+        if (!isMonitorPoll) return request;
+        const monitored = request.then(value => {
+            if (this._heightMonitorPending.get(cacheKey) !== monitored) return value;
+            this._heightMonitorPending.delete(cacheKey);
+            this._heightMonitorCache.set(cacheKey, {value, fetchedAt: Date.now()});
+            return value;
+        });
+        this._heightMonitorPending.set(cacheKey, monitored);
+        return monitored;
+    }
+
+    getHeight (args, util) {
+        return this._getHeight([
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Z)
+        ], util);
+    }
+
+    getHeightBelow (args, util) {
+        return this._getHeight([
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Z),
+            Cast.toNumber(args.MAX_Y)
+        ], util);
+    }
+
+    blockInfoId (args) {
+        return blockInfoId(Cast.toString(args.BLOCK_INFO));
+    }
+
+    blockInfoState (args) {
+        return blockInfoState(Cast.toString(args.BLOCK_INFO));
+    }
+
+    blockInfoStateProperty (args) {
+        return blockInfoStateProperty(
+            Cast.toString(args.BLOCK_INFO),
+            Cast.toString(args.PROPERTY)
+        );
+    }
+
+    blockInfoHasStateProperty (args) {
+        return blockInfoHasStateProperty(
+            Cast.toString(args.BLOCK_INFO),
+            Cast.toString(args.PROPERTY)
+        );
+    }
+
+    isMcRemoteError (args) {
+        return isErrorText(Cast.toString(args.VALUE));
+    }
+
+    spawnEntity (args, util) {
+        const variableReference = args.VARIABLE;
+        const variable = util && util.target && variableReference &&
+            typeof util.target.lookupOrCreateVariable === 'function' ?
+            util.target.lookupOrCreateVariable(variableReference.id, variableReference.name) :
+            null;
+        if (!variable || variable.isCloud) {
+            const error = new Error('McRemote entity handles require a non-cloud variable');
+            error.reason = 'invalid_output_variable';
+            return this._actionableCommandError('world.spawnEntity', error);
+        }
+
+        return this._request('world.spawnEntity', [
+            Cast.toString(args.ENTITY),
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]).then(handle => {
+            variable.value = typeof handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(handle) ?
+                handle :
+                makeErrorText('remote_error');
+        }, error => {
+            variable.value = remoteErrorText(error);
+        });
     }
 
     /**

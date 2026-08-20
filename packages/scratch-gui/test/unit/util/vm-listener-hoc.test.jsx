@@ -130,10 +130,22 @@ describe('VMListenerHOC', () => {
 
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'not_connected'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'connection_disabled'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_build_mode'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_trace_delay'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'backpressure'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'capacity_exhausted'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'height_not_found'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_output_list'});
 
         const actions = store.getActions();
         expect(actions[0].alertId).toEqual('mcremoteNotConnected');
         expect(actions[1].alertId).toEqual('mcremoteConnectionDisabled');
+        expect(actions[2].alertId).toEqual('mcremoteInvalidBuildMode');
+        expect(actions[3].alertId).toEqual('mcremoteInvalidTraceDelay');
+        expect(actions[4].alertId).toEqual('mcremoteBuildDeliveryFailed');
+        expect(actions[5].alertId).toEqual('mcremoteBuildDeliveryFailed');
+        expect(actions[6].alertId).toEqual('mcremoteGroundNotFound');
+        expect(actions[7].alertId).toEqual('mcremoteOperationFailed');
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
     });

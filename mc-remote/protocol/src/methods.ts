@@ -11,6 +11,10 @@ export const Method = {
   worldSetBlock: 'world.setBlock',
   worldSetBlocks: 'world.setBlocks',
   worldGetBlock: 'world.getBlock',
+  worldGetBlocks: 'world.getBlocks',
+  worldGetHeight: 'world.getHeight',
+  worldSpawnEntity: 'world.spawnEntity',
+  connectionFlush: 'connection.flush',
   playerGetPose: 'player.getPose',
   playerSetPose: 'player.setPose',
 } as const

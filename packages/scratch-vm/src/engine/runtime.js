@@ -119,6 +119,14 @@ const ArgumentTypeMap = (() => {
         // They are more analagous to the label on a block.
         fieldType: 'field_image'
     };
+    map[ArgumentType.VARIABLE] = {
+        fieldType: 'field_variable',
+        variableType: ''
+    };
+    map[ArgumentType.LIST] = {
+        fieldType: 'field_variable',
+        variableType: 'list'
+    };
     return map;
 })();
 
@@ -1371,6 +1379,20 @@ class Runtime extends EventEmitter {
         if (argTypeInfo.fieldType === 'field_image') {
             argJSON = this._constructInlineImageJson(argInfo);
             argJSON.name = placeholder;
+        } else if (argTypeInfo.fieldType === 'field_variable') {
+            const variableType = argTypeInfo.variableType;
+            const defaultValue =
+                typeof argInfo.defaultValue === 'undefined' ? '' :
+                    xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+            argJSON = {
+                type: 'field_variable',
+                name: placeholder,
+                variableTypes: [variableType],
+                defaultType: variableType
+            };
+            context.inputList.push(
+                `<field name="${placeholder}" variabletype="${variableType}">${defaultValue}</field>`
+            );
         } else {
             // Construct input value
 

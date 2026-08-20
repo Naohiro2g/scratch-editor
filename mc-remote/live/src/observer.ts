@@ -1,5 +1,5 @@
 export const OBSERVER_SCHEMA = 'mcremote.observer' as const
-export const OBSERVER_SCHEMA_VERSION = 1 as const
+export const OBSERVER_SCHEMA_VERSION = 1.1 as const
 
 export const OBSERVED_METHODS = [
   'hello',
@@ -9,6 +9,10 @@ export const OBSERVED_METHODS = [
   'world.setBlock',
   'world.setBlocks',
   'world.getBlock',
+  'world.getBlocks',
+  'world.getHeight',
+  'world.spawnEntity',
+  'connection.flush',
   'player.getPos',
   'player.setPos',
   'player.getPose',
@@ -45,7 +49,10 @@ export interface ObserverHello {
 
 export interface ObserverErrorData {
   reason?: string
-  ref?: string
+  block_id?: string
+  property?: string
+  value?: string | number | boolean | null
+  path?: string
   allowed?: (string | number | boolean)[]
   bounds?: number[]
   violating?: number[]
@@ -209,12 +216,18 @@ const parseHello = (value: unknown): ObserverHello => {
 const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   if (typeof value === 'undefined') return undefined
   const data = objectValue(value, 'frame.payload.error.data')
-  exactFields(data, ['reason', 'ref', 'allowed', 'bounds', 'violating'], 'frame.payload.error.data')
+  exactFields(
+    data,
+    ['reason', 'block_id', 'property', 'value', 'path', 'allowed', 'bounds', 'violating'],
+    'frame.payload.error.data',
+  )
   if (typeof data.reason !== 'undefined' && typeof data.reason !== 'string') {
     throw new Error('frame.payload.error.data.reason must be a string')
   }
-  if (typeof data.ref !== 'undefined' && typeof data.ref !== 'string') {
-    throw new Error('frame.payload.error.data.ref must be a string')
+  for (const field of ['block_id', 'property', 'path'] as const) {
+    if (typeof data[field] !== 'undefined' && typeof data[field] !== 'string') {
+      throw new Error(`frame.payload.error.data.${field} must be a string`)
+    }
   }
   const allowed = data.allowed
   if (
@@ -231,7 +244,10 @@ const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   }
   const parsed: ObserverErrorData = {}
   if (typeof data.reason === 'string') parsed.reason = data.reason
-  if (typeof data.ref === 'string') parsed.ref = data.ref
+  if (typeof data.block_id === 'string') parsed.block_id = data.block_id
+  if (typeof data.property === 'string') parsed.property = data.property
+  if (typeof data.path === 'string') parsed.path = data.path
+  if (typeof data.value !== 'undefined') parsed.value = jsonScalar(data.value, 'frame.payload.error.data.value')
   if (Array.isArray(allowed)) {
     parsed.allowed = allowed.map((item) => {
       if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
@@ -268,6 +284,41 @@ const jsonScalar = (value: unknown, context: string): string | number | boolean 
   throw new Error(`${context} must be a JSON scalar`)
 }
 
+interface ObserverBlock {
+  block_id: string
+  state: Record<string, string | number | boolean>
+}
+
+const parseBlock = (value: unknown, context: string, canonicalId: boolean): ObserverBlock => {
+  const block = objectValue(value, context)
+  exactFields(block, ['block_id', 'state'], context)
+  const blockId = requiredString(block.block_id, `${context}.block_id`)
+  const resourcePattern = canonicalId ? /^[a-z0-9_.-]+:[a-z0-9_./-]+$/ : /^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/
+  if (!resourcePattern.test(blockId)) throw new Error(`${context}.block_id must be a resource ID`)
+  const state = objectValue(block.state, `${context}.state`)
+  const parsedState: Record<string, string | number | boolean> = {}
+  for (const [property, item] of Object.entries(state)) {
+    if (!/^[a-z0-9_]+$/.test(property)) throw new Error(`${context}.state has an invalid property`)
+    const scalarValue = jsonScalar(item, `${context}.state.${property}`)
+    if (scalarValue === null) throw new Error(`${context}.state.${property} must not be null`)
+    parsedState[property] = scalarValue
+  }
+  return { block_id: blockId, state: parsedState }
+}
+
+const exactParams = (value: unknown, length: number): unknown[] => {
+  if (!Array.isArray(value) || value.length !== length) {
+    throw new Error(`frame.payload.params must contain exactly ${length} items`)
+  }
+  return value
+}
+
+const integer = (value: unknown, context: string): number => {
+  const number = finiteNumber(value, context)
+  if (!Number.isInteger(number)) throw new Error(`${context} must be an integer`)
+  return number
+}
+
 const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') {
     const params = objectValue(value, 'frame.payload.params')
@@ -296,6 +347,42 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     }
     return result
   }
+  if (method === 'world.setBlock') {
+    const params = exactParams(value, 4)
+    return [
+      integer(params[0], 'frame.payload.params[0]'),
+      integer(params[1], 'frame.payload.params[1]'),
+      integer(params[2], 'frame.payload.params[2]'),
+      parseBlock(params[3], 'frame.payload.params[3]', false),
+    ]
+  }
+  if (method === 'world.setBlocks') {
+    const params = exactParams(value, 7)
+    return [
+      ...params.slice(0, 6).map((item, index) => integer(item, `frame.payload.params[${index}]`)),
+      parseBlock(params[6], 'frame.payload.params[6]', false),
+    ]
+  }
+  if (method === 'world.getBlock') {
+    return exactParams(value, 3).map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.getBlocks') {
+    return exactParams(value, 6).map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.getHeight') {
+    if (!Array.isArray(value) || (value.length !== 2 && value.length !== 3)) {
+      throw new Error('frame.payload.params must contain 2 or 3 items')
+    }
+    return value.map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.spawnEntity') {
+    const params = exactParams(value, 4)
+    return [
+      requiredString(params[0], 'frame.payload.params[0]'),
+      ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+    ]
+  }
+  if (method === 'connection.flush') return exactParams(value, 0)
   if (!Array.isArray(value)) throw new Error('frame.payload.params must be an array')
   return value.map((item, index) => jsonScalar(item, `frame.payload.params[${index}]`))
 }
@@ -324,9 +411,20 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') return parseHello(value)
   if (method === 'player.getPos' || method === 'player.setPos') return parsePosition(value)
   if (method === 'player.getPose' || method === 'player.setPose') return parsePose(value)
-  if (method === 'world.getBlock') {
-    if (typeof value !== 'string') throw new Error('frame.payload.result must be a string')
-    return value
+  if (method === 'world.setBlock' || method === 'world.setBlocks' || method === 'connection.flush') {
+    if (value !== null) throw new Error('frame.payload.result must be null')
+    return null
+  }
+  if (method === 'world.getBlock') return parseBlock(value, 'frame.payload.result', true)
+  if (method === 'world.getBlocks') {
+    if (!Array.isArray(value)) throw new Error('frame.payload.result must be an array')
+    return value.map((item, index) => parseBlock(item, `frame.payload.result[${index}]`, true))
+  }
+  if (method === 'world.getHeight') return integer(value, 'frame.payload.result')
+  if (method === 'world.spawnEntity') {
+    const handle = requiredString(value, 'frame.payload.result')
+    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
+    return handle
   }
   return jsonScalar(value, 'frame.payload.result')
 }
@@ -355,6 +453,12 @@ const parseFrame = (value: unknown): ObserverFrame => {
     throw new Error('frame.request_id must be a string, number, or null')
   }
   const method = frame.method as ObservedMethod
+  if (
+    requestId === null &&
+    (frame.direction !== 'send' || (method !== 'world.setBlock' && method !== 'world.setBlocks'))
+  ) {
+    throw new Error('frame.request_id may be null only for a setter notification')
+  }
   return {
     sequence: finiteNumber(frame.sequence, 'frame.sequence'),
     observed_at: finiteNumber(frame.observed_at, 'frame.observed_at'),

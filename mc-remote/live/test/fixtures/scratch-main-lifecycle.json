@@ -1,7 +1,7 @@
 [
   {
     "schema": "mcremote.observer",
-    "schema_version": 1,
+    "schema_version": 1.1,
     "emitted_at": 1786032000000,
     "target": {
       "id": "target-01",
@@ -14,7 +14,7 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "21.0.0",
+          "protocol": "22.0.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
@@ -29,7 +29,7 @@
   },
   {
     "schema": "mcremote.observer",
-    "schema_version": 1,
+    "schema_version": 1.1,
     "emitted_at": 1786032000100,
     "target": {
       "id": "target-01",
@@ -42,7 +42,7 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "21.0.0",
+          "protocol": "22.0.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
@@ -58,7 +58,9 @@
             "direction": "send",
             "request_id": 2,
             "method": "world.setBlock",
-            "payload": { "params": [1, 2, 3, "minecraft:stone"] }
+            "payload": {
+              "params": [1, 2, 3, { "block_id": "minecraft:stone", "state": {} }]
+            }
           },
           {
             "sequence": 4,

@@ -53,6 +53,21 @@ const testExtensionInfo = {
             }
         },
         {
+            opcode: 'variableCommand',
+            blockType: BlockType.COMMAND,
+            text: 'put result in [VARIABLE] and [LIST]',
+            arguments: {
+                VARIABLE: {
+                    type: ArgumentType.VARIABLE,
+                    defaultValue: 'result'
+                },
+                LIST: {
+                    type: ArgumentType.LIST,
+                    defaultValue: 'results'
+                }
+            }
+        },
+        {
             opcode: 'ifElse',
             blockType: BlockType.CONDITIONAL,
             branchCount: 2,
@@ -211,6 +226,31 @@ const testCommand = function (t, command) {
         'default text</field></shadow></value></block>');
 };
 
+const testVariableCommand = function (t, command) {
+    t.equal(command.json.type, 'test_variableCommand');
+    testCategoryInfo(t, command);
+    t.equal(command.json.message0, 'put result in %1 and %2');
+    t.strictSame(command.json.args0, [
+        {
+            type: 'field_variable',
+            name: 'VARIABLE',
+            variableTypes: [''],
+            defaultType: ''
+        },
+        {
+            type: 'field_variable',
+            name: 'LIST',
+            variableTypes: ['list'],
+            defaultType: 'list'
+        }
+    ]);
+    t.equal(command.xml,
+        '<block type="test_variableCommand">' +
+        '<field name="VARIABLE" variabletype="">result</field>' +
+        '<field name="LIST" variabletype="list">results</field>' +
+        '</block>');
+};
+
 const testConditional = function (t, conditional) {
     t.equal(conditional.json.type, 'test_ifElse');
     testCategoryInfo(t, conditional);
@@ -281,13 +321,14 @@ test('registerExtensionPrimitives', t => {
         });
 
         // Note that this also implicitly tests that block order is preserved
-        const [button, reporter, inlineImage, separator, command, conditional, loop] = blocksInfo;
+        const [button, reporter, inlineImage, separator, command, variableCommand, conditional, loop] = blocksInfo;
 
         testButton(t, button);
         testReporter(t, reporter);
         testInlineImage(t, inlineImage);
         testSeparator(t, separator);
         testCommand(t, command);
+        testVariableCommand(t, variableCommand);
         testConditional(t, conditional);
         testLoop(t, loop);
 

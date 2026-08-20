@@ -6,7 +6,8 @@ import React, {useCallback, useMemo, useState} from 'react';
 import Box from '../box/box.jsx';
 import Modal from '../../containers/modal.jsx';
 import {
-    buildBlockRef,
+    buildStateText,
+    catalogBlockId,
     findCatalogSelection,
     pickerBlockId,
     stateValueText
@@ -25,18 +26,31 @@ const messages = defineMessages({
         description: 'Search field in the McRemote block picker',
         id: 'gui.mcremote.blockPicker.search'
     },
-    minecraftDefault: {
-        defaultMessage: 'Minecraft default',
-        description: 'Option to omit a state property in the McRemote block picker',
-        id: 'gui.mcremote.blockPicker.minecraftDefault'
+    minecraftDefaultValue: {
+        defaultMessage: 'Minecraft default ({value})',
+        description: 'Option to omit a state property, including its Minecraft default value',
+        id: 'gui.mcremote.blockPicker.minecraftDefaultValue'
     }
 });
 
-const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onCancel}) => {
+const McRemoteBlockPicker = ({
+    catalogState,
+    initialBlockId,
+    initialStateText,
+    canApply,
+    onApply,
+    onCancel
+}) => {
     const intl = useIntl();
-    const blockCatalog = catalogState.catalog && catalogState.catalog.block ? catalogState.catalog.block : {};
-    const initialSelection = findCatalogSelection(initialValue, blockCatalog);
-    const [draft, setDraft] = useState(initialValue);
+    const hasCurrentCatalog = catalogState.status === 'current';
+    const blockCatalog = hasCurrentCatalog && catalogState.catalog && catalogState.catalog.block ?
+        catalogState.catalog.block :
+        {};
+    const initialSelection = findCatalogSelection(initialBlockId, initialStateText, blockCatalog);
+    const [blockIdDraft, setBlockIdDraft] = useState(initialBlockId);
+    const [stateDraft, setStateDraft] = useState(
+        initialSelection ? buildStateText(initialSelection.selectedStates) : initialStateText
+    );
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState(initialSelection ? initialSelection.id : null);
     const [selectedStates, setSelectedStates] = useState(
@@ -49,12 +63,12 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
         return blockIds.filter(id => id.toLowerCase().includes(query));
     }, [blockIds, search]);
     const selectedEntry = selectedId ? blockCatalog[selectedId] : null;
-    const hasCurrentCatalog = catalogState.status === 'current';
 
     const selectBlock = useCallback(id => {
         setSelectedId(id);
         setSelectedStates({});
-        setDraft(pickerBlockId(id));
+        setBlockIdDraft(pickerBlockId(id));
+        setStateDraft('');
     }, []);
     const selectState = useCallback((property, indexText) => {
         const nextStates = Object.assign({}, selectedStates);
@@ -64,11 +78,30 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
             nextStates[property] = selectedEntry.states[property][Number(indexText)];
         }
         setSelectedStates(nextStates);
-        setDraft(buildBlockRef(selectedId, Object.assign({}, nextStates, {
-            [property]: indexText === '' ? null : nextStates[property]
-        })));
-    }, [selectedEntry, selectedId, selectedStates]);
-    const handleDraftChange = useCallback(event => setDraft(event.target.value), []);
+        setStateDraft(buildStateText(nextStates));
+    }, [selectedEntry, selectedStates]);
+    const handleBlockIdDraftChange = useCallback(event => {
+        const value = event.target.value;
+        setBlockIdDraft(value);
+        if (!selectedId || catalogBlockId(value.trim()) !== selectedId) {
+            setSelectedId(null);
+            setSelectedStates({});
+            setStateDraft('');
+        }
+    }, [selectedId]);
+    const handleStateDraftChange = useCallback(event => {
+        const value = event.target.value;
+        const selection = findCatalogSelection(blockIdDraft, value, blockCatalog);
+        setStateDraft(value);
+        if (selection) {
+            setSelectedId(selection.id);
+            setSelectedStates(selection.selectedStates);
+            return;
+        }
+        const currentId = catalogBlockId(blockIdDraft.trim());
+        setSelectedId(blockCatalog[currentId] ? currentId : null);
+        setSelectedStates({});
+    }, [blockCatalog, blockIdDraft]);
     const handleSearchChange = useCallback(event => setSearch(event.target.value), []);
     const handleBlockClick = useCallback(event => {
         selectBlock(event.currentTarget.dataset.blockId);
@@ -76,7 +109,10 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
     const handleStateChange = useCallback(event => {
         selectState(event.currentTarget.dataset.property, event.target.value);
     }, [selectState]);
-    const handleApply = useCallback(() => onApply(draft), [draft, onApply]);
+    const handleApply = useCallback(() => {
+        const selection = findCatalogSelection(blockIdDraft, stateDraft, blockCatalog);
+        onApply(blockIdDraft, selection ? buildStateText(selection.selectedStates) : stateDraft);
+    }, [blockCatalog, blockIdDraft, onApply, stateDraft]);
 
     let status;
     if (catalogState.status === 'current') {
@@ -127,23 +163,35 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
                 {canApply ? null : (
                     <div className={styles.warning}>
                         <FormattedMessage
-                            defaultMessage={'A reporter is connected. The picker will not replace it; ' +
-                                'disconnect the reporter to insert a literal value.'}
-                            description="Warning when a reporter occupies the McRemote block input"
+                            defaultMessage={'A reporter or variable is connected. The picker will not replace it; ' +
+                                'disconnect both inputs to insert literal values.'}
+                            description="Warning when a reporter occupies either McRemote block picker input"
                             id="gui.mcremote.blockPicker.reporterConnected"
                         />
                     </div>
                 )}
                 <label className={styles.outputLabel}>
                     <FormattedMessage
-                        defaultMessage="Block value"
-                        description="Label for the editable McRemote block reference"
-                        id="gui.mcremote.blockPicker.blockValue"
+                        defaultMessage="Block ID"
+                        description="Label for the editable McRemote block ID"
+                        id="gui.mcremote.blockPicker.blockId"
                     />
                     <input
                         className={styles.outputInput}
-                        value={draft}
-                        onChange={handleDraftChange}
+                        value={blockIdDraft}
+                        onChange={handleBlockIdDraftChange}
+                    />
+                </label>
+                <label className={styles.outputLabel}>
+                    <FormattedMessage
+                        defaultMessage="State"
+                        description="Label for the editable McRemote StateText"
+                        id="gui.mcremote.blockPicker.stateText"
+                    />
+                    <input
+                        className={styles.outputInput}
+                        value={stateDraft}
+                        onChange={handleStateDraftChange}
                     />
                 </label>
                 <div className={styles.pickerGrid}>
@@ -201,7 +249,8 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
                             .map(property => {
                                 const selectedValue = selectedStates[property];
                                 const selectedIndex = typeof selectedValue === 'undefined' ? '' :
-                                    String(selectedEntry.states[property].findIndex(value => value === selectedValue));
+                                    String(selectedEntry.states[property]
+                                        .findIndex(value => value === selectedValue));
                                 return (
                                     <label
                                         className={styles.stateRow}
@@ -214,7 +263,9 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
                                             onChange={handleStateChange}
                                         >
                                             <option value="">
-                                                {intl.formatMessage(messages.minecraftDefault)}
+                                                {intl.formatMessage(messages.minecraftDefaultValue, {
+                                                    value: stateValueText(selectedEntry.default_state[property])
+                                                })}
                                             </option>
                                             {selectedEntry.states[property].map((value, index) => (
                                                 <option
@@ -244,8 +295,8 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
                         onClick={handleApply}
                     >
                         <FormattedMessage
-                            defaultMessage="Use this value"
-                            description="Apply button in the McRemote block picker"
+                            defaultMessage="Use these values"
+                            description="Apply the block ID and StateText in the McRemote block picker"
                             id="gui.mcremote.blockPicker.apply"
                         />
                     </button>
@@ -258,13 +309,27 @@ const McRemoteBlockPicker = ({catalogState, initialValue, canApply, onApply, onC
 McRemoteBlockPicker.propTypes = {
     canApply: PropTypes.bool.isRequired,
     catalogState: PropTypes.shape({
-        catalog: PropTypes.object,
+        catalog: PropTypes.shape({
+            block: PropTypes.objectOf(PropTypes.shape({
+                default_state: PropTypes.objectOf(PropTypes.oneOfType([
+                    PropTypes.bool,
+                    PropTypes.number,
+                    PropTypes.string
+                ])).isRequired,
+                states: PropTypes.objectOf(PropTypes.arrayOf(PropTypes.oneOfType([
+                    PropTypes.bool,
+                    PropTypes.number,
+                    PropTypes.string
+                ]))).isRequired
+            }))
+        }),
         catalogHash: PropTypes.string,
         mcVersion: PropTypes.string,
         source: PropTypes.string,
         status: PropTypes.string.isRequired
     }).isRequired,
-    initialValue: PropTypes.string.isRequired,
+    initialBlockId: PropTypes.string.isRequired,
+    initialStateText: PropTypes.string.isRequired,
     onApply: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired
 };

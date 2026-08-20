@@ -15,6 +15,10 @@ const OBSERVED_METHODS = new Set([
     'world.setBlock',
     'world.setBlocks',
     'world.getBlock',
+    'world.getBlocks',
+    'world.getHeight',
+    'world.spawnEntity',
+    'connection.flush',
     'player.getPos',
     'player.setPos',
     'player.getPose',
@@ -109,6 +113,52 @@ const allowArrayParams = function (value) {
     return result.some((...[item]) => typeof item === 'undefined') ? null : result;
 };
 
+const allowBlock = function (value, canonicalId) {
+    if (!isObject(value) || !optionalString(value.block_id) || !isObject(value.state)) return null;
+    const blockIdPattern = canonicalId ?
+        /^[a-z0-9_.-]+:[a-z0-9_./-]+$/ :
+        /^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/;
+    if (!blockIdPattern.test(value.block_id)) return null;
+    const state = {};
+    for (const property of Object.keys(value.state)) {
+        const stateValue = scalar(value.state[property]);
+        if (!/^[a-z0-9_]+$/.test(property) || stateValue === null || typeof stateValue === 'undefined') return null;
+        state[property] = stateValue;
+    }
+    return {block_id: value.block_id, state};
+};
+
+const allowExactNumberParams = function (value, length) {
+    return Array.isArray(value) && value.length === length && value.every(Number.isInteger) ? value.slice() : null;
+};
+
+const allowParams = function (method, value) {
+    if (method === 'hello') return allowHelloParams(value);
+    if (method === 'world.setBlock') {
+        const coordinates = allowExactNumberParams(Array.isArray(value) ? value.slice(0, 3) : null, 3);
+        const block = Array.isArray(value) && value.length === 4 ? allowBlock(value[3], false) : null;
+        return coordinates && block ? coordinates.concat([block]) : null;
+    }
+    if (method === 'world.setBlocks') {
+        const coordinates = allowExactNumberParams(Array.isArray(value) ? value.slice(0, 6) : null, 6);
+        const block = Array.isArray(value) && value.length === 7 ? allowBlock(value[6], false) : null;
+        return coordinates && block ? coordinates.concat([block]) : null;
+    }
+    if (method === 'world.getBlock') return allowExactNumberParams(value, 3);
+    if (method === 'world.getBlocks') return allowExactNumberParams(value, 6);
+    if (method === 'world.getHeight') {
+        return Array.isArray(value) && (value.length === 2 || value.length === 3) && value.every(Number.isInteger) ?
+            value.slice() : null;
+    }
+    if (method === 'world.spawnEntity') {
+        if (!Array.isArray(value) || value.length !== 4 || !optionalString(value[0]) ||
+            !value.slice(1).every(finiteNumber)) return null;
+        return value.slice();
+    }
+    if (method === 'connection.flush') return Array.isArray(value) && value.length === 0 ? [] : null;
+    return allowArrayParams(value);
+};
+
 const allowPosition = function (value) {
     if (!isObject(value)) return null;
     const world = optionalString(value.world);
@@ -130,7 +180,11 @@ const allowError = function (value) {
     if (isObject(value.data)) {
         const data = {};
         if (typeof value.data.reason === 'string') data.reason = value.data.reason;
-        if (typeof value.data.ref === 'string') data.ref = value.data.ref;
+        if (typeof value.data.block_id === 'string') data.block_id = value.data.block_id;
+        if (typeof value.data.property === 'string') data.property = value.data.property;
+        if (typeof value.data.path === 'string') data.path = value.data.path;
+        const rejectedValue = scalar(value.data.value);
+        if (typeof rejectedValue !== 'undefined') data.value = rejectedValue;
         if (Array.isArray(value.data.allowed)) {
             const allowed = value.data.allowed.map(scalar)
                 .filter((...[item]) => typeof item !== 'undefined');
@@ -144,7 +198,7 @@ const allowError = function (value) {
 const allowFramePayload = function (frame) {
     const payload = isObject(frame.payload) ? frame.payload : {};
     if (frame.direction === 'send') {
-        const params = frame.method === 'hello' ? allowHelloParams(payload.params) : allowArrayParams(payload.params);
+        const params = allowParams(frame.method, payload.params);
         return params === null ? null : {params};
     }
     if (isObject(payload.error)) return {error: allowError(payload.error)};
@@ -161,8 +215,23 @@ const allowFramePayload = function (frame) {
         const result = allowPose(payload.result);
         return result ? {result} : null;
     }
+    if (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
+        frame.method === 'connection.flush') return payload.result === null ? {result: null} : null;
     if (frame.method === 'world.getBlock') {
-        return typeof payload.result === 'string' ? {result: payload.result} : null;
+        const result = allowBlock(payload.result, true);
+        return result ? {result} : null;
+    }
+    if (frame.method === 'world.getBlocks') {
+        if (!Array.isArray(payload.result)) return null;
+        const result = payload.result.map(item => allowBlock(item, true));
+        return result.every(Boolean) ? {result} : null;
+    }
+    if (frame.method === 'world.getHeight') {
+        return Number.isInteger(payload.result) ? {result: payload.result} : null;
+    }
+    if (frame.method === 'world.spawnEntity') {
+        return typeof payload.result === 'string' && /^mceh_[\x21-\x7e]+$/.test(payload.result) ?
+            {result: payload.result} : null;
     }
     const result = scalar(payload.result);
     return typeof result === 'undefined' ? null : {result};
@@ -176,6 +245,9 @@ const allowFrame = function (frame) {
     const payload = allowFramePayload(frame);
     if (!payload || !finiteNumber(frame.sequence) || !finiteNumber(frame.timestamp)) return null;
     const requestId = typeof frame.id === 'string' || finiteNumber(frame.id) ? frame.id : null;
+    const isSetterNotification = frame.direction === 'send' && requestId === null &&
+        (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks');
+    if (requestId === null && !isSetterNotification) return null;
     return {
         sequence: frame.sequence,
         observed_at: frame.timestamp,
@@ -193,7 +265,7 @@ const toWireScopeSnapshot = (observation, targetId, emittedAt = Date.now()) => {
     const frames = Array.isArray(observation.frameLog) ? observation.frameLog.map(allowFrame).filter(Boolean) : [];
     return {
         schema: 'mcremote.observer',
-        schema_version: 1,
+        schema_version: 1.1,
         emitted_at: emittedAt,
         target: {
             id: targetId,

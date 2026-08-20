@@ -150,7 +150,7 @@ export const buildWireScopeArtifact = async (options) => {
       },
     },
     protocols: {
-      observer_schema: { name: 'mcremote.observer', version: 1 },
+      observer_schema: { name: 'mcremote.observer', version: 1.1 },
       observer_session: 1,
       scratch_handoff: 1,
       station_attach: 1,

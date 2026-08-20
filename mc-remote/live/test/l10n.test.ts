@@ -32,6 +32,8 @@ describe('WireScope localization', () => {
     )
     expect(translate('en', 'streamEnded')).toBe('ended')
     expect(translate('ja', 'streamEnded')).toBe('終了')
+    expect(translate('ja', 'directionSentUnconfirmed')).toBe('送信済み・未確認')
+    expect(translate('en', 'directionSentUnconfirmed')).toBe('sent · unconfirmed')
   })
 
   test('provides a kanji-free Japanese Hiragana locale', () => {

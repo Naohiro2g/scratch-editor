@@ -629,23 +629,35 @@ class Blocks extends React.Component {
         });
     }
     handleMcRemoteBlockPickerStart (block) {
-        const input = block.getInput('BLOCK');
-        const inputBlock = input && input.connection ? input.connection.targetBlock() : null;
-        const literalField = inputBlock && inputBlock.isShadow() ? inputBlock.getField('TEXT') : null;
+        const literalField = inputName => {
+            const input = block.getInput(inputName);
+            const inputBlock = input && input.connection ? input.connection.targetBlock() : null;
+            return inputBlock && inputBlock.isShadow() ? inputBlock.getField('TEXT') : null;
+        };
+        const blockIdField = literalField('BLOCK');
+        const stateField = literalField('STATE');
         this.setState({
             mcRemoteBlockPicker: {
-                literalField,
-                initialValue: literalField ? literalField.getValue() : ''
+                blockIdField,
+                stateField,
+                initialBlockId: blockIdField ? blockIdField.getValue() : '',
+                initialStateText: stateField ? stateField.getValue() : ''
             }
         });
     }
-    handleMcRemoteBlockPickerApply (value) {
+    handleMcRemoteBlockPickerApply (blockId, stateText) {
         const picker = this.state.mcRemoteBlockPicker;
-        if (!picker || !picker.literalField) {
-            log.warn('Blocks.handleMcRemoteBlockPickerApply: no editable literal field');
+        if (!picker || !picker.blockIdField || !picker.stateField) {
+            log.warn('Blocks.handleMcRemoteBlockPickerApply: both inputs must be editable literal fields');
             return;
         }
-        picker.literalField.setValue(value);
+        this.ScratchBlocks.Events.setGroup(true);
+        try {
+            picker.blockIdField.setValue(blockId);
+            picker.stateField.setValue(stateText);
+        } finally {
+            this.ScratchBlocks.Events.setGroup(false);
+        }
         this.handleMcRemoteBlockPickerClose();
     }
     handleMcRemoteBlockPickerClose () {
@@ -768,9 +780,13 @@ class Blocks extends React.Component {
                 ) : null}
                 {this.state.mcRemoteBlockPicker ? (
                     <McRemoteBlockPicker
-                        canApply={Boolean(this.state.mcRemoteBlockPicker.literalField)}
+                        canApply={Boolean(
+                            this.state.mcRemoteBlockPicker.blockIdField &&
+                            this.state.mcRemoteBlockPicker.stateField
+                        )}
                         catalogState={mcRemoteCatalog}
-                        initialValue={this.state.mcRemoteBlockPicker.initialValue}
+                        initialBlockId={this.state.mcRemoteBlockPicker.initialBlockId}
+                        initialStateText={this.state.mcRemoteBlockPicker.initialStateText}
                         onApply={this.handleMcRemoteBlockPickerApply}
                         onCancel={this.handleMcRemoteBlockPickerClose}
                     />

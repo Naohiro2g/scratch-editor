@@ -17,10 +17,9 @@ export const ErrorCode = {
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 
-/** Stable `data.reason` enum carried on protocol errors (b1 set). */
+/** Stable `data.reason` enum carried on protocol 22 errors. */
 export const ErrorReason = {
-  /** Parse failure of the block ref (broken brackets, etc.). */
-  malformedRef: 'malformed_ref',
+  invalidParams: 'invalid_params',
   /** Syntax OK but the block does not exist. */
   unknownBlock: 'unknown_block',
   /** Property name not valid for that block (`stone[axis=y]`). */
@@ -29,25 +28,64 @@ export const ErrorReason = {
   invalidPropertyValue: 'invalid_property_value',
   /** Build policy, range, or authorization denied the operation. */
   buildDenied: 'build_denied',
+  permissionDenied: 'permission_denied',
+  playerOffline: 'player_offline',
+  unknownWorld: 'unknown_world',
+  teleportFailed: 'teleport_failed',
+  heightNotFound: 'height_not_found',
+  unknownParticle: 'unknown_particle',
+  particleDataRequired: 'particle_data_required',
+  unknownEntity: 'unknown_entity',
+  entityNotSpawnable: 'entity_not_spawnable',
+  backpressure: 'backpressure',
+  workLimitExceeded: 'work_limit_exceeded',
+  entityCapacityExhausted: 'entity_capacity_exhausted',
+  entityHandleNotFound: 'entity_handle_not_found',
+  entityRemoved: 'entity_removed',
+  entityUnloaded: 'entity_unloaded',
+  entityWorldChanged: 'entity_world_changed',
+  entitySpawnFailed: 'entity_spawn_failed',
+  internalError: 'internal_error',
 } as const
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason]
 
 /** JSON-RPC `error.code` family for each reason (wire-format-design §7.3). */
 export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
-  [ErrorReason.malformedRef]: ErrorCode.invalidParams,
+  [ErrorReason.invalidParams]: ErrorCode.invalidParams,
   [ErrorReason.unknownBlock]: ErrorCode.invalidParams,
   [ErrorReason.unknownProperty]: ErrorCode.invalidParams,
   [ErrorReason.invalidPropertyValue]: ErrorCode.invalidParams,
+  [ErrorReason.unknownWorld]: ErrorCode.invalidParams,
+  [ErrorReason.unknownParticle]: ErrorCode.invalidParams,
+  [ErrorReason.particleDataRequired]: ErrorCode.invalidParams,
+  [ErrorReason.unknownEntity]: ErrorCode.invalidParams,
+  [ErrorReason.entityNotSpawnable]: ErrorCode.invalidParams,
   [ErrorReason.buildDenied]: ErrorCode.serverError,
+  [ErrorReason.permissionDenied]: ErrorCode.serverError,
+  [ErrorReason.playerOffline]: ErrorCode.serverError,
+  [ErrorReason.teleportFailed]: ErrorCode.serverError,
+  [ErrorReason.heightNotFound]: ErrorCode.serverError,
+  [ErrorReason.backpressure]: ErrorCode.serverError,
+  [ErrorReason.workLimitExceeded]: ErrorCode.serverError,
+  [ErrorReason.entityCapacityExhausted]: ErrorCode.serverError,
+  [ErrorReason.entityHandleNotFound]: ErrorCode.serverError,
+  [ErrorReason.entityRemoved]: ErrorCode.serverError,
+  [ErrorReason.entityUnloaded]: ErrorCode.serverError,
+  [ErrorReason.entityWorldChanged]: ErrorCode.serverError,
+  [ErrorReason.entitySpawnFailed]: ErrorCode.serverError,
+  [ErrorReason.internalError]: ErrorCode.internalError,
 }
 
-/** `error.data` payload. `ref` echoes the offending input and is required. */
+/** Safe structured `error.data` fields used by protocol 22. */
 export interface ProtocolErrorData {
   reason: ErrorReason
-  ref: string
+  path?: string
+  block_id?: string
+  property?: string
+  value?: boolean | number | string
   /** Allowed values; returned for `invalid_property_value` when known. */
-  allowed?: readonly string[]
+  allowed?: readonly (boolean | number | string)[]
   /** Optional build bounds returned with `build_denied` when known. */
   bounds?: unknown
   /** Optional offending coordinate or region returned with `build_denied`. */

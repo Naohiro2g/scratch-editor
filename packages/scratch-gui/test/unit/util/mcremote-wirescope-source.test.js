@@ -11,7 +11,7 @@ const connectedObservation = () => ({
     pairCode: '123-456',
     pairCommand: '/mcremote pair 123-456',
     hello: {
-        protocol: '21.0.0',
+        protocol: '22.0.0',
         mc_version: '1.21.11',
         supported_mc_versions: ['1.21.11'],
         catalogHash: null,
@@ -38,7 +38,7 @@ const connectedObservation = () => ({
             id: 1,
             method: 'hello',
             params: {
-                protocol: '21.0.0',
+                protocol: '22.0.0',
                 client: {name: 'scratch-mcremote', version: 'build-1'},
                 auth: {token: 'mcrs_secret'},
                 device_label: 'classroom laptop'
@@ -59,7 +59,7 @@ const connectedObservation = () => ({
         direction: 'send',
         id: 3,
         method: 'world.setBlock',
-        payload: {params: [1, 2, 3, 'minecraft:stone']}
+        payload: {params: [1, 2, 3, {block_id: 'minecraft:stone', state: {}}]}
     }]
 });
 
@@ -69,7 +69,7 @@ describe('McRemote WireScope source adapter', () => {
 
         expect(snapshot).toMatchObject({
             schema: 'mcremote.observer',
-            schema_version: 1,
+            schema_version: 1.1,
             emitted_at: 2000,
             target: {
                 id: 'target-01',
@@ -80,7 +80,7 @@ describe('McRemote WireScope source adapter', () => {
                 id: 'main',
                 kind: 'main',
                 hello: {
-                    protocol: '21.0.0',
+                    protocol: '22.0.0',
                     world: 'overworld',
                     origin: [200, 0, 200],
                     permissions: {online: true, offline: false, build_range: 100}
@@ -99,6 +99,58 @@ describe('McRemote WireScope source adapter', () => {
         ]) {
             expect(serialized).not.toContain(forbidden);
         }
+    });
+
+    test('projects protocol 22 FAST notifications and connection.flush without synthetic results', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            method: 'world.setBlock',
+            payload: {params: [4, 5, 6, {block_id: 'oak_log', state: {axis: 'z'}}]}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'connection.flush',
+            payload: {params: []}
+        }, {
+            sequence: 6,
+            timestamp: 1005,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'connection.flush',
+            payload: {result: null}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames.slice(-3)).toEqual([{
+            sequence: 4,
+            observed_at: 1003,
+            direction: 'send',
+            request_id: null,
+            method: 'world.setBlock',
+            payload: {params: [4, 5, 6, {block_id: 'oak_log', state: {axis: 'z'}}]}
+        }, {
+            sequence: 5,
+            observed_at: 1004,
+            direction: 'send',
+            request_id: 4,
+            method: 'connection.flush',
+            payload: {params: []}
+        }, {
+            sequence: 6,
+            observed_at: 1005,
+            direction: 'receive',
+            request_id: 4,
+            method: 'connection.flush',
+            payload: {result: null}
+        }]);
     });
 
     test('does not project pairing or disconnected observations', () => {
@@ -141,6 +193,74 @@ describe('McRemote WireScope source adapter', () => {
             request_id: 4,
             method: 'player.getPose',
             payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+        }]);
+    });
+
+    test('projects height and entity handle requests and results', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'world.getHeight',
+            payload: {params: [7, 9, 20]}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'world.getHeight',
+            payload: {result: -1}
+        }, {
+            sequence: 6,
+            timestamp: 1005,
+            streamId: 'default',
+            direction: 'send',
+            id: 5,
+            method: 'world.spawnEntity',
+            payload: {params: ['minecraft:allay', 1, 2, 3]}
+        }, {
+            sequence: 7,
+            timestamp: 1006,
+            streamId: 'default',
+            direction: 'receive',
+            id: 5,
+            method: 'world.spawnEntity',
+            payload: {result: 'mceh_example'}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames.slice(-4)).toEqual([{
+            sequence: 4,
+            observed_at: 1003,
+            direction: 'send',
+            request_id: 4,
+            method: 'world.getHeight',
+            payload: {params: [7, 9, 20]}
+        }, {
+            sequence: 5,
+            observed_at: 1004,
+            direction: 'receive',
+            request_id: 4,
+            method: 'world.getHeight',
+            payload: {result: -1}
+        }, {
+            sequence: 6,
+            observed_at: 1005,
+            direction: 'send',
+            request_id: 5,
+            method: 'world.spawnEntity',
+            payload: {params: ['minecraft:allay', 1, 2, 3]}
+        }, {
+            sequence: 7,
+            observed_at: 1006,
+            direction: 'receive',
+            request_id: 5,
+            method: 'world.spawnEntity',
+            payload: {result: 'mceh_example'}
         }]);
     });
 
