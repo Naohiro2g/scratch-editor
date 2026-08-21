@@ -1966,8 +1966,9 @@ test('catalog cache miss fetches after hello without delaying connection', async
 
     await connected;
     t.equal(latestCatalog(runtime).status, 'not_acquired', 'connect resolves before catalog response');
-    await waitFor(() => socket.lastSent().method === 'catalog.get');
-    const request = socket.lastSent();
+    await waitFor(() => socket.sent.some(payload => JSON.parse(payload).method === 'catalog.get'));
+    const request = socket.sent.map(payload => JSON.parse(payload))
+        .find(message => message.method === 'catalog.get');
     t.same(request.params, []);
     socket.fireMessage({jsonrpc: '2.0', id: request.id, result: catalogResult});
 
