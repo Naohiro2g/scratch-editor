@@ -1,7 +1,7 @@
 [
   {
     "schema": "mcremote.observer",
-    "schema_version": 1.1,
+    "schema_version": 1,
     "emitted_at": 1786032000000,
     "target": {
       "id": "target-01",
@@ -29,7 +29,7 @@
   },
   {
     "schema": "mcremote.observer",
-    "schema_version": 1.1,
+    "schema_version": 1,
     "emitted_at": 1786032000100,
     "target": {
       "id": "target-01",

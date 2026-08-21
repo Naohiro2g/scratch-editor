@@ -9,6 +9,7 @@ const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
+const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v22.json');
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
 /**
@@ -98,6 +99,25 @@ const newRuntime = () => ({
         this.startedHats.push(opcode);
     }
 });
+
+const newEventRuntime = () => {
+    const runtime = newRuntime();
+    runtime.startedEventThreads = [];
+    runtime.threads = [];
+    runtime.allScriptsByOpcodeDo = () => {};
+    runtime.startHats = function (opcode, matchFields, target, options) {
+        const thread = {
+            opcode,
+            updateMonitor: false,
+            extensionContext: Object.freeze(Object.assign({}, options.extensionContext))
+        };
+        this.startedHats.push(opcode);
+        this.startedEventThreads.push(thread);
+        this.threads.push(thread);
+        return [thread];
+    };
+    return runtime;
+};
 
 const observations = runtime => runtime.emitted
     .filter(event => event.event === Runtime.MCREMOTE_OBSERVATION_UPDATE)
@@ -822,6 +842,23 @@ test('build mode and flush command blocks expose one shared stream control surfa
     t.end();
 });
 
+test('b5 events expose three hats and thread-local accessors without raw poll controls', t => {
+    const info = new McRemote({}).getInfo();
+    const opcodes = info.blocks.filter(block => typeof block !== 'string').map(block => block.opcode);
+    for (const opcode of [
+        'whenBlockRightClicked',
+        'whenChatPosted',
+        'whenProjectileHit',
+        'eventValue',
+        'eventStatus'
+    ]) {
+        t.ok(opcodes.includes(opcode), `${opcode} is public`);
+    }
+    t.notOk(opcodes.includes('eventsPoll'), 'raw events.poll is not a public block');
+    t.notOk(opcodes.includes('eventsClear'), 'events.clear remains outside b5');
+    t.end();
+});
+
 test('pairing reporter blocks are exposed', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -1094,12 +1131,13 @@ test('TRACE delay accepts the inclusive 0 to 2 second range and rejects a larger
                 t.equal(blocks._buildMode, 'TRACE');
                 t.equal(blocks._traceDelaySeconds, 2);
                 return blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: -0.1});
-            }).then(() => {
-                t.equal(socket.sent.length, before, 'negative delay sends no flush');
-                t.equal(blocks._buildMode, 'TRACE');
-                t.equal(blocks._traceDelaySeconds, 2);
-                t.end();
-            });
+            })
+                .then(() => {
+                    t.equal(socket.sent.length, before, 'negative delay sends no flush');
+                    t.equal(blocks._buildMode, 'TRACE');
+                    t.equal(blocks._traceDelaySeconds, 2);
+                    t.end();
+                });
         });
     })
 );
@@ -1354,6 +1392,92 @@ test('getHeight returns ErrorText and emits one actionable hint for height_not_f
             t.end();
         });
     });
+});
+
+test('one connection poller dispatches mixed b5 events with per-thread context and visible loss', async t => {
+    const runtime = newEventRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const firstPoll = socket.lastSent();
+    t.equal(firstPoll.method, 'events.poll');
+    t.same(firstPoll.params, eventFixture.poll_requests.default,
+        'Scratch omits options and delegates the default limit to the server');
+
+    socket.fireMessage({jsonrpc: '2.0', id: firstPoll.id, result: eventFixture.poll_result});
+    await waitFor(() => runtime.startedEventThreads.length === 3);
+    t.same(runtime.startedHats, [
+        'mcremote_whenBlockRightClicked',
+        'mcremote_whenChatPosted',
+        'mcremote_whenProjectileHit'
+    ], 'mixed events preserve FIFO hat dispatch');
+    const [clickThread, chatThread, projectileThread] = runtime.startedEventThreads;
+    t.equal(blocks.eventValue({PROPERTY: 'block'}, {thread: clickThread}), 'minecraft:stone');
+    t.equal(blocks.eventValue({PROPERTY: 'message'}, {thread: chatThread}), 'hello');
+    t.equal(blocks.eventValue({PROPERTY: 'target_block'}, {thread: projectileThread}),
+        'minecraft:oak_log[axis=z]');
+    t.equal(blocks.eventValue({PROPERTY: 'message'}, {thread: Object.assign({}, chatThread, {updateMonitor: true})}),
+        '', 'monitor evaluation cannot reuse a hat thread event');
+    t.not(clickThread.extensionContext, chatThread.extensionContext, 'each thread owns a distinct context object');
+
+    await waitFor(() => socket.lastSent().method === 'events.poll' && socket.lastSent().id !== firstPoll.id);
+    const secondPoll = socket.lastSent();
+    t.same(secondPoll.params, [3]);
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: secondPoll.id,
+        result: {
+            events: [],
+            through_sequence: 4,
+            latest_sequence: 4,
+            filtered_out: 0,
+            overflow_dropped_total: 0,
+            capacity_dropped_total: 1,
+            explicitly_discarded_total: 0
+        }
+    });
+    await waitFor(() => blocks.eventStatus({PROPERTY: 'capacity'}) === 1);
+    t.equal(blocks.eventStatus({PROPERTY: 'cursor'}), 4);
+    t.equal(blocks.eventStatus({PROPERTY: 'total_loss'}), 1);
+    t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'event_loss');
+
+    socket.fireClose({code: 1000, reason: ''});
+    t.equal(blocks.eventStatus({PROPERTY: 'cursor'}), 0, 'disconnect clears the epoch cursor');
+    t.equal(clickThread.extensionContext, null, 'disconnect clears event context on active threads');
+    const reconnected = blocks.connect();
+    const nextSocket = FakeWebSocket.instances[1];
+    nextSocket.fireOpen();
+    nextSocket.fireMessage({
+        jsonrpc: '2.0',
+        id: 1,
+        result: {
+            protocol: '22.0.0',
+            mc_version: '1.21.11',
+            supported_mc_versions: ['1.21.11'],
+            catalogHash: null,
+            world_constants: {y_sea: 63}
+        }
+    });
+    await reconnected;
+    t.same(nextSocket.lastSent().params, [0], 'the new connection epoch starts from cursor zero');
+    t.end();
+});
+
+test('a malformed event result stops only the poller without advancing its cursor', async t => {
+    const runtime = newEventRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const poll = socket.lastSent();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: poll.id,
+        result: Object.assign({}, eventFixture.poll_result, {unknown: true})
+    });
+    await waitFor(() => actionableErrors(runtime).some(error => error.reason === 'invalid_event_response'));
+    t.equal(blocks.eventStatus({PROPERTY: 'cursor'}), 0);
+    const command = blocks.getHeight({X: 1, Z: 2}, {});
+    const request = socket.lastSent();
+    t.equal(request.method, 'world.getHeight', 'Minecraft control remains usable');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: 10});
+    t.equal(await command, 10);
+    t.end();
 });
 
 test('spawnEntity writes its epoch handle or ErrorText to the selected scalar variable', t =>

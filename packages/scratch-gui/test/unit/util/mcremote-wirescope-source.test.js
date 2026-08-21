@@ -2,6 +2,7 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
+import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 
 const connectedObservation = () => ({
@@ -70,7 +71,7 @@ describe('McRemote WireScope source adapter', () => {
 
         expect(snapshot).toMatchObject({
             schema: 'mcremote.observer',
-            schema_version: 1.1,
+            schema_version: 1,
             emitted_at: 2000,
             target: {
                 id: 'target-01',
@@ -151,6 +152,45 @@ describe('McRemote WireScope source adapter', () => {
             request_id: 4,
             method: 'connection.flush',
             payload: {result: null}
+        }]);
+    });
+
+    test('projects strict events.poll requests and results without changing schema_version', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 10,
+            timestamp: 1010,
+            streamId: 'default',
+            direction: 'send',
+            id: 7,
+            method: 'events.poll',
+            payload: {params: eventsFixture.poll_requests.default}
+        }, {
+            sequence: 11,
+            timestamp: 1011,
+            streamId: 'default',
+            direction: 'receive',
+            id: 7,
+            method: 'events.poll',
+            payload: {result: eventsFixture.poll_result}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.schema_version).toBe(1);
+        expect(snapshot.streams[0].frames.slice(-2)).toEqual([{
+            sequence: 10,
+            observed_at: 1010,
+            direction: 'send',
+            request_id: 7,
+            method: 'events.poll',
+            payload: {params: [0]}
+        }, {
+            sequence: 11,
+            observed_at: 1011,
+            direction: 'receive',
+            request_id: 7,
+            method: 'events.poll',
+            payload: {result: eventsFixture.poll_result}
         }]);
     });
 

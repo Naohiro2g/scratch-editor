@@ -4,6 +4,8 @@ import type {
   BlockValue,
   ConnectionFlushParams,
   ConnectionFlushResult,
+  EventsPollParams,
+  EventsPollResult,
   GetBlocksParams,
   GetBlocksResult,
   GetHeightParams,
@@ -16,6 +18,7 @@ import type {
   SpawnEntityResult,
 } from '../src/index.ts'
 import { ERROR_REASON_CODE, ErrorCode, ErrorReason, JSONRPC_VERSION, Method, PROTOCOL_VERSION } from '../src/index.ts'
+import eventsFixture from './fixtures/events-v22.json'
 import spawnFixture from './fixtures/spawn-v22.json'
 
 describe('protocol constants', () => {
@@ -41,6 +44,7 @@ describe('protocol constants', () => {
     expect(Method.worldSpawnParticle).toBe('world.spawnParticle')
     expect(Method.worldSpawnEntity).toBe('world.spawnEntity')
     expect(Method.connectionFlush).toBe('connection.flush')
+    expect(Method.eventsPoll).toBe('events.poll')
     expect(Method.playerGetPose).toBe('player.getPose')
     expect(Method.playerSetPose).toBe('player.setPose')
   })
@@ -105,5 +109,20 @@ describe('structured block values', () => {
     expect(spawnParams[3]).toBe('minecraft:allay')
     expect(handle).toMatch(/^mceh_/)
     expect(spawnFixture.spawn_particle.default_force.effective_force).toBe(true)
+  })
+
+  it('keeps events.poll options and cumulative loss fields in one bounded result', () => {
+    const defaultParams = eventsFixture.poll_requests.default as EventsPollParams
+    const boundedParams = eventsFixture.poll_requests.bounded as EventsPollParams
+    const result = eventsFixture.poll_result as EventsPollResult
+    expect(defaultParams).toEqual([0])
+    expect(boundedParams).toEqual([0, { max_events: 3 }])
+    expect(result.events.map((event) => event.type)).toEqual(['block_right_click', 'chat_posted', 'projectile_hit'])
+    expect(result.through_sequence).toBe(3)
+    expect(result.overflow_dropped_total).toBe(0)
+    expect(eventsFixture.limits).toEqual({
+      max_compact_jsonrpc_response_bytes: 61_440,
+      max_observer_frame_bytes: 65_536,
+    })
   })
 })

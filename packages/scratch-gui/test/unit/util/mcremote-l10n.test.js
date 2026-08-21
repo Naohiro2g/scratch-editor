@@ -20,7 +20,7 @@ describe('McRemote Japanese localization', () => {
             'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
             'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
             'mcremote.buildMode.trace': 'TRACE（過程）',
-            'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から60秒の数値にしてください。',
+            'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
             'gui.alerts.mcremoteBuildDeliveryFailed':
                 'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。'
         });

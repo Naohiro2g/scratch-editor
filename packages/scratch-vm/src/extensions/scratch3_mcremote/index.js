@@ -22,6 +22,12 @@ const {
     parseStateText,
     remoteErrorText
 } = require('./block-value');
+const {
+    eventStatusValue: readEventStatusValue,
+    eventValue: readEventValue,
+    initialEventStatus,
+    validateEventPollResult
+} = require('./event');
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -60,6 +66,7 @@ const OUTBOUND_QUEUE_LIMIT = 256;
 const OUTBOUND_BUFFER_LIMIT_BYTES = 1024 * 1024;
 const OUTBOUND_BACKPRESSURE_POLL_MS = 4;
 const OUTBOUND_BACKPRESSURE_TIMEOUT_MS = 5000;
+const EVENT_POLL_IDLE_INTERVAL_MS = 250;
 
 /**
  * Minimum time between live `player.getPos` requests made on behalf of a
@@ -107,6 +114,12 @@ const BuildMode = {
     DEBUG: 'DEBUG',
     TRACE: 'TRACE',
     FAST: 'FAST'
+};
+
+const EVENT_HAT_OPCODES = {
+    block_right_click: 'mcremote_whenBlockRightClicked',
+    chat_posted: 'mcremote_whenChatPosted',
+    projectile_hit: 'mcremote_whenProjectileHit'
 };
 
 /**
@@ -364,12 +377,25 @@ class Scratch3McRemoteBlocks {
         this._heightMonitorCache = new Map();
         this._heightMonitorPending = new Map();
         this._heightNotFoundNoticeKeys = new Set();
+
+        /**
+         * One non-destructive event cursor and poll loop per connection epoch.
+         * @private
+         */
+        this._eventPollGeneration = 0;
+        this._eventPollPromise = null;
+        this._eventStatus = initialEventStatus();
+        this._eventPollErrorNoticeShown = false;
     }
 
     /**
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        const menuItem = (id, text, value) => ({
+            text: formatMessage({id, default: text}),
+            value
+        });
         return {
             id: 'mcremote',
             name: formatMessage({
@@ -711,6 +737,70 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
+                    opcode: 'whenBlockRightClicked',
+                    blockType: BlockType.HAT,
+                    isEdgeActivated: false,
+                    shouldRestartExistingThreads: false,
+                    text: formatMessage({
+                        id: 'mcremote.whenBlockRightClicked',
+                        default: 'when a block is right-clicked',
+                        description: 'Run once for each paired-player block right-click event'
+                    })
+                },
+                {
+                    opcode: 'whenChatPosted',
+                    blockType: BlockType.HAT,
+                    isEdgeActivated: false,
+                    shouldRestartExistingThreads: false,
+                    text: formatMessage({
+                        id: 'mcremote.whenChatPosted',
+                        default: 'when chat is posted',
+                        description: 'Run once for each paired-player chat event'
+                    })
+                },
+                {
+                    opcode: 'whenProjectileHit',
+                    blockType: BlockType.HAT,
+                    isEdgeActivated: false,
+                    shouldRestartExistingThreads: false,
+                    text: formatMessage({
+                        id: 'mcremote.whenProjectileHit',
+                        default: 'when a projectile hits',
+                        description: 'Run once for each paired-player projectile hit event'
+                    })
+                },
+                {
+                    opcode: 'eventValue',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.eventValue',
+                        default: '[PROPERTY] of this Minecraft event',
+                        description: 'Read one value from the event bound to the current hat thread'
+                    }),
+                    arguments: {
+                        PROPERTY: {
+                            type: ArgumentType.STRING,
+                            menu: 'eventValues'
+                        }
+                    }
+                },
+                {
+                    opcode: 'eventStatus',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.eventStatus',
+                        default: 'event polling [PROPERTY]',
+                        description: 'Read the current event cursor or a cumulative event loss counter'
+                    }),
+                    arguments: {
+                        PROPERTY: {
+                            type: ArgumentType.STRING,
+                            menu: 'eventStatusValues'
+                        }
+                    }
+                },
+                '---',
+                {
                     opcode: 'playerAttribute',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -781,6 +871,43 @@ class Scratch3McRemoteBlocks {
                 }
             ],
             menus: {
+                eventValues: {
+                    acceptReporters: false,
+                    items: [
+                        menuItem('mcremote.eventValue.sequence', 'sequence', 'sequence'),
+                        menuItem('mcremote.eventValue.type', 'event type', 'type'),
+                        menuItem('mcremote.eventValue.world', 'dimension', 'world'),
+                        menuItem('mcremote.eventValue.x', 'x position', 'x'),
+                        menuItem('mcremote.eventValue.y', 'y position', 'y'),
+                        menuItem('mcremote.eventValue.z', 'z position', 'z'),
+                        menuItem('mcremote.eventValue.originX', 'origin x', 'origin_x'),
+                        menuItem('mcremote.eventValue.originY', 'origin y', 'origin_y'),
+                        menuItem('mcremote.eventValue.originZ', 'origin z', 'origin_z'),
+                        menuItem('mcremote.eventValue.face', 'face', 'face'),
+                        menuItem('mcremote.eventValue.hand', 'hand', 'hand'),
+                        menuItem('mcremote.eventValue.message', 'message', 'message'),
+                        menuItem('mcremote.eventValue.block', 'block information', 'block'),
+                        menuItem('mcremote.eventValue.projectile', 'projectile', 'projectile'),
+                        menuItem('mcremote.eventValue.targetKind', 'target type', 'target_kind'),
+                        menuItem('mcremote.eventValue.targetX', 'target x', 'target_x'),
+                        menuItem('mcremote.eventValue.targetY', 'target y', 'target_y'),
+                        menuItem('mcremote.eventValue.targetZ', 'target z', 'target_z'),
+                        menuItem('mcremote.eventValue.targetFace', 'target face', 'target_face'),
+                        menuItem('mcremote.eventValue.targetBlock', 'target block information', 'target_block'),
+                        menuItem('mcremote.eventValue.targetHandle', 'target entity handle', 'target_handle')
+                    ]
+                },
+                eventStatusValues: {
+                    acceptReporters: false,
+                    items: [
+                        menuItem('mcremote.eventStatus.cursor', 'cursor', 'cursor'),
+                        menuItem('mcremote.eventStatus.latest', 'latest sequence', 'latest'),
+                        menuItem('mcremote.eventStatus.overflow', 'overflow loss', 'overflow'),
+                        menuItem('mcremote.eventStatus.capacity', 'capacity loss', 'capacity'),
+                        menuItem('mcremote.eventStatus.discarded', 'explicit discard', 'discarded'),
+                        menuItem('mcremote.eventStatus.totalLoss', 'total loss', 'total_loss')
+                    ]
+                },
                 buildModes: {
                     acceptReporters: true,
                     items: [
@@ -983,6 +1110,31 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Clear contexts which belong to a previous McRemote connection epoch.
+     * @private
+     */
+    _clearEventThreadContexts () {
+        if (!this.runtime || !Array.isArray(this.runtime.threads)) return;
+        for (const thread of this.runtime.threads) {
+            if (thread.extensionContext && thread.extensionContext.mcremoteEvent) {
+                thread.extensionContext = null;
+            }
+        }
+    }
+
+    /**
+     * Stop the current poll loop and return event state to connection defaults.
+     * @private
+     */
+    _resetEventState () {
+        this._eventPollGeneration++;
+        this._eventPollPromise = null;
+        this._eventStatus = initialEventStatus();
+        this._eventPollErrorNoticeShown = false;
+        this._clearEventThreadContexts();
+    }
+
+    /**
      * Reset stream-local observer data before starting a new connection.
      * @private
      */
@@ -990,6 +1142,7 @@ class Scratch3McRemoteBlocks {
         const resetError = new Error('McRemote connection epoch reset');
         resetError.reason = 'connection_reset';
         this._rejectOutboundQueue(resetError);
+        this._resetEventState();
         this._connectionStatus = ConnectionStatus.DISCONNECTED;
         this._streamId = DEFAULT_STREAM_ID;
         this._displayAlias = '';
@@ -1364,6 +1517,7 @@ class Scratch3McRemoteBlocks {
                 this._heightMonitorCache.clear();
                 this._heightMonitorPending.clear();
                 this._heightNotFoundNoticeKeys.clear();
+                this._resetEventState();
                 this._setConnectionStatus(ConnectionStatus.CLOSED, error);
                 this._resetCatalog();
                 this._rejectPending(error);
@@ -1403,6 +1557,7 @@ class Scratch3McRemoteBlocks {
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
             this._disconnectedCommandNoticeShown = false;
             this._acquireCatalog(result);
+            this._startEventPoller();
             return result;
         });
     }
@@ -1680,6 +1835,130 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
+     * Polling is enabled only in a complete Scratch runtime. Lightweight unit
+     * harnesses without script discovery keep their existing request ordering.
+     * @returns {boolean} whether event hats can be started.
+     * @private
+     */
+    _eventPollingAvailable () {
+        return Boolean(this.runtime &&
+            typeof this.runtime.startHats === 'function' &&
+            typeof this.runtime.allScriptsByOpcodeDo === 'function');
+    }
+
+    /**
+     * Start exactly one non-destructive poll loop for the current connection.
+     * @private
+     */
+    _startEventPoller () {
+        if (!this._eventPollingAvailable()) return;
+        const generation = ++this._eventPollGeneration;
+        this._eventPollPromise = null;
+        this._eventStatus = initialEventStatus();
+        this._eventPollErrorNoticeShown = false;
+        this._pollEvents(generation);
+    }
+
+    /**
+     * @param {object} event immutable validated event DTO.
+     * @private
+     */
+    _dispatchEvent (event) {
+        const opcode = EVENT_HAT_OPCODES[event.type];
+        if (!opcode || !this.runtime || typeof this.runtime.startHats !== 'function') return;
+        this.runtime.startHats(opcode, {}, null, {
+            allowConcurrentThreads: true,
+            extensionContext: {mcremoteEvent: event}
+        });
+    }
+
+    /**
+     * Notify the editor without turning a recoverable ring loss into a broken
+     * Minecraft control connection.
+     * @param {object} status current cumulative event status.
+     * @private
+     */
+    _notifyEventLoss (status) {
+        const error = new Error('Some Minecraft events were lost before Scratch could receive them.');
+        error.reason = 'event_loss';
+        error.data = {
+            reason: error.reason,
+            overflow_dropped_total: status.overflowDroppedTotal,
+            capacity_dropped_total: status.capacityDroppedTotal
+        };
+        log.warn(`McRemote: events.poll reported loss: overflow=${status.overflowDroppedTotal}, ` +
+            `capacity=${status.capacityDroppedTotal}`);
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._errorInfo(error));
+        }
+    }
+
+    /**
+     * Stop a malformed or failed poll loop while leaving other commands usable.
+     * @param {Error} error poll failure.
+     * @private
+     */
+    _failEventPoller (error) {
+        this._eventPollGeneration++;
+        this._eventPollPromise = null;
+        if (this._eventPollErrorNoticeShown) return;
+        this._eventPollErrorNoticeShown = true;
+        log.warn(`McRemote: events.poll stopped: ${error.reason || error.message}`);
+        this._lastError = this._errorInfo(error);
+        this._emitObservation();
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+        }
+    }
+
+    /**
+     * @param {number} generation current event poll generation.
+     * @param {boolean} idle whether the preceding result was empty.
+     * @private
+     */
+    _scheduleEventPoll (generation, idle) {
+        const wait = idle ? this._delay(EVENT_POLL_IDLE_INTERVAL_MS) : Promise.resolve();
+        wait.then(() => {
+            if (generation !== this._eventPollGeneration ||
+                this._connectionStatus !== ConnectionStatus.CONNECTED) return;
+            this._pollEvents(generation);
+        });
+    }
+
+    /**
+     * Request one batch. The cursor advances only after strict validation and
+     * successful receipt, so a lost response can be requested again safely.
+     * @param {number} generation current event poll generation.
+     * @private
+     */
+    _pollEvents (generation) {
+        if (generation !== this._eventPollGeneration ||
+            this._connectionStatus !== ConnectionStatus.CONNECTED || this._eventPollPromise) return;
+        const afterSequence = this._eventStatus.cursor;
+        const polling = this._request('events.poll', [afterSequence]);
+        this._eventPollPromise = polling;
+        polling.then(result => {
+            if (generation !== this._eventPollGeneration || this._eventPollPromise !== polling) return;
+            this._eventPollPromise = null;
+            let parsed;
+            try {
+                parsed = validateEventPollResult(result, afterSequence, this._eventStatus);
+            } catch (error) {
+                this._failEventPoller(error);
+                return;
+            }
+            this._eventStatus = parsed.status;
+            if (parsed.lossDelta > 0) this._notifyEventLoss(parsed.status);
+            for (const event of parsed.events) this._dispatchEvent(event);
+            this._scheduleEventPoll(generation, parsed.events.length === 0);
+        }, error => {
+            if (generation !== this._eventPollGeneration || this._eventPollPromise !== polling) return;
+            this._eventPollPromise = null;
+            this._failEventPoller(error);
+        });
+    }
+
+    /**
      * Reject a send before assigning a request id when the active connection
      * cannot accept commands.
      * @param {string} method - JSON-RPC method.
@@ -1945,6 +2224,31 @@ class Scratch3McRemoteBlocks {
 
     whenPaired () {
         return true;
+    }
+
+    whenBlockRightClicked () {
+        return true;
+    }
+
+    whenChatPosted () {
+        return true;
+    }
+
+    whenProjectileHit () {
+        return true;
+    }
+
+    eventValue (args, util) {
+        const thread = util && util.thread;
+        if (!thread || thread.updateMonitor || !thread.extensionContext) return '';
+        return readEventValue(
+            thread.extensionContext.mcremoteEvent,
+            Cast.toString(args.PROPERTY)
+        );
+    }
+
+    eventStatus (args) {
+        return readEventStatusValue(this._eventStatus, Cast.toString(args.PROPERTY));
     }
 
     setWorld (args) {

@@ -94,3 +94,62 @@ export type SpawnEntityResult = string
 /** `connection.flush` — wait for earlier work in this connection epoch. */
 export type ConnectionFlushParams = readonly []
 export type ConnectionFlushResult = null
+
+export interface EventsPollOptions {
+  readonly max_events: number
+}
+
+export type EventsPollParams =
+  | readonly [afterSequence: number]
+  | readonly [afterSequence: number, options: EventsPollOptions]
+
+export interface BlockRightClickEvent {
+  readonly sequence: number
+  readonly type: 'block_right_click'
+  readonly world: string
+  readonly origin: readonly [number, number, number]
+  readonly pos: readonly [number, number, number]
+  readonly face: string
+  readonly block: BlockValue
+  readonly hand: 'main' | 'off'
+}
+
+export interface ChatPostedEvent {
+  readonly sequence: number
+  readonly type: 'chat_posted'
+  readonly world: string
+  readonly origin: readonly [number, number, number]
+  readonly message: string
+}
+
+export type ProjectileTarget =
+  | { readonly kind: 'player' }
+  | { readonly kind: 'entity'; readonly handle: string }
+  | {
+      readonly kind: 'block'
+      readonly block: BlockValue
+      readonly pos: readonly [number, number, number]
+      readonly face?: string
+    }
+
+export interface ProjectileHitEvent {
+  readonly sequence: number
+  readonly type: 'projectile_hit'
+  readonly world: string
+  readonly origin: readonly [number, number, number]
+  readonly projectile: string
+  readonly pos: readonly [number, number, number]
+  readonly target: ProjectileTarget
+}
+
+export type McRemoteEvent = BlockRightClickEvent | ChatPostedEvent | ProjectileHitEvent
+
+export interface EventsPollResult {
+  readonly events: readonly McRemoteEvent[]
+  readonly through_sequence: number
+  readonly latest_sequence: number
+  readonly filtered_out: number
+  readonly overflow_dropped_total: number
+  readonly capacity_dropped_total: number
+  readonly explicitly_discarded_total: number
+}

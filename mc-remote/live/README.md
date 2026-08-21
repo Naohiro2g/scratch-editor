@@ -25,7 +25,7 @@ reconnecting the observation target.
 
 ## Observer client
 
-The browser client keeps the strict `mcremote.observer` schema version 1.1 validator separate from the versioned
+The browser client keeps the strict `mcremote.observer` schema version 1 validator separate from the versioned
 observer session envelope. A snapshot envelope applies the sanitized snapshot and its `history_window` metadata
 atomically. The session core accepts the wire end reasons `target-ended`, `source-closed`, `backpressure`, and
 `capacity-exhausted`; it synthesizes `transport-lost` only as a browser-local terminal state.
@@ -34,10 +34,10 @@ envelope shape for adapter conformance.
 
 The shared `test/fixtures/display-alias-v1.json` fixture fixes the vocabulary and `WORD-WORD-NNNNNN` shape for
 source-side alias conformance. The Scratch generator is checked against it. The alias is display-only: it is not
-a discovery key, target identity, attach capability, or authorization input. Observer schema v1.1 continues to
+a discovery key, target identity, attach capability, or authorization input. The b5 compatibility-set revision continues to
 accept existing non-empty aliases so recorded sessions and other source implementations can migrate independently.
 
-Schema v1.1 observes protocol 22 block IDs and state as structured objects. It distinguishes acknowledged setter
+The b5 compatibility-set revision observes protocol 22 block IDs and state as structured objects. It distinguishes acknowledged setter
 requests, FAST setter notifications, `result: null`, and `connection.flush`; FAST frames are shown as sent and
 unconfirmed, without a synthetic response or an inferred DEBUG/TRACE/FAST mode.
 
@@ -96,7 +96,7 @@ distribution gate.
 - The station adapter sends the normalized attach code only in the same-origin `POST` body with credentials
   omitted. It rejects redirects, unversioned bootstrap data, unbounded responses, and invalid NDJSON framing.
 
-The observer contract is versioned independently as `mcremote.observer` schema version 1.1. Its shape uses
+The observer contract is versioned independently as `mcremote.observer` schema version 1. Its shape uses
 `streams[]` even though the Scratch reference adapter currently exposes one `main` stream.
 
 The development HTML includes a restrictive CSP meta policy. Production deployment must still set the required

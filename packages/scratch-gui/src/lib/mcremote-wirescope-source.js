@@ -20,6 +20,7 @@ const OBSERVED_METHODS = new Set([
     'world.spawnParticle',
     'world.spawnEntity',
     'connection.flush',
+    'events.poll',
     'player.getPos',
     'player.setPos',
     'player.getPose',
@@ -28,6 +29,9 @@ const OBSERVED_METHODS = new Set([
 
 const isObject = function (value) {
     return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+};
+const hasExactFields = function (value, fields) {
+    return isObject(value) && Object.keys(value).every(field => fields.indexOf(field) !== -1);
 };
 const finiteNumber = function (value) {
     return typeof value === 'number' && Number.isFinite(value);
@@ -133,8 +137,21 @@ const allowExactNumberParams = function (value, length) {
     return Array.isArray(value) && value.length === length && value.every(Number.isInteger) ? value.slice() : null;
 };
 
+const allowEventsPollParams = function (value) {
+    if (!Array.isArray(value) || (value.length !== 1 && value.length !== 2) ||
+        !Number.isInteger(value[0]) || value[0] < 0) return null;
+    if (value.length === 1) return [value[0]];
+    const options = value[1];
+    if (!hasExactFields(options, ['max_events']) || Object.keys(options).length !== 1 ||
+        !Number.isInteger(options.max_events) || options.max_events <= 0) return null;
+    return [value[0], {max_events: options.max_events}];
+};
+
 const canonicalResourceId = function (value) {
     return typeof value === 'string' && /^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(value);
+};
+const faceToken = function (value) {
+    return typeof value === 'string' && /^[a-z_]+$/.test(value);
 };
 
 const allowParams = function (method, value) {
@@ -170,7 +187,81 @@ const allowParams = function (method, value) {
         return value.slice();
     }
     if (method === 'connection.flush') return Array.isArray(value) && value.length === 0 ? [] : null;
+    if (method === 'events.poll') return allowEventsPollParams(value);
     return allowArrayParams(value);
+};
+
+const allowEvent = function (value) {
+    if (!isObject(value) || !Number.isInteger(value.sequence) || value.sequence < 1 ||
+        !optionalString(value.world)) return null;
+    const origin = numberTuple(value.origin);
+    if (!origin || !origin.every(Number.isInteger)) return null;
+    const common = {sequence: value.sequence, type: value.type, world: value.world, origin};
+    if (value.type === 'block_right_click') {
+        const pos = numberTuple(value.pos);
+        const block = allowBlock(value.block, true);
+        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'pos', 'face', 'block', 'hand']) ||
+            !pos || !pos.every(Number.isInteger) || !faceToken(value.face) || !block ||
+            (value.hand !== 'main' && value.hand !== 'off')) return null;
+        return Object.assign(common, {pos, face: value.face, block, hand: value.hand});
+    }
+    if (value.type === 'chat_posted') {
+        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'message']) ||
+            typeof value.message !== 'string') return null;
+        return Object.assign(common, {message: value.message});
+    }
+    if (value.type === 'projectile_hit') {
+        const pos = numberTuple(value.pos);
+        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'projectile', 'pos', 'target']) ||
+            !canonicalResourceId(value.projectile) || !pos || !isObject(value.target)) return null;
+        let target;
+        if (value.target.kind === 'player' && hasExactFields(value.target, ['kind'])) {
+            target = {kind: 'player'};
+        } else if (value.target.kind === 'entity' && hasExactFields(value.target, ['kind', 'handle']) &&
+            typeof value.target.handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(value.target.handle)) {
+            target = {kind: 'entity', handle: value.target.handle};
+        } else if (value.target.kind === 'block' &&
+            hasExactFields(value.target, ['kind', 'block', 'pos', 'face'])) {
+            const targetBlock = allowBlock(value.target.block, true);
+            const targetPos = numberTuple(value.target.pos);
+            if (!targetBlock || !targetPos || !targetPos.every(Number.isInteger) ||
+                (typeof value.target.face !== 'undefined' && !faceToken(value.target.face))) return null;
+            target = {kind: 'block', block: targetBlock, pos: targetPos};
+            if (typeof value.target.face === 'string') target.face = value.target.face;
+        } else {
+            return null;
+        }
+        return Object.assign(common, {projectile: value.projectile, pos, target});
+    }
+    return null;
+};
+
+const allowEventsPollResult = function (value) {
+    const fields = ['events', 'through_sequence', 'latest_sequence', 'filtered_out',
+        'overflow_dropped_total', 'capacity_dropped_total', 'explicitly_discarded_total'];
+    if (!hasExactFields(value, fields) || Object.keys(value).length !== fields.length || !Array.isArray(value.events)) {
+        return null;
+    }
+    const counters = fields.slice(1);
+    if (!counters.every(field => Number.isInteger(value[field]) && value[field] >= 0) ||
+        value.through_sequence > value.latest_sequence || value.filtered_out !== 0 ||
+        value.explicitly_discarded_total !== 0) return null;
+    const events = value.events.map(allowEvent);
+    if (!events.every(Boolean)) return null;
+    let priorSequence = 0;
+    for (const event of events) {
+        if (event.sequence <= priorSequence || event.sequence > value.through_sequence) return null;
+        priorSequence = event.sequence;
+    }
+    return {
+        events,
+        through_sequence: value.through_sequence,
+        latest_sequence: value.latest_sequence,
+        filtered_out: 0,
+        overflow_dropped_total: value.overflow_dropped_total,
+        capacity_dropped_total: value.capacity_dropped_total,
+        explicitly_discarded_total: 0
+    };
 };
 
 const allowPosition = function (value) {
@@ -250,6 +341,10 @@ const allowFramePayload = function (frame) {
         return typeof payload.result === 'string' && /^mceh_[\x21-\x7e]+$/.test(payload.result) ?
             {result: payload.result} : null;
     }
+    if (frame.method === 'events.poll') {
+        const result = allowEventsPollResult(payload.result);
+        return result ? {result} : null;
+    }
     const result = scalar(payload.result);
     return typeof result === 'undefined' ? null : {result};
 };
@@ -282,7 +377,7 @@ const toWireScopeSnapshot = (observation, targetId, emittedAt = Date.now()) => {
     const frames = Array.isArray(observation.frameLog) ? observation.frameLog.map(allowFrame).filter(Boolean) : [];
     return {
         schema: 'mcremote.observer',
-        schema_version: 1.1,
+        schema_version: 1,
         emitted_at: emittedAt,
         target: {
             id: targetId,

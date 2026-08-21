@@ -1,5 +1,5 @@
 export const OBSERVER_SCHEMA = 'mcremote.observer' as const
-export const OBSERVER_SCHEMA_VERSION = 1.1 as const
+export const OBSERVER_SCHEMA_VERSION = 1 as const
 
 export const OBSERVED_METHODS = [
   'hello',
@@ -14,6 +14,7 @@ export const OBSERVED_METHODS = [
   'world.spawnParticle',
   'world.spawnEntity',
   'connection.flush',
+  'events.poll',
   'player.getPos',
   'player.setPos',
   'player.getPose',
@@ -340,6 +341,156 @@ const canonicalResourceId = (value: unknown, context: string): string => {
   return resourceId
 }
 
+const faceToken = (value: unknown, context: string): string => {
+  const face = requiredString(value, context)
+  if (!/^[a-z_]+$/.test(face)) throw new Error(`${context} must be a face token`)
+  return face
+}
+
+const parseEventsPollParams = (value: unknown): unknown[] => {
+  if (!Array.isArray(value) || (value.length !== 1 && value.length !== 2)) {
+    throw new Error('frame.payload.params must contain after_sequence and optional options')
+  }
+  const afterSequence = nonNegativeInteger(value[0], 'frame.payload.params[0]')
+  if (value.length === 1) return [afterSequence]
+  const options = objectValue(value[1], 'frame.payload.params[1]')
+  exactFields(options, ['max_events'], 'frame.payload.params[1]')
+  if (Object.keys(options).length !== 1) {
+    throw new Error('frame.payload.params[1] must contain max_events')
+  }
+  const maxEvents = integer(options.max_events, 'frame.payload.params[1].max_events')
+  if (maxEvents <= 0) throw new Error('frame.payload.params[1].max_events must be positive')
+  return [afterSequence, { max_events: maxEvents }]
+}
+
+const parseEventCommon = (
+  value: Record<string, unknown>,
+  fields: readonly string[],
+  context: string,
+): Record<string, unknown> => {
+  exactFields(value, ['sequence', 'type', 'world', 'origin', ...fields], context)
+  const sequence = integer(value.sequence, `${context}.sequence`)
+  if (sequence < 1) throw new Error(`${context}.sequence must be positive`)
+  return {
+    sequence,
+    type: requiredString(value.type, `${context}.type`),
+    world: requiredString(value.world, `${context}.world`),
+    origin: numberTuple(value.origin, `${context}.origin`).map((item, index) =>
+      integer(item, `${context}.origin[${index}]`),
+    ),
+  }
+}
+
+const parseProjectileTarget = (value: unknown, context: string): Record<string, unknown> => {
+  const target = objectValue(value, context)
+  if (target.kind === 'player') {
+    exactFields(target, ['kind'], context)
+    return { kind: 'player' }
+  }
+  if (target.kind === 'entity') {
+    exactFields(target, ['kind', 'handle'], context)
+    const handle = requiredString(target.handle, `${context}.handle`)
+    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context}.handle must be an entity handle`)
+    return { kind: 'entity', handle }
+  }
+  if (target.kind === 'block') {
+    exactFields(target, ['kind', 'block', 'pos', 'face'], context)
+    const result: Record<string, unknown> = {
+      kind: 'block',
+      block: parseBlock(target.block, `${context}.block`, true),
+      pos: numberTuple(target.pos, `${context}.pos`).map((item, index) => integer(item, `${context}.pos[${index}]`)),
+    }
+    if (typeof target.face !== 'undefined') result.face = faceToken(target.face, `${context}.face`)
+    return result
+  }
+  throw new Error(`${context}.kind must be block, entity, or player`)
+}
+
+const parseEvent = (value: unknown, index: number): Record<string, unknown> => {
+  const context = `frame.payload.result.events[${index}]`
+  const event = objectValue(value, context)
+  if (event.type === 'block_right_click') {
+    const hand = requiredString(event.hand, `${context}.hand`)
+    if (hand !== 'main' && hand !== 'off') throw new Error(`${context}.hand must be main or off`)
+    return {
+      ...parseEventCommon(event, ['pos', 'face', 'block', 'hand'], context),
+      pos: numberTuple(event.pos, `${context}.pos`).map((item, position) =>
+        integer(item, `${context}.pos[${position}]`),
+      ),
+      face: faceToken(event.face, `${context}.face`),
+      block: parseBlock(event.block, `${context}.block`, true),
+      hand,
+    }
+  }
+  if (event.type === 'chat_posted') {
+    exactFields(event, ['sequence', 'type', 'world', 'origin', 'message'], context)
+    if (typeof event.message !== 'string') throw new Error(`${context}.message must be a string`)
+    return { ...parseEventCommon(event, ['message'], context), message: event.message }
+  }
+  if (event.type === 'projectile_hit') {
+    return {
+      ...parseEventCommon(event, ['projectile', 'pos', 'target'], context),
+      projectile: canonicalResourceId(event.projectile, `${context}.projectile`),
+      pos: numberTuple(event.pos, `${context}.pos`),
+      target: parseProjectileTarget(event.target, `${context}.target`),
+    }
+  }
+  throw new Error(`${context}.type is not observable`)
+}
+
+const parseEventsPollResult = (value: unknown): Record<string, unknown> => {
+  const result = objectValue(value, 'frame.payload.result')
+  exactFields(
+    result,
+    [
+      'events',
+      'through_sequence',
+      'latest_sequence',
+      'filtered_out',
+      'overflow_dropped_total',
+      'capacity_dropped_total',
+      'explicitly_discarded_total',
+    ],
+    'frame.payload.result',
+  )
+  if (!Array.isArray(result.events)) throw new Error('frame.payload.result.events must be an array')
+  const throughSequence = nonNegativeInteger(result.through_sequence, 'frame.payload.result.through_sequence')
+  const latestSequence = nonNegativeInteger(result.latest_sequence, 'frame.payload.result.latest_sequence')
+  if (throughSequence > latestSequence) throw new Error('frame.payload.result cursor bounds are inconsistent')
+  const filteredOut = nonNegativeInteger(result.filtered_out, 'frame.payload.result.filtered_out')
+  const explicitlyDiscardedTotal = nonNegativeInteger(
+    result.explicitly_discarded_total,
+    'frame.payload.result.explicitly_discarded_total',
+  )
+  if (filteredOut !== 0 || explicitlyDiscardedTotal !== 0) {
+    throw new Error('b5 filter and explicit discard totals must remain zero')
+  }
+  const events = result.events.map(parseEvent)
+  let priorSequence = 0
+  for (const event of events) {
+    const sequence = event.sequence as number
+    if (sequence <= priorSequence || sequence > throughSequence) {
+      throw new Error('frame.payload.result event sequences are inconsistent')
+    }
+    priorSequence = sequence
+  }
+  return {
+    events,
+    through_sequence: throughSequence,
+    latest_sequence: latestSequence,
+    filtered_out: 0,
+    overflow_dropped_total: nonNegativeInteger(
+      result.overflow_dropped_total,
+      'frame.payload.result.overflow_dropped_total',
+    ),
+    capacity_dropped_total: nonNegativeInteger(
+      result.capacity_dropped_total,
+      'frame.payload.result.capacity_dropped_total',
+    ),
+    explicitly_discarded_total: 0,
+  }
+}
+
 const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') {
     const params = objectValue(value, 'frame.payload.params')
@@ -417,6 +568,7 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     ]
   }
   if (method === 'connection.flush') return exactParams(value, 0)
+  if (method === 'events.poll') return parseEventsPollParams(value)
   if (!Array.isArray(value)) throw new Error('frame.payload.params must be an array')
   return value.map((item, index) => jsonScalar(item, `frame.payload.params[${index}]`))
 }
@@ -461,6 +613,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
     if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
     return handle
   }
+  if (method === 'events.poll') return parseEventsPollResult(value)
   return jsonScalar(value, 'frame.payload.result')
 }
 

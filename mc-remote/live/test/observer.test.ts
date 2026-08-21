@@ -4,7 +4,12 @@ import { describe, expect, test } from 'vitest'
 import { parseObserverSnapshot } from '../src/observer'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
+const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v22.json', import.meta.url))
 const spawnFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/spawn-v22.json', import.meta.url))
+const eventsFixture = JSON.parse(readFileSync(eventsFixturePath, 'utf8')) as {
+  poll_requests: { default: unknown[]; rejected: unknown[][] }
+  poll_result: Record<string, unknown>
+}
 const spawnFixture = JSON.parse(readFileSync(spawnFixturePath, 'utf8')) as {
   spawn_particle: {
     default_force: { params: unknown[]; result: number }
@@ -16,7 +21,7 @@ interface MutableSnapshotFixture {
   streams: { hello: { protocol: string }; frames: unknown[] }[]
 }
 
-describe('observer schema v1.1', () => {
+describe('observer schema v1 with the b5 compatibility-set revision', () => {
   test('accepts the Scratch main-stream lifecycle fixture', () => {
     const lifecycle: unknown = JSON.parse(readFileSync(fixturePath, 'utf8'))
     expect(Array.isArray(lifecycle)).toBe(true)
@@ -47,7 +52,7 @@ describe('observer schema v1.1', () => {
   test('accepts a protocol 22 FAST notification followed by connection.flush', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
-    snapshot.schema_version = 1.1
+    snapshot.schema_version = 1
     snapshot.streams[0].hello.protocol = '22.0.0'
     snapshot.streams[0].frames = [
       {
@@ -78,10 +83,53 @@ describe('observer schema v1.1', () => {
     expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
   })
 
+  test('accepts strict events.poll params and the three b5 event DTOs', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.schema_version = 1
+    snapshot.streams[0].hello.protocol = '22.0.0'
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'send',
+        request_id: 1,
+        method: 'events.poll',
+        payload: { params: eventsFixture.poll_requests.default },
+      },
+      {
+        sequence: 2,
+        observed_at: 2,
+        direction: 'receive',
+        request_id: 1,
+        method: 'events.poll',
+        payload: { result: eventsFixture.poll_result },
+      },
+    ]
+    expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+  })
+
+  test.each(eventsFixture.poll_requests.rejected)('rejects an obsolete or malformed events.poll shape', (params) => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.streams[0].hello.protocol = '22.0.0'
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'send',
+        request_id: 1,
+        method: 'events.poll',
+        payload: { params },
+      },
+    ]
+    expect(() => parseObserverSnapshot(snapshot)).toThrow()
+  })
+
   test('accepts protocol 22 height and entity handle observations', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
-    snapshot.schema_version = 1.1
+    snapshot.schema_version = 1
     snapshot.streams[0].hello.protocol = '22.0.0'
     snapshot.streams[0].frames = [
       {
@@ -139,7 +187,7 @@ describe('observer schema v1.1', () => {
   test('rejects malformed height and entity handle results', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
-    snapshot.schema_version = 1.1
+    snapshot.schema_version = 1
     snapshot.streams[0].hello.protocol = '22.0.0'
     snapshot.streams[0].frames = [
       {
@@ -169,7 +217,7 @@ describe('observer schema v1.1', () => {
   test('rejects legacy spawn order and malformed particle params', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
-    snapshot.schema_version = 1.1
+    snapshot.schema_version = 1
     snapshot.streams[0].hello.protocol = '22.0.0'
     snapshot.streams[0].frames = [
       {
@@ -199,7 +247,7 @@ describe('observer schema v1.1', () => {
   test('rejects legacy protocol 21 block strings and synthetic setter results', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
-    snapshot.schema_version = 1.1
+    snapshot.schema_version = 1
     snapshot.streams[0].hello.protocol = '22.0.0'
     snapshot.streams[0].frames = [
       {

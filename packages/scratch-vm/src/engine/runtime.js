@@ -1937,16 +1937,25 @@ class Runtime extends EventEmitter {
      * @param {!string} requestedHatOpcode Opcode of hats to start.
      * @param {object=} optMatchFields Optionally, fields to match on the hat.
      * @param {Target=} optTarget Optionally, a target to restrict to.
+     * @param {object=} optThreadOptions Optional per-start thread behavior.
+     * @param {boolean=} optThreadOptions.allowConcurrentThreads Allow another instance of the same hat script.
+     * @param {object=} optThreadOptions.extensionContext Immutable context attached before the hat executes.
      * @returns {Array.<Thread>} List of threads started by this function.
      */
     startHats (requestedHatOpcode,
-        optMatchFields, optTarget) {
+        optMatchFields, optTarget, optThreadOptions) {
         if (!Object.prototype.hasOwnProperty.call(this._hats, requestedHatOpcode)) {
             // No known hat with this opcode.
             return;
         }
         const instance = this;
         const newThreads = [];
+        const allowConcurrentThreads = Boolean(optThreadOptions && optThreadOptions.allowConcurrentThreads);
+        const extensionContext = optThreadOptions && optThreadOptions.extensionContext;
+        const registerThread = thread => {
+            if (extensionContext) thread.extensionContext = Object.freeze(Object.assign({}, extensionContext));
+            newThreads.push(thread);
+        };
         // Look up metadata for the relevant hat.
         const hatMeta = instance._hats[requestedHatOpcode];
 
@@ -1974,7 +1983,7 @@ class Runtime extends EventEmitter {
                 }
             }
 
-            if (hatMeta.restartExistingThreads) {
+            if (!allowConcurrentThreads && hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
                 for (let i = 0; i < this.threads.length; i++) {
@@ -1982,11 +1991,11 @@ class Runtime extends EventEmitter {
                         this.threads[i].topBlock === topBlockId &&
                         // stack click threads and hat threads can coexist
                         !this.threads[i].stackClick) {
-                        newThreads.push(this._restartThread(this.threads[i]));
+                        registerThread(this._restartThread(this.threads[i]));
                         return;
                     }
                 }
-            } else {
+            } else if (!allowConcurrentThreads) {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
                 for (let j = 0; j < this.threads.length; j++) {
@@ -2001,7 +2010,7 @@ class Runtime extends EventEmitter {
                 }
             }
             // Start the thread with this top block.
-            newThreads.push(this._pushThread(topBlockId, target));
+            registerThread(this._pushThread(topBlockId, target));
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation

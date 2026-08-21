@@ -16,6 +16,7 @@ export const Method = {
   worldSpawnParticle: 'world.spawnParticle',
   worldSpawnEntity: 'world.spawnEntity',
   connectionFlush: 'connection.flush',
+  eventsPoll: 'events.poll',
   playerGetPose: 'player.getPose',
   playerSetPose: 'player.setPose',
 } as const
