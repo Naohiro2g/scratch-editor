@@ -32,8 +32,8 @@ describe('WireScope localization', () => {
     )
     expect(translate('en', 'streamEnded')).toBe('ended')
     expect(translate('ja', 'streamEnded')).toBe('終了')
-    expect(translate('ja', 'directionSentUnconfirmed')).toBe('送信済み・未確認')
-    expect(translate('en', 'directionSentUnconfirmed')).toBe('sent · unconfirmed')
+    expect(translate('ja', 'directionSentUnconfirmed')).toBe('送信済み・結果未確認')
+    expect(translate('en', 'directionSentUnconfirmed')).toBe('Sent · unconfirmed')
   })
 
   test('provides a kanji-free Japanese Hiragana locale', () => {
@@ -46,6 +46,7 @@ describe('WireScope localization', () => {
       'データのながれがはやすぎるため、かんそくをしゅうりょうしました。',
     )
     expect(translate('ja-Hira', 'streamEnded')).toBe('しゅうりょう')
+    expect(translate('ja-Hira', 'directionSentUnconfirmed')).toBe('そうしんずみ・けっかみかくにん')
     for (const key of messageKeys) {
       expect(translate('ja-Hira', key)).not.toContain('かんさつ')
     }

@@ -1073,17 +1073,31 @@ test('invalid TRACE delay leaves the current mode unchanged', t =>
     })
 );
 
-test('TRACE delay accepts 60 seconds and rejects a larger runtime value', t =>
+test('TRACE delay accepts the inclusive 0 to 2 second range and rejects a larger value', t =>
     newConnectedBlocks(newRuntime()).then(({blocks, socket}) => {
-        const accepted = blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: 60});
+        const acceptedZero = blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: 0});
         socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
-        return accepted.then(() => {
-            t.equal(blocks._traceDelaySeconds, 60);
+        return acceptedZero.then(() => {
+            t.equal(blocks._traceDelaySeconds, 0);
+            const acceptedUpper = blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 2});
+            return nextTurn().then(() => {
+                const flush = socket.lastSent();
+                t.equal(flush.method, 'connection.flush');
+                socket.fireMessage({jsonrpc: '2.0', id: flush.id, result: null});
+                return acceptedUpper;
+            });
+        }).then(() => {
+            t.equal(blocks._traceDelaySeconds, 2);
             const before = socket.sent.length;
-            return blocks.setBuildMode({MODE: 'TRACE', TRACE_DELAY: 60.1}).then(() => {
+            return blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: 2.1}).then(() => {
                 t.equal(socket.sent.length, before, 'out-of-range delay sends no flush');
-                t.equal(blocks._buildMode, 'DEBUG');
-                t.equal(blocks._traceDelaySeconds, 60);
+                t.equal(blocks._buildMode, 'TRACE');
+                t.equal(blocks._traceDelaySeconds, 2);
+                return blocks.setBuildMode({MODE: 'DEBUG', TRACE_DELAY: -0.1});
+            }).then(() => {
+                t.equal(socket.sent.length, before, 'negative delay sends no flush');
+                t.equal(blocks._buildMode, 'TRACE');
+                t.equal(blocks._traceDelaySeconds, 2);
                 t.end();
             });
         });
