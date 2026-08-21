@@ -131,7 +131,8 @@ const BuildMode = {
  *   world.getBlock  [x, y, z]                                   -> BlockValue
  *   world.getBlocks [x1, y1, z1, x2, y2, z2]                    -> BlockValue[]
  *   world.getHeight [x, z] or [x, z, maxY]                       -> integer
- *   world.spawnEntity [entity, x, y, z]                          -> entity handle
+ *   world.spawnParticle [x, y, z, ox, oy, oz, particle, speed, count, (force)] -> accepted count
+ *   world.spawnEntity [x, y, z, entity]                          -> entity handle
  *   connection.flush []                                          -> null
  *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
  *   player.setPos   [world, x, y, z]                               -> reply
@@ -666,6 +667,33 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'spawnParticle',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.spawnParticle',
+                        default: 'spawn particle [PARTICLE] at x:[X] y:[Y] z:[Z] ' +
+                            'offset x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] ' +
+                            'speed:[SPEED] count:[COUNT] visibility:[FORCE]',
+                        description: 'Spawn data-free particles at an origin-relative position'
+                    }),
+                    arguments: {
+                        PARTICLE: {type: ArgumentType.STRING, defaultValue: 'minecraft:flame'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        OFFSET_X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        OFFSET_Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        OFFSET_Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        SPEED: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        COUNT: {type: ArgumentType.NUMBER, defaultValue: 1},
+                        FORCE: {
+                            type: ArgumentType.STRING,
+                            menu: 'particleVisibility',
+                            defaultValue: 'true'
+                        }
+                    }
+                },
+                {
                     opcode: 'spawnEntity',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -779,6 +807,27 @@ class Scratch3McRemoteBlocks {
                                 description: 'Build mode that sends placement commands without individual replies'
                             }),
                             value: BuildMode.FAST
+                        }
+                    ]
+                },
+                particleVisibility: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.particleVisibility.far',
+                                default: 'far away too',
+                                description: 'Particle visibility that uses Minecraft force=true'
+                            }),
+                            value: 'true'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.particleVisibility.near',
+                                default: 'nearby only',
+                                description: 'Particle visibility that uses Minecraft force=false'
+                            }),
+                            value: 'false'
                         }
                     ]
                 },
@@ -2227,6 +2276,22 @@ class Scratch3McRemoteBlocks {
         return isErrorText(Cast.toString(args.VALUE));
     }
 
+    spawnParticle (args) {
+        const params = [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z),
+            Cast.toNumber(args.OFFSET_X),
+            Cast.toNumber(args.OFFSET_Y),
+            Cast.toNumber(args.OFFSET_Z),
+            Cast.toString(args.PARTICLE),
+            Cast.toNumber(args.SPEED),
+            Cast.toNumber(args.COUNT)
+        ];
+        if (typeof args.FORCE !== 'undefined') params.push(Cast.toBoolean(args.FORCE));
+        return this._commandRequest('world.spawnParticle', params);
+    }
+
     spawnEntity (args, util) {
         const variableReference = args.VARIABLE;
         const variable = util && util.target && variableReference &&
@@ -2240,10 +2305,10 @@ class Scratch3McRemoteBlocks {
         }
 
         return this._request('world.spawnEntity', [
-            Cast.toString(args.ENTITY),
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
-            Cast.toNumber(args.Z)
+            Cast.toNumber(args.Z),
+            Cast.toString(args.ENTITY)
         ]).then(handle => {
             variable.value = typeof handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(handle) ?
                 handle :

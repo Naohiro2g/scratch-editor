@@ -13,6 +13,7 @@ export const Method = {
   worldGetBlock: 'world.getBlock',
   worldGetBlocks: 'world.getBlocks',
   worldGetHeight: 'world.getHeight',
+  worldSpawnParticle: 'world.spawnParticle',
   worldSpawnEntity: 'world.spawnEntity',
   connectionFlush: 'connection.flush',
   playerGetPose: 'player.getPose',

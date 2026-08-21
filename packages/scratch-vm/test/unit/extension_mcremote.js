@@ -9,6 +9,7 @@ const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
+const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
@@ -1347,17 +1348,17 @@ test('spawnEntity writes its epoch handle or ErrorText to the selected scalar va
         const util = {target: {lookupOrCreateVariable: () => variable}};
         const args = {
             ENTITY: 'minecraft:allay',
-            X: 1,
-            Y: 2,
-            Z: 3,
+            X: 1.25,
+            Y: 2.5,
+            Z: 3.75,
             VARIABLE: {id: 'variable-id', name: 'spawned entity'}
         };
         const success = blocks.spawnEntity(args, util);
         let request = socket.lastSent();
         t.equal(request.method, 'world.spawnEntity');
-        t.same(request.params, ['minecraft:allay', 1, 2, 3]);
+        t.same(request.params, spawnFixture.spawn_entity.params);
         t.equal(variable.value, 'previous', 'output changes only after the response');
-        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: 'mceh_example'});
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: spawnFixture.spawn_entity.result});
         return success.then(() => {
             t.equal(variable.value, 'mceh_example');
             const failure = blocks.spawnEntity(args, util);
@@ -1372,6 +1373,42 @@ test('spawnEntity writes its epoch handle or ErrorText to the selected scalar va
             t.equal(variable.value, '⟦mcr-error:entity_capacity_exhausted⟧');
             t.end();
         });
+    })
+);
+
+test('spawnParticle sends coordinate-first params and preserves optional force', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const baseArgs = {
+            X: 1.25,
+            Y: 2.5,
+            Z: 3.75,
+            OFFSET_X: 0,
+            OFFSET_Y: 0.5,
+            OFFSET_Z: 0,
+            PARTICLE: 'minecraft:flame',
+            SPEED: 0.1,
+            COUNT: 4
+        };
+        const omitted = blocks.spawnParticle(baseArgs);
+        let request = socket.lastSent();
+        t.equal(request.method, 'world.spawnParticle');
+        t.same(request.params, spawnFixture.spawn_particle.default_force.params);
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            result: spawnFixture.spawn_particle.default_force.result
+        });
+        return omitted.then(() => {
+            const explicit = blocks.spawnParticle(Object.assign({}, baseArgs, {FORCE: 'false'}));
+            request = socket.lastSent();
+            t.same(request.params, spawnFixture.spawn_particle.explicit_false.params);
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: request.id,
+                result: spawnFixture.spawn_particle.explicit_false.result
+            });
+            return explicit;
+        }).then(() => t.end());
     })
 );
 

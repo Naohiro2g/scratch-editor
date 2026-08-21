@@ -17,6 +17,7 @@ const OBSERVED_METHODS = new Set([
     'world.getBlock',
     'world.getBlocks',
     'world.getHeight',
+    'world.spawnParticle',
     'world.spawnEntity',
     'connection.flush',
     'player.getPos',
@@ -132,6 +133,10 @@ const allowExactNumberParams = function (value, length) {
     return Array.isArray(value) && value.length === length && value.every(Number.isInteger) ? value.slice() : null;
 };
 
+const canonicalResourceId = function (value) {
+    return typeof value === 'string' && /^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(value);
+};
+
 const allowParams = function (method, value) {
     if (method === 'hello') return allowHelloParams(value);
     if (method === 'world.setBlock') {
@@ -151,8 +156,17 @@ const allowParams = function (method, value) {
             value.slice() : null;
     }
     if (method === 'world.spawnEntity') {
-        if (!Array.isArray(value) || value.length !== 4 || !optionalString(value[0]) ||
-            !value.slice(1).every(finiteNumber)) return null;
+        if (!Array.isArray(value) || value.length !== 4 || !value.slice(0, 3).every(finiteNumber) ||
+            !canonicalResourceId(value[3])) return null;
+        return value.slice();
+    }
+    if (method === 'world.spawnParticle') {
+        if (!Array.isArray(value) || (value.length !== 9 && value.length !== 10) ||
+            !value.slice(0, 3).every(finiteNumber) ||
+            !value.slice(3, 6).every(item => finiteNumber(item) && item >= 0) ||
+            !canonicalResourceId(value[6]) || !finiteNumber(value[7]) || value[7] < 0 ||
+            !Number.isInteger(value[8]) || value[8] < 0 ||
+            (value.length === 10 && typeof value[9] !== 'boolean')) return null;
         return value.slice();
     }
     if (method === 'connection.flush') return Array.isArray(value) && value.length === 0 ? [] : null;
@@ -228,6 +242,9 @@ const allowFramePayload = function (frame) {
     }
     if (frame.method === 'world.getHeight') {
         return Number.isInteger(payload.result) ? {result: payload.result} : null;
+    }
+    if (frame.method === 'world.spawnParticle') {
+        return Number.isInteger(payload.result) && payload.result >= 0 ? {result: payload.result} : null;
     }
     if (frame.method === 'world.spawnEntity') {
         return typeof payload.result === 'string' && /^mceh_[\x21-\x7e]+$/.test(payload.result) ?

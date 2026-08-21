@@ -11,6 +11,7 @@ export const OBSERVED_METHODS = [
   'world.getBlock',
   'world.getBlocks',
   'world.getHeight',
+  'world.spawnParticle',
   'world.spawnEntity',
   'connection.flush',
   'player.getPos',
@@ -319,6 +320,26 @@ const integer = (value: unknown, context: string): number => {
   return number
 }
 
+const nonNegativeFiniteNumber = (value: unknown, context: string): number => {
+  const number = finiteNumber(value, context)
+  if (number < 0) throw new Error(`${context} must be a non-negative finite number`)
+  return number
+}
+
+const nonNegativeInteger = (value: unknown, context: string): number => {
+  const number = integer(value, context)
+  if (number < 0) throw new Error(`${context} must be a non-negative integer`)
+  return number
+}
+
+const canonicalResourceId = (value: unknown, context: string): string => {
+  const resourceId = requiredString(value, context)
+  if (!/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(resourceId)) {
+    throw new Error(`${context} must be a canonical resource ID`)
+  }
+  return resourceId
+}
+
 const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') {
     const params = objectValue(value, 'frame.payload.params')
@@ -378,8 +399,21 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'world.spawnEntity') {
     const params = exactParams(value, 4)
     return [
-      requiredString(params[0], 'frame.payload.params[0]'),
-      ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+      ...params.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
+      canonicalResourceId(params[3], 'frame.payload.params[3]'),
+    ]
+  }
+  if (method === 'world.spawnParticle') {
+    if (!Array.isArray(value) || (value.length !== 9 && value.length !== 10)) {
+      throw new Error('frame.payload.params must contain 9 or 10 items')
+    }
+    return [
+      ...value.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
+      ...value.slice(3, 6).map((item, index) => nonNegativeFiniteNumber(item, `frame.payload.params[${index + 3}]`)),
+      canonicalResourceId(value[6], 'frame.payload.params[6]'),
+      nonNegativeFiniteNumber(value[7], 'frame.payload.params[7]'),
+      nonNegativeInteger(value[8], 'frame.payload.params[8]'),
+      ...(value.length === 10 ? [optionalBoolean(value[9], 'frame.payload.params[9]')] : []),
     ]
   }
   if (method === 'connection.flush') return exactParams(value, 0)
@@ -421,6 +455,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
     return value.map((item, index) => parseBlock(item, `frame.payload.result[${index}]`, true))
   }
   if (method === 'world.getHeight') return integer(value, 'frame.payload.result')
+  if (method === 'world.spawnParticle') return nonNegativeInteger(value, 'frame.payload.result')
   if (method === 'world.spawnEntity') {
     const handle = requiredString(value, 'frame.payload.result')
     if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')

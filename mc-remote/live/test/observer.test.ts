@@ -4,6 +4,13 @@ import { describe, expect, test } from 'vitest'
 import { parseObserverSnapshot } from '../src/observer'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
+const spawnFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/spawn-v22.json', import.meta.url))
+const spawnFixture = JSON.parse(readFileSync(spawnFixturePath, 'utf8')) as {
+  spawn_particle: {
+    default_force: { params: unknown[]; result: number }
+  }
+  spawn_entity: { params: unknown[]; result: string; legacy_entity_first: unknown[] }
+}
 interface MutableSnapshotFixture {
   schema_version: number
   streams: { hello: { protocol: string }; frames: unknown[] }[]
@@ -99,7 +106,7 @@ describe('observer schema v1.1', () => {
         direction: 'send',
         request_id: 2,
         method: 'world.spawnEntity',
-        payload: { params: ['minecraft:allay', 1, 2, 3] },
+        payload: { params: spawnFixture.spawn_entity.params },
       },
       {
         sequence: 4,
@@ -107,7 +114,23 @@ describe('observer schema v1.1', () => {
         direction: 'receive',
         request_id: 2,
         method: 'world.spawnEntity',
-        payload: { result: 'mceh_example' },
+        payload: { result: spawnFixture.spawn_entity.result },
+      },
+      {
+        sequence: 5,
+        observed_at: 5,
+        direction: 'send',
+        request_id: 3,
+        method: 'world.spawnParticle',
+        payload: { params: spawnFixture.spawn_particle.default_force.params },
+      },
+      {
+        sequence: 6,
+        observed_at: 6,
+        direction: 'receive',
+        request_id: 3,
+        method: 'world.spawnParticle',
+        payload: { result: spawnFixture.spawn_particle.default_force.result },
       },
     ]
     expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
@@ -141,6 +164,36 @@ describe('observer schema v1.1', () => {
       },
     ]
     expect(() => parseObserverSnapshot(snapshot)).toThrow('must be an entity handle')
+  })
+
+  test('rejects legacy spawn order and malformed particle params', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.schema_version = 1.1
+    snapshot.streams[0].hello.protocol = '22.0.0'
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'send',
+        request_id: 1,
+        method: 'world.spawnEntity',
+        payload: { params: spawnFixture.spawn_entity.legacy_entity_first },
+      },
+    ]
+    expect(() => parseObserverSnapshot(snapshot)).toThrow('frame.payload.params[0] must be a finite number')
+
+    snapshot.streams[0].frames = [
+      {
+        sequence: 2,
+        observed_at: 2,
+        direction: 'send',
+        request_id: 2,
+        method: 'world.spawnParticle',
+        payload: { params: [1, 2, 3, -1, 0, 0, 'minecraft:flame', 0, 1] },
+      },
+    ]
+    expect(() => parseObserverSnapshot(snapshot)).toThrow('must be a non-negative finite number')
   })
 
   test('rejects legacy protocol 21 block strings and synthetic setter results', () => {

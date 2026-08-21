@@ -105,6 +105,10 @@ const mcremoteMessages = {
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] の状態 [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] に状態 [PROPERTY] がある',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
+        'mcremote.spawnParticle':
+            'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する',
+        'mcremote.particleVisibility.far': '遠くにも表示',
+        'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] に生成し ハンドルを [VARIABLE] に入れる',
         'mcremote.playerAttribute': 'プレイヤーの [PROPERTY]',
@@ -211,6 +215,10 @@ const mcremoteMessages = {
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] のじょうたい [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] にじょうたい [PROPERTY] がある',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
+        'mcremote.spawnParticle':
+            'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] はやさ:[SPEED] かず:[COUNT] ひょうじ:[FORCE] でだす',
+        'mcremote.particleVisibility.far': 'とおくにもひょうじ',
+        'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] にだして ハンドルを [VARIABLE] にいれる',
         'mcremote.playerAttribute': 'プレイヤーの [PROPERTY]',

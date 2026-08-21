@@ -60,8 +60,35 @@ export type GetBlocksResult = readonly BlockValue[]
 export type GetHeightParams = readonly [x: number, z: number] | readonly [x: number, z: number, maxY: number]
 export type GetHeightResult = number
 
+/** `world.spawnParticle` — spawn a data-free particle, defaulting force to true when omitted. */
+export type SpawnParticleParams =
+  | readonly [
+      x: number,
+      y: number,
+      z: number,
+      offsetX: number,
+      offsetY: number,
+      offsetZ: number,
+      particle: string,
+      speed: number,
+      count: number,
+    ]
+  | readonly [
+      x: number,
+      y: number,
+      z: number,
+      offsetX: number,
+      offsetY: number,
+      offsetZ: number,
+      particle: string,
+      speed: number,
+      count: number,
+      force: boolean,
+    ]
+export type SpawnParticleResult = number
+
 /** `world.spawnEntity` — spawn one entity and return its connection-epoch handle. */
-export type SpawnEntityParams = readonly [entity: string, x: number, y: number, z: number]
+export type SpawnEntityParams = readonly [x: number, y: number, z: number, entity: string]
 export type SpawnEntityResult = string
 
 /** `connection.flush` — wait for earlier work in this connection epoch. */

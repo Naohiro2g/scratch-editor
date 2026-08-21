@@ -2,6 +2,7 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
+import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 
 const connectedObservation = () => ({
     status: 'connected',
@@ -196,7 +197,7 @@ describe('McRemote WireScope source adapter', () => {
         }]);
     });
 
-    test('projects height and entity handle requests and results', () => {
+    test('projects height and coordinate-first spawn requests and results', () => {
         const observation = connectedObservation();
         observation.frameLog.push({
             sequence: 4,
@@ -221,7 +222,7 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'send',
             id: 5,
             method: 'world.spawnEntity',
-            payload: {params: ['minecraft:allay', 1, 2, 3]}
+            payload: {params: spawnFixture.spawn_entity.params}
         }, {
             sequence: 7,
             timestamp: 1006,
@@ -229,11 +230,27 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             id: 5,
             method: 'world.spawnEntity',
-            payload: {result: 'mceh_example'}
+            payload: {result: spawnFixture.spawn_entity.result}
+        }, {
+            sequence: 8,
+            timestamp: 1007,
+            streamId: 'default',
+            direction: 'send',
+            id: 6,
+            method: 'world.spawnParticle',
+            payload: {params: spawnFixture.spawn_particle.explicit_false.params}
+        }, {
+            sequence: 9,
+            timestamp: 1008,
+            streamId: 'default',
+            direction: 'receive',
+            id: 6,
+            method: 'world.spawnParticle',
+            payload: {result: spawnFixture.spawn_particle.explicit_false.result}
         });
 
         const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
-        expect(snapshot.streams[0].frames.slice(-4)).toEqual([{
+        expect(snapshot.streams[0].frames.slice(-6)).toEqual([{
             sequence: 4,
             observed_at: 1003,
             direction: 'send',
@@ -253,15 +270,53 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'send',
             request_id: 5,
             method: 'world.spawnEntity',
-            payload: {params: ['minecraft:allay', 1, 2, 3]}
+            payload: {params: spawnFixture.spawn_entity.params}
         }, {
             sequence: 7,
             observed_at: 1006,
             direction: 'receive',
             request_id: 5,
             method: 'world.spawnEntity',
-            payload: {result: 'mceh_example'}
+            payload: {result: spawnFixture.spawn_entity.result}
+        }, {
+            sequence: 8,
+            observed_at: 1007,
+            direction: 'send',
+            request_id: 6,
+            method: 'world.spawnParticle',
+            payload: {params: spawnFixture.spawn_particle.explicit_false.params}
+        }, {
+            sequence: 9,
+            observed_at: 1008,
+            direction: 'receive',
+            request_id: 6,
+            method: 'world.spawnParticle',
+            payload: {result: spawnFixture.spawn_particle.explicit_false.result}
         }]);
+    });
+
+    test('rejects legacy spawn order and malformed particle params', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'world.spawnEntity',
+            payload: {params: spawnFixture.spawn_entity.legacy_entity_first}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'send',
+            id: 5,
+            method: 'world.spawnParticle',
+            payload: {params: [1, 2, 3, -1, 0, 0, 'minecraft:flame', 0, 1]}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames).toHaveLength(2);
     });
 
     test('hands a one-time grant over MessageChannel and ends it with the target', () => {

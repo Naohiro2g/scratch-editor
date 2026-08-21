@@ -10,10 +10,13 @@ import type {
   GetHeightResult,
   SetBlockResult,
   SetBlocksResult,
+  SpawnParticleParams,
+  SpawnParticleResult,
   SpawnEntityParams,
   SpawnEntityResult,
 } from '../src/index.ts'
 import { ERROR_REASON_CODE, ErrorCode, ErrorReason, JSONRPC_VERSION, Method, PROTOCOL_VERSION } from '../src/index.ts'
+import spawnFixture from './fixtures/spawn-v22.json'
 
 describe('protocol constants', () => {
   it('advertises the clean protocol semver without a channel suffix', () => {
@@ -35,6 +38,7 @@ describe('protocol constants', () => {
     expect(Method.worldGetBlock).toBe('world.getBlock')
     expect(Method.worldGetBlocks).toBe('world.getBlocks')
     expect(Method.worldGetHeight).toBe('world.getHeight')
+    expect(Method.worldSpawnParticle).toBe('world.spawnParticle')
     expect(Method.worldSpawnEntity).toBe('world.spawnEntity')
     expect(Method.connectionFlush).toBe('connection.flush')
     expect(Method.playerGetPose).toBe('player.getPose')
@@ -85,14 +89,21 @@ describe('structured block values', () => {
     expect(flushResult).toBeNull()
   })
 
-  it('keeps height queries and entity handles as small scalar results', () => {
+  it('keeps height and spawn results as small scalar values', () => {
     const heightParams: GetHeightParams = [3, 4, 20]
     const height: GetHeightResult = -1
-    const spawnParams: SpawnEntityParams = ['minecraft:allay', 1, 2, 3]
-    const handle: SpawnEntityResult = 'mceh_example'
+    const particleParams = spawnFixture.spawn_particle.default_force.params as SpawnParticleParams
+    const forcedParticleParams = spawnFixture.spawn_particle.explicit_false.params as SpawnParticleParams
+    const accepted: SpawnParticleResult = spawnFixture.spawn_particle.default_force.result
+    const spawnParams = spawnFixture.spawn_entity.params as SpawnEntityParams
+    const handle: SpawnEntityResult = spawnFixture.spawn_entity.result
     expect(heightParams).toEqual([3, 4, 20])
     expect(height).toBe(-1)
-    expect(spawnParams[0]).toBe('minecraft:allay')
+    expect(particleParams).toHaveLength(9)
+    expect(forcedParticleParams[9]).toBe(false)
+    expect(accepted).toBe(4)
+    expect(spawnParams[3]).toBe('minecraft:allay')
     expect(handle).toMatch(/^mceh_/)
+    expect(spawnFixture.spawn_particle.default_force.effective_force).toBe(true)
   })
 })
