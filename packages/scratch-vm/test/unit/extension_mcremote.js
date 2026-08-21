@@ -2004,8 +2004,9 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         }
     });
     await connected;
-    await waitFor(() => socket.lastSent().method === 'catalog.get');
-    const request = socket.lastSent();
+    await waitFor(() => socket.sent.some(payload => JSON.parse(payload).method === 'catalog.get'));
+    const request = socket.sent.map(payload => JSON.parse(payload))
+        .find(message => message.method === 'catalog.get');
     const changedCatalog = Object.assign({}, catalogResult, {
         particle: {'minecraft:campfire_cosy_smoke': {}}
     });
@@ -2041,7 +2042,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         }
     });
     await connected;
-    await waitFor(() => socket.lastSent().method === 'catalog.get');
+    await waitFor(() => socket.sent.some(payload => JSON.parse(payload).method === 'catalog.get'));
     socket.fireClose({code: 1006, reason: 'network_lost'});
 
     await nextTurn();
