@@ -131,6 +131,17 @@ const catalogs = runtime => runtime.emitted
 
 const latestCatalog = runtime => catalogs(runtime).slice(-1)[0];
 
+const nextCatalogStatus = (runtime, status) => new Promise(resolve => {
+    const emit = runtime.emit;
+    runtime.emit = function (event, payload) {
+        emit.call(this, event, payload);
+        if (event === Runtime.MCREMOTE_CATALOG_UPDATE && payload.status === status) {
+            runtime.emit = emit;
+            resolve(payload);
+        }
+    };
+});
+
 const actionableErrors = runtime => runtime.emitted
     .filter(event => event.event === Runtime.MCREMOTE_ACTIONABLE_ERROR)
     .map(event => event.payload);
@@ -1911,6 +1922,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         get: hash => Promise.resolve({catalog: catalogResult, fetchedAt: 1234, hash}),
         set: () => Promise.resolve(true)
     };
+    const catalogReady = nextCatalogStatus(runtime, 'current');
 
     const connected = blocks.connect();
     const socket = FakeWebSocket.instances[0];
@@ -1928,7 +1940,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
     });
 
     await connected;
-    await waitFor(() => latestCatalog(runtime).status === 'current');
+    await catalogReady;
     t.equal(socket.sent.length, 1, 'catalog.get is skipped on a valid cache hit');
     t.equal(latestCatalog(runtime).source, 'cache');
     t.equal(latestCatalog(runtime).fetchedAt, 1234);
@@ -1970,9 +1982,10 @@ test('catalog cache miss fetches after hello without delaying connection', async
     const request = socket.sent.map(payload => JSON.parse(payload))
         .find(message => message.method === 'catalog.get');
     t.same(request.params, []);
+    const catalogReady = nextCatalogStatus(runtime, 'current');
     socket.fireMessage({jsonrpc: '2.0', id: request.id, result: catalogResult});
 
-    await waitFor(() => latestCatalog(runtime).status === 'current');
+    await catalogReady;
     t.equal(latestCatalog(runtime).source, 'network');
     t.equal(writes.length, 1);
     t.equal(writes[0].hash, catalogHash);
@@ -2010,9 +2023,10 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
     const changedCatalog = Object.assign({}, catalogResult, {
         particle: {'minecraft:campfire_cosy_smoke': {}}
     });
+    const catalogUnavailable = nextCatalogStatus(runtime, 'unavailable');
     socket.fireMessage({jsonrpc: '2.0', id: request.id, result: changedCatalog});
 
-    await waitFor(() => latestCatalog(runtime).status === 'unavailable');
+    await catalogUnavailable;
     t.equal(latestObservation(runtime).status, 'connected');
     t.equal(blocks._socket, socket);
 });
