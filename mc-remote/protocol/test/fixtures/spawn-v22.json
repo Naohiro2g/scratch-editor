@@ -1,0 +1,23 @@
+{
+  "schema": "mcremote.spawn-params",
+  "version": 1,
+  "protocol": "22.0.0",
+  "spawn_particle": {
+    "default_force": {
+      "params": [1.25, 2.5, 3.75, 0, 0.5, 0, "minecraft:flame", 0.1, 4],
+      "effective_force": true,
+      "result": 4
+    },
+    "explicit_false": {
+      "params": [1.25, 2.5, 3.75, 0, 0.5, 0, "minecraft:flame", 0.1, 4, false],
+      "effective_force": false,
+      "result": 4
+    },
+    "legacy_particle_first": ["minecraft:flame", 1.25, 2.5, 3.75, 4, 0, 0.5, 0, 0.1, true]
+  },
+  "spawn_entity": {
+    "params": [1.25, 2.5, 3.75, "minecraft:allay"],
+    "result": "mceh_example",
+    "legacy_entity_first": ["minecraft:allay", 1.25, 2.5, 3.75]
+  }
+}

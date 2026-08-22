@@ -6,12 +6,18 @@ import {
   OBSERVER_SESSION_END,
   OBSERVER_SESSION_PROTOCOL_VERSION,
   OBSERVER_SESSION_SNAPSHOT,
+  parseObserverSessionEnvelope,
   type ObserverSessionEndReason,
 } from '../src/session'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
 const sessionFixturePath = fileURLToPath(new URL('./fixtures/observer-session-lifecycle.ndjson', import.meta.url))
+const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v22.json', import.meta.url))
 const snapshots = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+const eventsFixture = JSON.parse(readFileSync(eventsFixturePath, 'utf8')) as {
+  limits: { max_compact_jsonrpc_response_bytes: number; max_observer_frame_bytes: number }
+  poll_result: { events: Record<string, unknown>[] }
+}
 
 const snapshotEnvelope = (snapshot: unknown, droppedFrames = 0) => ({
   type: OBSERVER_SESSION_SNAPSHOT,
@@ -127,5 +133,49 @@ describe('observer session core', () => {
 
     expect(events.onError).toHaveBeenCalledWith(expect.objectContaining({ code: 'invalid-end' }))
     expect(events.onEnd).not.toHaveBeenCalled()
+  })
+
+  test('keeps a maximum-sized events.poll response within one observer session frame', () => {
+    const result = structuredClone(eventsFixture.poll_result)
+    const chatEvent = structuredClone(result.events[1])
+    let message = ''
+    const escapedUnit = '\\"\\\n漢'
+    const jsonRpcResponse = () => ({
+      jsonrpc: '2.0',
+      id: 1,
+      result: { ...result, events: [{ ...chatEvent, message }] },
+    })
+    while (
+      Buffer.byteLength(
+        JSON.stringify({
+          ...jsonRpcResponse(),
+          result: { ...jsonRpcResponse().result, events: [{ ...chatEvent, message: message + escapedUnit }] },
+        }),
+      ) <= eventsFixture.limits.max_compact_jsonrpc_response_bytes
+    ) {
+      message += escapedUnit
+    }
+
+    const responseBytes = Buffer.byteLength(JSON.stringify(jsonRpcResponse()))
+    const snapshot = structuredClone(snapshots[0]) as {
+      streams: { frames: unknown[] }[]
+    }
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'receive',
+        request_id: 1,
+        method: 'events.poll',
+        payload: { result: jsonRpcResponse().result },
+      },
+    ]
+    const envelope = snapshotEnvelope(snapshot)
+    const envelopeBytes = Buffer.byteLength(JSON.stringify(envelope)) + 1
+
+    expect(responseBytes).toBeLessThanOrEqual(eventsFixture.limits.max_compact_jsonrpc_response_bytes)
+    expect(responseBytes).toBeGreaterThan(eventsFixture.limits.max_compact_jsonrpc_response_bytes - 16)
+    expect(envelopeBytes).toBeLessThanOrEqual(eventsFixture.limits.max_observer_frame_bytes)
+    expect(parseObserverSessionEnvelope(envelope)).toEqual(envelope)
   })
 })

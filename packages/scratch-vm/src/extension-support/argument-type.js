@@ -41,7 +41,17 @@ const ArgumentType = {
     /**
      * Inline image on block (as part of the label)
      */
-    IMAGE: 'image'
+    IMAGE: 'image',
+
+    /**
+     * Scalar variable selected with Scratch's standard variable field
+     */
+    VARIABLE: 'variable',
+
+    /**
+     * List selected with Scratch's standard list field
+     */
+    LIST: 'list'
 };
 
 module.exports = ArgumentType;

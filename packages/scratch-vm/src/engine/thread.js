@@ -131,6 +131,13 @@ class Thread {
         this.topBlock = firstBlock;
 
         /**
+         * Optional context owned by the event source which started this thread.
+         * It is never copied to another thread or serialized with a project.
+         * @type {?object}
+         */
+        this.extensionContext = null;
+
+        /**
          * Stack for the thread. When the sequencer enters a control structure,
          * the block is pushed onto the stack so we know where to exit.
          * @type {Array.<string>}

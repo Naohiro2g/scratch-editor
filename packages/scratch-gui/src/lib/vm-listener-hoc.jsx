@@ -256,8 +256,17 @@ const vmListenerHOC = function (WrappedComponent) {
             dispatch(updateMcRemoteCatalog(snapshot));
         },
         onMcRemoteActionableError: error => {
-            const alertId = error && error.reason === 'connection_disabled' ?
-                'mcremoteConnectionDisabled' : 'mcremoteNotConnected';
+            const alertByReason = {
+                not_connected: 'mcremoteNotConnected',
+                connection_disabled: 'mcremoteConnectionDisabled',
+                invalid_build_mode: 'mcremoteInvalidBuildMode',
+                invalid_trace_delay: 'mcremoteInvalidTraceDelay',
+                backpressure: 'mcremoteBuildDeliveryFailed',
+                capacity_exhausted: 'mcremoteBuildDeliveryFailed',
+                height_not_found: 'mcremoteGroundNotFound'
+            };
+            const alertId = error && alertByReason[error.reason] ?
+                alertByReason[error.reason] : 'mcremoteOperationFailed';
             showAlertWithTimeout(dispatch, alertId);
         },
         onExtensionDataLoading: loading => {

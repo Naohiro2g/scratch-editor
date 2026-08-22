@@ -106,8 +106,8 @@ const renderHello = (hello: ObserverHello): HTMLElement => {
   list.append(
     detail(t('fieldCatalogHash'), hello.catalog_hash ?? t('valueNone')),
     detail(t('fieldWorldConstants'), hello.world_constants),
-    detail(t('fieldWorld'), hello.world ?? '—'),
-    detail(t('fieldOrigin'), hello.origin?.join(', ') ?? '—'),
+    detail(t('fieldDimension'), hello.dimension),
+    detail(t('fieldOrigin'), hello.origin.join(', ')),
   )
   section.append(list)
   return section
@@ -138,7 +138,13 @@ const renderFrames = (frames: ObserverFrame[]): HTMLElement => {
       make(
         'td',
         `direction direction-${frame.direction}`,
-        t(frame.direction === 'send' ? 'directionSend' : 'directionReceive'),
+        t(
+          frame.direction === 'send' && frame.request_id === null
+            ? 'directionSentUnconfirmed'
+            : frame.direction === 'send'
+              ? 'directionSend'
+              : 'directionReceive',
+        ),
       ),
       make('td', 'method', frame.method),
       make('td', 'payload', valueText(frame.payload)),

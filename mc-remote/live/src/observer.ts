@@ -3,12 +3,18 @@ export const OBSERVER_SCHEMA_VERSION = 1 as const
 
 export const OBSERVED_METHODS = [
   'hello',
-  'build.setWorld',
+  'build.setDimension',
   'build.setOrigin',
   'chat.post',
   'world.setBlock',
   'world.setBlocks',
   'world.getBlock',
+  'world.getBlocks',
+  'world.getHeight',
+  'world.spawnParticle',
+  'world.spawnEntity',
+  'connection.flush',
+  'events.poll',
   'player.getPos',
   'player.setPos',
   'player.getPose',
@@ -37,15 +43,19 @@ export interface ObserverHello {
   mc_version: string
   supported_mc_versions: string[]
   catalog_hash: string | null
-  world?: string
-  origin?: [number, number, number]
+  dimension: string
+  origin: [number, number, number]
   world_constants: ObserverWorldConstants
   permissions?: ObserverPermissions
 }
 
 export interface ObserverErrorData {
   reason?: string
-  ref?: string
+  block_id?: string
+  dimension?: string
+  property?: string
+  value?: string | number | boolean | null
+  path?: string
   allowed?: (string | number | boolean)[]
   bounds?: number[]
   violating?: number[]
@@ -171,7 +181,7 @@ const parseHello = (value: unknown): ObserverHello => {
       'mc_version',
       'supported_mc_versions',
       'catalog_hash',
-      'world',
+      'dimension',
       'origin',
       'world_constants',
       'permissions',
@@ -191,15 +201,11 @@ const parseHello = (value: unknown): ObserverHello => {
     mc_version: requiredString(hello.mc_version, 'hello.mc_version'),
     supported_mc_versions: stringArray(hello.supported_mc_versions, 'hello.supported_mc_versions'),
     catalog_hash: hello.catalog_hash,
+    dimension: canonicalDimensionKey(hello.dimension, 'hello.dimension'),
+    origin: numberTuple(hello.origin, 'hello.origin'),
     world_constants: {
       y_sea: constants.y_sea === null ? null : finiteNumber(constants.y_sea, 'hello.world_constants.y_sea'),
     },
-  }
-  if (typeof hello.world !== 'undefined') {
-    parsed.world = requiredString(hello.world, 'hello.world')
-  }
-  if (typeof hello.origin !== 'undefined') {
-    parsed.origin = numberTuple(hello.origin, 'hello.origin')
   }
   const permissions = parsePermissions(hello.permissions)
   if (permissions) parsed.permissions = permissions
@@ -209,12 +215,18 @@ const parseHello = (value: unknown): ObserverHello => {
 const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   if (typeof value === 'undefined') return undefined
   const data = objectValue(value, 'frame.payload.error.data')
-  exactFields(data, ['reason', 'ref', 'allowed', 'bounds', 'violating'], 'frame.payload.error.data')
+  exactFields(
+    data,
+    ['reason', 'block_id', 'dimension', 'property', 'value', 'path', 'allowed', 'bounds', 'violating'],
+    'frame.payload.error.data',
+  )
   if (typeof data.reason !== 'undefined' && typeof data.reason !== 'string') {
     throw new Error('frame.payload.error.data.reason must be a string')
   }
-  if (typeof data.ref !== 'undefined' && typeof data.ref !== 'string') {
-    throw new Error('frame.payload.error.data.ref must be a string')
+  for (const field of ['block_id', 'property', 'path'] as const) {
+    if (typeof data[field] !== 'undefined' && typeof data[field] !== 'string') {
+      throw new Error(`frame.payload.error.data.${field} must be a string`)
+    }
   }
   const allowed = data.allowed
   if (
@@ -231,7 +243,13 @@ const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   }
   const parsed: ObserverErrorData = {}
   if (typeof data.reason === 'string') parsed.reason = data.reason
-  if (typeof data.ref === 'string') parsed.ref = data.ref
+  if (typeof data.block_id === 'string') parsed.block_id = data.block_id
+  if (typeof data.dimension !== 'undefined') {
+    parsed.dimension = dimensionRef(data.dimension, 'frame.payload.error.data.dimension')
+  }
+  if (typeof data.property === 'string') parsed.property = data.property
+  if (typeof data.path === 'string') parsed.path = data.path
+  if (typeof data.value !== 'undefined') parsed.value = jsonScalar(data.value, 'frame.payload.error.data.value')
   if (Array.isArray(allowed)) {
     parsed.allowed = allowed.map((item) => {
       if (typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean') {
@@ -268,6 +286,227 @@ const jsonScalar = (value: unknown, context: string): string | number | boolean 
   throw new Error(`${context} must be a JSON scalar`)
 }
 
+interface ObserverBlock {
+  block_id: string
+  state: Record<string, string | number | boolean>
+}
+
+const parseBlock = (value: unknown, context: string, canonicalId: boolean): ObserverBlock => {
+  const block = objectValue(value, context)
+  exactFields(block, ['block_id', 'state'], context)
+  const blockId = requiredString(block.block_id, `${context}.block_id`)
+  const resourcePattern = canonicalId ? /^[a-z0-9_.-]+:[a-z0-9_./-]+$/ : /^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/
+  if (!resourcePattern.test(blockId)) throw new Error(`${context}.block_id must be a resource ID`)
+  const state = objectValue(block.state, `${context}.state`)
+  const parsedState: Record<string, string | number | boolean> = {}
+  for (const [property, item] of Object.entries(state)) {
+    if (!/^[a-z0-9_]+$/.test(property)) throw new Error(`${context}.state has an invalid property`)
+    const scalarValue = jsonScalar(item, `${context}.state.${property}`)
+    if (scalarValue === null) throw new Error(`${context}.state.${property} must not be null`)
+    parsedState[property] = scalarValue
+  }
+  return { block_id: blockId, state: parsedState }
+}
+
+const exactParams = (value: unknown, length: number): unknown[] => {
+  if (!Array.isArray(value) || value.length !== length) {
+    throw new Error(`frame.payload.params must contain exactly ${length} items`)
+  }
+  return value
+}
+
+const integer = (value: unknown, context: string): number => {
+  const number = finiteNumber(value, context)
+  if (!Number.isInteger(number)) throw new Error(`${context} must be an integer`)
+  return number
+}
+
+const nonNegativeFiniteNumber = (value: unknown, context: string): number => {
+  const number = finiteNumber(value, context)
+  if (number < 0) throw new Error(`${context} must be a non-negative finite number`)
+  return number
+}
+
+const nonNegativeInteger = (value: unknown, context: string): number => {
+  const number = integer(value, context)
+  if (number < 0) throw new Error(`${context} must be a non-negative integer`)
+  return number
+}
+
+const canonicalResourceId = (value: unknown, context: string): string => {
+  const resourceId = requiredString(value, context)
+  if (!/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(resourceId)) {
+    throw new Error(`${context} must be a canonical resource ID`)
+  }
+  return resourceId
+}
+
+const dimensionRef = (value: unknown, context: string): string => {
+  const dimension = requiredString(value, context)
+  if (!/^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(dimension)) {
+    throw new Error(`${context} must be a dimension reference`)
+  }
+  return dimension
+}
+
+const canonicalDimensionKey = (value: unknown, context: string): string => {
+  const dimension = requiredString(value, context)
+  if (!/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(dimension)) {
+    throw new Error(`${context} must be a canonical dimension key`)
+  }
+  return dimension
+}
+
+const faceToken = (value: unknown, context: string): string => {
+  const face = requiredString(value, context)
+  if (!/^[a-z_]+$/.test(face)) throw new Error(`${context} must be a face token`)
+  return face
+}
+
+const parseEventsPollParams = (value: unknown): unknown[] => {
+  if (!Array.isArray(value) || (value.length !== 1 && value.length !== 2)) {
+    throw new Error('frame.payload.params must contain after_sequence and optional options')
+  }
+  const afterSequence = nonNegativeInteger(value[0], 'frame.payload.params[0]')
+  if (value.length === 1) return [afterSequence]
+  const options = objectValue(value[1], 'frame.payload.params[1]')
+  exactFields(options, ['max_events'], 'frame.payload.params[1]')
+  if (Object.keys(options).length !== 1) {
+    throw new Error('frame.payload.params[1] must contain max_events')
+  }
+  const maxEvents = integer(options.max_events, 'frame.payload.params[1].max_events')
+  if (maxEvents <= 0) throw new Error('frame.payload.params[1].max_events must be positive')
+  return [afterSequence, { max_events: maxEvents }]
+}
+
+const parseEventCommon = (
+  value: Record<string, unknown>,
+  fields: readonly string[],
+  context: string,
+): Record<string, unknown> => {
+  exactFields(value, ['sequence', 'type', 'dimension', 'origin', ...fields], context)
+  const sequence = integer(value.sequence, `${context}.sequence`)
+  if (sequence < 1) throw new Error(`${context}.sequence must be positive`)
+  return {
+    sequence,
+    type: requiredString(value.type, `${context}.type`),
+    dimension: canonicalDimensionKey(value.dimension, `${context}.dimension`),
+    origin: numberTuple(value.origin, `${context}.origin`).map((item, index) =>
+      integer(item, `${context}.origin[${index}]`),
+    ),
+  }
+}
+
+const parseProjectileTarget = (value: unknown, context: string): Record<string, unknown> => {
+  const target = objectValue(value, context)
+  if (target.kind === 'player') {
+    exactFields(target, ['kind'], context)
+    return { kind: 'player' }
+  }
+  if (target.kind === 'entity') {
+    exactFields(target, ['kind', 'handle'], context)
+    const handle = requiredString(target.handle, `${context}.handle`)
+    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context}.handle must be an entity handle`)
+    return { kind: 'entity', handle }
+  }
+  if (target.kind === 'block') {
+    exactFields(target, ['kind', 'block', 'pos', 'face'], context)
+    const result: Record<string, unknown> = {
+      kind: 'block',
+      block: parseBlock(target.block, `${context}.block`, true),
+      pos: numberTuple(target.pos, `${context}.pos`).map((item, index) => integer(item, `${context}.pos[${index}]`)),
+    }
+    if (typeof target.face !== 'undefined') result.face = faceToken(target.face, `${context}.face`)
+    return result
+  }
+  throw new Error(`${context}.kind must be block, entity, or player`)
+}
+
+const parseEvent = (value: unknown, index: number): Record<string, unknown> => {
+  const context = `frame.payload.result.events[${index}]`
+  const event = objectValue(value, context)
+  if (event.type === 'block_right_click') {
+    const hand = requiredString(event.hand, `${context}.hand`)
+    if (hand !== 'main' && hand !== 'off') throw new Error(`${context}.hand must be main or off`)
+    return {
+      ...parseEventCommon(event, ['pos', 'face', 'block', 'hand'], context),
+      pos: numberTuple(event.pos, `${context}.pos`).map((item, position) =>
+        integer(item, `${context}.pos[${position}]`),
+      ),
+      face: faceToken(event.face, `${context}.face`),
+      block: parseBlock(event.block, `${context}.block`, true),
+      hand,
+    }
+  }
+  if (event.type === 'chat_posted') {
+    exactFields(event, ['sequence', 'type', 'dimension', 'origin', 'message'], context)
+    if (typeof event.message !== 'string') throw new Error(`${context}.message must be a string`)
+    return { ...parseEventCommon(event, ['message'], context), message: event.message }
+  }
+  if (event.type === 'projectile_hit') {
+    return {
+      ...parseEventCommon(event, ['projectile', 'pos', 'target'], context),
+      projectile: canonicalResourceId(event.projectile, `${context}.projectile`),
+      pos: numberTuple(event.pos, `${context}.pos`),
+      target: parseProjectileTarget(event.target, `${context}.target`),
+    }
+  }
+  throw new Error(`${context}.type is not observable`)
+}
+
+const parseEventsPollResult = (value: unknown): Record<string, unknown> => {
+  const result = objectValue(value, 'frame.payload.result')
+  exactFields(
+    result,
+    [
+      'events',
+      'through_sequence',
+      'latest_sequence',
+      'filtered_out',
+      'overflow_dropped_total',
+      'capacity_dropped_total',
+      'explicitly_discarded_total',
+    ],
+    'frame.payload.result',
+  )
+  if (!Array.isArray(result.events)) throw new Error('frame.payload.result.events must be an array')
+  const throughSequence = nonNegativeInteger(result.through_sequence, 'frame.payload.result.through_sequence')
+  const latestSequence = nonNegativeInteger(result.latest_sequence, 'frame.payload.result.latest_sequence')
+  if (throughSequence > latestSequence) throw new Error('frame.payload.result cursor bounds are inconsistent')
+  const filteredOut = nonNegativeInteger(result.filtered_out, 'frame.payload.result.filtered_out')
+  const explicitlyDiscardedTotal = nonNegativeInteger(
+    result.explicitly_discarded_total,
+    'frame.payload.result.explicitly_discarded_total',
+  )
+  if (filteredOut !== 0 || explicitlyDiscardedTotal !== 0) {
+    throw new Error('b5 filter and explicit discard totals must remain zero')
+  }
+  const events = result.events.map(parseEvent)
+  let priorSequence = 0
+  for (const event of events) {
+    const sequence = event.sequence as number
+    if (sequence <= priorSequence || sequence > throughSequence) {
+      throw new Error('frame.payload.result event sequences are inconsistent')
+    }
+    priorSequence = sequence
+  }
+  return {
+    events,
+    through_sequence: throughSequence,
+    latest_sequence: latestSequence,
+    filtered_out: 0,
+    overflow_dropped_total: nonNegativeInteger(
+      result.overflow_dropped_total,
+      'frame.payload.result.overflow_dropped_total',
+    ),
+    capacity_dropped_total: nonNegativeInteger(
+      result.capacity_dropped_total,
+      'frame.payload.result.capacity_dropped_total',
+    ),
+    explicitly_discarded_total: 0,
+  }
+}
+
 const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') {
     const params = objectValue(value, 'frame.payload.params')
@@ -286,9 +525,11 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     }
     if (typeof params.build !== 'undefined') {
       const build = objectValue(params.build, 'frame.payload.params.build')
-      exactFields(build, ['world', 'origin'], 'frame.payload.params.build')
+      exactFields(build, ['dimension', 'origin'], 'frame.payload.params.build')
       result.build = {
-        ...(typeof build.world === 'string' ? { world: build.world } : {}),
+        ...(typeof build.dimension !== 'undefined'
+          ? { dimension: dimensionRef(build.dimension, 'frame.payload.params.build.dimension') }
+          : {}),
         ...(typeof build.origin !== 'undefined'
           ? { origin: numberTuple(build.origin, 'frame.payload.params.build.origin') }
           : {}),
@@ -296,24 +537,87 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     }
     return result
   }
+  if (method === 'build.setDimension') {
+    const params = exactParams(value, 1)
+    return [dimensionRef(params[0], 'frame.payload.params[0]')]
+  }
+  if (method === 'world.setBlock') {
+    const params = exactParams(value, 4)
+    return [
+      integer(params[0], 'frame.payload.params[0]'),
+      integer(params[1], 'frame.payload.params[1]'),
+      integer(params[2], 'frame.payload.params[2]'),
+      parseBlock(params[3], 'frame.payload.params[3]', false),
+    ]
+  }
+  if (method === 'world.setBlocks') {
+    const params = exactParams(value, 7)
+    return [
+      ...params.slice(0, 6).map((item, index) => integer(item, `frame.payload.params[${index}]`)),
+      parseBlock(params[6], 'frame.payload.params[6]', false),
+    ]
+  }
+  if (method === 'world.getBlock') {
+    return exactParams(value, 3).map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.getBlocks') {
+    return exactParams(value, 6).map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.getHeight') {
+    if (!Array.isArray(value) || (value.length !== 2 && value.length !== 3)) {
+      throw new Error('frame.payload.params must contain 2 or 3 items')
+    }
+    return value.map((item, index) => integer(item, `frame.payload.params[${index}]`))
+  }
+  if (method === 'world.spawnEntity') {
+    const params = exactParams(value, 4)
+    return [
+      ...params.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
+      canonicalResourceId(params[3], 'frame.payload.params[3]'),
+    ]
+  }
+  if (method === 'world.spawnParticle') {
+    if (!Array.isArray(value) || (value.length !== 9 && value.length !== 10)) {
+      throw new Error('frame.payload.params must contain 9 or 10 items')
+    }
+    return [
+      ...value.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
+      ...value.slice(3, 6).map((item, index) => nonNegativeFiniteNumber(item, `frame.payload.params[${index + 3}]`)),
+      canonicalResourceId(value[6], 'frame.payload.params[6]'),
+      nonNegativeFiniteNumber(value[7], 'frame.payload.params[7]'),
+      nonNegativeInteger(value[8], 'frame.payload.params[8]'),
+      ...(value.length === 10 ? [optionalBoolean(value[9], 'frame.payload.params[9]')] : []),
+    ]
+  }
+  if (method === 'connection.flush') return exactParams(value, 0)
+  if (method === 'events.poll') return parseEventsPollParams(value)
+  if (method === 'player.setPos' || method === 'player.setPose') {
+    const params = exactParams(value, method === 'player.setPos' ? 4 : 6)
+    return [
+      dimensionRef(params[0], 'frame.payload.params[0]'),
+      ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+    ]
+  }
   if (!Array.isArray(value)) throw new Error('frame.payload.params must be an array')
   return value.map((item, index) => jsonScalar(item, `frame.payload.params[${index}]`))
 }
 
-const parsePosition = (value: unknown): { world: string; pos: [number, number, number] } => {
+const parsePosition = (value: unknown): { dimension: string; pos: [number, number, number] } => {
   const position = objectValue(value, 'frame.payload.result')
-  exactFields(position, ['world', 'pos'], 'frame.payload.result')
+  exactFields(position, ['dimension', 'pos'], 'frame.payload.result')
   return {
-    world: requiredString(position.world, 'frame.payload.result.world'),
+    dimension: canonicalDimensionKey(position.dimension, 'frame.payload.result.dimension'),
     pos: numberTuple(position.pos, 'frame.payload.result.pos'),
   }
 }
 
-const parsePose = (value: unknown): { world: string; pos: [number, number, number]; yaw: number; pitch: number } => {
+const parsePose = (
+  value: unknown,
+): { dimension: string; pos: [number, number, number]; yaw: number; pitch: number } => {
   const pose = objectValue(value, 'frame.payload.result')
-  exactFields(pose, ['world', 'pos', 'yaw', 'pitch'], 'frame.payload.result')
+  exactFields(pose, ['dimension', 'pos', 'yaw', 'pitch'], 'frame.payload.result')
   return {
-    world: requiredString(pose.world, 'frame.payload.result.world'),
+    dimension: canonicalDimensionKey(pose.dimension, 'frame.payload.result.dimension'),
     pos: numberTuple(pose.pos, 'frame.payload.result.pos'),
     yaw: finiteNumber(pose.yaw, 'frame.payload.result.yaw'),
     pitch: finiteNumber(pose.pitch, 'frame.payload.result.pitch'),
@@ -324,10 +628,31 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') return parseHello(value)
   if (method === 'player.getPos' || method === 'player.setPos') return parsePosition(value)
   if (method === 'player.getPose' || method === 'player.setPose') return parsePose(value)
-  if (method === 'world.getBlock') {
-    if (typeof value !== 'string') throw new Error('frame.payload.result must be a string')
-    return value
+  if (method === 'build.setDimension' || method === 'build.setOrigin') {
+    const context = objectValue(value, 'frame.payload.result')
+    exactFields(context, ['dimension', 'origin'], 'frame.payload.result')
+    return {
+      dimension: canonicalDimensionKey(context.dimension, 'frame.payload.result.dimension'),
+      origin: numberTuple(context.origin, 'frame.payload.result.origin'),
+    }
   }
+  if (method === 'world.setBlock' || method === 'world.setBlocks' || method === 'connection.flush') {
+    if (value !== null) throw new Error('frame.payload.result must be null')
+    return null
+  }
+  if (method === 'world.getBlock') return parseBlock(value, 'frame.payload.result', true)
+  if (method === 'world.getBlocks') {
+    if (!Array.isArray(value)) throw new Error('frame.payload.result must be an array')
+    return value.map((item, index) => parseBlock(item, `frame.payload.result[${index}]`, true))
+  }
+  if (method === 'world.getHeight') return integer(value, 'frame.payload.result')
+  if (method === 'world.spawnParticle') return nonNegativeInteger(value, 'frame.payload.result')
+  if (method === 'world.spawnEntity') {
+    const handle = requiredString(value, 'frame.payload.result')
+    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
+    return handle
+  }
+  if (method === 'events.poll') return parseEventsPollResult(value)
   return jsonScalar(value, 'frame.payload.result')
 }
 
@@ -355,6 +680,12 @@ const parseFrame = (value: unknown): ObserverFrame => {
     throw new Error('frame.request_id must be a string, number, or null')
   }
   const method = frame.method as ObservedMethod
+  if (
+    requestId === null &&
+    (frame.direction !== 'send' || (method !== 'world.setBlock' && method !== 'world.setBlocks'))
+  ) {
+    throw new Error('frame.request_id may be null only for a setter notification')
+  }
   return {
     sequence: finiteNumber(frame.sequence, 'frame.sequence'),
     observed_at: finiteNumber(frame.observed_at, 'frame.observed_at'),

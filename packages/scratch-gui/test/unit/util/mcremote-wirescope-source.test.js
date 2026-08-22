@@ -2,6 +2,9 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
+import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v22.json';
+import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
+import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 
 const connectedObservation = () => ({
     status: 'connected',
@@ -11,12 +14,12 @@ const connectedObservation = () => ({
     pairCode: '123-456',
     pairCommand: '/mcremote pair 123-456',
     hello: {
-        protocol: '21.0.0',
+        protocol: '22.0.0',
         mc_version: '1.21.11',
         supported_mc_versions: ['1.21.11'],
         catalogHash: null,
         world_constants: {y_sea: 62, future_secret: 'no'},
-        world: 'overworld',
+        dimension: 'minecraft:overworld',
         origin: [200, 0, 200],
         player: 'player-uuid',
         permissions: {
@@ -38,7 +41,7 @@ const connectedObservation = () => ({
             id: 1,
             method: 'hello',
             params: {
-                protocol: '21.0.0',
+                protocol: '22.0.0',
                 client: {name: 'scratch-mcremote', version: 'build-1'},
                 auth: {token: 'mcrs_secret'},
                 device_label: 'classroom laptop'
@@ -59,7 +62,7 @@ const connectedObservation = () => ({
         direction: 'send',
         id: 3,
         method: 'world.setBlock',
-        payload: {params: [1, 2, 3, 'minecraft:stone']}
+        payload: {params: [1, 2, 3, {block_id: 'minecraft:stone', state: {}}]}
     }]
 });
 
@@ -80,8 +83,8 @@ describe('McRemote WireScope source adapter', () => {
                 id: 'main',
                 kind: 'main',
                 hello: {
-                    protocol: '21.0.0',
-                    world: 'overworld',
+                    protocol: '22.0.0',
+                    dimension: 'minecraft:overworld',
                     origin: [200, 0, 200],
                     permissions: {online: true, offline: false, build_range: 100}
                 }
@@ -99,6 +102,97 @@ describe('McRemote WireScope source adapter', () => {
         ]) {
             expect(serialized).not.toContain(forbidden);
         }
+    });
+
+    test('projects protocol 22 FAST notifications and connection.flush without synthetic results', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            method: 'world.setBlock',
+            payload: {params: [4, 5, 6, {block_id: 'oak_log', state: {axis: 'z'}}]}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'connection.flush',
+            payload: {params: []}
+        }, {
+            sequence: 6,
+            timestamp: 1005,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'connection.flush',
+            payload: {result: null}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames.slice(-3)).toEqual([{
+            sequence: 4,
+            observed_at: 1003,
+            direction: 'send',
+            request_id: null,
+            method: 'world.setBlock',
+            payload: {params: [4, 5, 6, {block_id: 'oak_log', state: {axis: 'z'}}]}
+        }, {
+            sequence: 5,
+            observed_at: 1004,
+            direction: 'send',
+            request_id: 4,
+            method: 'connection.flush',
+            payload: {params: []}
+        }, {
+            sequence: 6,
+            observed_at: 1005,
+            direction: 'receive',
+            request_id: 4,
+            method: 'connection.flush',
+            payload: {result: null}
+        }]);
+    });
+
+    test('projects strict events.poll requests and results without changing schema_version', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 10,
+            timestamp: 1010,
+            streamId: 'default',
+            direction: 'send',
+            id: 7,
+            method: 'events.poll',
+            payload: {params: eventsFixture.poll_requests.default}
+        }, {
+            sequence: 11,
+            timestamp: 1011,
+            streamId: 'default',
+            direction: 'receive',
+            id: 7,
+            method: 'events.poll',
+            payload: {result: eventsFixture.poll_result}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.schema_version).toBe(1);
+        expect(snapshot.streams[0].frames.slice(-2)).toEqual([{
+            sequence: 10,
+            observed_at: 1010,
+            direction: 'send',
+            request_id: 7,
+            method: 'events.poll',
+            payload: {params: [0]}
+        }, {
+            sequence: 11,
+            observed_at: 1011,
+            direction: 'receive',
+            request_id: 7,
+            method: 'events.poll',
+            payload: {result: eventsFixture.poll_result}
+        }]);
     });
 
     test('does not project pairing or disconnected observations', () => {
@@ -123,7 +217,7 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             id: 4,
             method: 'player.getPose',
-            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+            payload: {result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
         });
 
         const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
@@ -140,8 +234,155 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             request_id: 4,
             method: 'player.getPose',
-            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+            payload: {result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
         }]);
+    });
+
+    test('preserves a raw DimensionRef and validates the canonical setter result', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'build.setDimension',
+            payload: {params: ['myworld:world']}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'build.setDimension',
+            payload: {result: dimensionFixture.custom_build_context}
+        });
+
+        const frames = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames.slice(-2);
+        expect(frames[0].payload).toEqual({params: ['myworld:world']});
+        expect(frames[1].payload).toEqual({result: dimensionFixture.custom_build_context});
+    });
+
+    test('projects height and coordinate-first spawn requests and results', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'world.getHeight',
+            payload: {params: [7, 9, 20]}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'world.getHeight',
+            payload: {result: -1}
+        }, {
+            sequence: 6,
+            timestamp: 1005,
+            streamId: 'default',
+            direction: 'send',
+            id: 5,
+            method: 'world.spawnEntity',
+            payload: {params: spawnFixture.spawn_entity.params}
+        }, {
+            sequence: 7,
+            timestamp: 1006,
+            streamId: 'default',
+            direction: 'receive',
+            id: 5,
+            method: 'world.spawnEntity',
+            payload: {result: spawnFixture.spawn_entity.result}
+        }, {
+            sequence: 8,
+            timestamp: 1007,
+            streamId: 'default',
+            direction: 'send',
+            id: 6,
+            method: 'world.spawnParticle',
+            payload: {params: spawnFixture.spawn_particle.explicit_false.params}
+        }, {
+            sequence: 9,
+            timestamp: 1008,
+            streamId: 'default',
+            direction: 'receive',
+            id: 6,
+            method: 'world.spawnParticle',
+            payload: {result: spawnFixture.spawn_particle.explicit_false.result}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames.slice(-6)).toEqual([{
+            sequence: 4,
+            observed_at: 1003,
+            direction: 'send',
+            request_id: 4,
+            method: 'world.getHeight',
+            payload: {params: [7, 9, 20]}
+        }, {
+            sequence: 5,
+            observed_at: 1004,
+            direction: 'receive',
+            request_id: 4,
+            method: 'world.getHeight',
+            payload: {result: -1}
+        }, {
+            sequence: 6,
+            observed_at: 1005,
+            direction: 'send',
+            request_id: 5,
+            method: 'world.spawnEntity',
+            payload: {params: spawnFixture.spawn_entity.params}
+        }, {
+            sequence: 7,
+            observed_at: 1006,
+            direction: 'receive',
+            request_id: 5,
+            method: 'world.spawnEntity',
+            payload: {result: spawnFixture.spawn_entity.result}
+        }, {
+            sequence: 8,
+            observed_at: 1007,
+            direction: 'send',
+            request_id: 6,
+            method: 'world.spawnParticle',
+            payload: {params: spawnFixture.spawn_particle.explicit_false.params}
+        }, {
+            sequence: 9,
+            observed_at: 1008,
+            direction: 'receive',
+            request_id: 6,
+            method: 'world.spawnParticle',
+            payload: {result: spawnFixture.spawn_particle.explicit_false.result}
+        }]);
+    });
+
+    test('rejects legacy spawn order and malformed particle params', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'world.spawnEntity',
+            payload: {params: spawnFixture.spawn_entity.legacy_entity_first}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'send',
+            id: 5,
+            method: 'world.spawnParticle',
+            payload: {params: [1, 2, 3, -1, 0, 0, 'minecraft:flame', 0, 1]}
+        });
+
+        const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+        expect(snapshot.streams[0].frames).toHaveLength(2);
     });
 
     test('hands a one-time grant over MessageChannel and ends it with the target', () => {

@@ -14,11 +14,11 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "21.0.0",
+          "protocol": "22.0.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
-          "world": "overworld",
+          "dimension": "minecraft:overworld",
           "origin": [200, 0, 200],
           "world_constants": { "y_sea": 62 },
           "permissions": { "online": true, "offline": false, "build_range": 100 }
@@ -42,11 +42,11 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "21.0.0",
+          "protocol": "22.0.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
-          "world": "overworld",
+          "dimension": "minecraft:overworld",
           "origin": [200, 0, 200],
           "world_constants": { "y_sea": 62 },
           "permissions": { "online": true, "offline": false, "build_range": 100 }
@@ -58,7 +58,9 @@
             "direction": "send",
             "request_id": 2,
             "method": "world.setBlock",
-            "payload": { "params": [1, 2, 3, "minecraft:stone"] }
+            "payload": {
+              "params": [1, 2, 3, { "block_id": "minecraft:stone", "state": {} }]
+            }
           },
           {
             "sequence": 4,
@@ -76,7 +78,7 @@
             "method": "player.setPose",
             "payload": {
               "result": {
-                "world": "overworld",
+                "dimension": "minecraft:overworld",
                 "pos": [5, 6, 7],
                 "yaw": 135,
                 "pitch": -20

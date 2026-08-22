@@ -1,5 +1,5 @@
 import {
-    buildBlockRef,
+    buildStateText,
     findCatalogSelection,
     pickerBlockId
 } from '../../../src/lib/mcremote-block-ref';
@@ -21,22 +21,29 @@ describe('McRemote block reference picker helpers', () => {
         expect(pickerBlockId('examplemod:machine')).toBe('examplemod:machine');
     });
 
-    test('emits only explicit states in canonical property order', () => {
-        expect(buildBlockRef('examplemod:machine', {
+    test('emits StateText only for explicit states in canonical property order', () => {
+        expect(buildStateText({
             powered: true,
             facing: 'south',
             omitted: null
-        })).toBe('examplemod:machine[facing=south,powered=true]');
+        })).toBe('facing=south,powered=true');
     });
 
-    test('recognizes short vanilla input and keeps JSON-native state types', () => {
-        expect(findCatalogSelection('oak_log[axis=z]', blocks)).toEqual({
+    test('recognizes separate block ID and StateText while keeping JSON-native types', () => {
+        expect(findCatalogSelection('oak_log', 'axis=z', blocks)).toEqual({
             id: 'minecraft:oak_log',
             selectedStates: {axis: 'z'}
         });
-        expect(findCatalogSelection('examplemod:machine[powered=false]', blocks)).toEqual({
+        expect(findCatalogSelection('examplemod:machine', 'powered=false', blocks)).toEqual({
             id: 'examplemod:machine',
             selectedStates: {powered: false}
         });
+    });
+
+    test('rejects malformed, duplicate, unknown and type-mismatched StateText', () => {
+        expect(findCatalogSelection('oak_log', 'axis=z,', blocks)).toBeNull();
+        expect(findCatalogSelection('oak_log', 'axis=z,axis=y', blocks)).toBeNull();
+        expect(findCatalogSelection('oak_log', 'powered=false', blocks)).toBeNull();
+        expect(findCatalogSelection('examplemod:machine', 'powered=0', blocks)).toBeNull();
     });
 });

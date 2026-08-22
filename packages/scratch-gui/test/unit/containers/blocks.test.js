@@ -94,33 +94,39 @@ describe('Blocks container McRemote block picker integration', () => {
         expect(openPicker).toHaveBeenCalledWith(block);
     });
 
-    test('opens on a literal field and applies the selected editable string', () => {
-        const literalField = {
+    test('opens on two literal fields and applies both values in one Blockly event group', () => {
+        const blockIdField = {
             getValue: jest.fn().mockReturnValue('stone'),
+            setValue: jest.fn()
+        };
+        const stateField = {
+            getValue: jest.fn().mockReturnValue(''),
             setValue: jest.fn()
         };
         const instance = {
             state: {mcRemoteBlockPicker: null},
+            ScratchBlocks: {Events: {setGroup: jest.fn()}},
             setState: jest.fn(update => {
                 instance.state = Object.assign({}, instance.state, update);
             }),
             handleMcRemoteBlockPickerClose: jest.fn()
         };
         const block = {
-            getInput: jest.fn().mockReturnValue({
-                connection: {
-                    targetBlock: () => ({
-                        isShadow: () => true,
-                        getField: () => literalField
-                    })
-                }
-            })
+            getInput: jest.fn(name => ({
+                connection: {targetBlock: () => ({
+                    isShadow: () => true,
+                    getField: () => (name === 'BLOCK' ? blockIdField : stateField)
+                })}
+            }))
         };
 
         Blocks.prototype.handleMcRemoteBlockPickerStart.call(instance, block);
-        expect(instance.state.mcRemoteBlockPicker.initialValue).toBe('stone');
-        Blocks.prototype.handleMcRemoteBlockPickerApply.call(instance, 'oak_log[axis=z]');
-        expect(literalField.setValue).toHaveBeenCalledWith('oak_log[axis=z]');
+        expect(instance.state.mcRemoteBlockPicker.initialBlockId).toBe('stone');
+        expect(instance.state.mcRemoteBlockPicker.initialStateText).toBe('');
+        Blocks.prototype.handleMcRemoteBlockPickerApply.call(instance, 'oak_log', 'axis=z');
+        expect(blockIdField.setValue).toHaveBeenCalledWith('oak_log');
+        expect(stateField.setValue).toHaveBeenCalledWith('axis=z');
+        expect(instance.ScratchBlocks.Events.setGroup.mock.calls).toEqual([[true], [false]]);
         expect(instance.handleMcRemoteBlockPickerClose).toHaveBeenCalled();
     });
 
@@ -132,15 +138,20 @@ describe('Blocks container McRemote block picker integration', () => {
             isShadow: () => false,
             getField: jest.fn()
         };
+        const stateField = {getValue: jest.fn().mockReturnValue(''), setValue: jest.fn()};
         const block = {
-            getInput: () => ({connection: {targetBlock: () => reporter}})
+            getInput: name => ({connection: {targetBlock: () => (
+                name === 'BLOCK' ? reporter : {isShadow: () => true, getField: () => stateField}
+            )}})
         };
 
         Blocks.prototype.handleMcRemoteBlockPickerStart.call(instance, block);
         expect(instance.setState).toHaveBeenCalledWith({
             mcRemoteBlockPicker: {
-                literalField: null,
-                initialValue: ''
+                blockIdField: null,
+                stateField,
+                initialBlockId: '',
+                initialStateText: ''
             }
         });
         expect(reporter.getField).not.toHaveBeenCalled();

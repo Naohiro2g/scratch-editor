@@ -20,7 +20,7 @@ describe('WireScope localization', () => {
     expect(translate('en', 'statusObserving', { count: 2, streams: 'streams' })).toBe('Observing 2 streams')
     expect(translate('ja', 'streamMain')).toBe('メインストリーム')
     expect(translate('ja', 'fieldWorldConstants')).toBe('世界定数')
-    expect(translate('ja', 'fieldWorld')).toBe('初期ワールド')
+    expect(translate('ja', 'fieldDimension')).toBe('初期次元')
     expect(translate('ja', 'fieldOrigin')).toBe('初期原点')
     expect(translate('ja', 'historyWindowTruncated', { count: 12 })).toContain('12 件')
     expect(translate('ja', 'statusDirectNavigation')).toBe(
@@ -32,6 +32,8 @@ describe('WireScope localization', () => {
     )
     expect(translate('en', 'streamEnded')).toBe('ended')
     expect(translate('ja', 'streamEnded')).toBe('終了')
+    expect(translate('ja', 'directionSentUnconfirmed')).toBe('送信済み・結果未確認')
+    expect(translate('en', 'directionSentUnconfirmed')).toBe('Sent · unconfirmed')
   })
 
   test('provides a kanji-free Japanese Hiragana locale', () => {
@@ -44,6 +46,7 @@ describe('WireScope localization', () => {
       'データのながれがはやすぎるため、かんそくをしゅうりょうしました。',
     )
     expect(translate('ja-Hira', 'streamEnded')).toBe('しゅうりょう')
+    expect(translate('ja-Hira', 'directionSentUnconfirmed')).toBe('そうしんずみ・けっかみかくにん')
     for (const key of messageKeys) {
       expect(translate('ja-Hira', key)).not.toContain('かんさつ')
     }

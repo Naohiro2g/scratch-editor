@@ -34,8 +34,12 @@ envelope shape for adapter conformance.
 
 The shared `test/fixtures/display-alias-v1.json` fixture fixes the vocabulary and `WORD-WORD-NNNNNN` shape for
 source-side alias conformance. The Scratch generator is checked against it. The alias is display-only: it is not
-a discovery key, target identity, attach capability, or authorization input. Observer schema v1 continues to
+a discovery key, target identity, attach capability, or authorization input. The b5 compatibility-set revision continues to
 accept existing non-empty aliases so recorded sessions and other source implementations can migrate independently.
+
+The b5 compatibility-set revision observes protocol 22 block IDs and state as structured objects. It distinguishes acknowledged setter
+requests, FAST setter notifications, `result: null`, and `connection.flush`; FAST frames are shown as sent and
+unconfirmed, without a synthetic response or an inferred DEBUG/TRACE/FAST mode.
 
 The current Scratch transport remains a distinct-origin `MessageChannel` adapter. An opener plus a distinct
 absolute referrer makes Scratch only a candidate. The adapter must receive an exact source, origin, protocol, and
@@ -92,7 +96,7 @@ distribution gate.
 - The station adapter sends the normalized attach code only in the same-origin `POST` body with credentials
   omitted. It rejects redirects, unversioned bootstrap data, unbounded responses, and invalid NDJSON framing.
 
-The observer contract is versioned independently as `mcremote.observer` schema version 1. Its initial shape uses
+The observer contract is versioned independently as `mcremote.observer` schema version 1. Its shape uses
 `streams[]` even though the Scratch reference adapter currently exposes one `main` stream.
 
 The development HTML includes a restrictive CSP meta policy. Production deployment must still set the required
