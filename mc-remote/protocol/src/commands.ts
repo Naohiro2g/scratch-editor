@@ -19,14 +19,24 @@ export interface BlockValue {
 /** `chat.post` — send a chat message. b1 uses an acknowledged request. */
 export type ChatPostParams = readonly [message: string]
 
-/** Build dimensions accepted by `build.setWorld`. */
-export type BuildWorld = 'overworld' | 'nether' | 'the_end'
+/** A fully-qualified Minecraft dimension identity (`namespace:path`). */
+export type DimensionKey = string
 
-/** `build.setWorld` — update the stream-local build dimension. */
-export type BuildSetWorldParams = readonly [dimension: BuildWorld]
+/** A fully-qualified key or a path whose omitted namespace means `minecraft`. */
+export type DimensionRef = string
+
+export interface BuildContextResult {
+  readonly dimension: DimensionKey
+  readonly origin: readonly [number, number, number]
+}
+
+/** `build.setDimension` — update the stream-local build dimension. */
+export type BuildSetDimensionParams = readonly [dimension: DimensionRef]
+export type BuildSetDimensionResult = BuildContextResult
 
 /** `build.setOrigin` — update the stream-local build origin. */
 export type BuildSetOriginParams = readonly [x: number, y: number, z: number]
+export type BuildSetOriginResult = BuildContextResult
 
 /** `world.setBlock` — place one block. Read back explicitly when needed. */
 export type SetBlockParams = readonly [x: number, y: number, z: number, block: BlockSpec]
@@ -106,7 +116,7 @@ export type EventsPollParams =
 export interface BlockRightClickEvent {
   readonly sequence: number
   readonly type: 'block_right_click'
-  readonly world: string
+  readonly dimension: DimensionKey
   readonly origin: readonly [number, number, number]
   readonly pos: readonly [number, number, number]
   readonly face: string
@@ -117,7 +127,7 @@ export interface BlockRightClickEvent {
 export interface ChatPostedEvent {
   readonly sequence: number
   readonly type: 'chat_posted'
-  readonly world: string
+  readonly dimension: DimensionKey
   readonly origin: readonly [number, number, number]
   readonly message: string
 }
@@ -135,7 +145,7 @@ export type ProjectileTarget =
 export interface ProjectileHitEvent {
   readonly sequence: number
   readonly type: 'projectile_hit'
-  readonly world: string
+  readonly dimension: DimensionKey
   readonly origin: readonly [number, number, number]
   readonly projectile: string
   readonly pos: readonly [number, number, number]

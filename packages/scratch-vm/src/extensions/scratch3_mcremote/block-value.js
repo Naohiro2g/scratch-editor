@@ -13,7 +13,7 @@ const REMOTE_ERROR_REASONS = new Set([
     'entity_removed',
     'entity_spawn_failed',
     'entity_unloaded',
-    'entity_world_changed',
+    'entity_dimension_changed',
     'height_not_found',
     'internal_error',
     'invalid_params',
@@ -26,7 +26,7 @@ const REMOTE_ERROR_REASONS = new Set([
     'unknown_entity',
     'unknown_particle',
     'unknown_property',
-    'unknown_world',
+    'unknown_dimension',
     'work_limit_exceeded'
 ]);
 

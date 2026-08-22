@@ -9,7 +9,7 @@ const GRANT_LIFETIME_MS = 15000;
 
 const OBSERVED_METHODS = new Set([
     'hello',
-    'build.setWorld',
+    'build.setDimension',
     'build.setOrigin',
     'chat.post',
     'world.setBlock',
@@ -67,10 +67,11 @@ const allowHello = function (value) {
         catalog_hash: typeof value.catalogHash === 'string' ? value.catalogHash.toLowerCase() : null,
         world_constants: {y_sea: ySea}
     };
-    const world = optionalString(value.world);
+    const dimension = optionalString(value.dimension);
     const origin = numberTuple(value.origin);
-    if (world) result.world = world;
-    if (origin) result.origin = origin;
+    if (!dimension || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(dimension) || !origin) return null;
+    result.dimension = dimension;
+    result.origin = origin;
     if (isObject(value.permissions)) {
         const permissions = {};
         const online = optionalBoolean(value.permissions.online);
@@ -103,10 +104,16 @@ const allowHelloParams = function (value) {
     if (client) result.client = client;
     if (isObject(value.build)) {
         const build = {};
-        const world = optionalString(value.build.world);
+        const dimension = optionalString(value.build.dimension);
         const origin = numberTuple(value.build.origin);
-        if (world) build.world = world;
-        if (origin) build.origin = origin;
+        if (Object.prototype.hasOwnProperty.call(value.build, 'dimension')) {
+            if (!dimension || !/^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(dimension)) return null;
+            build.dimension = dimension;
+        }
+        if (Object.prototype.hasOwnProperty.call(value.build, 'origin')) {
+            if (!origin) return null;
+            build.origin = origin;
+        }
         if (Object.keys(build).length) result.build = build;
     }
     return result;
@@ -150,12 +157,18 @@ const allowEventsPollParams = function (value) {
 const canonicalResourceId = function (value) {
     return typeof value === 'string' && /^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(value);
 };
+const dimensionRef = function (value) {
+    return typeof value === 'string' && /^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(value);
+};
 const faceToken = function (value) {
     return typeof value === 'string' && /^[a-z_]+$/.test(value);
 };
 
 const allowParams = function (method, value) {
     if (method === 'hello') return allowHelloParams(value);
+    if (method === 'build.setDimension') {
+        return Array.isArray(value) && value.length === 1 && dimensionRef(value[0]) ? value.slice() : null;
+    }
     if (method === 'world.setBlock') {
         const coordinates = allowExactNumberParams(Array.isArray(value) ? value.slice(0, 3) : null, 3);
         const block = Array.isArray(value) && value.length === 4 ? allowBlock(value[3], false) : null;
@@ -188,31 +201,36 @@ const allowParams = function (method, value) {
     }
     if (method === 'connection.flush') return Array.isArray(value) && value.length === 0 ? [] : null;
     if (method === 'events.poll') return allowEventsPollParams(value);
+    if (method === 'player.setPos' || method === 'player.setPose') {
+        const length = method === 'player.setPos' ? 4 : 6;
+        return Array.isArray(value) && value.length === length && dimensionRef(value[0]) &&
+            value.slice(1).every(finiteNumber) ? value.slice() : null;
+    }
     return allowArrayParams(value);
 };
 
 const allowEvent = function (value) {
     if (!isObject(value) || !Number.isInteger(value.sequence) || value.sequence < 1 ||
-        !optionalString(value.world)) return null;
+        !canonicalResourceId(value.dimension)) return null;
     const origin = numberTuple(value.origin);
     if (!origin || !origin.every(Number.isInteger)) return null;
-    const common = {sequence: value.sequence, type: value.type, world: value.world, origin};
+    const common = {sequence: value.sequence, type: value.type, dimension: value.dimension, origin};
     if (value.type === 'block_right_click') {
         const pos = numberTuple(value.pos);
         const block = allowBlock(value.block, true);
-        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'pos', 'face', 'block', 'hand']) ||
+        if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'pos', 'face', 'block', 'hand']) ||
             !pos || !pos.every(Number.isInteger) || !faceToken(value.face) || !block ||
             (value.hand !== 'main' && value.hand !== 'off')) return null;
         return Object.assign(common, {pos, face: value.face, block, hand: value.hand});
     }
     if (value.type === 'chat_posted') {
-        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'message']) ||
+        if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'message']) ||
             typeof value.message !== 'string') return null;
         return Object.assign(common, {message: value.message});
     }
     if (value.type === 'projectile_hit') {
         const pos = numberTuple(value.pos);
-        if (!hasExactFields(value, ['sequence', 'type', 'world', 'origin', 'projectile', 'pos', 'target']) ||
+        if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'projectile', 'pos', 'target']) ||
             !canonicalResourceId(value.projectile) || !pos || !isObject(value.target)) return null;
         let target;
         if (value.target.kind === 'player' && hasExactFields(value.target, ['kind'])) {
@@ -266,9 +284,16 @@ const allowEventsPollResult = function (value) {
 
 const allowPosition = function (value) {
     if (!isObject(value)) return null;
-    const world = optionalString(value.world);
+    const dimension = optionalString(value.dimension);
     const pos = numberTuple(value.pos);
-    return world && pos ? {world, pos} : null;
+    return dimension && canonicalResourceId(dimension) && pos ? {dimension, pos} : null;
+};
+
+const allowBuildContext = function (value) {
+    if (!hasExactFields(value, ['dimension', 'origin']) || Object.keys(value).length !== 2 ||
+        !canonicalResourceId(value.dimension)) return null;
+    const origin = numberTuple(value.origin);
+    return origin ? {dimension: value.dimension, origin} : null;
 };
 
 const allowPose = function (value) {
@@ -286,6 +311,7 @@ const allowError = function (value) {
         const data = {};
         if (typeof value.data.reason === 'string') data.reason = value.data.reason;
         if (typeof value.data.block_id === 'string') data.block_id = value.data.block_id;
+        if (dimensionRef(value.data.dimension)) data.dimension = value.data.dimension;
         if (typeof value.data.property === 'string') data.property = value.data.property;
         if (typeof value.data.path === 'string') data.path = value.data.path;
         const rejectedValue = scalar(value.data.value);
@@ -318,6 +344,10 @@ const allowFramePayload = function (frame) {
     }
     if (frame.method === 'player.getPose' || frame.method === 'player.setPose') {
         const result = allowPose(payload.result);
+        return result ? {result} : null;
+    }
+    if (frame.method === 'build.setDimension' || frame.method === 'build.setOrigin') {
+        const result = allowBuildContext(payload.result);
         return result ? {result} : null;
     }
     if (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||

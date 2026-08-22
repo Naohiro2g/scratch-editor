@@ -1,0 +1,21 @@
+{
+  "schema": "mcremote.dimensions.v22",
+  "protocol": "22.0.0",
+  "default_dimension": "minecraft:overworld",
+  "accepted_refs": [
+    { "input": "overworld", "canonical": "minecraft:overworld" },
+    { "input": "minecraft:the_nether", "canonical": "minecraft:the_nether" },
+    { "input": "the_end", "canonical": "minecraft:the_end" },
+    { "input": "myworld:world", "canonical": "myworld:world" }
+  ],
+  "not_aliases": ["world", "normal", "nether", "end"],
+  "invalid_refs": ["", "Overworld", " overworld", "overworld ", "minecraft:", ":overworld", "minecraft:over world"],
+  "build_context": {
+    "dimension": "minecraft:overworld",
+    "origin": [200, 0, 200]
+  },
+  "custom_build_context": {
+    "dimension": "myworld:world",
+    "origin": [12, 0, -7]
+  }
+}

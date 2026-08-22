@@ -3,7 +3,7 @@ export const OBSERVER_SCHEMA_VERSION = 1 as const
 
 export const OBSERVED_METHODS = [
   'hello',
-  'build.setWorld',
+  'build.setDimension',
   'build.setOrigin',
   'chat.post',
   'world.setBlock',
@@ -43,8 +43,8 @@ export interface ObserverHello {
   mc_version: string
   supported_mc_versions: string[]
   catalog_hash: string | null
-  world?: string
-  origin?: [number, number, number]
+  dimension: string
+  origin: [number, number, number]
   world_constants: ObserverWorldConstants
   permissions?: ObserverPermissions
 }
@@ -52,6 +52,7 @@ export interface ObserverHello {
 export interface ObserverErrorData {
   reason?: string
   block_id?: string
+  dimension?: string
   property?: string
   value?: string | number | boolean | null
   path?: string
@@ -180,7 +181,7 @@ const parseHello = (value: unknown): ObserverHello => {
       'mc_version',
       'supported_mc_versions',
       'catalog_hash',
-      'world',
+      'dimension',
       'origin',
       'world_constants',
       'permissions',
@@ -200,15 +201,11 @@ const parseHello = (value: unknown): ObserverHello => {
     mc_version: requiredString(hello.mc_version, 'hello.mc_version'),
     supported_mc_versions: stringArray(hello.supported_mc_versions, 'hello.supported_mc_versions'),
     catalog_hash: hello.catalog_hash,
+    dimension: canonicalDimensionKey(hello.dimension, 'hello.dimension'),
+    origin: numberTuple(hello.origin, 'hello.origin'),
     world_constants: {
       y_sea: constants.y_sea === null ? null : finiteNumber(constants.y_sea, 'hello.world_constants.y_sea'),
     },
-  }
-  if (typeof hello.world !== 'undefined') {
-    parsed.world = requiredString(hello.world, 'hello.world')
-  }
-  if (typeof hello.origin !== 'undefined') {
-    parsed.origin = numberTuple(hello.origin, 'hello.origin')
   }
   const permissions = parsePermissions(hello.permissions)
   if (permissions) parsed.permissions = permissions
@@ -220,7 +217,7 @@ const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   const data = objectValue(value, 'frame.payload.error.data')
   exactFields(
     data,
-    ['reason', 'block_id', 'property', 'value', 'path', 'allowed', 'bounds', 'violating'],
+    ['reason', 'block_id', 'dimension', 'property', 'value', 'path', 'allowed', 'bounds', 'violating'],
     'frame.payload.error.data',
   )
   if (typeof data.reason !== 'undefined' && typeof data.reason !== 'string') {
@@ -247,6 +244,9 @@ const parseErrorData = (value: unknown): ObserverErrorData | undefined => {
   const parsed: ObserverErrorData = {}
   if (typeof data.reason === 'string') parsed.reason = data.reason
   if (typeof data.block_id === 'string') parsed.block_id = data.block_id
+  if (typeof data.dimension !== 'undefined') {
+    parsed.dimension = dimensionRef(data.dimension, 'frame.payload.error.data.dimension')
+  }
   if (typeof data.property === 'string') parsed.property = data.property
   if (typeof data.path === 'string') parsed.path = data.path
   if (typeof data.value !== 'undefined') parsed.value = jsonScalar(data.value, 'frame.payload.error.data.value')
@@ -341,6 +341,22 @@ const canonicalResourceId = (value: unknown, context: string): string => {
   return resourceId
 }
 
+const dimensionRef = (value: unknown, context: string): string => {
+  const dimension = requiredString(value, context)
+  if (!/^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(dimension)) {
+    throw new Error(`${context} must be a dimension reference`)
+  }
+  return dimension
+}
+
+const canonicalDimensionKey = (value: unknown, context: string): string => {
+  const dimension = requiredString(value, context)
+  if (!/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(dimension)) {
+    throw new Error(`${context} must be a canonical dimension key`)
+  }
+  return dimension
+}
+
 const faceToken = (value: unknown, context: string): string => {
   const face = requiredString(value, context)
   if (!/^[a-z_]+$/.test(face)) throw new Error(`${context} must be a face token`)
@@ -368,13 +384,13 @@ const parseEventCommon = (
   fields: readonly string[],
   context: string,
 ): Record<string, unknown> => {
-  exactFields(value, ['sequence', 'type', 'world', 'origin', ...fields], context)
+  exactFields(value, ['sequence', 'type', 'dimension', 'origin', ...fields], context)
   const sequence = integer(value.sequence, `${context}.sequence`)
   if (sequence < 1) throw new Error(`${context}.sequence must be positive`)
   return {
     sequence,
     type: requiredString(value.type, `${context}.type`),
-    world: requiredString(value.world, `${context}.world`),
+    dimension: canonicalDimensionKey(value.dimension, `${context}.dimension`),
     origin: numberTuple(value.origin, `${context}.origin`).map((item, index) =>
       integer(item, `${context}.origin[${index}]`),
     ),
@@ -423,7 +439,7 @@ const parseEvent = (value: unknown, index: number): Record<string, unknown> => {
     }
   }
   if (event.type === 'chat_posted') {
-    exactFields(event, ['sequence', 'type', 'world', 'origin', 'message'], context)
+    exactFields(event, ['sequence', 'type', 'dimension', 'origin', 'message'], context)
     if (typeof event.message !== 'string') throw new Error(`${context}.message must be a string`)
     return { ...parseEventCommon(event, ['message'], context), message: event.message }
   }
@@ -509,15 +525,21 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     }
     if (typeof params.build !== 'undefined') {
       const build = objectValue(params.build, 'frame.payload.params.build')
-      exactFields(build, ['world', 'origin'], 'frame.payload.params.build')
+      exactFields(build, ['dimension', 'origin'], 'frame.payload.params.build')
       result.build = {
-        ...(typeof build.world === 'string' ? { world: build.world } : {}),
+        ...(typeof build.dimension !== 'undefined'
+          ? { dimension: dimensionRef(build.dimension, 'frame.payload.params.build.dimension') }
+          : {}),
         ...(typeof build.origin !== 'undefined'
           ? { origin: numberTuple(build.origin, 'frame.payload.params.build.origin') }
           : {}),
       }
     }
     return result
+  }
+  if (method === 'build.setDimension') {
+    const params = exactParams(value, 1)
+    return [dimensionRef(params[0], 'frame.payload.params[0]')]
   }
   if (method === 'world.setBlock') {
     const params = exactParams(value, 4)
@@ -569,24 +591,33 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
   }
   if (method === 'connection.flush') return exactParams(value, 0)
   if (method === 'events.poll') return parseEventsPollParams(value)
+  if (method === 'player.setPos' || method === 'player.setPose') {
+    const params = exactParams(value, method === 'player.setPos' ? 4 : 6)
+    return [
+      dimensionRef(params[0], 'frame.payload.params[0]'),
+      ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+    ]
+  }
   if (!Array.isArray(value)) throw new Error('frame.payload.params must be an array')
   return value.map((item, index) => jsonScalar(item, `frame.payload.params[${index}]`))
 }
 
-const parsePosition = (value: unknown): { world: string; pos: [number, number, number] } => {
+const parsePosition = (value: unknown): { dimension: string; pos: [number, number, number] } => {
   const position = objectValue(value, 'frame.payload.result')
-  exactFields(position, ['world', 'pos'], 'frame.payload.result')
+  exactFields(position, ['dimension', 'pos'], 'frame.payload.result')
   return {
-    world: requiredString(position.world, 'frame.payload.result.world'),
+    dimension: canonicalDimensionKey(position.dimension, 'frame.payload.result.dimension'),
     pos: numberTuple(position.pos, 'frame.payload.result.pos'),
   }
 }
 
-const parsePose = (value: unknown): { world: string; pos: [number, number, number]; yaw: number; pitch: number } => {
+const parsePose = (
+  value: unknown,
+): { dimension: string; pos: [number, number, number]; yaw: number; pitch: number } => {
   const pose = objectValue(value, 'frame.payload.result')
-  exactFields(pose, ['world', 'pos', 'yaw', 'pitch'], 'frame.payload.result')
+  exactFields(pose, ['dimension', 'pos', 'yaw', 'pitch'], 'frame.payload.result')
   return {
-    world: requiredString(pose.world, 'frame.payload.result.world'),
+    dimension: canonicalDimensionKey(pose.dimension, 'frame.payload.result.dimension'),
     pos: numberTuple(pose.pos, 'frame.payload.result.pos'),
     yaw: finiteNumber(pose.yaw, 'frame.payload.result.yaw'),
     pitch: finiteNumber(pose.pitch, 'frame.payload.result.pitch'),
@@ -597,6 +628,14 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') return parseHello(value)
   if (method === 'player.getPos' || method === 'player.setPos') return parsePosition(value)
   if (method === 'player.getPose' || method === 'player.setPose') return parsePose(value)
+  if (method === 'build.setDimension' || method === 'build.setOrigin') {
+    const context = objectValue(value, 'frame.payload.result')
+    exactFields(context, ['dimension', 'origin'], 'frame.payload.result')
+    return {
+      dimension: canonicalDimensionKey(context.dimension, 'frame.payload.result.dimension'),
+      origin: numberTuple(context.origin, 'frame.payload.result.origin'),
+    }
+  }
   if (method === 'world.setBlock' || method === 'world.setBlocks' || method === 'connection.flush') {
     if (value !== null) throw new Error('frame.payload.result must be null')
     return null

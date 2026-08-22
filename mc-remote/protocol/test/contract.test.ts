@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type {
   BlockSpec,
   BlockValue,
+  BuildContextResult,
+  BuildSetDimensionParams,
   ConnectionFlushParams,
   ConnectionFlushResult,
   EventsPollParams,
@@ -18,6 +20,7 @@ import type {
   SpawnEntityResult,
 } from '../src/index.ts'
 import { ERROR_REASON_CODE, ErrorCode, ErrorReason, JSONRPC_VERSION, Method, PROTOCOL_VERSION } from '../src/index.ts'
+import dimensionsFixture from './fixtures/dimensions-v22.json'
 import eventsFixture from './fixtures/events-v22.json'
 import spawnFixture from './fixtures/spawn-v22.json'
 
@@ -34,7 +37,7 @@ describe('protocol constants', () => {
     expect(Method.hello).toBe('hello')
     expect(Method.catalogGet).toBe('catalog.get')
     expect(Method.chatPost).toBe('chat.post')
-    expect(Method.buildSetWorld).toBe('build.setWorld')
+    expect(Method.buildSetDimension).toBe('build.setDimension')
     expect(Method.buildSetOrigin).toBe('build.setOrigin')
     expect(Method.worldSetBlock).toBe('world.setBlock')
     expect(Method.worldSetBlocks).toBe('world.setBlocks')
@@ -47,6 +50,22 @@ describe('protocol constants', () => {
     expect(Method.eventsPoll).toBe('events.poll')
     expect(Method.playerGetPose).toBe('player.getPose')
     expect(Method.playerSetPose).toBe('player.setPose')
+  })
+})
+
+describe('dimension identity', () => {
+  it('keeps standard short refs and general namespaces while results are canonical', () => {
+    const standard = [dimensionsFixture.accepted_refs[0].input] as BuildSetDimensionParams
+    const custom = [dimensionsFixture.accepted_refs[3].input] as BuildSetDimensionParams
+    const context = dimensionsFixture.custom_build_context as BuildContextResult
+    expect(standard).toEqual(['overworld'])
+    expect(custom).toEqual(['myworld:world'])
+    expect(context.dimension).toBe('myworld:world')
+  })
+
+  it('pins the exact default and excludes legacy world aliases', () => {
+    expect(dimensionsFixture.default_dimension).toBe('minecraft:overworld')
+    expect(dimensionsFixture.not_aliases).toEqual(['world', 'normal', 'nether', 'end'])
   })
 })
 

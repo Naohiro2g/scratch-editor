@@ -10,6 +10,7 @@ const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/cat
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
 const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v22.json');
+const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
 /**
@@ -46,6 +47,11 @@ class FakeWebSocket {
         this._emit('open');
     }
     fireMessage (obj) {
+        if (obj && obj.result && /^22\./.test(obj.result.protocol)) {
+            obj = Object.assign({}, obj, {
+                result: Object.assign({}, dimensionFixture.build_context, obj.result)
+            });
+        }
         this._emit('message', {data: JSON.stringify(obj)});
     }
     fireClose (event) {
@@ -367,7 +373,9 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
             world_constants: {y_sea: 63},
-            permissions: {build: true}
+            permissions: {build: true},
+            dimension: 'minecraft:overworld',
+            origin: [200, 0, 200]
         }});
 
     return result.then(() => {
@@ -381,7 +389,9 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
             world_constants: {y_sea: 63},
-            permissions: {build: true}
+            permissions: {build: true},
+            dimension: 'minecraft:overworld',
+            origin: [200, 0, 200]
         });
         t.equal(connected.frameLog.length, 2);
         t.equal(connected.frameLog[1].direction, 'receive');
@@ -407,7 +417,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
             catalogHash: null,
-            world: 'world',
+            dimension: 'myworld:world',
             origin: [200, 0, 200]
         }});
 
@@ -419,7 +429,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
             supported_mc_versions: ['1.21.11'],
             world_constants: {y_sea: 63},
             permissions: null,
-            world: 'world',
+            dimension: 'myworld:world',
             origin: [200, 0, 200]
         });
         t.end();
@@ -821,13 +831,14 @@ test('connectTo debug block uses the runtime-configured default sandbox route', 
     t.end();
 });
 
-test('build world block uses the fixed dimension menu values', t => {
+test('build dimension block offers standard refs and accepts reporters', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
     const info = blocks.getInfo();
-    const setWorld = info.blocks.find(block => block.opcode === 'setWorld');
-    t.equal(setWorld.arguments.WORLD.defaultValue, 'overworld');
-    t.same(info.menus.worlds.items.map(item => item.value), ['overworld', 'nether', 'the_end']);
+    const setDimension = info.blocks.find(block => block.opcode === 'setDimension');
+    t.equal(setDimension.arguments.DIMENSION.defaultValue, 'overworld');
+    t.equal(info.menus.dimensions.acceptReporters, true);
+    t.same(info.menus.dimensions.items.map(item => item.value), ['overworld', 'the_nether', 'the_end']);
     t.end();
 });
 
@@ -880,15 +891,15 @@ test('pairing reporter blocks are exposed', t => {
     t.end();
 });
 
-test('setWorld is an acknowledged build-state request', t =>
+test('setDimension preserves a general DimensionRef and accepts canonical context', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        const result = blocks.setWorld({WORLD: 'nether'});
+        const result = blocks.setDimension({DIMENSION: 'myworld:world'});
         const msg = socket.lastSent();
         t.equal(msg.jsonrpc, '2.0');
-        t.equal(msg.method, 'build.setWorld');
+        t.equal(msg.method, 'build.setDimension');
         t.equal(msg.id, 2, 'build state changes wait for acknowledgement');
-        t.same(msg.params, ['nether']);
-        socket.fireMessage({jsonrpc: '2.0', id: 2, result: {ok: true}});
+        t.same(msg.params, ['myworld:world']);
+        socket.fireMessage({jsonrpc: '2.0', id: 2, result: dimensionFixture.custom_build_context});
         return result.then(value => {
             t.equal(value, void 0);
             t.end();
@@ -896,12 +907,25 @@ test('setWorld is an acknowledged build-state request', t =>
     })
 );
 
+test('setDimension rejects case, whitespace, and malformed refs without sending', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const before = socket.sent.length;
+    for (const dimension of dimensionFixture.invalid_refs) {
+        await blocks.setDimension({DIMENSION: dimension});
+    }
+    t.equal(socket.sent.length, before);
+});
+
 test('reconnect reuses the sandbox token and starts build state from defaults', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_saved');
-        const setWorld = blocks.setWorld({WORLD: 'nether'});
-        socket.fireMessage({jsonrpc: '2.0', id: 2, result: {ok: true}});
-        return setWorld.then(() => {
+        const setDimension = blocks.setDimension({DIMENSION: 'the_nether'});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: 2,
+            result: {
+                dimension: 'minecraft:the_nether', origin: [200, 0, 200]
+            }});
+        return setDimension.then(() => {
             socket.fireClose();
             const reconnect = blocks.connect();
             const nextSocket = FakeWebSocket.instances[1];
@@ -958,7 +982,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
 test('permission_denied does not clear the current sandbox token', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         global.localStorage.setItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE), 'mcrs_allowed');
-        const result = blocks.setWorld({WORLD: 'nether'});
+        const result = blocks.setDimension({DIMENSION: 'the_nether'});
         socket.fireMessage({jsonrpc: '2.0',
             id: 2,
             error: {
@@ -980,7 +1004,11 @@ test('setBuildOrigin seals y at 0 for Scratch', t =>
         t.equal(msg.method, 'build.setOrigin');
         t.equal(msg.id, 2, 'build state changes wait for acknowledgement');
         t.same(msg.params, [240, 0, 260]);
-        socket.fireMessage({jsonrpc: '2.0', id: 2, result: null});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: 2,
+            result: {
+                dimension: 'minecraft:overworld', origin: [240, 0, 260]
+            }});
         return result.then(() => t.end());
     })
 );
@@ -1421,6 +1449,7 @@ test('one connection poller dispatches mixed b5 events with per-thread context a
         'mcremote_whenProjectileHit'
     ], 'mixed events preserve FIFO hat dispatch');
     const [clickThread, chatThread, projectileThread] = runtime.startedEventThreads;
+    t.equal(blocks.eventValue({PROPERTY: 'dimension'}, {thread: clickThread}), 'minecraft:overworld');
     t.equal(blocks.eventValue({PROPERTY: 'block'}, {thread: clickThread}), 'minecraft:stone');
     t.equal(blocks.eventValue({PROPERTY: 'message'}, {thread: chatThread}), 'hello');
     t.equal(blocks.eventValue({PROPERTY: 'target_block'}, {thread: projectileThread}),
@@ -1470,6 +1499,32 @@ test('one connection poller dispatches mixed b5 events with per-thread context a
     await reconnected;
     t.same(nextSocket.lastSent().params, [0], 'the new connection epoch starts from cursor zero');
     t.end();
+});
+
+test('build context updates only from a valid setter result and guards event dispatch', async t => {
+    const runtime = newEventRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const oldContext = blocks._buildContext;
+    const malformed = blocks.setDimension({DIMENSION: 'myworld:world'});
+    const malformedRequest = socket.lastSent();
+    socket.fireMessage({jsonrpc: '2.0',
+        id: malformedRequest.id,
+        result: {
+            dimension: 'myworld:world'
+        }});
+    await t.rejects(malformed, {reason: 'invalid_params'});
+    t.equal(blocks._buildContext, oldContext, 'malformed success does not change the context');
+
+    const changed = blocks.setDimension({DIMENSION: 'myworld:world'});
+    const changedRequest = socket.lastSent();
+    socket.fireMessage({jsonrpc: '2.0', id: changedRequest.id, result: dimensionFixture.custom_build_context});
+    await changed;
+    t.same(blocks._buildContext, dimensionFixture.custom_build_context);
+
+    blocks._dispatchEvent(eventFixture.poll_result.events[0]);
+    t.equal(runtime.startedEventThreads.length, 0, 'an event captured under the old context is ignored');
+    blocks._dispatchEvent(Object.assign({}, eventFixture.poll_result.events[0], dimensionFixture.custom_build_context));
+    t.equal(runtime.startedEventThreads.length, 1, 'the matching dimension and origin start the hat');
 });
 
 test('a malformed event result stops only the poller without advancing its cursor', async t => {
@@ -1685,13 +1740,17 @@ test('malformed StateText is not sent and emits an actionable local reason', t =
     })
 );
 
-test('playerAttribute reports world and position from player.getPos', t =>
+test('playerAttribute reports dimension and position from player.getPos', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.playerAttribute({PROPERTY: 'x'});
         const msg = socket.lastSent();
         t.equal(msg.method, 'player.getPos');
         t.same(msg.params, []);
-        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'overworld', pos: [5, 6, 7]}});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: msg.id,
+            result: {
+                dimension: 'minecraft:overworld', pos: [5, 6, 7]
+            }});
         return result.then(value => {
             t.equal(value, 5);
             t.end();
@@ -1699,13 +1758,33 @@ test('playerAttribute reports world and position from player.getPos', t =>
     })
 );
 
-test('playerAttribute resolves the world property', t =>
+test('playerAttribute resolves the canonical dimension property', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        const result = blocks.playerAttribute({PROPERTY: 'world'});
+        const result = blocks.playerAttribute({PROPERTY: 'dimension'});
         const msg = socket.lastSent();
-        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'nether', pos: [0, 64, 0]}});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: msg.id,
+            result: {
+                dimension: 'minecraft:the_nether', pos: [0, 64, 0]
+            }});
         return result.then(value => {
-            t.equal(value, 'nether');
+            t.equal(value, 'minecraft:the_nether');
+            t.end();
+        });
+    })
+);
+
+test('playerAttribute rejects a non-canonical dimension result', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.playerAttribute({PROPERTY: 'dimension'});
+        const msg = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0',
+            id: msg.id,
+            result: {
+                dimension: 'overworld', pos: [0, 64, 0]
+            }});
+        return result.then(value => {
+            t.equal(value, '');
             t.end();
         });
     })
@@ -1720,7 +1799,7 @@ test('playerAttribute reports yaw and pitch from player.getPose', t =>
         socket.fireMessage({
             jsonrpc: '2.0',
             id: yawMessage.id,
-            result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
+            result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
         });
         return yaw.then(yawValue => {
             t.equal(yawValue, 135);
@@ -1730,7 +1809,7 @@ test('playerAttribute reports yaw and pitch from player.getPose', t =>
             socket.fireMessage({
                 jsonrpc: '2.0',
                 id: pitchMessage.id,
-                result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
+                result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}
             });
             return pitch.then(pitchValue => {
                 t.equal(pitchValue, -20);
@@ -1759,7 +1838,11 @@ test('playerAttribute throttles monitor-driven polls to one bridge request', t =
         const monitorUtil = {thread: {updateMonitor: true}};
         const first = blocks.playerAttribute({PROPERTY: 'x'}, monitorUtil);
         const requestMsg = socket.lastSent();
-        socket.fireMessage({jsonrpc: '2.0', id: requestMsg.id, result: {world: 'overworld', pos: [5, 6, 7]}});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: requestMsg.id,
+            result: {
+                dimension: 'minecraft:overworld', pos: [5, 6, 7]
+            }});
         return first.then(value => {
             t.equal(value, 5);
             const sentBefore = socket.sent.length;
@@ -1782,7 +1865,7 @@ test('playerAttribute throttles monitor-driven pose polls separately from positi
         socket.fireMessage({
             jsonrpc: '2.0',
             id: requestMsg.id,
-            result: {world: 'overworld', pos: [5, 6, 7], yaw: 90, pitch: 15}
+            result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 90, pitch: 15}
         });
         return first.then(value => {
             t.equal(value, 90);
@@ -1797,7 +1880,7 @@ test('playerAttribute throttles monitor-driven pose polls separately from positi
                 socket.fireMessage({
                     jsonrpc: '2.0',
                     id: positionMessage.id,
-                    result: {world: 'overworld', pos: [8, 9, 10]}
+                    result: {dimension: 'minecraft:overworld', pos: [8, 9, 10]}
                 });
                 return position.then(positionValue => {
                     t.equal(positionValue, 8);
@@ -1810,37 +1893,49 @@ test('playerAttribute throttles monitor-driven pose polls separately from positi
 
 test('playerAttribute does not throttle explicit (non-monitor) calls', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        const first = blocks.playerAttribute({PROPERTY: 'world'});
+        const first = blocks.playerAttribute({PROPERTY: 'dimension'});
         const firstMsg = socket.lastSent();
-        socket.fireMessage({jsonrpc: '2.0', id: firstMsg.id, result: {world: 'overworld', pos: [0, 0, 0]}});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: firstMsg.id,
+            result: {
+                dimension: 'minecraft:overworld', pos: [0, 0, 0]
+            }});
         return first.then(() => {
-            const second = blocks.playerAttribute({PROPERTY: 'world'});
+            const second = blocks.playerAttribute({PROPERTY: 'dimension'});
             const secondMsg = socket.lastSent();
             t.not(secondMsg.id, firstMsg.id, 'a second explicit call sends its own request');
-            socket.fireMessage({jsonrpc: '2.0', id: secondMsg.id, result: {world: 'nether', pos: [0, 0, 0]}});
+            socket.fireMessage({jsonrpc: '2.0',
+                id: secondMsg.id,
+                result: {
+                    dimension: 'minecraft:the_nether', pos: [0, 0, 0]
+                }});
             return second.then(value => {
-                t.equal(value, 'nether');
+                t.equal(value, 'minecraft:the_nether');
                 t.end();
             });
         });
     })
 );
 
-test('setPlayerPos is an acknowledged request with an explicit world', t =>
+test('setPlayerPos is an acknowledged request with an explicit dimension', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
-        const result = blocks.setPlayerPos({WORLD: 'nether', X: 10, Y: 20, Z: 30});
+        const result = blocks.setPlayerPos({DIMENSION: 'the_nether', X: 10, Y: 20, Z: 30});
         const msg = socket.lastSent();
         t.equal(msg.method, 'player.setPos');
-        t.same(msg.params, ['nether', 10, 20, 30]);
-        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {world: 'nether', pos: [10, 20, 30]}});
+        t.same(msg.params, ['the_nether', 10, 20, 30]);
+        socket.fireMessage({jsonrpc: '2.0',
+            id: msg.id,
+            result: {
+                dimension: 'minecraft:the_nether', pos: [10, 20, 30]
+            }});
         return result.then(() => t.end());
     })
 );
 
-test('setPlayerPose sends world, position, yaw and pitch in one acknowledged request', t =>
+test('setPlayerPose sends dimension, position, yaw and pitch in one acknowledged request', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setPlayerPose({
-            WORLD: 'nether',
+            DIMENSION: 'the_nether',
             X: 10,
             Y: 20,
             Z: 30,
@@ -1849,28 +1944,36 @@ test('setPlayerPose sends world, position, yaw and pitch in one acknowledged req
         });
         const msg = socket.lastSent();
         t.equal(msg.method, 'player.setPose');
-        t.same(msg.params, ['nether', 10, 20, 30, 135, -20]);
+        t.same(msg.params, ['the_nether', 10, 20, 30, 135, -20]);
         socket.fireMessage({
             jsonrpc: '2.0',
             id: msg.id,
-            result: {world: 'nether', pos: [10, 20, 30], yaw: 135, pitch: -20}
+            result: {dimension: 'minecraft:the_nether', pos: [10, 20, 30], yaw: 135, pitch: -20}
         });
         return result.then(() => t.end());
     })
 );
 
-test('setPlayerXYZ fetches the current world before teleporting', t =>
+test('setPlayerXYZ fetches the current dimension before teleporting', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setPlayerXYZ({X: 10, Y: 20, Z: 30});
         const getPosMsg = socket.lastSent();
         t.equal(getPosMsg.method, 'player.getPos');
         t.same(getPosMsg.params, []);
-        socket.fireMessage({jsonrpc: '2.0', id: getPosMsg.id, result: {world: 'nether', pos: [1, 2, 3]}});
+        socket.fireMessage({jsonrpc: '2.0',
+            id: getPosMsg.id,
+            result: {
+                dimension: 'minecraft:the_nether', pos: [1, 2, 3]
+            }});
         return nextTurn().then(() => {
             const setPosMsg = socket.lastSent();
             t.equal(setPosMsg.method, 'player.setPos');
-            t.same(setPosMsg.params, ['nether', 10, 20, 30]);
-            socket.fireMessage({jsonrpc: '2.0', id: setPosMsg.id, result: {world: 'nether', pos: [10, 20, 30]}});
+            t.same(setPosMsg.params, ['minecraft:the_nether', 10, 20, 30]);
+            socket.fireMessage({jsonrpc: '2.0',
+                id: setPosMsg.id,
+                result: {
+                    dimension: 'minecraft:the_nether', pos: [10, 20, 30]
+                }});
             return result.then(() => t.end());
         });
     })

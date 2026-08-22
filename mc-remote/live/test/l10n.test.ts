@@ -20,7 +20,7 @@ describe('WireScope localization', () => {
     expect(translate('en', 'statusObserving', { count: 2, streams: 'streams' })).toBe('Observing 2 streams')
     expect(translate('ja', 'streamMain')).toBe('メインストリーム')
     expect(translate('ja', 'fieldWorldConstants')).toBe('世界定数')
-    expect(translate('ja', 'fieldWorld')).toBe('初期ワールド')
+    expect(translate('ja', 'fieldDimension')).toBe('初期次元')
     expect(translate('ja', 'fieldOrigin')).toBe('初期原点')
     expect(translate('ja', 'historyWindowTruncated', { count: 12 })).toContain('12 件')
     expect(translate('ja', 'statusDirectNavigation')).toBe(

@@ -6,6 +6,9 @@ import { parseObserverSnapshot } from '../src/observer'
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
 const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v22.json', import.meta.url))
 const spawnFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/spawn-v22.json', import.meta.url))
+const dimensionsFixturePath = fileURLToPath(
+  new URL('../../protocol/test/fixtures/dimensions-v22.json', import.meta.url),
+)
 const eventsFixture = JSON.parse(readFileSync(eventsFixturePath, 'utf8')) as {
   poll_requests: { default: unknown[]; rejected: unknown[][] }
   poll_result: Record<string, unknown>
@@ -15,6 +18,10 @@ const spawnFixture = JSON.parse(readFileSync(spawnFixturePath, 'utf8')) as {
     default_force: { params: unknown[]; result: number }
   }
   spawn_entity: { params: unknown[]; result: string; legacy_entity_first: unknown[] }
+}
+const dimensionsFixture = JSON.parse(readFileSync(dimensionsFixturePath, 'utf8')) as {
+  custom_build_context: { dimension: string; origin: number[] }
+  invalid_refs: string[]
 }
 interface MutableSnapshotFixture {
   schema_version: number
@@ -107,6 +114,35 @@ describe('observer schema v1 with the b5 compatibility-set revision', () => {
       },
     ]
     expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+  })
+
+  test('preserves a request DimensionRef and requires canonical dimension results', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'send',
+        request_id: 1,
+        method: 'build.setDimension',
+        payload: { params: ['myworld:world'] },
+      },
+      {
+        sequence: 2,
+        observed_at: 2,
+        direction: 'receive',
+        request_id: 1,
+        method: 'build.setDimension',
+        payload: { result: dimensionsFixture.custom_build_context },
+      },
+    ]
+    expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+
+    for (const ref of dimensionsFixture.invalid_refs) {
+      ;(snapshot.streams[0].frames[0] as { payload: { params: string[] } }).payload.params = [ref]
+      expect(() => parseObserverSnapshot(snapshot)).toThrow()
+    }
   })
 
   test.each(eventsFixture.poll_requests.rejected)('rejects an obsolete or malformed events.poll shape', (params) => {

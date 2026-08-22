@@ -5,6 +5,7 @@ const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
 const {createDisplayAlias} = require('./display-alias');
+const {buildContext, dimensionKey, dimensionRef, sameBuildContext} = require('./dimension');
 const {
     CatalogSource,
     CatalogStatus,
@@ -104,9 +105,9 @@ const AUTH_REASONS = [
     'token_invalid'
 ];
 
-const BuildWorld = {
+const BuildDimension = {
     OVERWORLD: 'overworld',
-    NETHER: 'nether',
+    NETHER: 'the_nether',
     THE_END: 'the_end'
 };
 
@@ -120,6 +121,31 @@ const EVENT_HAT_OPCODES = {
     block_right_click: 'mcremote_whenBlockRightClicked',
     chat_posted: 'mcremote_whenChatPosted',
     projectile_hit: 'mcremote_whenProjectileHit'
+};
+
+const playerResult = (value, includeOrientation) => {
+    const fields = includeOrientation ? ['dimension', 'pos', 'yaw', 'pitch'] : ['dimension', 'pos'];
+    if (!value || typeof value !== 'object' || Array.isArray(value) ||
+        Object.keys(value).length !== fields.length ||
+        fields.some(field => !Object.prototype.hasOwnProperty.call(value, field)) ||
+        !Array.isArray(value.pos) || value.pos.length !== 3 ||
+        value.pos.some(item => typeof item !== 'number' || !Number.isFinite(item)) ||
+        (includeOrientation &&
+            (typeof value.yaw !== 'number' || !Number.isFinite(value.yaw) ||
+                typeof value.pitch !== 'number' || !Number.isFinite(value.pitch)))) {
+        const error = new Error('Invalid player result');
+        error.reason = 'invalid_response';
+        throw error;
+    }
+    const result = {
+        dimension: dimensionKey(value.dimension, 'player result dimension'),
+        pos: value.pos.slice()
+    };
+    if (includeOrientation) {
+        result.yaw = value.yaw;
+        result.pitch = value.pitch;
+    }
+    return result;
 };
 
 /**
@@ -136,8 +162,8 @@ const EVENT_HAT_OPCODES = {
  * `method` is the dot-namespaced command (TCP command names, direct):
  *
  *   hello           object params (auth + build context)        -> reply
- *   build.setWorld  [dimension]                                  -> reply
- *   build.setOrigin [x, y, z]                                    -> reply
+ *   build.setDimension [DimensionRef]                             -> BuildContext
+ *   build.setOrigin [x, y, z]                                    -> BuildContext
  *   chat.post       ["msg"]                                      -> reply
  *   world.setBlock  [x, y, z, {block_id,state}]                  -> null
  *   world.setBlocks [x1, y1, z1, x2, y2, z2, {block_id,state}]  -> null
@@ -147,10 +173,10 @@ const EVENT_HAT_OPCODES = {
  *   world.spawnParticle [x, y, z, ox, oy, oz, particle, speed, count, (force)] -> accepted count
  *   world.spawnEntity [x, y, z, entity]                          -> entity handle
  *   connection.flush []                                          -> null
- *   player.getPos   []         => {world, pos:[x,y,z]}            -> reply
- *   player.setPos   [world, x, y, z]                               -> reply
- *   player.getPose  []         => {world, pos:[x,y,z], yaw, pitch} -> reply
- *   player.setPose  [world, x, y, z, yaw, pitch]                   -> reply
+ *   player.getPos   []         => {dimension, pos:[x,y,z]}        -> reply
+ *   player.setPos   [dimension, x, y, z]                          -> reply
+ *   player.getPose  []         => {dimension, pos:[x,y,z], yaw, pitch} -> reply
+ *   player.setPose  [dimension, x, y, z, yaw, pitch]              -> reply
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
@@ -159,8 +185,8 @@ const EVENT_HAT_OPCODES = {
  * the plugin performs final registry validation and returns full BlockValue.
  * Scratch keeps build-origin y sealed
  * and sends 0 for `build.setOrigin` y. `player.*` coordinates share the same
- * build-origin delta but do not depend on the world set by `build.setWorld`;
- * the world is explicit in both `player.getPos`'s result and `player.setPos`'s
+ * build-origin delta but do not depend on the dimension set by `build.setDimension`;
+ * the dimension is explicit in both `player.getPos`'s result and `player.setPos`'s
  * params. Command blocks use id-bearing requests so success/error can be
  * observed during release-gate testing. FAST sends setters as notifications;
  * DEBUG and TRACE use requests, and TRACE waits on the calling Scratch thread
@@ -275,6 +301,9 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._helloInfo = null;
+
+        /** Canonical build context confirmed by hello or a successful setter. */
+        this._buildContext = null;
 
         /**
          * Catalog state exposed to the Scratch picker. Catalog data exists only
@@ -459,18 +488,18 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
-                    opcode: 'setWorld',
+                    opcode: 'setDimension',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
-                        id: 'mcremote.setWorld',
-                        default: 'set build world to [WORLD]',
+                        id: 'mcremote.setDimension',
+                        default: 'set build dimension to [DIMENSION]',
                         description: 'Set the Minecraft dimension used by build commands'
                     }),
                     arguments: {
-                        WORLD: {
+                        DIMENSION: {
                             type: ArgumentType.STRING,
-                            menu: 'worlds',
-                            defaultValue: BuildWorld.OVERWORLD
+                            menu: 'dimensions',
+                            defaultValue: BuildDimension.OVERWORLD
                         }
                     }
                 },
@@ -820,14 +849,14 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerPos',
-                        default: 'move player to [WORLD] x:[X] y:[Y] z:[Z]',
+                        default: 'move player to [DIMENSION] x:[X] y:[Y] z:[Z]',
                         description: 'Teleport the paired player to a dimension and position'
                     }),
                     arguments: {
-                        WORLD: {
+                        DIMENSION: {
                             type: ArgumentType.STRING,
-                            menu: 'worlds',
-                            defaultValue: BuildWorld.OVERWORLD
+                            menu: 'dimensions',
+                            defaultValue: BuildDimension.OVERWORLD
                         },
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
@@ -839,14 +868,14 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerPose',
-                        default: 'move player to [WORLD] x:[X] y:[Y] z:[Z] yaw:[YAW] pitch:[PITCH]',
+                        default: 'move player to [DIMENSION] x:[X] y:[Y] z:[Z] yaw:[YAW] pitch:[PITCH]',
                         description: 'Teleport the paired player to a dimension, position and orientation'
                     }),
                     arguments: {
-                        WORLD: {
+                        DIMENSION: {
                             type: ArgumentType.STRING,
-                            menu: 'worlds',
-                            defaultValue: BuildWorld.OVERWORLD
+                            menu: 'dimensions',
+                            defaultValue: BuildDimension.OVERWORLD
                         },
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
@@ -876,7 +905,7 @@ class Scratch3McRemoteBlocks {
                     items: [
                         menuItem('mcremote.eventValue.sequence', 'sequence', 'sequence'),
                         menuItem('mcremote.eventValue.type', 'event type', 'type'),
-                        menuItem('mcremote.eventValue.world', 'dimension', 'world'),
+                        menuItem('mcremote.eventValue.dimension', 'dimension', 'dimension'),
                         menuItem('mcremote.eventValue.x', 'x position', 'x'),
                         menuItem('mcremote.eventValue.y', 'y position', 'y'),
                         menuItem('mcremote.eventValue.z', 'z position', 'z'),
@@ -963,11 +992,11 @@ class Scratch3McRemoteBlocks {
                     items: [
                         {
                             text: formatMessage({
-                                id: 'mcremote.playerAttribute.world',
+                                id: 'mcremote.playerAttribute.dimension',
                                 default: 'dimension',
                                 description: 'Menu label for the paired player\'s current Minecraft dimension'
                             }),
-                            value: 'world'
+                            value: 'dimension'
                         },
                         {
                             text: formatMessage({
@@ -1011,32 +1040,32 @@ class Scratch3McRemoteBlocks {
                         }
                     ]
                 },
-                worlds: {
+                dimensions: {
                     acceptReporters: true,
                     items: [
                         {
                             text: formatMessage({
-                                id: 'mcremote.world.overworld',
+                                id: 'mcremote.dimension.overworld',
                                 default: 'overworld',
                                 description: 'Menu label for the Minecraft overworld dimension'
                             }),
-                            value: BuildWorld.OVERWORLD
+                            value: BuildDimension.OVERWORLD
                         },
                         {
                             text: formatMessage({
-                                id: 'mcremote.world.nether',
+                                id: 'mcremote.dimension.nether',
                                 default: 'nether',
                                 description: 'Menu label for the Minecraft nether dimension'
                             }),
-                            value: BuildWorld.NETHER
+                            value: BuildDimension.NETHER
                         },
                         {
                             text: formatMessage({
-                                id: 'mcremote.world.theEnd',
+                                id: 'mcremote.dimension.theEnd',
                                 default: 'the End',
                                 description: 'Menu label for the Minecraft the_end dimension'
                             }),
-                            value: BuildWorld.THE_END
+                            value: BuildDimension.THE_END
                         }
                     ]
                 }
@@ -1147,6 +1176,7 @@ class Scratch3McRemoteBlocks {
         this._streamId = DEFAULT_STREAM_ID;
         this._displayAlias = '';
         this._helloInfo = null;
+        this._buildContext = null;
         this._lastError = null;
         this._frameLog = [];
         this._frameSequence = 0;
@@ -1341,6 +1371,10 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _recordHelloInfo (result) {
+        const confirmedContext = buildContext({
+            dimension: result && result.dimension,
+            origin: result && result.origin
+        }, 'hello result build context');
         const worldConstants = result && typeof result === 'object' && result.world_constants ?
             result.world_constants :
             result && typeof result === 'object' && Object.prototype.hasOwnProperty.call(result, 'y_sea') ?
@@ -1355,9 +1389,10 @@ class Scratch3McRemoteBlocks {
                 [],
             world_constants: worldConstants,
             permissions: result.permissions || null,
-            ...(typeof result.world === 'string' ? {world: result.world} : {}),
-            ...(Array.isArray(result.origin) && result.origin.length === 3 ? {origin: result.origin.slice()} : {})
+            dimension: confirmedContext.dimension,
+            origin: confirmedContext.origin.slice()
         } : null;
+        this._buildContext = confirmedContext;
     }
 
     /**
@@ -1512,6 +1547,7 @@ class Scratch3McRemoteBlocks {
                 error.reason = event && event.reason;
                 this._socket = null;
                 this._displayAlias = '';
+                this._buildContext = null;
                 this._blockInfoMonitorCache.clear();
                 this._blockInfoMonitorPending.clear();
                 this._heightMonitorCache.clear();
@@ -1864,6 +1900,7 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _dispatchEvent (event) {
+        if (!sameBuildContext(event, this._buildContext)) return;
         const opcode = EVENT_HAT_OPCODES[event.type];
         if (!opcode || !this.runtime || typeof this.runtime.startHats !== 'function') return;
         this.runtime.startHats(opcode, {}, null, {
@@ -2251,14 +2288,27 @@ class Scratch3McRemoteBlocks {
         return readEventStatusValue(this._eventStatus, Cast.toString(args.PROPERTY));
     }
 
-    setWorld (args) {
-        return this._commandRequest('build.setWorld', [
-            Cast.toString(args.WORLD)
-        ]);
+    _setBuildContext (method, params) {
+        return this._request(method, params).then(result => {
+            this._buildContext = buildContext(result, `${method} result`);
+        }, error => {
+            log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
+        });
+    }
+
+    setDimension (args) {
+        let dimension;
+        try {
+            dimension = dimensionRef(Cast.toString(args.DIMENSION));
+        } catch (error) {
+            log.warn(`McRemote: build.setDimension failed: ${error.reason || error.message}`);
+            return Promise.resolve();
+        }
+        return this._setBuildContext('build.setDimension', [dimension]);
     }
 
     setBuildOrigin (args) {
-        return this._commandRequest('build.setOrigin', [
+        return this._setBuildContext('build.setOrigin', [
             Cast.toNumber(args.X),
             0,
             Cast.toNumber(args.Z)
@@ -2623,7 +2673,7 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
-     * Fetch the paired player's current world/position. Monitor-driven calls
+     * Fetch the paired player's current dimension/position. Monitor-driven calls
      * (a checked stage monitor re-evaluates its reporter on every runtime
      * step) reuse a cached result for PLAYER_POS_MONITOR_THROTTLE_MS instead
      * of issuing a fresh bridge request; explicit script calls always fetch.
@@ -2638,13 +2688,14 @@ class Scratch3McRemoteBlocks {
             return Promise.resolve(this._playerPosCache.result);
         }
         return this._request('player.getPos', []).then(result => {
-            this._playerPosCache = {result, fetchedAt: Date.now()};
-            return result;
+            const parsed = playerResult(result, false);
+            this._playerPosCache = {result: parsed, fetchedAt: Date.now()};
+            return parsed;
         });
     }
 
     /**
-     * Fetch the paired player's current world, position and orientation.
+     * Fetch the paired player's current dimension, position and orientation.
      * Monitor-driven calls share a short-lived pose cache; explicit script
      * calls always fetch.
      * @param {BlockUtility} util - execution context for this block call.
@@ -2658,8 +2709,9 @@ class Scratch3McRemoteBlocks {
             return Promise.resolve(this._playerPoseCache.result);
         }
         return this._request('player.getPose', []).then(result => {
-            this._playerPoseCache = {result, fetchedAt: Date.now()};
-            return result;
+            const parsed = playerResult(result, true);
+            this._playerPoseCache = {result: parsed, fetchedAt: Date.now()};
+            return parsed;
         });
     }
 
@@ -2669,8 +2721,8 @@ class Scratch3McRemoteBlocks {
             this._getPlayerPose(util) :
             this._getPlayerPos(util);
         return request.then(result => {
-            if (property === 'world') {
-                return result && result.world ? result.world : '';
+            if (property === 'dimension') {
+                return result.dimension;
             }
             if (property === 'yaw' || property === 'pitch') {
                 return result && typeof result[property] === 'number' ? result[property] : '';
@@ -2684,7 +2736,7 @@ class Scratch3McRemoteBlocks {
 
     setPlayerPos (args) {
         return this._commandRequest('player.setPos', [
-            Cast.toString(args.WORLD),
+            dimensionRef(Cast.toString(args.DIMENSION)),
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z)
@@ -2693,7 +2745,7 @@ class Scratch3McRemoteBlocks {
 
     setPlayerPose (args) {
         return this._commandRequest('player.setPose', [
-            Cast.toString(args.WORLD),
+            dimensionRef(Cast.toString(args.DIMENSION)),
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
             Cast.toNumber(args.Z),
@@ -2705,7 +2757,7 @@ class Scratch3McRemoteBlocks {
     setPlayerXYZ (args) {
         return this._request('player.getPos', []).then(
             result => this._commandRequest('player.setPos', [
-                result && result.world,
+                playerResult(result, false).dimension,
                 Cast.toNumber(args.X),
                 Cast.toNumber(args.Y),
                 Cast.toNumber(args.Z)

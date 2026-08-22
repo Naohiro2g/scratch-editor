@@ -49,7 +49,7 @@ describe('McRemote Japanese localization', () => {
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',
-            'mcremote.setWorld': 'けんちくワールドを [WORLD] にする',
+            'mcremote.setDimension': 'けんちくするじげんを [DIMENSION] にする',
             'mcremote.setBuildMode':
                 'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
             'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ'

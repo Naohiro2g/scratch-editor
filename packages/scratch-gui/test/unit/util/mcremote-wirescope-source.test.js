@@ -3,6 +3,7 @@ import {
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
 import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v22.json';
+import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 
 const connectedObservation = () => ({
@@ -18,7 +19,7 @@ const connectedObservation = () => ({
         supported_mc_versions: ['1.21.11'],
         catalogHash: null,
         world_constants: {y_sea: 62, future_secret: 'no'},
-        world: 'overworld',
+        dimension: 'minecraft:overworld',
         origin: [200, 0, 200],
         player: 'player-uuid',
         permissions: {
@@ -83,7 +84,7 @@ describe('McRemote WireScope source adapter', () => {
                 kind: 'main',
                 hello: {
                     protocol: '22.0.0',
-                    world: 'overworld',
+                    dimension: 'minecraft:overworld',
                     origin: [200, 0, 200],
                     permissions: {online: true, offline: false, build_range: 100}
                 }
@@ -216,7 +217,7 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             id: 4,
             method: 'player.getPose',
-            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+            payload: {result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
         });
 
         const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
@@ -233,8 +234,33 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             request_id: 4,
             method: 'player.getPose',
-            payload: {result: {world: 'overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
+            payload: {result: {dimension: 'minecraft:overworld', pos: [5, 6, 7], yaw: 135, pitch: -20}}
         }]);
+    });
+
+    test('preserves a raw DimensionRef and validates the canonical setter result', () => {
+        const observation = connectedObservation();
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: 'build.setDimension',
+            payload: {params: ['myworld:world']}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'build.setDimension',
+            payload: {result: dimensionFixture.custom_build_context}
+        });
+
+        const frames = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames.slice(-2);
+        expect(frames[0].payload).toEqual({params: ['myworld:world']});
+        expect(frames[1].payload).toEqual({result: dimensionFixture.custom_build_context});
     });
 
     test('projects height and coordinate-first spawn requests and results', () => {

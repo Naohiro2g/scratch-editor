@@ -4,6 +4,7 @@
  * b1 to the final form — clients read whether `catalogHash` is filled, not
  * whether fields exist.
  */
+import type { DimensionKey, DimensionRef } from './commands'
 
 /** Build origin as an absolute `[x, y, z]` triple. */
 export type Origin = readonly [x: number, y: number, z: number]
@@ -21,7 +22,7 @@ export interface HelloAuth {
 
 /** Build context. Omitted means overworld at origin (200, 0, 200). */
 export interface BuildContext {
-  world?: string
+  dimension?: DimensionRef
   origin?: Origin
 }
 
@@ -58,8 +59,8 @@ export interface HelloResult {
   world_constants: WorldConstants
   session?: string
   player?: string
-  world?: string
-  origin?: Origin
+  dimension: DimensionKey
+  origin: Origin
   permissions?: HelloPermissions
   server?: string
 }

@@ -24,7 +24,7 @@
       {
         "sequence": 1,
         "type": "block_right_click",
-        "world": "world",
+        "dimension": "minecraft:overworld",
         "origin": [200, 0, 200],
         "pos": [1, 2, 3],
         "face": "up",
@@ -34,14 +34,14 @@
       {
         "sequence": 2,
         "type": "chat_posted",
-        "world": "world",
+        "dimension": "minecraft:overworld",
         "origin": [200, 0, 200],
         "message": "hello"
       },
       {
         "sequence": 3,
         "type": "projectile_hit",
-        "world": "world",
+        "dimension": "minecraft:overworld",
         "origin": [200, 0, 200],
         "projectile": "minecraft:arrow",
         "pos": [1.235, 0, -1.235],

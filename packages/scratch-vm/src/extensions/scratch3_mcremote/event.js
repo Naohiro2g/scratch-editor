@@ -1,4 +1,5 @@
 const {formatBlockInfoText} = require('./block-value');
+const {dimensionKey} = require('./dimension');
 
 const POLL_RESULT_FIELDS = [
     'events',
@@ -85,11 +86,11 @@ const face = (value, context) => {
 };
 
 const commonEvent = (value, fields, context) => {
-    exactFields(value, ['sequence', 'type', 'world', 'origin', ...fields], context);
+    exactFields(value, ['sequence', 'type', 'dimension', 'origin', ...fields], context);
     return {
         sequence: integer(value.sequence, `${context}.sequence`, 1),
         type: requiredString(value.type, `${context}.type`),
-        world: requiredString(value.world, `${context}.world`),
+        dimension: dimensionKey(value.dimension, `${context}.dimension`),
         origin: tuple(value.origin, `${context}.origin`, integer)
     };
 };
@@ -220,7 +221,7 @@ const eventValue = (event, property) => {
     switch (property) {
     case 'sequence': return event.sequence;
     case 'type': return event.type;
-    case 'world': return event.world;
+    case 'dimension': return event.dimension;
     case 'origin_x': return at(event.origin, 0);
     case 'origin_y': return at(event.origin, 1);
     case 'origin_z': return at(event.origin, 2);

@@ -37,7 +37,7 @@ test('event values are read from one immutable thread DTO without network parsin
     const click = parsed.events[0];
     const projectile = parsed.events[2];
     t.equal(eventValue(click, 'sequence'), 1);
-    t.equal(eventValue(click, 'world'), 'world');
+    t.equal(eventValue(click, 'dimension'), 'minecraft:overworld');
     t.equal(eventValue(click, 'x'), 1);
     t.equal(eventValue(click, 'origin_x'), 200);
     t.equal(eventValue(click, 'block'), 'minecraft:stone');
@@ -45,7 +45,7 @@ test('event values are read from one immutable thread DTO without network parsin
     t.equal(eventValue(projectile, 'target_z'), 6);
     t.equal(eventValue(projectile, 'target_block'), 'minecraft:oak_log[axis=z]');
     t.equal(eventValue(parsed.events[1], 'message'), 'hello');
-    t.equal(eventValue(null, 'world'), '');
+    t.equal(eventValue(null, 'dimension'), '');
     t.end();
 });
 

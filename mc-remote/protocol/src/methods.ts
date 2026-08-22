@@ -6,7 +6,7 @@ export const Method = {
   hello: 'hello',
   catalogGet: 'catalog.get',
   chatPost: 'chat.post',
-  buildSetWorld: 'build.setWorld',
+  buildSetDimension: 'build.setDimension',
   buildSetOrigin: 'build.setOrigin',
   worldSetBlock: 'world.setBlock',
   worldSetBlocks: 'world.setBlocks',

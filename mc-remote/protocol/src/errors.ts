@@ -30,7 +30,7 @@ export const ErrorReason = {
   buildDenied: 'build_denied',
   permissionDenied: 'permission_denied',
   playerOffline: 'player_offline',
-  unknownWorld: 'unknown_world',
+  unknownDimension: 'unknown_dimension',
   teleportFailed: 'teleport_failed',
   heightNotFound: 'height_not_found',
   unknownParticle: 'unknown_particle',
@@ -43,7 +43,7 @@ export const ErrorReason = {
   entityHandleNotFound: 'entity_handle_not_found',
   entityRemoved: 'entity_removed',
   entityUnloaded: 'entity_unloaded',
-  entityWorldChanged: 'entity_world_changed',
+  entityDimensionChanged: 'entity_dimension_changed',
   entitySpawnFailed: 'entity_spawn_failed',
   internalError: 'internal_error',
 } as const
@@ -56,7 +56,7 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.unknownBlock]: ErrorCode.invalidParams,
   [ErrorReason.unknownProperty]: ErrorCode.invalidParams,
   [ErrorReason.invalidPropertyValue]: ErrorCode.invalidParams,
-  [ErrorReason.unknownWorld]: ErrorCode.invalidParams,
+  [ErrorReason.unknownDimension]: ErrorCode.invalidParams,
   [ErrorReason.unknownParticle]: ErrorCode.invalidParams,
   [ErrorReason.particleDataRequired]: ErrorCode.invalidParams,
   [ErrorReason.unknownEntity]: ErrorCode.invalidParams,
@@ -72,7 +72,7 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.entityHandleNotFound]: ErrorCode.serverError,
   [ErrorReason.entityRemoved]: ErrorCode.serverError,
   [ErrorReason.entityUnloaded]: ErrorCode.serverError,
-  [ErrorReason.entityWorldChanged]: ErrorCode.serverError,
+  [ErrorReason.entityDimensionChanged]: ErrorCode.serverError,
   [ErrorReason.entitySpawnFailed]: ErrorCode.serverError,
   [ErrorReason.internalError]: ErrorCode.internalError,
 }
@@ -82,6 +82,7 @@ export interface ProtocolErrorData {
   reason: ErrorReason
   path?: string
   block_id?: string
+  dimension?: string
   property?: string
   value?: boolean | number | string
   /** Allowed values; returned for `invalid_property_value` when known. */
