@@ -269,6 +269,53 @@
   background-image: url("./icon--mystuff.png");
 }
 
+.local-project-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.local-project-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+}
+
+.local-project-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 1ch;
+    line-height: 1.3;
+    margin-top: 0.4rem;
+}
+
+.local-project-meta {
+    font-weight: normal;
+    font-size: 0.7rem;
+    color: $ui-white-dim;
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+    padding-left: 2ch;
+    line-height: 1.2;
+    margin-top: -1px;
+}
+
+.local-project-delete {
+    flex: 0 0 auto;
+    background: transparent;
+    border: none;
+    color: $ui-white-dim;
+    cursor: pointer;
+    font-weight: bold;
+    padding: 0 0.25rem;
+}
+
+.local-project-delete:hover {
+    color: $red-primary;
+}
+
 .collapsible-label {
     margin: 0 .5rem 0 .25rem;
 }

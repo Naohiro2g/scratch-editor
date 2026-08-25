@@ -21,6 +21,7 @@ import {handleFileUpload, spriteUpload} from '../lib/file-uploader.js';
 import sharedMessages from '../lib/shared-messages';
 import {emptySprite} from '../lib/empty-assets';
 import {highlightTarget} from '../reducers/targets';
+import {requestSaveLocalSprite} from '../reducers/local-sprites';
 import {fetchSprite, fetchCode} from '../lib/backpack-api';
 import randomizeSpritePosition from '../lib/randomize-sprite-position';
 import downloadBlob from '../lib/download-blob';
@@ -349,7 +350,8 @@ const mapDispatchToProps = dispatch => ({
         dispatch(highlightTarget(id));
     },
     onCloseImporting: () => dispatch(closeAlertWithId('importingAsset')),
-    onShowImporting: () => dispatch(showStandardAlert('importingAsset'))
+    onShowImporting: () => dispatch(showStandardAlert('importingAsset')),
+    onSaveSpriteToBrowser: id => dispatch(requestSaveLocalSprite(id))
 });
 
 const mergeProps = (stateProps, dispatchProps, ownProps) => ({

@@ -79,7 +79,8 @@ const SpriteSelectorItem = props => {
                     ) : null}
                 </div>
             </ContextMenu.Trigger>
-            {(props.onDuplicateButtonClick || props.onDeleteButtonClick || props.onExportButtonClick) && (
+            {(props.onDuplicateButtonClick || props.onDeleteButtonClick ||
+                props.onExportButtonClick || props.onSaveToBrowserButtonClick) && (
                 <ContextMenu.Portal>
                     <ContextMenu.Content
                         className={contextMenuStyles.contextMenuContent}
@@ -101,6 +102,15 @@ const SpriteSelectorItem = props => {
                                     defaultMessage="export"
                                     description="Menu item to export the selected item"
                                     id="gui.spriteSelectorItem.contextMenuExport"
+                                />
+                            </MenuItem>
+                        )}
+                        {props.onSaveToBrowserButtonClick && (
+                            <MenuItem onClick={props.onSaveToBrowserButtonClick}>
+                                <FormattedMessage
+                                    defaultMessage="save to browser"
+                                    description="Menu item to save the selected sprite to this browser"
+                                    id="gui.spriteSelectorItem.contextMenuSaveToBrowser"
                                 />
                             </MenuItem>
                         )}
@@ -131,6 +141,7 @@ SpriteSelectorItem.propTypes = {
     onDeleteButtonClick: PropTypes.func,
     onDuplicateButtonClick: PropTypes.func,
     onExportButtonClick: PropTypes.func,
+    onSaveToBrowserButtonClick: PropTypes.func,
     onMouseDown: PropTypes.func,
     onPointerEnter: PropTypes.func,
     onPointerLeave: PropTypes.func,

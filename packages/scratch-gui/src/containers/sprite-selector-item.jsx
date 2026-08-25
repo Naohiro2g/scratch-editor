@@ -25,6 +25,7 @@ class SpriteSelectorItem extends React.PureComponent {
             'handleClick',
             'handleDuplicate',
             'handleExport',
+            'handleSaveToBrowser',
             'handlePointerEnter',
             'handlePointerLeave',
             'handleMouseDown',
@@ -113,6 +114,10 @@ class SpriteSelectorItem extends React.PureComponent {
         e.stopPropagation();
         this.props.onExportButtonClick(this.props.id);
     }
+    handleSaveToBrowser (e) {
+        e.stopPropagation();
+        this.props.onSaveToBrowserButtonClick(this.props.id);
+    }
     handlePointerLeave () {
         this.props.dispatchSetHoveredSprite(null);
     }
@@ -148,6 +153,7 @@ class SpriteSelectorItem extends React.PureComponent {
             onDeleteButtonClick,
             onDuplicateButtonClick,
             onExportButtonClick,
+            onSaveToBrowserButtonClick,
             dragPayload,
             receivedBlocks,
             costumeURL,
@@ -172,6 +178,7 @@ class SpriteSelectorItem extends React.PureComponent {
                 onDeleteButtonClick={onDeleteButtonClick ? this.handleDeleteButtonClick : null}
                 onDuplicateButtonClick={onDuplicateButtonClick ? this.handleDuplicate : null}
                 onExportButtonClick={onExportButtonClick ? this.handleExport : null}
+                onSaveToBrowserButtonClick={onSaveToBrowserButtonClick ? this.handleSaveToBrowser : null}
                 onMouseDown={this.handleMouseDown}
                 onPointerEnter={this.handlePointerEnter}
                 onPointerLeave={this.handlePointerLeave}
@@ -198,6 +205,7 @@ SpriteSelectorItem.propTypes = {
     onDrag: PropTypes.func.isRequired,
     onDuplicateButtonClick: PropTypes.func,
     onExportButtonClick: PropTypes.func,
+    onSaveToBrowserButtonClick: PropTypes.func,
     receivedBlocks: PropTypes.bool.isRequired,
     selected: PropTypes.bool,
     withDeleteConfirmation: PropTypes.bool,
