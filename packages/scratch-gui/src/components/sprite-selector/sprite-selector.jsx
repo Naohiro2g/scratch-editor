@@ -58,6 +58,7 @@ const SpriteSelectorComponent = function (props) {
         onFileUploadClick,
         onNewSpriteClick,
         onPaintSpriteClick,
+        onSaveSpriteToBrowser,
         onSelectSprite,
         onSpriteUpload,
         onSurpriseSpriteClick,
@@ -110,6 +111,7 @@ const SpriteSelectorComponent = function (props) {
                 onDrop={onDrop}
                 onDuplicateSprite={onDuplicateSprite}
                 onExportSprite={onExportSprite}
+                onSaveSpriteToBrowser={onSaveSpriteToBrowser}
                 onSelectSprite={onSelectSprite}
             />
             <ActionMenu
@@ -166,6 +168,7 @@ SpriteSelectorComponent.propTypes = {
     onFileUploadClick: PropTypes.func,
     onNewSpriteClick: PropTypes.func,
     onPaintSpriteClick: PropTypes.func,
+    onSaveSpriteToBrowser: PropTypes.func,
     onSelectSprite: PropTypes.func,
     onSpriteUpload: PropTypes.func,
     onSurpriseSpriteClick: PropTypes.func,
