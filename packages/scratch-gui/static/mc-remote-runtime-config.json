@@ -12,6 +12,7 @@
   "wirescope_url": "http://127.0.0.1:4173/",
   "release_identity": "2200.0.0b5",
   "homepage_url": "https://mc-remote.com/",
+  "storage_persist_enabled": true,
   "notices": [
     {
       "heading": "今後のリリース予定",
