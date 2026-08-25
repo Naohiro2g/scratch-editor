@@ -14,6 +14,7 @@ const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     connectionEnabled: true,
     wireScopeUrl: null,
     releaseIdentity: 'embedded-default',
+    homepageUrl: null,
     notices: EMPTY_NOTICES
 });
 
@@ -145,6 +146,14 @@ const normalizeRuntimeConfig = (...[value]) => {
         }
         wireScopeUrl = candidate.toString();
     }
+    let homepageUrl = null;
+    if (typeof value.homepage_url !== 'undefined' && value.homepage_url !== null) {
+        const candidate = new URL(value.homepage_url);
+        if (candidate.protocol !== 'https:' && candidate.protocol !== 'http:') {
+            throw new Error('homepage_url must use http or https');
+        }
+        homepageUrl = candidate.toString();
+    }
     const notices = normalizeNotices(value.notices);
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
@@ -153,6 +162,7 @@ const normalizeRuntimeConfig = (...[value]) => {
         connectionEnabled: value.connection_enabled,
         wireScopeUrl,
         releaseIdentity: value.release_identity.trim(),
+        homepageUrl,
         notices
     });
 };
