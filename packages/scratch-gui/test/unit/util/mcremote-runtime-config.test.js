@@ -35,6 +35,7 @@ describe('McRemote runtime config', () => {
             connectionEnabled: true,
             wireScopeUrl: 'https://wirescope.classroom.example/live',
             releaseIdentity: 'release-123',
+            homepageUrl: null,
             notices: []
         });
         expect(global.fetch).toHaveBeenCalledWith(
@@ -248,6 +249,67 @@ describe('McRemote runtime config', () => {
             releaseIdentity: 'runtime-config-unavailable'
         });
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('notices[0].link.href'));
+        warn.mockRestore();
+    });
+
+    test('normalizes an optional homepage_url', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                bridge_url: 'wss://bridge.mc-remote.com',
+                default_sandbox: 'sb.mc-remote.com',
+                connection_targets: [{id: 'stable', label: 'Stable', sandbox: 'sb.mc-remote.com'}],
+                connection_enabled: true,
+                release_identity: 'release-123',
+                homepage_url: 'https://mc-remote.com/'
+            })
+        });
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            homepageUrl: 'https://mc-remote.com/'
+        });
+    });
+
+    test('defaults homepageUrl to null when homepage_url is absent', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                bridge_url: 'wss://bridge.mc-remote.com',
+                default_sandbox: 'sb.mc-remote.com',
+                connection_targets: [{id: 'stable', label: 'Stable', sandbox: 'sb.mc-remote.com'}],
+                connection_enabled: true,
+                release_identity: 'release-123'
+            })
+        });
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            homepageUrl: null
+        });
+    });
+
+    test('fails closed when homepage_url uses a non-http(s) scheme', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve({
+                bridge_url: 'wss://bridge.mc-remote.com',
+                default_sandbox: 'sb.mc-remote.com',
+                connection_targets: [{id: 'stable', label: 'Stable', sandbox: 'sb.mc-remote.com'}],
+                connection_enabled: true,
+                release_identity: 'release-123',
+                homepage_url: 'ftp://mc-remote.com/'
+            })
+        });
+        const log = require('../../../src/lib/log.js').default;
+        const warn = jest.spyOn(log, 'warn').mockImplementation(() => {});
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            connectionEnabled: false,
+            releaseIdentity: 'runtime-config-unavailable'
+        });
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('homepage_url'));
         warn.mockRestore();
     });
 });

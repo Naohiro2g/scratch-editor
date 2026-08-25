@@ -14,8 +14,13 @@ jest.mock('../../../src/lib/mcremote-runtime-config.js', () => ({
 const {getMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
 
 describe('NoticeOverlay', () => {
-    const renderOverlay = function (notices, props = {}) {
-        getMcRemoteRuntimeConfig.mockReturnValue({notices});
+    const renderOverlay = function (notices, props = {}, runtimeConfig = {}) {
+        getMcRemoteRuntimeConfig.mockReturnValue({
+            notices,
+            releaseIdentity: 'release-123',
+            homepageUrl: null,
+            ...runtimeConfig
+        });
         return renderWithIntl(
             <NoticeOverlay {...props} />,
             {locale: 'ja', messages: mcremoteMessages.ja}
@@ -26,9 +31,20 @@ describe('NoticeOverlay', () => {
         getMcRemoteRuntimeConfig.mockReset();
     });
 
-    test('renders nothing when there are no notices', () => {
-        const {container} = renderOverlay([]);
-        expect(container).toBeEmptyDOMElement();
+    test('always shows the fixed version footer, even with no deployment notices', () => {
+        renderOverlay([]);
+        expect(screen.getByText('バージョン release-123')).toBeInTheDocument();
+    });
+
+    test('shows a homepage link in the footer only when homepageUrl is configured', () => {
+        renderOverlay([], {}, {homepageUrl: 'https://mc-remote.com/'});
+        const link = screen.getByRole('link', {name: 'ホームページ'});
+        expect(link).toHaveAttribute('href', 'https://mc-remote.com/');
+    });
+
+    test('omits the homepage link when homepageUrl is not configured', () => {
+        renderOverlay([]);
+        expect(screen.queryByRole('link', {name: 'ホームページ'})).not.toBeInTheDocument();
     });
 
     test('starts open and shows heading, body, and an optional link', () => {

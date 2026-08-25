@@ -1,11 +1,17 @@
 /**
- * Fork-local translations for the McRemote extension.
+ * Fork-local translations.
  *
  * The published scratch-l10n catalog does not carry this fork's strings, so we
  * merge these into the locale catalog ourselves (see reducers/locales.js). The
  * same catalog feeds both react-intl (the `gui.extension.mcremote.*` library
- * tile) and the VM's format-message (the `mcremote.*` block labels), so one
- * entry per id covers both.
+ * tile, and any other fork-added `gui.*` string) and the VM's format-message
+ * (the `mcremote.*` block labels), so one entry per id covers both.
+ *
+ * Most entries here are McRemote-extension-specific, but this file also
+ * carries translations for a few pre-existing upstream Scratch string ids
+ * that scratch-l10n's Japanese catalog happens not to include yet (e.g.
+ * `gui.sharedMessages.loadFromComputerTitle`, `gui.menuBar.theme`,
+ * `gui.menuBar.colorMode`) — same mechanism, just not a fork addition.
  *
  * English is defined where the strings live (`defaultMessage` in the extension
  * library entry, `default:` in the VM extension's getInfo) and is used as the
@@ -19,6 +25,19 @@
  */
 const mcremoteMessages = {
     'ja': {
+        // Editor UI strings (not McRemote-specific) that scratch-l10n's ja
+        // catalog doesn't carry yet.
+        'gui.sharedMessages.loadFromComputerTitle': 'コンピューターから読み込む',
+        'gui.menuBar.theme': 'テーマ',
+        'gui.menuBar.colorMode': 'カラーモード',
+        // Local project/sprite browser save (McRemote save-track entry gate / b6).
+        'gui.menuBar.browserSavedProjects': 'ブラウザに保存した作品',
+        'gui.menuBar.deleteBrowserSavedProject': 'このブラウザ保存の作品を削除する',
+        'gui.menuBar.browserSavedSprites': 'ブラウザに保存したスプライト',
+        'gui.menuBar.deleteBrowserSavedSprite': 'このブラウザ保存のスプライトを削除する',
+        'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザ保存',
+        'gui.mcremote.notice.version': 'バージョン {version}',
+        'gui.mcremote.notice.homepageLink': 'ホームページ',
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft の操作が無効です。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「接続する」ブロックを実行してください。',
@@ -92,6 +111,19 @@ const mcremoteMessages = {
         'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へ移動する'
     },
     'ja-Hira': {
+        // Editor UI strings (not McRemote-specific) that scratch-l10n's
+        // ja-Hira catalog doesn't carry yet.
+        'gui.sharedMessages.loadFromComputerTitle': 'コンピューターからよみこむ',
+        'gui.menuBar.theme': 'テーマ',
+        'gui.menuBar.colorMode': 'カラーモード',
+        // Local project/sprite browser save (McRemote save-track entry gate / b6).
+        'gui.menuBar.browserSavedProjects': 'ブラウザにほぞんしたさくひん',
+        'gui.menuBar.deleteBrowserSavedProject': 'このブラウザほぞんのさくひんをけす',
+        'gui.menuBar.browserSavedSprites': 'ブラウザにほぞんしたスプライト',
+        'gui.menuBar.deleteBrowserSavedSprite': 'このブラウザほぞんのスプライトをけす',
+        'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザほぞん',
+        'gui.mcremote.notice.version': 'バージョン {version}',
+        'gui.mcremote.notice.homepageLink': 'ホームページ',
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft をそうさします。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft をそうさできません。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「せつぞくする」ブロックをうごかしてください。',

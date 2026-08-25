@@ -135,3 +135,28 @@ $notice-transition-easing: ease-in-out;
     color: $notice-accent-high-contrast;
     text-decoration: underline;
 }
+
+/*
+    Always-shown identity strip (release version, homepage), distinct from the
+    deployment-configured notice list above it: smaller, muted, and set apart by its
+    own top border regardless of whether any notices preceded it.
+*/
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    border-top: 1px solid $ui-black-transparent-10;
+    font-size: 0.7rem;
+    color: $text-primary-transparent;
+}
+
+.footer-version {
+    font-family: "SF Mono", "Consolas", "Menlo", monospace;
+}
+
+.footer-link {
+    margin: 0;
+    font-weight: normal;
+}
