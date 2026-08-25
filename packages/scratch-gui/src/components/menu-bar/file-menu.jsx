@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import styles from './menu-bar.css';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
@@ -23,6 +23,7 @@ import {
     requestRestoreLocalSprite,
     requestDeleteLocalSprite
 } from '../../reducers/local-sprites';
+import {checkBrowserStoragePersisted} from '../../lib/browser-storage-persistence.js';
 
 const fileMenu = defineMessage({
     id: 'gui.aria.fileMenu',
@@ -40,6 +41,21 @@ const deleteBrowserSavedSpriteMessage = defineMessage({
     id: 'gui.menuBar.deleteBrowserSavedSprite',
     defaultMessage: 'Delete this browser-saved sprite',
     description: 'Accessible label for the delete control on a browser-saved sprite'
+});
+
+// `navigator.storage.persisted()` is scoped to the whole origin, not to any
+// one project or sprite, so this status is shown once per section heading
+// rather than per list item.
+const storagePersistGrantedMessage = defineMessage({
+    id: 'gui.menuBar.storagePersistGranted',
+    defaultMessage: 'Persistent',
+    description: 'Shown next to the browser-saved list heading when the browser has granted persistent storage'
+});
+const storagePersistNotGrantedMessage = defineMessage({
+    id: 'gui.menuBar.storagePersistNotGranted',
+    defaultMessage: 'Not persistent',
+    description:
+        'Shown next to the browser-saved list heading when the browser has not granted persistent storage'
 });
 
 // Fixed `yyyy-mm-dd HH:MM:SS` (24-hour, local time) rather than a
@@ -85,6 +101,25 @@ const FileMenu = ({
     depth
 }) => {
     const intl = useIntl();
+
+    // Origin-wide, not per-item: `navigator.storage.persisted()` reports on
+    // this origin's storage as a whole, so the same value applies to every
+    // browser-saved project and sprite alike.
+    const [storagePersisted, setStoragePersisted] = useState(null);
+    useEffect(() => {
+        let cancelled = false;
+        checkBrowserStoragePersisted().then(result => {
+            if (!cancelled) setStoragePersisted(result);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+    const storagePersistStatus = storagePersisted === null ? null : (
+        <span className={styles.storagePersistStatus}>
+            {intl.formatMessage(storagePersisted ? storagePersistGrantedMessage : storagePersistNotGrantedMessage)}
+        </span>
+    );
 
     const {
         menuRef,
@@ -247,7 +282,10 @@ const FileMenu = ({
                             isDataMenuItem
                             onParentKeyDown={handleKeyDownOpenMenu}
                         >
-                            {browserSavedProjectsLabel}
+                            <span className={styles.browserSavedSectionHeading}>
+                                {browserSavedProjectsLabel}
+                                {storagePersistStatus}
+                            </span>
                         </MenuItem>
                         {localProjects.slice(0, MAX_VISIBLE_LOCAL_PROJECTS).map(project => (
                             <MenuItem
@@ -286,7 +324,10 @@ const FileMenu = ({
                             isDataMenuItem
                             onParentKeyDown={handleKeyDownOpenMenu}
                         >
-                            {browserSavedSpritesLabel}
+                            <span className={styles.browserSavedSectionHeading}>
+                                {browserSavedSpritesLabel}
+                                {storagePersistStatus}
+                            </span>
                         </MenuItem>
                         {localSprites.slice(0, MAX_VISIBLE_LOCAL_SPRITES).map(sprite => (
                             <MenuItem

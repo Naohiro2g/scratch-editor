@@ -15,7 +15,8 @@ const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     wireScopeUrl: null,
     releaseIdentity: 'embedded-default',
     homepageUrl: null,
-    notices: EMPTY_NOTICES
+    notices: EMPTY_NOTICES,
+    storagePersistEnabled: false
 });
 
 const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
@@ -155,6 +156,13 @@ const normalizeRuntimeConfig = (...[value]) => {
         homepageUrl = candidate.toString();
     }
     const notices = normalizeNotices(value.notices);
+    let storagePersistEnabled = false;
+    if (typeof value.storage_persist_enabled !== 'undefined' && value.storage_persist_enabled !== null) {
+        if (typeof value.storage_persist_enabled !== 'boolean') {
+            throw new Error('storage_persist_enabled must be a boolean');
+        }
+        storagePersistEnabled = value.storage_persist_enabled;
+    }
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
@@ -163,7 +171,8 @@ const normalizeRuntimeConfig = (...[value]) => {
         wireScopeUrl,
         releaseIdentity: value.release_identity.trim(),
         homepageUrl,
-        notices
+        notices,
+        storagePersistEnabled
     });
 };
 

@@ -316,6 +316,20 @@
     color: $red-primary;
 }
 
+.browser-saved-section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.storage-persist-status {
+    font-weight: normal;
+    font-size: 0.7rem;
+    color: $ui-white-dim;
+    white-space: nowrap;
+}
+
 .collapsible-label {
     margin: 0 .5rem 0 .25rem;
 }
