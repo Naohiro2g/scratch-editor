@@ -1,7 +1,7 @@
 import { startObserverClient, type ObserverClientErrorCode, type ObserverClientStatus } from './client'
 import {
-  ALL_METHOD_GROUPS,
-  EVENT_CLASSES,
+  OBSERVABLE_EVENT_CLASSES,
+  OBSERVABLE_METHOD_GROUPS,
   filterCounts,
   filterFrames,
   loadFilterState,
@@ -135,7 +135,7 @@ let filterState: FilterState = loadFilterState(window.localStorage)
 const persistFilterState = (): void => saveFilterState(window.localStorage, filterState)
 
 const methodGroupSwitches = new Map<MethodGroup, FilterSwitchElements>()
-for (const group of ALL_METHOD_GROUPS) {
+for (const group of OBSERVABLE_METHOD_GROUPS) {
   const elements = makeFilterSwitch((checked) => {
     filterState = {
       ...filterState,
@@ -149,7 +149,7 @@ for (const group of ALL_METHOD_GROUPS) {
 }
 
 const eventClassSwitches = new Map<EventClass, FilterSwitchElements>()
-for (const eventClass of EVENT_CLASSES) {
+for (const eventClass of OBSERVABLE_EVENT_CLASSES) {
   const elements = makeFilterSwitch((checked) => {
     filterState = {
       ...filterState,

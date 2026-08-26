@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   ALL_METHOD_GROUPS,
   defaultFilterState,
+  EVENT_CLASSES,
   eventClassesForPollResponse,
   FILTER_STORAGE_KEY,
   FILTER_STORAGE_VERSION,
@@ -11,6 +12,8 @@ import {
   groupIntoFilterUnits,
   loadFilterState,
   methodGroupFor,
+  OBSERVABLE_EVENT_CLASSES,
+  OBSERVABLE_METHOD_GROUPS,
   parseStoredFilterState,
   saveFilterState,
   textMatches,
@@ -80,6 +83,33 @@ describe('methodGroupFor', () => {
   it('classifies an unrecognized method as other', () => {
     expect(methodGroupFor('entity.getPose')).toBe('other')
     expect(methodGroupFor('')).toBe('other')
+  })
+})
+
+describe('OBSERVABLE_METHOD_GROUPS / OBSERVABLE_EVENT_CLASSES', () => {
+  it('excludes auth and catalog, which OBSERVED_METHODS never routes a frame to', () => {
+    expect(OBSERVABLE_METHOD_GROUPS).not.toContain('auth')
+    expect(OBSERVABLE_METHOD_GROUPS).not.toContain('catalog')
+  })
+
+  it('keeps other, unlike auth/catalog, even though it is also always 0 today', () => {
+    expect(OBSERVABLE_METHOD_GROUPS).toContain('other')
+  })
+
+  it('keeps every group with at least one observed member', () => {
+    for (const group of ['connection', 'build', 'chat', 'events', 'player', 'world'] as const) {
+      expect(OBSERVABLE_METHOD_GROUPS).toContain(group)
+    }
+  })
+
+  it('is a strict subset of ALL_METHOD_GROUPS', () => {
+    for (const group of OBSERVABLE_METHOD_GROUPS) expect(ALL_METHOD_GROUPS).toContain(group)
+    expect(OBSERVABLE_METHOD_GROUPS.length).toBeLessThan(ALL_METHOD_GROUPS.length)
+  })
+
+  it('excludes the other event class, which parseEvent() can never classify into', () => {
+    expect(OBSERVABLE_EVENT_CLASSES).not.toContain('other')
+    expect(OBSERVABLE_EVENT_CLASSES).toEqual(EVENT_CLASSES.filter((eventClass) => eventClass !== 'other'))
   })
 })
 

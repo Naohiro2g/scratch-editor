@@ -1,4 +1,10 @@
-import type { ObservedMethod, ObserverFrame, ObserverPayload, RequestId } from './observer'
+import {
+  OBSERVED_METHODS,
+  type ObservedMethod,
+  type ObserverFrame,
+  type ObserverPayload,
+  type RequestId,
+} from './observer'
 
 /**
  * Client-only WireScope display filter over the currently held frame window.
@@ -8,11 +14,11 @@ import type { ObservedMethod, ObserverFrame, ObserverPayload, RequestId } from '
  * The eight method groups below are a candidate mapping derived from the
  * wire method catalog (wire-format-design_ja.md §4) and the extension's own
  * dispatch table, merging `hello` into `connection` to land on exactly
- * eight plus "other". `auth` and `catalog` are included for a stable,
- * forward-compatible taxonomy even though `OBSERVED_METHODS` (observer.ts)
- * does not currently allow either namespace through to the observer, so
- * both will show a persistent 0 count today. This mapping has not been
- * human-confirmed; see the transport slip.
+ * eight plus "other". This mapping has not been human-confirmed; see the
+ * transport slip. `auth` and `catalog` are kept as named groups here (the
+ * taxonomy stays forward-compatible if either namespace is later observed)
+ * but are excluded from `OBSERVABLE_METHOD_GROUPS` below, so the UI does not
+ * offer a switch that would always read 0.
  */
 export const METHOD_GROUPS = ['connection', 'auth', 'build', 'catalog', 'chat', 'events', 'player', 'world'] as const
 
@@ -40,6 +46,20 @@ export const methodGroupFor = (method: string): MethodGroup => {
 }
 
 /**
+ * Method groups reachable by at least one currently `OBSERVED_METHODS`
+ * entry. `auth` and `catalog` have none — observer.ts's allowlist excludes
+ * those namespaces entirely — so their switches would always read 0 and
+ * never change; the UI does not render a switch for a group that cannot
+ * currently be reached (see the transport slip on this candidate). `other`
+ * is kept regardless of reachability: unlike `auth`/`catalog` it is a
+ * genuine catch-all for any future or unexpected method, not a
+ * namespace-specific placeholder waiting on a contract.
+ */
+export const OBSERVABLE_METHOD_GROUPS: readonly MethodGroup[] = ALL_METHOD_GROUPS.filter(
+  (group) => group === 'other' || OBSERVED_METHODS.some((method) => methodGroupFor(method) === group),
+)
+
+/**
  * `events.poll` response event classification. Order matches the product
  * decision: the three protocol 23 event types, then "empty" (a poll whose
  * response carried zero events — the dominant steady-state noise this
@@ -49,6 +69,17 @@ export const EVENT_CLASSES = ['pickaxe_poke', 'chat_posted', 'projectile_hit', '
 export type EventClass = (typeof EVENT_CLASSES)[number]
 
 const KNOWN_EVENT_TYPES: ReadonlySet<string> = new Set(['pickaxe_poke', 'chat_posted', 'projectile_hit'])
+
+/**
+ * Event classes reachable in real observer-validated data. `other` is
+ * unreachable: observer.ts's `parseEvent()` throws on any event `type` it
+ * does not recognize rather than classifying it as `other` — it rejects the
+ * whole snapshot instead. The UI does not render a switch for a class that
+ * cannot currently occur.
+ */
+export const OBSERVABLE_EVENT_CLASSES: readonly EventClass[] = EVENT_CLASSES.filter(
+  (eventClass) => eventClass !== 'other',
+)
 
 /**
  * Classify an `events.poll` RESPONSE payload into the set of event classes
