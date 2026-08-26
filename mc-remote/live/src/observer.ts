@@ -425,17 +425,18 @@ const parseProjectileTarget = (value: unknown, context: string): Record<string, 
 const parseEvent = (value: unknown, index: number): Record<string, unknown> => {
   const context = `frame.payload.result.events[${index}]`
   const event = objectValue(value, context)
-  if (event.type === 'block_right_click') {
+  if (event.type === 'pickaxe_poke') {
     const hand = requiredString(event.hand, `${context}.hand`)
     if (hand !== 'main' && hand !== 'off') throw new Error(`${context}.hand must be main or off`)
     return {
-      ...parseEventCommon(event, ['pos', 'face', 'block', 'hand'], context),
+      ...parseEventCommon(event, ['pos', 'face', 'block', 'hand', 'item'], context),
       pos: numberTuple(event.pos, `${context}.pos`).map((item, position) =>
         integer(item, `${context}.pos[${position}]`),
       ),
       face: faceToken(event.face, `${context}.face`),
       block: parseBlock(event.block, `${context}.block`, true),
       hand,
+      item: canonicalResourceId(event.item, `${context}.item`),
     }
   }
   if (event.type === 'chat_posted') {

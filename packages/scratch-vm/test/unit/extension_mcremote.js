@@ -9,7 +9,7 @@ const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
-const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v22.json');
+const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
 const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
@@ -47,7 +47,7 @@ class FakeWebSocket {
         this._emit('open');
     }
     fireMessage (obj) {
-        if (obj && obj.result && /^22\./.test(obj.result.protocol)) {
+        if (obj && obj.result && /^23\./.test(obj.result.protocol)) {
             obj = Object.assign({}, obj, {
                 result: Object.assign({}, dimensionFixture.build_context, obj.result)
             });
@@ -201,7 +201,7 @@ const newConnectedBlocks = runtime => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -210,7 +210,7 @@ const newConnectedBlocks = runtime => {
     return connected.then(() => ({blocks, socket}));
 };
 
-test('hello uses a JSON-RPC 2.0 request with protocol 22.0.0', t => {
+test('hello uses a JSON-RPC 2.0 request with protocol 23.0.0', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -227,7 +227,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 22.0.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, '22.0.0', 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, '23.0.0', 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
     t.equal(hello.params.client.version, '2200.0.0b5', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
@@ -368,7 +368,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -384,7 +384,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
         t.equal(connected.sourceKind, 'scratch');
         t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -412,7 +412,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '26.1.2',
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
@@ -423,7 +423,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
 
     return result.then(() => {
         t.same(latestObservation(runtime).hello, {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '26.1.2',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -497,7 +497,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
-                    protocol: '22.0.0',
+                    protocol: '23.0.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -590,7 +590,7 @@ test('hello accepts a server with a newer compatible protocol minor', t => {
     const result = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '22.3.99'}});
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.3.99'}});
 
     return result.then(() => {
         t.equal(blocks._connectionStatus, 'connected');
@@ -625,8 +625,8 @@ test('hello rejects an incompatible server protocol before commands can run', t 
 
 test('hello rejects a server protocol minor older than the client', t => {
     const blocks = new McRemote({});
-    t.equal(blocks._isProtocolCompatible('22.0.0', '22.1.0'), false);
-    t.equal(blocks._isProtocolCompatible('22.1.0', '22.1.99'), true, 'patch is ignored');
+    t.equal(blocks._isProtocolCompatible('23.0.0', '23.1.0'), false);
+    t.equal(blocks._isProtocolCompatible('23.1.0', '23.1.99'), true, 'patch is ignored');
     t.end();
 });
 
@@ -692,7 +692,7 @@ test('connect block resolves without exposing the hello result', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -747,7 +747,7 @@ test('successful reconnect resets disconnected command guidance', async t => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             catalogHash: null
         }
     });
@@ -772,7 +772,7 @@ test('connect block reuses an in-flight connection instead of opening a duplicat
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -864,11 +864,11 @@ test('build mode and flush command blocks expose one shared stream control surfa
     t.end();
 });
 
-test('b5 events expose three hats and thread-local accessors without raw poll controls', t => {
+test('b6 events expose three hats and thread-local accessors without raw poll controls', t => {
     const info = new McRemote({}).getInfo();
     const opcodes = info.blocks.filter(block => typeof block !== 'string').map(block => block.opcode);
     for (const opcode of [
-        'whenBlockRightClicked',
+        'whenPickaxePoke',
         'whenChatPosted',
         'whenProjectileHit',
         'eventValue',
@@ -877,7 +877,7 @@ test('b5 events expose three hats and thread-local accessors without raw poll co
         t.ok(opcodes.includes(opcode), `${opcode} is public`);
     }
     t.notOk(opcodes.includes('eventsPoll'), 'raw events.poll is not a public block');
-    t.notOk(opcodes.includes('eventsClear'), 'events.clear remains outside b5');
+    t.notOk(opcodes.includes('eventsClear'), 'events.clear remains outside b6');
     t.end();
 });
 
@@ -940,7 +940,7 @@ test('reconnect reuses the sandbox token and starts build state from defaults', 
             nextSocket.fireMessage({jsonrpc: '2.0',
                 id: 1,
                 result: {
-                    protocol: '22.0.0',
+                    protocol: '23.0.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -969,7 +969,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
         nextSocket.fireMessage({jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '22.0.0',
+                protocol: '23.0.0',
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash: null,
@@ -1433,7 +1433,7 @@ test('getHeight returns ErrorText and emits one actionable hint for height_not_f
     });
 });
 
-test('one connection poller dispatches mixed b5 events with per-thread context and visible loss', async t => {
+test('one connection poller dispatches mixed b6 events with per-thread context and visible loss', async t => {
     const runtime = newEventRuntime();
     const {blocks, socket} = await newConnectedBlocks(runtime);
     const firstPoll = socket.lastSent();
@@ -1444,13 +1444,14 @@ test('one connection poller dispatches mixed b5 events with per-thread context a
     socket.fireMessage({jsonrpc: '2.0', id: firstPoll.id, result: eventFixture.poll_result});
     await waitFor(() => runtime.startedEventThreads.length === 3);
     t.same(runtime.startedHats, [
-        'mcremote_whenBlockRightClicked',
+        'mcremote_whenPickaxePoke',
         'mcremote_whenChatPosted',
         'mcremote_whenProjectileHit'
     ], 'mixed events preserve FIFO hat dispatch');
     const [clickThread, chatThread, projectileThread] = runtime.startedEventThreads;
     t.equal(blocks.eventValue({PROPERTY: 'dimension'}, {thread: clickThread}), 'minecraft:overworld');
     t.equal(blocks.eventValue({PROPERTY: 'block'}, {thread: clickThread}), 'minecraft:stone');
+    t.equal(blocks.eventValue({PROPERTY: 'item'}, {thread: clickThread}), 'minecraft:diamond_pickaxe');
     t.equal(blocks.eventValue({PROPERTY: 'message'}, {thread: chatThread}), 'hello');
     t.equal(blocks.eventValue({PROPERTY: 'target_block'}, {thread: projectileThread}),
         'minecraft:oak_log[axis=z]');
@@ -1489,7 +1490,7 @@ test('one connection poller dispatches mixed b5 events with per-thread context a
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -2034,7 +2035,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2071,7 +2072,7 @@ test('catalog cache miss fetches after hello without delaying connection', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2112,7 +2113,7 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2151,7 +2152,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '22.0.0',
+            protocol: '23.0.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,

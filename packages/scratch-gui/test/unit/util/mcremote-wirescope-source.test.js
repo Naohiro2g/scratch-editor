@@ -2,7 +2,7 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
-import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v22.json';
+import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v23.json';
 import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 

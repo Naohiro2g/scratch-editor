@@ -215,13 +215,15 @@ const allowEvent = function (value) {
     const origin = numberTuple(value.origin);
     if (!origin || !origin.every(Number.isInteger)) return null;
     const common = {sequence: value.sequence, type: value.type, dimension: value.dimension, origin};
-    if (value.type === 'block_right_click') {
+    if (value.type === 'pickaxe_poke') {
         const pos = numberTuple(value.pos);
         const block = allowBlock(value.block, true);
-        if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'pos', 'face', 'block', 'hand']) ||
+        if (!hasExactFields(
+            value, ['sequence', 'type', 'dimension', 'origin', 'pos', 'face', 'block', 'hand', 'item']
+        ) ||
             !pos || !pos.every(Number.isInteger) || !faceToken(value.face) || !block ||
-            (value.hand !== 'main' && value.hand !== 'off')) return null;
-        return Object.assign(common, {pos, face: value.face, block, hand: value.hand});
+            (value.hand !== 'main' && value.hand !== 'off') || !canonicalResourceId(value.item)) return null;
+        return Object.assign(common, {pos, face: value.face, block, hand: value.hand, item: value.item});
     }
     if (value.type === 'chat_posted') {
         if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'message']) ||

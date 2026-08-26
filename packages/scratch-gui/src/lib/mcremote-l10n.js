@@ -112,7 +112,7 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] に生成し ハンドルを [VARIABLE] に入れる',
-        'mcremote.whenBlockRightClicked': 'ブロックが右クリックされたとき',
+        'mcremote.whenPickaxePoke': 'ツルハシでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットが投稿されたとき',
         'mcremote.whenProjectileHit': '飛び道具が当たったとき',
         'mcremote.eventValue': 'このMinecraftイベントの [PROPERTY]',
@@ -127,6 +127,7 @@ const mcremoteMessages = {
         'mcremote.eventValue.originZ': '原点z',
         'mcremote.eventValue.face': '面',
         'mcremote.eventValue.hand': '手',
+        'mcremote.eventValue.item': 'アイテム',
         'mcremote.eventValue.message': 'メッセージ',
         'mcremote.eventValue.block': 'ブロック情報',
         'mcremote.eventValue.projectile': '飛び道具',
@@ -255,7 +256,7 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] にだして ハンドルを [VARIABLE] にいれる',
-        'mcremote.whenBlockRightClicked': 'ブロックがみぎクリックされたとき',
+        'mcremote.whenPickaxePoke': 'つるはしでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットがとうこうされたとき',
         'mcremote.whenProjectileHit': 'とびどうぐがあたったとき',
         'mcremote.eventValue': 'このMinecraftイベントの [PROPERTY]',
@@ -270,6 +271,7 @@ const mcremoteMessages = {
         'mcremote.eventValue.originZ': 'げんてんz',
         'mcremote.eventValue.face': 'めん',
         'mcremote.eventValue.hand': 'て',
+        'mcremote.eventValue.item': 'アイテム',
         'mcremote.eventValue.message': 'メッセージ',
         'mcremote.eventValue.block': 'ブロックじょうほう',
         'mcremote.eventValue.projectile': 'とびどうぐ',

@@ -113,15 +113,23 @@ export type EventsPollParams =
   | readonly [afterSequence: number]
   | readonly [afterSequence: number, options: EventsPollOptions]
 
-export interface BlockRightClickEvent {
+/**
+ * `pickaxe_poke` — protocol 23/b6 replacement for protocol 22/b5's
+ * `block_right_click` (DECISIONS 2026-08-26-06). Gated server-side to block
+ * right-clicks made while holding a pickaxe (`org.bukkit.Tag.ITEMS_PICKAXES`);
+ * carries the same payload as the event it replaces plus the canonical item
+ * type key.
+ */
+export interface PickaxePokeEvent {
   readonly sequence: number
-  readonly type: 'block_right_click'
+  readonly type: 'pickaxe_poke'
   readonly dimension: DimensionKey
   readonly origin: readonly [number, number, number]
   readonly pos: readonly [number, number, number]
   readonly face: string
   readonly block: BlockValue
   readonly hand: 'main' | 'off'
+  readonly item: string
 }
 
 export interface ChatPostedEvent {
@@ -152,7 +160,7 @@ export interface ProjectileHitEvent {
   readonly target: ProjectileTarget
 }
 
-export type McRemoteEvent = BlockRightClickEvent | ChatPostedEvent | ProjectileHitEvent
+export type McRemoteEvent = PickaxePokeEvent | ChatPostedEvent | ProjectileHitEvent
 
 export interface EventsPollResult {
   readonly events: readonly McRemoteEvent[]

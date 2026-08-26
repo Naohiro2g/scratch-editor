@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { parseObserverSnapshot } from '../src/observer'
 
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
-const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v22.json', import.meta.url))
+const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v23.json', import.meta.url))
 const spawnFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/spawn-v22.json', import.meta.url))
 const dimensionsFixturePath = fileURLToPath(
   new URL('../../protocol/test/fixtures/dimensions-v22.json', import.meta.url),

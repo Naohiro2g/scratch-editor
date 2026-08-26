@@ -21,12 +21,12 @@ import type {
 } from '../src/index.ts'
 import { ERROR_REASON_CODE, ErrorCode, ErrorReason, JSONRPC_VERSION, Method, PROTOCOL_VERSION } from '../src/index.ts'
 import dimensionsFixture from './fixtures/dimensions-v22.json'
-import eventsFixture from './fixtures/events-v22.json'
+import eventsFixture from './fixtures/events-v23.json'
 import spawnFixture from './fixtures/spawn-v22.json'
 
 describe('protocol constants', () => {
   it('advertises the clean protocol semver without a channel suffix', () => {
-    expect(PROTOCOL_VERSION).toBe('22.0.0')
+    expect(PROTOCOL_VERSION).toBe('23.0.0')
   })
 
   it('pins the JSON-RPC envelope version', () => {
@@ -136,7 +136,10 @@ describe('structured block values', () => {
     const result = eventsFixture.poll_result as EventsPollResult
     expect(defaultParams).toEqual([0])
     expect(boundedParams).toEqual([0, { max_events: 3 }])
-    expect(result.events.map((event) => event.type)).toEqual(['block_right_click', 'chat_posted', 'projectile_hit'])
+    expect(result.events.map((event) => event.type)).toEqual(['pickaxe_poke', 'chat_posted', 'projectile_hit'])
+    const pokeEvent = result.events[0]
+    if (pokeEvent.type !== 'pickaxe_poke') throw new Error('expected the first fixture event to be pickaxe_poke')
+    expect(pokeEvent.item).toBe('minecraft:diamond_pickaxe')
     expect(result.through_sequence).toBe(3)
     expect(result.overflow_dropped_total).toBe(0)
     expect(eventsFixture.limits).toEqual({

@@ -125,14 +125,19 @@ const projectileTarget = (value, context) => {
 const eventDto = (value, index) => {
     const context = `result.events[${index}]`;
     if (!isObject(value)) throw invalidEventResponse(`${context} must be an object`);
-    if (value.type === 'block_right_click') {
-        return Object.assign(commonEvent(value, ['pos', 'face', 'block', 'hand'], context), {
+    if (value.type === 'pickaxe_poke') {
+        const item = requiredString(value.item, `${context}.item`);
+        if (!/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(item)) {
+            throw invalidEventResponse(`${context}.item must be canonical`);
+        }
+        return Object.assign(commonEvent(value, ['pos', 'face', 'block', 'hand', 'item'], context), {
             pos: tuple(value.pos, `${context}.pos`, integer),
             face: face(value.face, `${context}.face`),
             block: blockValue(value.block, `${context}.block`),
             hand: value.hand === 'main' || value.hand === 'off' ? value.hand : (() => {
                 throw invalidEventResponse(`${context}.hand must be main or off`);
-            })()
+            })(),
+            item
         });
     }
     if (value.type === 'chat_posted') {
@@ -151,7 +156,7 @@ const eventDto = (value, index) => {
             target: projectileTarget(value.target, `${context}.target`)
         });
     }
-    throw invalidEventResponse(`${context}.type is not a b5 event`);
+    throw invalidEventResponse(`${context}.type is not a b6 event`);
 };
 
 const deepFreeze = value => {
@@ -180,7 +185,7 @@ const validateEventPollResult = (value, afterSequence, previousStatus) => {
         throw invalidEventResponse('result.latest_sequence moved backwards');
     }
     if (value.filtered_out !== 0 || value.explicitly_discarded_total !== 0) {
-        throw invalidEventResponse('b5 filter and explicit discard totals must remain zero');
+        throw invalidEventResponse('filter and explicit discard totals must remain zero until filter is implemented');
     }
     const overflowDroppedTotal = integer(value.overflow_dropped_total, 'result.overflow_dropped_total', 0);
     const capacityDroppedTotal = integer(value.capacity_dropped_total, 'result.capacity_dropped_total', 0);
@@ -230,6 +235,7 @@ const eventValue = (event, property) => {
     case 'z': return at(event.pos, 2);
     case 'face': return event.face || '';
     case 'hand': return event.hand || '';
+    case 'item': return event.item || '';
     case 'message': return typeof event.message === 'string' ? event.message : '';
     case 'block': return event.block ? formatBlockInfoText(event.block) : '';
     case 'projectile': return event.projectile || '';

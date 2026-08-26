@@ -40,11 +40,11 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
- * protocol contract version (22.0.0); the package/channel suffix is not
+ * protocol contract version (23.0.0); the package/channel suffix is not
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '22.0.0';
+const PROTOCOL_VERSION = '23.0.0';
 
 /**
  * Scratch McRemote client build label for diagnostics. Compatibility is still
@@ -118,7 +118,7 @@ const BuildMode = {
 };
 
 const EVENT_HAT_OPCODES = {
-    block_right_click: 'mcremote_whenBlockRightClicked',
+    pickaxe_poke: 'mcremote_whenPickaxePoke',
     chat_posted: 'mcremote_whenChatPosted',
     projectile_hit: 'mcremote_whenProjectileHit'
 };
@@ -149,7 +149,7 @@ const playerResult = (value, includeOrientation) => {
 };
 
 /**
- * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 22.0.0).
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.0.0).
  * One WebSocket message carries either one raw JSON-RPC object or, for the
  * pre-auth pairing methods only, one Bridge transport envelope containing the
  * untouched JSON-RPC string.
@@ -766,14 +766,14 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
-                    opcode: 'whenBlockRightClicked',
+                    opcode: 'whenPickaxePoke',
                     blockType: BlockType.HAT,
                     isEdgeActivated: false,
                     shouldRestartExistingThreads: false,
                     text: formatMessage({
-                        id: 'mcremote.whenBlockRightClicked',
-                        default: 'when a block is right-clicked',
-                        description: 'Run once for each paired-player block right-click event'
+                        id: 'mcremote.whenPickaxePoke',
+                        default: 'when a block is poked with a pickaxe',
+                        description: 'Run once for each paired-player pickaxe-poke event'
                     })
                 },
                 {
@@ -914,6 +914,7 @@ class Scratch3McRemoteBlocks {
                         menuItem('mcremote.eventValue.originZ', 'origin z', 'origin_z'),
                         menuItem('mcremote.eventValue.face', 'face', 'face'),
                         menuItem('mcremote.eventValue.hand', 'hand', 'hand'),
+                        menuItem('mcremote.eventValue.item', 'item', 'item'),
                         menuItem('mcremote.eventValue.message', 'message', 'message'),
                         menuItem('mcremote.eventValue.block', 'block information', 'block'),
                         menuItem('mcremote.eventValue.projectile', 'projectile', 'projectile'),
@@ -2263,7 +2264,7 @@ class Scratch3McRemoteBlocks {
         return true;
     }
 
-    whenBlockRightClicked () {
+    whenPickaxePoke () {
         return true;
     }
 

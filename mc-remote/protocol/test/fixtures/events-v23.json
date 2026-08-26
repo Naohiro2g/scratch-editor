@@ -1,6 +1,6 @@
 {
-  "schema": "mcremote.events.v22",
-  "protocol": "22.0.0",
+  "schema": "mcremote.events.v23",
+  "protocol": "23.0.0",
   "method": "events.poll",
   "limits": {
     "max_compact_jsonrpc_response_bytes": 61440,
@@ -23,13 +23,14 @@
     "events": [
       {
         "sequence": 1,
-        "type": "block_right_click",
+        "type": "pickaxe_poke",
         "dimension": "minecraft:overworld",
         "origin": [200, 0, 200],
         "pos": [1, 2, 3],
         "face": "up",
         "block": { "block_id": "minecraft:stone", "state": {} },
-        "hand": "main"
+        "hand": "main",
+        "item": "minecraft:diamond_pickaxe"
       },
       {
         "sequence": 2,
