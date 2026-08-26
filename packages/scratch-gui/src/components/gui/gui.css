@@ -60,6 +60,20 @@
     flex-direction: column;
 }
 
+.tab-bar-row {
+    /*
+        The tab list is a fixed 250px wide, matching the toolbox; this row
+        spans the full editor-wrapper width, so it leaves empty space to the
+        right of the tabs across all three tabs (Code/Costumes/Sounds) for
+        WireScopePanel, instead of overlaying the tab content below.
+    */
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: $space;
+    min-width: 0;
+}
+
 .tab-list {
     height: $stage-menu-height;
     width: 250px; /* Match width of the toolbox */

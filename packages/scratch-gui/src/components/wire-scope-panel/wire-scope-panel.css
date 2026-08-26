@@ -2,13 +2,21 @@
 @import "../../css/units.css";
 @import "../../css/z-index.css";
 
+/*
+    Lives in the tab bar row, to the right of the Code/Costumes/Sounds tabs
+    (gui.css .tab-bar-row), so it stays visible across all three tabs
+    without overlaying the block palette, costume list, or sound list.
+    Collapsed, it is a normal flex item sized to fit the tab row's height.
+    Expanded, .details below becomes a dropdown so opening it does not grow
+    the row or push the tabs/stage around.
+*/
 .panel {
-    position: absolute;
-    bottom: 3.75rem;
-    left: 0.25rem;
+    position: relative;
+    align-self: flex-end;
     z-index: $z-index-monitor;
-    width: 15rem;
-    max-width: calc(100% - 0.5rem);
+    flex: 0 1 15rem;
+    min-width: 0;
+    max-width: 100%;
     overflow: hidden;
     border: 1px solid $ui-black-transparent;
     border-radius: 8px;
@@ -18,11 +26,6 @@
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 0.75rem;
     line-height: 1.2rem;
-}
-
-[dir="rtl"] .panel {
-    right: 0.25rem;
-    left: auto;
 }
 
 .panel::before {
@@ -149,10 +152,26 @@
 }
 
 .details {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: $z-index-monitor;
+    width: 15rem;
+    max-width: calc(100vw - 0.5rem);
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
     padding: 0.65rem;
+    border: 1px solid $ui-black-transparent;
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    background: $ui-white;
+    box-shadow: 0 0.25rem 0.75rem $ui-black-transparent-10;
+}
+
+[dir="rtl"] .details {
+    right: auto;
+    left: 0;
 }
 
 .launch {
@@ -257,6 +276,10 @@
 
 @media (max-width: 640px) {
     .panel {
+        flex-basis: 13.5rem;
+    }
+
+    .details {
         width: 13.5rem;
     }
 }
