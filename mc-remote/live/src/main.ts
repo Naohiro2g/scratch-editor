@@ -1,4 +1,15 @@
 import { startObserverClient, type ObserverClientErrorCode, type ObserverClientStatus } from './client'
+import {
+  ALL_METHOD_GROUPS,
+  EVENT_CLASSES,
+  filterCounts,
+  filterFrames,
+  loadFilterState,
+  saveFilterState,
+  type EventClass,
+  type FilterState,
+  type MethodGroup,
+} from './frame-filter'
 import { resolveLocale, translate, type Locale, type MessageKey } from './l10n'
 import type { ObserverFrame, ObserverHello, ObserverSnapshot, ObserverStream } from './observer'
 import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
@@ -55,8 +66,170 @@ stationAttachButton.type = 'submit'
 stationAttachControls.append(stationAttachInput, stationAttachButton)
 stationAttach.append(stationAttachCopy, stationAttachControls)
 
+// Client-only display filter over the currently held frame window (never
+// touches the wire or server event ring — see frame-filter.ts). Built once,
+// outside `content`, so its search <input> elements are never torn down and
+// rebuilt by renderSnapshot() and never lose focus/value while a viewer is
+// mid-keystroke when a new frame arrives.
+const filterPanel = make('section', 'panel filter-panel hidden')
+const filterToggle = make('button', 'filter-toggle')
+filterToggle.type = 'button'
+const filterSummaryText = make('span', 'filter-summary')
+const filterToggleRow = make('div', 'filter-toggle-row')
+filterToggleRow.append(filterToggle, filterSummaryText)
+const filterBody = make('div', 'filter-body hidden')
+const filterMethodGroupHeading = make('h3')
+const filterMethodGroupList = make('div', 'filter-switch-list')
+const filterEventClassHeading = make('h3')
+const filterEventClassList = make('div', 'filter-switch-list')
+const filterSearchList = make('div', 'filter-search-list')
+filterBody.append(
+  filterMethodGroupHeading,
+  filterMethodGroupList,
+  filterEventClassHeading,
+  filterEventClassList,
+  filterSearchList,
+)
+filterPanel.append(filterToggleRow, filterBody)
+
+interface FilterSwitchElements {
+  root: HTMLElement
+  input: HTMLInputElement
+  labelText: HTMLElement
+  count: HTMLElement
+}
+
+const methodGroupSwitchKey: Record<MethodGroup, MessageKey> = {
+  connection: 'filterMethodGroupConnection',
+  auth: 'filterMethodGroupAuth',
+  build: 'filterMethodGroupBuild',
+  catalog: 'filterMethodGroupCatalog',
+  chat: 'filterMethodGroupChat',
+  events: 'filterMethodGroupEvents',
+  player: 'filterMethodGroupPlayer',
+  world: 'filterMethodGroupWorld',
+  other: 'filterMethodGroupOther',
+}
+
+const eventClassSwitchKey: Record<EventClass, MessageKey> = {
+  pickaxe_poke: 'filterEventClassPickaxePoke',
+  chat_posted: 'filterEventClassChatPosted',
+  projectile_hit: 'filterEventClassProjectileHit',
+  empty: 'filterEventClassEmpty',
+  other: 'filterEventClassOther',
+}
+
+const makeFilterSwitch = (onToggle: (checked: boolean) => void): FilterSwitchElements => {
+  const label = make('label', 'filter-switch')
+  const input = make('input')
+  input.type = 'checkbox'
+  const labelText = make('span')
+  const count = make('span', 'count filter-switch-count')
+  label.append(input, labelText, count)
+  input.addEventListener('change', () => onToggle(input.checked))
+  return { root: label, input, labelText, count }
+}
+
+let filterState: FilterState = loadFilterState(window.localStorage)
+
+const persistFilterState = (): void => saveFilterState(window.localStorage, filterState)
+
+const methodGroupSwitches = new Map<MethodGroup, FilterSwitchElements>()
+for (const group of ALL_METHOD_GROUPS) {
+  const elements = makeFilterSwitch((checked) => {
+    filterState = {
+      ...filterState,
+      methodGroups: { ...filterState.methodGroups, [group]: checked },
+    }
+    persistFilterState()
+    onFilterStateChanged()
+  })
+  methodGroupSwitches.set(group, elements)
+  filterMethodGroupList.append(elements.root)
+}
+
+const eventClassSwitches = new Map<EventClass, FilterSwitchElements>()
+for (const eventClass of EVENT_CLASSES) {
+  const elements = makeFilterSwitch((checked) => {
+    filterState = {
+      ...filterState,
+      eventClasses: { ...filterState.eventClasses, [eventClass]: checked },
+    }
+    persistFilterState()
+    onFilterStateChanged()
+  })
+  eventClassSwitches.set(eventClass, elements)
+  filterEventClassList.append(elements.root)
+}
+
+const makeSearchField = (
+  onEnabledChange: (checked: boolean) => void,
+  onTextChange: (text: string) => void,
+): { row: HTMLElement; enabledInput: HTMLInputElement; labelText: HTMLElement; textInput: HTMLInputElement } => {
+  const row = make('label', 'filter-search')
+  const enabledInput = make('input')
+  enabledInput.type = 'checkbox'
+  const labelText = make('span')
+  const textInput = make('input', 'filter-search-text')
+  textInput.type = 'text'
+  row.append(enabledInput, labelText, textInput)
+  enabledInput.addEventListener('change', () => onEnabledChange(enabledInput.checked))
+  textInput.addEventListener('input', () => onTextChange(textInput.value))
+  return { row, enabledInput, labelText, textInput }
+}
+
+const orSearch = makeSearchField(
+  (checked) => {
+    filterState = { ...filterState, orSearch: { ...filterState.orSearch, enabled: checked } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+  (text) => {
+    filterState = { ...filterState, orSearch: { ...filterState.orSearch, text } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+)
+const andSearch = makeSearchField(
+  (checked) => {
+    filterState = { ...filterState, andSearch: { ...filterState.andSearch, enabled: checked } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+  (text) => {
+    filterState = { ...filterState, andSearch: { ...filterState.andSearch, text } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+)
+orSearch.enabledInput.checked = filterState.orSearch.enabled
+orSearch.textInput.value = filterState.orSearch.text
+andSearch.enabledInput.checked = filterState.andSearch.enabled
+andSearch.textInput.value = filterState.andSearch.text
+filterSearchList.append(orSearch.row, andSearch.row)
+
+for (const [group, elements] of methodGroupSwitches) elements.input.checked = filterState.methodGroups[group]
+for (const [eventClass, elements] of eventClassSwitches) elements.input.checked = filterState.eventClasses[eventClass]
+
+let filterPanelExpanded = false
+
+const refreshFilterToggle = (): void => {
+  filterToggle.textContent = t(filterPanelExpanded ? 'filterCollapse' : 'filterExpand')
+  filterToggle.setAttribute('aria-expanded', String(filterPanelExpanded))
+  filterBody.classList.toggle('hidden', !filterPanelExpanded)
+}
+
+filterToggle.addEventListener('click', () => {
+  filterPanelExpanded = !filterPanelExpanded
+  refreshFilterToggle()
+})
+
+// Re-applies the current filterState to the active stream's frame table
+// without touching the filter panel's own DOM (search inputs keep focus).
+let onFilterStateChanged: () => void = () => {}
+
 const content = make('section', 'content empty')
-shell.append(header, status, stationAttach, content)
+shell.append(header, status, stationAttach, filterPanel, content)
 root.append(shell)
 
 type ViewStatus =
@@ -76,6 +249,33 @@ let stationMode = false
 
 const t = (key: MessageKey, values?: Readonly<Record<string, string | number>>): string =>
   translate(locale, key, values)
+
+// Switch counts always reflect the current window, independent of the
+// filter's own on/off state, and are shown next to every switch per the
+// product decision — never hidden even when a switch is off.
+const updateFilterPanel = (frames: readonly ObserverFrame[]): void => {
+  const counts = filterCounts(frames)
+  for (const [group, elements] of methodGroupSwitches) elements.count.textContent = String(counts.methodGroups[group])
+  for (const [eventClass, elements] of eventClassSwitches) {
+    elements.count.textContent = String(counts.eventClasses[eventClass])
+  }
+  const visible = filterFrames(frames, filterState).length
+  filterSummaryText.textContent = t('filterSummary', { visible, total: frames.length })
+}
+
+const refreshFilterLabels = (): void => {
+  filterMethodGroupHeading.textContent = t('filterMethodGroupHeading')
+  filterEventClassHeading.textContent = t('filterEventClassHeading')
+  for (const [group, elements] of methodGroupSwitches) elements.labelText.textContent = t(methodGroupSwitchKey[group])
+  for (const [eventClass, elements] of eventClassSwitches) {
+    elements.labelText.textContent = t(eventClassSwitchKey[eventClass])
+  }
+  orSearch.labelText.textContent = t('filterOrSearchLabel')
+  andSearch.labelText.textContent = t('filterAndSearchLabel')
+  orSearch.textInput.placeholder = t('filterSearchPlaceholder')
+  andSearch.textInput.placeholder = t('filterSearchPlaceholder')
+  refreshFilterToggle()
+}
 
 const valueText = (value: unknown): string => (typeof value === 'string' ? value : JSON.stringify(value))
 
@@ -113,13 +313,15 @@ const renderHello = (hello: ObserverHello): HTMLElement => {
   return section
 }
 
-const renderFrames = (frames: ObserverFrame[]): HTMLElement => {
+const renderFrames = (allFrames: ObserverFrame[]): HTMLElement => {
+  updateFilterPanel(allFrames)
+  const frames = filterFrames(allFrames, filterState)
   const section = make('section', 'panel frames-panel')
   const heading = make('div', 'panel-heading')
   heading.append(make('h2', '', t('wireFrames')), make('span', 'count', String(frames.length)))
   section.append(heading)
   if (frames.length === 0) {
-    section.append(make('p', 'muted', t('noFrames')))
+    section.append(make('p', 'muted', t(allFrames.length === 0 ? 'noFrames' : 'noFramesMatchFilter')))
     return section
   }
   const tableWrap = make('div', 'table-wrap')
@@ -202,6 +404,7 @@ const renderStreamTabs = (streams: readonly ObserverStream[], activeStream: Obse
 }
 
 const renderEmpty = (): void => {
+  filterPanel.classList.add('hidden')
   content.className = 'content empty'
   content.replaceChildren(
     make('h1', '', t(stationMode ? 'stationEmptyTitle' : 'emptyTitle')),
@@ -210,6 +413,7 @@ const renderEmpty = (): void => {
 }
 
 const renderSnapshot = (snapshot: ObserverSnapshot): void => {
+  filterPanel.classList.remove('hidden')
   content.replaceChildren()
   content.className = 'content'
   const target = make('section', 'target')
@@ -334,10 +538,15 @@ const refreshLocale = (): void => {
   languageSwitch.setAttribute('aria-label', t('languageSwitchLabel'))
   languageSwitch.title = t('languageSwitchLabel')
   languageSwitch.lang = nextLocale[locale]
+  refreshFilterLabels()
   if (currentSnapshot) renderSnapshot(currentSnapshot)
   else renderEmpty()
   renderStationAttach()
   renderStatus()
+}
+
+onFilterStateChanged = (): void => {
+  if (currentSnapshot) renderSnapshot(currentSnapshot)
 }
 
 languageSwitch.addEventListener('click', () => {

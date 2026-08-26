@@ -55,6 +55,19 @@ const grantMessage = (value: unknown): HandoffGrantMessage | null => {
 const adapterError = (code: ScratchAdapterErrorCode, message: string): ScratchAdapterError =>
   Object.assign(new Error(message), { code })
 
+// Falls back to 0 for a source that predates history_window or sends a
+// malformed one, rather than letting session.ts fail the whole envelope
+// closed on an otherwise-good snapshot.
+const droppedFramesOf = (value: unknown): number => {
+  if (!isObject(value)) return 0
+  const historyWindow = value.history_window
+  if (!isObject(historyWindow)) return 0
+  const droppedFrames = historyWindow.dropped_frames
+  return typeof droppedFrames === 'number' && Number.isSafeInteger(droppedFrames) && droppedFrames >= 0
+    ? droppedFrames
+    : 0
+}
+
 export const startScratchMessageChannelAdapter = (
   environment: ScratchAdapterEnvironment,
   callbacks: ScratchAdapterCallbacks,
@@ -99,7 +112,7 @@ export const startScratchMessageChannelAdapter = (
         type: OBSERVER_SNAPSHOT,
         protocol_version: OBSERVER_SESSION_PROTOCOL_VERSION,
         snapshot: event.data.snapshot,
-        history_window: { dropped_frames: 0 },
+        history_window: { dropped_frames: droppedFramesOf(event.data) },
       })
       return
     }

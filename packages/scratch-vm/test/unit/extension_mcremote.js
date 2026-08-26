@@ -426,6 +426,45 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     });
 });
 
+test('droppedFrames stays 0 while the frame log is within FRAME_LOG_LIMIT', t => {
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    for (let i = 0; i < 99; i++) blocks._appendFrame('send', {method: 'test.method'});
+    t.equal(latestObservation(runtime).droppedFrames, 0);
+    t.equal(latestObservation(runtime).frameLog.length, 99);
+    t.end();
+});
+
+test('droppedFrames accumulates the exact number of frames trimmed once FRAME_LOG_LIMIT is exceeded', t => {
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    for (let i = 0; i < 105; i++) blocks._appendFrame('send', {method: 'test.method'});
+    let snapshot = latestObservation(runtime);
+    t.equal(snapshot.frameLog.length, 100, 'the log itself stays bounded at FRAME_LOG_LIMIT');
+    t.equal(snapshot.droppedFrames, 5, 'the 5 oldest frames beyond the limit are counted as dropped');
+
+    for (let i = 0; i < 20; i++) blocks._appendFrame('send', {method: 'test.method'});
+    snapshot = latestObservation(runtime);
+    t.equal(snapshot.frameLog.length, 100);
+    t.equal(snapshot.droppedFrames, 25, 'dropped frames accumulate across multiple trims, never reset alone');
+    t.end();
+});
+
+test('droppedFrames resets to 0 at the same connection-reset boundary as the frame log itself', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    for (let i = 0; i < 105; i++) blocks._appendFrame('send', {method: 'test.method'});
+    t.equal(latestObservation(runtime).droppedFrames, 5);
+
+    blocks.connect();
+    const snapshot = latestObservation(runtime);
+    t.equal(snapshot.droppedFrames, 0, 'a new connection resets droppedFrames alongside frameLog');
+    t.equal(snapshot.frameLog.length, 0, 'the reset clears the frame log itself at the same boundary');
+    t.end();
+});
+
 test('McRemote observation normalizes top-level y_sea into world constants', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();

@@ -376,6 +376,16 @@ class Scratch3McRemoteBlocks {
         this._frameSequence = 0;
 
         /**
+         * Cumulative count of frames trimmed from `_frameLog` by
+         * FRAME_LOG_LIMIT, surfaced to WireScope as `history_window.
+         * dropped_frames` so a truncated window is never silently
+         * indistinguishable from a complete one. Resets with `_frameLog`.
+         * @type {number}
+         * @private
+         */
+        this._droppedFrameCount = 0;
+
+        /**
          * Sandbox route snapshot for the active connection.
          * @type {?{sandboxRoute: string, label: string}}
          * @private
@@ -1313,6 +1323,7 @@ class Scratch3McRemoteBlocks {
         this._lastError = null;
         this._frameLog = [];
         this._frameSequence = 0;
+        this._droppedFrameCount = 0;
         this._nextRequestId = 1;
         this._pairCode = '';
         this._pairCommand = '';
@@ -1465,7 +1476,8 @@ class Scratch3McRemoteBlocks {
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
             lastError: this._sanitizeWireValue(this._lastError),
-            frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame))
+            frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame)),
+            droppedFrames: this._droppedFrameCount
         };
     }
 
@@ -1545,7 +1557,9 @@ class Scratch3McRemoteBlocks {
             payload: this._sanitizeWireValue(message)
         });
         if (this._frameLog.length > FRAME_LOG_LIMIT) {
-            this._frameLog.splice(0, this._frameLog.length - FRAME_LOG_LIMIT);
+            const trimmed = this._frameLog.length - FRAME_LOG_LIMIT;
+            this._frameLog.splice(0, trimmed);
+            this._droppedFrameCount += trimmed;
         }
         this._emitObservation();
     }

@@ -1,5 +1,5 @@
 import type { ObserverSnapshot } from './observer'
-import { OBSERVER_SESSION_END, OBSERVER_SESSION_SNAPSHOT } from './session'
+import { OBSERVER_SESSION_END, OBSERVER_SESSION_SNAPSHOT, type ObserverHistoryWindow } from './session'
 
 export const HANDOFF_PROTOCOL_VERSION = 1 as const
 export const HANDOFF_READY = 'mcremote.wirescope.ready' as const
@@ -36,6 +36,9 @@ export interface ObserverSnapshotMessage {
   type: typeof OBSERVER_SNAPSHOT
   protocol_version: typeof HANDOFF_PROTOCOL_VERSION
   snapshot: ObserverSnapshot
+  // Optional so a source that predates this field (or omits it) still
+  // produces a valid message; the adapter falls back to dropped_frames: 0.
+  history_window?: ObserverHistoryWindow
 }
 
 export interface ObserverEndMessage {

@@ -512,6 +512,142 @@ describe('McRemote WireScope source adapter', () => {
         expect(port1.close).toHaveBeenCalled();
     });
 
+    test('forwards the observation\'s droppedFrames as history_window.dropped_frames, not a hardcoded 0', () => {
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const port2 = {};
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2})),
+            crypto: {getRandomValues: array => array.fill(7)},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
+        };
+        const source = createWireScopeSource(environment);
+        source.update(Object.assign({}, connectedObservation(), {droppedFrames: 12}));
+
+        source.launch('https://live.example/wirescope');
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        port1.listener({
+            data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+        });
+
+        expect(port1.postMessage.mock.calls[1][0].history_window).toEqual({dropped_frames: 12});
+
+        source.update(Object.assign({}, connectedObservation(), {droppedFrames: 15}));
+        expect(port1.postMessage.mock.calls[2][0].history_window).toEqual({dropped_frames: 15});
+    });
+
+    test('treats a missing, negative, or non-integer droppedFrames as 0 rather than forwarding it', () => {
+        const droppedFramesSentFor = invalidDroppedFrames => {
+            const windowListeners = {};
+            const observerWindow = {postMessage: jest.fn()};
+            const port1 = {
+                addEventListener: jest.fn((type, listener) => {
+                    port1.listener = listener;
+                }),
+                start: jest.fn(),
+                postMessage: jest.fn(),
+                close: jest.fn()
+            };
+            const sourceWindow = {
+                addEventListener: jest.fn((type, listener) => {
+                    windowListeners[type] = listener;
+                }),
+                removeEventListener: jest.fn(),
+                open: jest.fn(() => observerWindow)
+            };
+            const environment = {
+                window: sourceWindow,
+                MessageChannel: jest.fn(() => ({port1, port2: {}})),
+                crypto: {getRandomValues: array => array.fill(7)},
+                now: jest.fn(() => 5000),
+                setTimeout: jest.fn(() => 9),
+                clearTimeout: jest.fn()
+            };
+            const source = createWireScopeSource(environment);
+            source.update(Object.assign({}, connectedObservation(), {droppedFrames: invalidDroppedFrames}));
+            source.launch('https://live.example/wirescope');
+            windowListeners.message({
+                source: observerWindow,
+                origin: 'https://live.example',
+                data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+            });
+            const grantMessage = port1.postMessage.mock.calls[0][0];
+            port1.listener({
+                data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+            });
+            return port1.postMessage.mock.calls[1][0].history_window;
+        };
+
+        expect(droppedFramesSentFor(-1)).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor(1.5)).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor('twelve')).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor(null)).toEqual({dropped_frames: 0});
+
+        const observationWithoutField = connectedObservation();
+        delete observationWithoutField.droppedFrames;
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2: {}})),
+            crypto: {getRandomValues: array => array.fill(7)},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
+        };
+        const source = createWireScopeSource(environment);
+        source.update(observationWithoutField);
+        source.launch('https://live.example/wirescope');
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        port1.listener({
+            data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+        });
+        expect(port1.postMessage.mock.calls[1][0].history_window).toEqual({dropped_frames: 0});
+    });
+
     test('ends an active observer with source-closed when the Scratch page is hidden', () => {
         const windowListeners = {};
         const observerWindow = {postMessage: jest.fn()};

@@ -426,6 +426,15 @@ const toWireScopeSnapshot = (observation, targetId, emittedAt = Date.now()) => {
     };
 };
 
+// Trimmed from a non-negative integer to 0 for any observation that lacks a
+// droppedFrames field (older Scratch build) or carries a malformed one,
+// rather than forwarding a value WireScope's session envelope would reject.
+const droppedFramesOf = observation => (
+    isObject(observation) && Number.isInteger(observation.droppedFrames) && observation.droppedFrames >= 0 ?
+        observation.droppedFrames :
+        0
+);
+
 const randomToken = function (cryptoObject) {
     if (!cryptoObject || typeof cryptoObject.getRandomValues !== 'function') {
         throw new Error('createWireScopeSource: secure randomness is unavailable');
@@ -464,8 +473,10 @@ const createWireScopeSource = function (environment) {
         const snapshot = toWireScopeSnapshot(currentObservation, target.id, environment.now());
         if (!snapshot) return;
         target.snapshot = snapshot;
+        target.droppedFrames = droppedFramesOf(currentObservation);
+        const historyWindow = {dropped_frames: target.droppedFrames};
         for (const session of sessions) {
-            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot});
+            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot, history_window: historyWindow});
         }
     };
 
@@ -489,7 +500,11 @@ const createWireScopeSource = function (environment) {
             pending.delete(event.source);
             const session = {port: channel.port1, targetId: target.id};
             sessions.add(session);
-            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot: target.snapshot});
+            postSession(session.port, {
+                type: OBSERVER_SNAPSHOT,
+                snapshot: target.snapshot,
+                history_window: {dropped_frames: target.droppedFrames || 0}
+            });
         });
         channel.port1.start();
         event.source.postMessage({
@@ -528,7 +543,8 @@ const createWireScopeSource = function (environment) {
                 target = {
                     id: `target-${randomToken(environment.crypto)}`,
                     displayAlias: observation.displayAlias,
-                    snapshot: null
+                    snapshot: null,
+                    droppedFrames: 0
                 };
             }
             publish();
