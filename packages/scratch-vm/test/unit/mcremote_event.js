@@ -50,6 +50,55 @@ test('event values are read from one immutable thread DTO without network parsin
     t.end();
 });
 
+const projectileHitWithEntityTarget = handle => ({
+    events: [
+        {
+            sequence: 1,
+            type: 'projectile_hit',
+            dimension: 'minecraft:overworld',
+            origin: [200, 0, 200],
+            projectile: 'minecraft:arrow',
+            pos: [1, 2, 3],
+            target: {kind: 'entity', handle}
+        }
+    ],
+    through_sequence: 1,
+    latest_sequence: 1,
+    filtered_out: 0,
+    overflow_dropped_total: 0,
+    capacity_dropped_total: 0,
+    explicitly_discarded_total: 0
+});
+
+test('protocol 23 accepts an mcr_eh_ entity target handle', t => {
+    const parsed = validateEventPollResult(
+        projectileHitWithEntityTarget('mcr_eh_abc123'), 0, initialEventStatus()
+    );
+    t.equal(parsed.events[0].target.handle, 'mcr_eh_abc123');
+    t.end();
+});
+
+test('protocol 23 rejects a protocol-22 mceh_ entity target handle', t => {
+    t.throws(() => validateEventPollResult(
+        projectileHitWithEntityTarget('mceh_abc123'), 0, initialEventStatus()
+    ));
+    t.end();
+});
+
+test('protocol 23 rejects an invalid-prefix, empty, or non-string entity target handle', t => {
+    t.throws(() => validateEventPollResult(
+        projectileHitWithEntityTarget('not_an_entity_handle'), 0, initialEventStatus()
+    ));
+    t.throws(() => validateEventPollResult(projectileHitWithEntityTarget(''), 0, initialEventStatus()));
+    t.throws(() => validateEventPollResult(projectileHitWithEntityTarget(42), 0, initialEventStatus()));
+    t.end();
+});
+
+test('the current events fixture carries no protocol-22 mceh_ handles', t => {
+    t.notMatch(JSON.stringify(fixture), /mceh_/);
+    t.end();
+});
+
 test('event status exposes cursor and distinct cumulative loss counters', t => {
     const status = {
         cursor: 9,

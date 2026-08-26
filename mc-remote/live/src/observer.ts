@@ -406,7 +406,7 @@ const parseProjectileTarget = (value: unknown, context: string): Record<string, 
   if (target.kind === 'entity') {
     exactFields(target, ['kind', 'handle'], context)
     const handle = requiredString(target.handle, `${context}.handle`)
-    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context}.handle must be an entity handle`)
+    if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context}.handle must be an entity handle`)
     return { kind: 'entity', handle }
   }
   if (target.kind === 'block') {
@@ -650,7 +650,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'world.spawnParticle') return nonNegativeInteger(value, 'frame.payload.result')
   if (method === 'world.spawnEntity') {
     const handle = requiredString(value, 'frame.payload.result')
-    if (!/^mceh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
+    if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
     return handle
   }
   if (method === 'events.poll') return parseEventsPollResult(value)

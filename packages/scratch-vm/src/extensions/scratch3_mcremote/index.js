@@ -2901,7 +2901,7 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.Z),
             Cast.toString(args.ENTITY)
         ]).then(handle => {
-            variable.value = typeof handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(handle) ?
+            variable.value = typeof handle === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(handle) ?
                 handle :
                 makeErrorText('remote_error');
         }, error => {
@@ -3005,5 +3005,9 @@ class Scratch3McRemoteBlocks {
         );
     }
 }
+
+// Exposed so tests can build protocol-version-aware fixtures/mocks instead of
+// hardcoding a major version that will silently go stale on the next bump.
+Scratch3McRemoteBlocks.PROTOCOL_VERSION = PROTOCOL_VERSION;
 
 module.exports = Scratch3McRemoteBlocks;

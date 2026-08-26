@@ -147,4 +147,8 @@ describe('structured block values', () => {
       max_observer_frame_bytes: 65_536,
     })
   })
+
+  it('carries no protocol-22 mceh_ entity handles in the current protocol 23 events fixture', () => {
+    expect(JSON.stringify(eventsFixture)).not.toContain('mceh_')
+  })
 })

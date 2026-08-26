@@ -13,6 +13,14 @@ const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/event
 const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
+// Read from the extension itself so this harness tracks the current protocol
+// automatically on the next major bump instead of a hardcoded regex going stale.
+const mockHelloProtocolMajor = protocol => {
+    const match = typeof protocol === 'string' && /^(\d+)\./.exec(protocol);
+    return match ? match[1] : null;
+};
+const CLIENT_PROTOCOL_MAJOR = mockHelloProtocolMajor(McRemote.PROTOCOL_VERSION);
+
 /**
  * Minimal WebSocket stand-in driven synchronously by the tests. The extension
  * only uses addEventListener, send, readyState and the static OPEN constant.
@@ -47,7 +55,7 @@ class FakeWebSocket {
         this._emit('open');
     }
     fireMessage (obj) {
-        if (obj && obj.result && /^23\./.test(obj.result.protocol)) {
+        if (obj && obj.result && mockHelloProtocolMajor(obj.result.protocol) === CLIENT_PROTOCOL_MAJOR) {
             obj = Object.assign({}, obj, {
                 result: Object.assign({}, dimensionFixture.build_context, obj.result)
             });
@@ -70,6 +78,24 @@ FakeWebSocket.OPEN = 1;
 FakeWebSocket.instances = [];
 
 global.WebSocket = FakeWebSocket;
+
+test('FakeWebSocket backfills the mock hello default build context by the client protocol major', t => {
+    const socket = new FakeWebSocket('wss://example.test', []);
+    let lastMessage;
+    socket.addEventListener('message', event => {
+        lastMessage = JSON.parse(event.data);
+    });
+
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: McRemote.PROTOCOL_VERSION}});
+    t.same(lastMessage.result.dimension, dimensionFixture.build_context.dimension,
+        'a hello matching the client protocol major gets the default build context');
+
+    const otherMajor = `${Number(CLIENT_PROTOCOL_MAJOR) + 1}.0.0`;
+    socket.fireMessage({jsonrpc: '2.0', id: 2, result: {protocol: otherMajor}});
+    t.notOk(Object.prototype.hasOwnProperty.call(lastMessage.result, 'dimension'),
+        'a hello with a different protocol major does not get the default build context');
+    t.end();
+});
 
 class FakeLocalStorage {
     constructor () {
@@ -1630,9 +1656,11 @@ test('spawnEntity writes its epoch handle or ErrorText to the selected scalar va
         t.equal(request.method, 'world.spawnEntity');
         t.same(request.params, spawnFixture.spawn_entity.params);
         t.equal(variable.value, 'previous', 'output changes only after the response');
-        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: spawnFixture.spawn_entity.result});
+        // protocol 23 handles use the mcr_eh_ prefix; spawnFixture.spawn_entity.result is the
+        // protocol-22-labeled mceh_ example and is reused here only for params, not the result.
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: 'mcr_eh_example'});
         return success.then(() => {
-            t.equal(variable.value, 'mceh_example');
+            t.equal(variable.value, 'mcr_eh_example');
             const failure = blocks.spawnEntity(args, util);
             request = socket.lastSent();
             socket.fireMessage({
@@ -1643,6 +1671,26 @@ test('spawnEntity writes its epoch handle or ErrorText to the selected scalar va
             return failure;
         }).then(() => {
             t.equal(variable.value, '⟦mcr-error:entity_capacity_exhausted⟧');
+            t.end();
+        });
+    })
+);
+
+test('spawnEntity treats a protocol-22 mceh_ handle from the server as a remote_error', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const variable = {value: 'previous', isCloud: false};
+        const util = {target: {lookupOrCreateVariable: () => variable}};
+        const result = blocks.spawnEntity({
+            ENTITY: 'minecraft:allay',
+            X: 1.25,
+            Y: 2.5,
+            Z: 3.75,
+            VARIABLE: {id: 'variable-id', name: 'spawned entity'}
+        }, util);
+        const request = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: 'mceh_legacy'});
+        return result.then(() => {
+            t.equal(variable.value, '⟦mcr-error:remote_error⟧');
             t.end();
         });
     })

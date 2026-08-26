@@ -104,7 +104,7 @@ const projectileTarget = (value, context) => {
     if (value.kind === 'entity') {
         exactFields(value, ['kind', 'handle'], context);
         const handle = requiredString(value.handle, `${context}.handle`);
-        if (!/^mceh_[\x21-\x7e]+$/.test(handle)) {
+        if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) {
             throw invalidEventResponse(`${context}.handle must be an entity handle`);
         }
         return {kind: 'entity', handle};

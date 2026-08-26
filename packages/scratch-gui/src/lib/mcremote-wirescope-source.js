@@ -238,7 +238,7 @@ const allowEvent = function (value) {
         if (value.target.kind === 'player' && hasExactFields(value.target, ['kind'])) {
             target = {kind: 'player'};
         } else if (value.target.kind === 'entity' && hasExactFields(value.target, ['kind', 'handle']) &&
-            typeof value.target.handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(value.target.handle)) {
+            typeof value.target.handle === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(value.target.handle)) {
             target = {kind: 'entity', handle: value.target.handle};
         } else if (value.target.kind === 'block' &&
             hasExactFields(value.target, ['kind', 'block', 'pos', 'face'])) {
@@ -370,7 +370,7 @@ const allowFramePayload = function (frame) {
         return Number.isInteger(payload.result) && payload.result >= 0 ? {result: payload.result} : null;
     }
     if (frame.method === 'world.spawnEntity') {
-        return typeof payload.result === 'string' && /^mceh_[\x21-\x7e]+$/.test(payload.result) ?
+        return typeof payload.result === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(payload.result) ?
             {result: payload.result} : null;
     }
     if (frame.method === 'events.poll') {

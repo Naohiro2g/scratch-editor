@@ -23,6 +23,10 @@ const dimensionsFixture = JSON.parse(readFileSync(dimensionsFixturePath, 'utf8')
   custom_build_context: { dimension: string; origin: number[] }
   invalid_refs: string[]
 }
+// spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
+// (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
+// use a protocol 23 handle here instead when exercising the current parser.
+const PROTOCOL_23_ENTITY_HANDLE = 'mcr_eh_example'
 interface MutableSnapshotFixture {
   schema_version: number
   streams: { hello: { protocol: string }; frames: unknown[] }[]
@@ -162,7 +166,7 @@ describe('observer schema v1 with the b5 compatibility-set revision', () => {
     expect(() => parseObserverSnapshot(snapshot)).toThrow()
   })
 
-  test('accepts protocol 22 height and entity handle observations', () => {
+  test('accepts height and protocol 23 entity handle observations', () => {
     const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
     const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
     snapshot.schema_version = 1
@@ -198,7 +202,7 @@ describe('observer schema v1 with the b5 compatibility-set revision', () => {
         direction: 'receive',
         request_id: 2,
         method: 'world.spawnEntity',
-        payload: { result: spawnFixture.spawn_entity.result },
+        payload: { result: PROTOCOL_23_ENTITY_HANDLE },
       },
       {
         sequence: 5,
@@ -245,6 +249,18 @@ describe('observer schema v1 with the b5 compatibility-set revision', () => {
         request_id: 2,
         method: 'world.spawnEntity',
         payload: { result: 'raw-uuid' },
+      },
+    ]
+    expect(() => parseObserverSnapshot(snapshot)).toThrow('must be an entity handle')
+
+    snapshot.streams[0].frames = [
+      {
+        sequence: 3,
+        observed_at: 3,
+        direction: 'receive',
+        request_id: 3,
+        method: 'world.spawnEntity',
+        payload: { result: 'mceh_legacy' },
       },
     ]
     expect(() => parseObserverSnapshot(snapshot)).toThrow('must be an entity handle')

@@ -63,6 +63,6 @@
   },
   "projectile_targets": {
     "player": { "kind": "player" },
-    "entity": { "kind": "entity", "handle": "mceh_fixture-1" }
+    "entity": { "kind": "entity", "handle": "mcr_eh_fixture-1" }
   }
 }
