@@ -1390,6 +1390,73 @@ test('getBlocks preserves the selected list when any returned block value is mal
     })
 );
 
+test('getSign makes one request and resolves to a SignInfoText usable by the line accessors', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.getSign({X: 1, Y: 2, Z: 3});
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'world.getSign');
+        const front = [
+            {text: 'Hi', color: 'red', decorations: ['bold']},
+            {text: '', color: 'black', decorations: []},
+            {text: '', color: 'black', decorations: []},
+            {text: '', color: 'black', decorations: []}
+        ];
+        const back = [
+            {text: '', color: 'black', decorations: []},
+            {text: '', color: 'black', decorations: []},
+            {text: '', color: 'black', decorations: []},
+            {text: '', color: 'black', decorations: []}
+        ];
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: {front, back, waxed: false}});
+        return result.then(signInfo => {
+            t.equal(blocks.signLineText({SIGN_INFO: signInfo, FACE: 'front', LINE: '0'}), 'Hi');
+            t.equal(blocks.signLineColor({SIGN_INFO: signInfo, FACE: 'front', LINE: '0'}), 'red');
+            t.ok(blocks.signLineHasDecoration({SIGN_INFO: signInfo, FACE: 'front', LINE: '0', DECORATION: 'bold'}));
+            t.notOk(blocks.signIsWaxed({SIGN_INFO: signInfo}));
+            t.end();
+        });
+    })
+);
+
+test('setSign replaces one face with plain-text lines and waits for a null result', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setSign({
+            X: 1, Y: 2, Z: 3, FACE: 'front', LINE0: 'a', LINE1: 'b', LINE2: 'c', LINE3: 'd'
+        });
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'world.setSign');
+        t.same(msg.params, [1, 2, 3, {front: ['a', 'b', 'c', 'd']}]);
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('updateSignLine sends the exact one-line PATCH shape', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.updateSignLine({X: 1, Y: 2, Z: 3, FACE: 'back', LINE: '2', TEXT: 'hi'});
+        const msg = socket.lastSent();
+        t.equal(msg.method, 'world.updateSignLine');
+        t.same(msg.params, [1, 2, 3, 'back', 2, 'hi']);
+        socket.fireMessage({jsonrpc: '2.0', id: msg.id, result: null});
+        return result.then(() => t.end());
+    })
+);
+
+test('a sign write error resolves the command block without rejecting the calling thread', t =>
+    newConnectedBlocks().then(({blocks, socket}) => {
+        const result = blocks.setSign({
+            X: 1, Y: 2, Z: 3, FACE: 'front', LINE0: 'a', LINE1: '', LINE2: '', LINE3: ''
+        });
+        const msg = socket.lastSent();
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: msg.id,
+            error: {code: -32000, message: 'sign is waxed', data: {reason: 'sign_waxed'}}
+        });
+        return result.then(() => t.end());
+    })
+);
+
 test('getHeight returns an integer and uses the optional maxY as an inclusive third parameter', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.getHeightBelow({X: 7, Z: 9, MAX_Y: 20}, {});
