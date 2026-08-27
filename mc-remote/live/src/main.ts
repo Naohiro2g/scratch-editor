@@ -320,6 +320,7 @@ streamsSection.append(streamToolbar, streamPanel)
 
 let contentMode: 'empty' | 'snapshot' = 'empty'
 let mountedStreamId: string | null = null
+let lastTargetId: string | null = null
 
 interface StreamHelloState {
   readonly section: HTMLElement
@@ -371,16 +372,37 @@ interface StreamFramesState {
   readonly tableWrap: HTMLElement
   readonly tbody: HTMLTableSectionElement
   readonly emptyMessage: HTMLElement
+  readonly pauseButton: HTMLButtonElement
+  readonly newArrivalsBadge: HTMLElement
   bodyMode: 'empty' | 'table' | null
   lastSignature: string | null
+  /**
+   * The client-only display pause (v1 UX candidate, 2026-08-27): frame
+   * collection, polling, and dropped_frames accounting are never affected —
+   * only which frames get projected into the table. `pausedFrames` is the
+   * held frame array captured at the moment pause was toggled on;
+   * `pausedMaxSequence` is its highest `sequence`, used to count arrivals
+   * since without replaying anything. Resuming re-projects the live frames
+   * once, immediately — no queued/replayed intermediate updates.
+   */
+  paused: boolean
+  pausedFrames: readonly ObserverFrame[] | null
+  pausedMaxSequence: number
+  /** The most recent live frame array passed to updateStreamFrames, kept so togglePause can capture it without needing snapshot data of its own. */
+  lastKnownFrames: readonly ObserverFrame[]
 }
 
 const buildStreamFrames = (): StreamFramesState => {
   const panel = make('section', 'panel frames-panel')
   const headingTitle = make('h2')
+  const headingControls = make('div', 'panel-heading-controls')
   const countSpan = make('span', 'count')
+  const newArrivalsBadge = make('span', 'frames-new-arrivals hidden')
+  const pauseButton = make('button', 'frames-pause-toggle')
+  pauseButton.type = 'button'
+  headingControls.append(countSpan, newArrivalsBadge, pauseButton)
   const heading = make('div', 'panel-heading')
-  heading.append(headingTitle, countSpan)
+  heading.append(headingTitle, headingControls)
   const bodyContainer = make('div')
   panel.append(heading, bodyContainer)
 
@@ -396,7 +418,7 @@ const buildStreamFrames = (): StreamFramesState => {
   tableElement.append(head, tbody)
   tableWrap.append(tableElement)
 
-  return {
+  const state: StreamFramesState = {
     panel,
     headingTitle,
     countSpan,
@@ -405,9 +427,39 @@ const buildStreamFrames = (): StreamFramesState => {
     tableWrap,
     tbody,
     emptyMessage,
+    pauseButton,
+    newArrivalsBadge,
     bodyMode: null,
     lastSignature: null,
+    paused: false,
+    pausedFrames: null,
+    pausedMaxSequence: 0,
+    lastKnownFrames: [],
   }
+  pauseButton.addEventListener('click', () => toggleStreamPause(state))
+  return state
+}
+
+/**
+ * Toggle the client-only display pause for one stream's frame table.
+ * Pausing captures the currently held frame array as of right now; resuming
+ * drops that capture and re-projects the live frames on the very next
+ * render, once, with no replay of what arrived while paused. Never touches
+ * the wire, plugin, Bridge, or events.poll cadence — frame collection and
+ * dropped_frames accounting continue unaffected either way.
+ * @param state - the stream's frame-table state to toggle.
+ */
+const toggleStreamPause = (state: StreamFramesState): void => {
+  if (state.paused) {
+    state.paused = false
+    state.pausedFrames = null
+    state.pausedMaxSequence = 0
+  } else {
+    state.paused = true
+    state.pausedFrames = state.lastKnownFrames
+    state.pausedMaxSequence = state.lastKnownFrames.reduce((max, frame) => Math.max(max, frame.sequence), 0)
+  }
+  if (currentSnapshot) renderSnapshot(currentSnapshot, { forceFrameTableRebuild: true })
 }
 
 const directionMessageKey = (frame: ObserverFrame): MessageKey =>
@@ -428,26 +480,47 @@ const directionMessageKey = (frame: ObserverFrame): MessageKey =>
  * `force` bypasses the skip for a locale switch or a filter-state change,
  * where the visible set may be textually different (translated labels,
  * newly (un)hidden units) even when the signature happens to match.
+ *
+ * While `state.paused`, `allFrames` (the live held window) is used only to
+ * track `lastKnownFrames` (for a future pause) and count new arrivals for
+ * the badge; the table itself keeps projecting `state.pausedFrames`, the
+ * array captured at the moment pause was toggled on, so its signature never
+ * changes and the table naturally never rebuilds until resumed. Filter and
+ * search still apply live against that frozen array.
  * @param state - the stream's persistent frame-table DOM state.
  * @param allFrames - the stream's currently held frames, in observed order.
  * @param force - re-render unconditionally, bypassing the signature check.
  */
 const updateStreamFrames = (state: StreamFramesState, allFrames: readonly ObserverFrame[], force: boolean): void => {
+  state.lastKnownFrames = allFrames
+
   state.headingTitle.textContent = t('wireFrames')
   const headers = ['#', t('columnDirection'), t('columnMethod'), t('columnPayload')]
   headers.forEach((label, index) => {
     state.headRow.children[index].textContent = label
   })
+  state.pauseButton.textContent = t(state.paused ? 'framesResume' : 'framesPause')
+  state.pauseButton.setAttribute('aria-pressed', String(state.paused))
 
-  const signature = visibleFrameSignature(allFrames, filterState)
+  if (state.paused) {
+    const newArrivals = allFrames.filter((frame) => frame.sequence > state.pausedMaxSequence).length
+    state.newArrivalsBadge.textContent = t('framesPausedNewArrivals', { count: newArrivals })
+    state.newArrivalsBadge.classList.remove('hidden')
+  } else {
+    state.newArrivalsBadge.classList.add('hidden')
+  }
+
+  const projectedFrames = state.paused && state.pausedFrames ? state.pausedFrames : allFrames
+
+  const signature = visibleFrameSignature(projectedFrames, filterState)
   if (!force && signature === state.lastSignature) return
   state.lastSignature = signature
 
-  const frames = filterFrames(allFrames, filterState)
+  const frames = filterFrames(projectedFrames, filterState)
   state.countSpan.textContent = String(frames.length)
 
   if (frames.length === 0) {
-    state.emptyMessage.textContent = t(allFrames.length === 0 ? 'noFrames' : 'noFramesMatchFilter')
+    state.emptyMessage.textContent = t(projectedFrames.length === 0 ? 'noFrames' : 'noFramesMatchFilter')
     if (state.bodyMode !== 'empty') {
       state.bodyContainer.replaceChildren(state.emptyMessage)
       state.bodyMode = 'empty'
@@ -529,6 +602,18 @@ const renderSnapshot = (
     content.replaceChildren(target, historyWindowNotice, streamsSection)
     content.className = 'content'
     contentMode = 'snapshot'
+  }
+
+  // A different observed target (a new handoff/session, not just a routine
+  // reconnect to the same one) drops every per-stream cache — including any
+  // display pause — rather than risk showing frozen or stale content from a
+  // prior target under a reused stream id.
+  if (snapshot.target.id !== lastTargetId) {
+    lastTargetId = snapshot.target.id
+    streamHelloStates.clear()
+    streamFramesStates.clear()
+    mountedStreamId = null
+    activeStreamId = null
   }
 
   targetEyebrow.textContent = t(snapshot.target.source_kind === 'scratch' ? 'sourceScratch' : 'sourcePython')

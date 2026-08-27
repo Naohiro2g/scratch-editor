@@ -443,10 +443,53 @@ p {
   margin: 0;
 }
 
+.panel-heading-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .count {
   min-width: 1.8rem;
   padding: 0.15rem 0.45rem;
   text-align: center;
+}
+
+.frames-pause-toggle {
+  border: 1px solid #34444e;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  background: #121d24;
+  color: #d4dce2;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.frames-pause-toggle:hover {
+  background: #1a2831;
+}
+
+.frames-pause-toggle[aria-pressed='true'] {
+  border-color: #6f5829;
+  background: #211b10;
+  color: #e2c47f;
+}
+
+.frames-new-arrivals {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #6f5829;
+  border-radius: 999px;
+  background: #211b10;
+  color: #e2c47f;
+  font-size: 0.68rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.frames-new-arrivals.hidden {
+  display: none;
 }
 
 .table-wrap {
