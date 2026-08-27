@@ -17,7 +17,6 @@
     flex: 0 1 15rem;
     min-width: 0;
     max-width: 100%;
-    overflow: hidden;
     border: 1px solid $ui-black-transparent;
     border-radius: 8px;
     background: $ui-white;
@@ -26,12 +25,21 @@
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-size: 0.75rem;
     line-height: 1.2rem;
+
+    /*
+        No overflow: hidden here — .details below is a dropdown positioned
+        outside this box (top: 100%), and clipping the panel would clip the
+        dropdown with it. The stripe and header below carry their own
+        matching corner radii instead so the collapsed panel still reads as
+        one rounded box.
+    */
 }
 
 .panel::before {
     content: "";
     display: block;
     height: 0.25rem;
+    border-radius: 7px 7px 0 0;
     background: $ui-tertiary;
 }
 
@@ -57,6 +65,7 @@
     min-height: 2.5rem;
     padding: 0.4rem 0.6rem;
     border: 0;
+    border-radius: 0 0 7px 7px;
     background: $ui-secondary;
     color: $text-primary;
     cursor: pointer;
