@@ -249,12 +249,32 @@ const eventClassesOf = (unit: FilterUnit): EventClass[] | null => {
 }
 
 /**
+ * A pending `events.poll` request: the send frame has been observed but its
+ * matching receive has not (yet, or ever, if the connection dropped first).
+ * Distinct from a receive-only orphan, which already carries a response and
+ * is judged normally like any other pair.
+ * @param unit - the filter unit.
+ * @returns whether this unit is a send-only `events.poll` request.
+ */
+const isPendingPollRequest = (unit: FilterUnit): boolean =>
+  unitMethod(unit) === 'events.poll' && unit.frames.length === 1 && unit.frames[0].direction === 'send'
+
+/**
  * The filter's core decision logic, applied per filter unit.
+ *
+ * A pending `events.poll` request is never shown, unconditionally — not by
+ * method group, not by an "or" search match, not by anything else. Polling
+ * happens roughly once a second; showing the request the instant it is sent
+ * and then hiding it once its (usually empty) response arrives a moment
+ * later is pure flicker, never information a viewer can act on. Once the
+ * pair completes, the whole pair is judged normally below.
  * @param unit - one non-poll frame, or one `events.poll` pair/orphan.
  * @param state - current filter state.
  * @returns whether this unit should be rendered.
  */
 export const filterUnitPasses = (unit: FilterUnit, state: FilterState): boolean => {
+  if (isPendingPollRequest(unit)) return false
+
   const group = methodGroupFor(unitMethod(unit))
   const groupOn = state.methodGroups[group]
   const classes = eventClassesOf(unit)
@@ -283,6 +303,24 @@ export const filterFrames = (frames: readonly ObserverFrame[], state: FilterStat
   }
   return visible
 }
+
+/**
+ * A stable identity for the currently visible (filtered) frame set, cheap to
+ * compare across snapshots so a renderer can skip rebuilding the frame table
+ * DOM — and losing any in-progress payload text selection — when nothing the
+ * viewer can see actually changed. `sequence` is unique and immutable once a
+ * frame is observed, so the ordered list of visible sequences fully
+ * identifies the visible set: unchanged content for an unchanged sequence
+ * needs no separate content hash.
+ * @param frames - a stream's currently held frames, in observed order.
+ * @param state - current filter state.
+ * @returns an opaque string equal only when the visible frame set (and
+ *     order) is identical.
+ */
+export const visibleFrameSignature = (frames: readonly ObserverFrame[], state: FilterState): string =>
+  filterFrames(frames, state)
+    .map((frame) => frame.sequence)
+    .join(',')
 
 export interface FilterCounts {
   readonly methodGroups: Readonly<Record<MethodGroup, number>>

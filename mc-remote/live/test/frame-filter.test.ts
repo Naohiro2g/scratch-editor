@@ -17,6 +17,7 @@ import {
   parseStoredFilterState,
   saveFilterState,
   textMatches,
+  visibleFrameSignature,
   type FilterState,
   type KeyValueStorage,
 } from '../src/frame-filter'
@@ -343,9 +344,22 @@ describe('events.poll pair visibility', () => {
     expect(filterFrames([requestFrame, responseFrame], state)).toEqual([requestFrame, responseFrame])
   })
 
-  it('does not misjudge an orphan request as empty and hide it while the events group is on', () => {
+  it('never shows a pending request-only events.poll unit, even with the events group on', () => {
     const requestFrame = pollRequest(1)
-    expect(filterFrames([requestFrame], defaultFilterState())).toEqual([requestFrame])
+    expect(filterFrames([requestFrame], defaultFilterState())).toEqual([])
+  })
+
+  it('does not show a pending request even when it matches an enabled "or" search', () => {
+    const requestFrame = frame('events.poll', 'send', { params: [0] }, 1)
+    const state: FilterState = { ...defaultFilterState(), orSearch: { enabled: true, text: 'events.poll' } }
+    expect(filterFrames([requestFrame], state)).toEqual([])
+  })
+
+  it('shows the pair once the response for a previously pending request arrives', () => {
+    const requestFrame = pollRequest(1)
+    expect(filterFrames([requestFrame], defaultFilterState())).toEqual([])
+    const responseFrame = pollResponse([{ type: 'pickaxe_poke' }], 1)
+    expect(filterFrames([requestFrame, responseFrame], defaultFilterState())).toEqual([requestFrame, responseFrame])
   })
 
   it('does not misjudge an orphan response missing its request as unclassified-empty', () => {
@@ -356,6 +370,54 @@ describe('events.poll pair visibility', () => {
   it('hides an orphan empty response the same as a paired empty response', () => {
     const responseFrame = pollResponse([], 1)
     expect(filterFrames([responseFrame], defaultFilterState())).toEqual([])
+  })
+
+  it('shows a completed empty-response pair together once the "empty" class switch is on', () => {
+    const requestFrame = pollRequest(1)
+    const responseFrame = pollResponse([], 1)
+    const state: FilterState = {
+      ...defaultFilterState(),
+      eventClasses: { ...defaultFilterState().eventClasses, empty: true },
+    }
+    expect(filterFrames([requestFrame, responseFrame], state)).toEqual([requestFrame, responseFrame])
+  })
+
+  it('shows a completed error-response pair together, ungated by the event-class switches', () => {
+    const requestFrame = pollRequest(1)
+    const errorResponseFrame = frame(
+      'events.poll',
+      'receive',
+      { error: { code: -32000, message: 'backpressure', data: { reason: 'backpressure' } } },
+      1,
+    )
+    const allEventClassesOff: FilterState = {
+      ...defaultFilterState(),
+      eventClasses: Object.fromEntries(
+        EVENT_CLASSES.map((eventClass) => [eventClass, false]),
+      ) as FilterState['eventClasses'],
+    }
+    expect(filterFrames([requestFrame, errorResponseFrame], allEventClassesOff)).toEqual([
+      requestFrame,
+      errorResponseFrame,
+    ])
+  })
+})
+
+describe('visibleFrameSignature', () => {
+  it('does not change when a hidden (pending or filtered-out) poll is added', () => {
+    const frames = [frame('chat.post', 'send', { params: ['hi'] })]
+    const before = visibleFrameSignature(frames, defaultFilterState())
+    const withPendingPoll = [...frames, pollRequest(2)]
+    expect(visibleFrameSignature(withPendingPoll, defaultFilterState())).toBe(before)
+    const withHiddenEmptyPair = [...withPendingPoll, pollResponse([], 2)]
+    expect(visibleFrameSignature(withHiddenEmptyPair, defaultFilterState())).toBe(before)
+  })
+
+  it('changes when a visible frame (a player/event frame) is added', () => {
+    const frames = [frame('chat.post', 'send', { params: ['hi'] })]
+    const before = visibleFrameSignature(frames, defaultFilterState())
+    const withVisibleEvent = [...frames, pollRequest(2), pollResponse([{ type: 'pickaxe_poke' }], 2)]
+    expect(visibleFrameSignature(withVisibleEvent, defaultFilterState())).not.toBe(before)
   })
 })
 
