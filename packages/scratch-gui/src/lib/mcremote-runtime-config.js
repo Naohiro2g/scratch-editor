@@ -14,7 +14,9 @@ const DEFAULT_RUNTIME_CONFIG = Object.freeze({
     connectionEnabled: true,
     wireScopeUrl: null,
     releaseIdentity: 'embedded-default',
-    notices: EMPTY_NOTICES
+    homepageUrl: null,
+    notices: EMPTY_NOTICES,
+    storagePersistEnabled: false
 });
 
 const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
@@ -145,7 +147,22 @@ const normalizeRuntimeConfig = (...[value]) => {
         }
         wireScopeUrl = candidate.toString();
     }
+    let homepageUrl = null;
+    if (typeof value.homepage_url !== 'undefined' && value.homepage_url !== null) {
+        const candidate = new URL(value.homepage_url);
+        if (candidate.protocol !== 'https:' && candidate.protocol !== 'http:') {
+            throw new Error('homepage_url must use http or https');
+        }
+        homepageUrl = candidate.toString();
+    }
     const notices = normalizeNotices(value.notices);
+    let storagePersistEnabled = false;
+    if (typeof value.storage_persist_enabled !== 'undefined' && value.storage_persist_enabled !== null) {
+        if (typeof value.storage_persist_enabled !== 'boolean') {
+            throw new Error('storage_persist_enabled must be a boolean');
+        }
+        storagePersistEnabled = value.storage_persist_enabled;
+    }
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
@@ -153,7 +170,9 @@ const normalizeRuntimeConfig = (...[value]) => {
         connectionEnabled: value.connection_enabled,
         wireScopeUrl,
         releaseIdentity: value.release_identity.trim(),
-        notices
+        homepageUrl,
+        notices,
+        storagePersistEnabled
     });
 };
 

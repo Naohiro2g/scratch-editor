@@ -37,6 +37,8 @@ import SBFileUploaderHOC from '../lib/sb-file-uploader-hoc.jsx';
 import ProjectFetcherHOC from '../lib/project-fetcher-hoc.jsx';
 import TitledHOC from '../lib/titled-hoc.jsx';
 import ProjectSaverHOC from '../lib/project-saver-hoc.jsx';
+import LocalProjectSaverHOC from '../lib/local-project-saver-hoc.jsx';
+import LocalSpriteSaverHOC from '../lib/local-sprite-saver-hoc.jsx';
 import QueryParserHOC from '../lib/query-parser-hoc.jsx';
 import vmListenerHOC from '../lib/vm-listener-hoc.jsx';
 import vmManagerHOC from '../lib/vm-manager-hoc.jsx';
@@ -295,6 +297,8 @@ const WrappedGui = compose(
     ProjectFetcherHOC,
     TitledHOC,
     ProjectSaverHOC,
+    LocalProjectSaverHOC,
+    LocalSpriteSaverHOC,
     vmListenerHOC,
     vmManagerHOC,
     SBFileUploaderHOC,

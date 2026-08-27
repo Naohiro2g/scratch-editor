@@ -5,10 +5,14 @@ import 'core-js/fn/promise/finally';
 import 'intl'; // For Safari 9
 
 import {loadMcRemoteRuntimeConfig} from '../lib/mcremote-runtime-config.js';
+import {requestBrowserStoragePersistence} from '../lib/browser-storage-persistence.js';
 
 import styles from './index.css';
 
 loadMcRemoteRuntimeConfig().then(() => {
+    requestBrowserStoragePersistence();
+
+
     const React = require('react');
     const ReactDomClient = require('react-dom/client');
     const AppStateHOC = require('../lib/app-state-hoc.jsx').default;

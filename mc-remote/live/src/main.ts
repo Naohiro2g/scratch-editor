@@ -1,4 +1,16 @@
 import { startObserverClient, type ObserverClientErrorCode, type ObserverClientStatus } from './client'
+import {
+  OBSERVABLE_EVENT_CLASSES,
+  OBSERVABLE_METHOD_GROUPS,
+  filterCounts,
+  filterFrames,
+  loadFilterState,
+  saveFilterState,
+  visibleFrameSignature,
+  type EventClass,
+  type FilterState,
+  type MethodGroup,
+} from './frame-filter'
 import { resolveLocale, translate, type Locale, type MessageKey } from './l10n'
 import type { ObserverFrame, ObserverHello, ObserverSnapshot, ObserverStream } from './observer'
 import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
@@ -55,8 +67,170 @@ stationAttachButton.type = 'submit'
 stationAttachControls.append(stationAttachInput, stationAttachButton)
 stationAttach.append(stationAttachCopy, stationAttachControls)
 
+// Client-only display filter over the currently held frame window (never
+// touches the wire or server event ring — see frame-filter.ts). Built once,
+// outside `content`, so its search <input> elements are never torn down and
+// rebuilt by renderSnapshot() and never lose focus/value while a viewer is
+// mid-keystroke when a new frame arrives.
+const filterPanel = make('section', 'panel filter-panel hidden')
+const filterToggle = make('button', 'filter-toggle')
+filterToggle.type = 'button'
+const filterSummaryText = make('span', 'filter-summary')
+const filterToggleRow = make('div', 'filter-toggle-row')
+filterToggleRow.append(filterToggle, filterSummaryText)
+const filterBody = make('div', 'filter-body hidden')
+const filterMethodGroupHeading = make('h3')
+const filterMethodGroupList = make('div', 'filter-switch-list')
+const filterEventClassHeading = make('h3')
+const filterEventClassList = make('div', 'filter-switch-list')
+const filterSearchList = make('div', 'filter-search-list')
+filterBody.append(
+  filterMethodGroupHeading,
+  filterMethodGroupList,
+  filterEventClassHeading,
+  filterEventClassList,
+  filterSearchList,
+)
+filterPanel.append(filterToggleRow, filterBody)
+
+interface FilterSwitchElements {
+  root: HTMLElement
+  input: HTMLInputElement
+  labelText: HTMLElement
+  count: HTMLElement
+}
+
+const methodGroupSwitchKey: Record<MethodGroup, MessageKey> = {
+  connection: 'filterMethodGroupConnection',
+  auth: 'filterMethodGroupAuth',
+  build: 'filterMethodGroupBuild',
+  catalog: 'filterMethodGroupCatalog',
+  chat: 'filterMethodGroupChat',
+  events: 'filterMethodGroupEvents',
+  player: 'filterMethodGroupPlayer',
+  world: 'filterMethodGroupWorld',
+  other: 'filterMethodGroupOther',
+}
+
+const eventClassSwitchKey: Record<EventClass, MessageKey> = {
+  pickaxe_poke: 'filterEventClassPickaxePoke',
+  chat_posted: 'filterEventClassChatPosted',
+  projectile_hit: 'filterEventClassProjectileHit',
+  empty: 'filterEventClassEmpty',
+  other: 'filterEventClassOther',
+}
+
+const makeFilterSwitch = (onToggle: (checked: boolean) => void): FilterSwitchElements => {
+  const label = make('label', 'filter-switch')
+  const input = make('input')
+  input.type = 'checkbox'
+  const labelText = make('span')
+  const count = make('span', 'count filter-switch-count')
+  label.append(input, labelText, count)
+  input.addEventListener('change', () => onToggle(input.checked))
+  return { root: label, input, labelText, count }
+}
+
+let filterState: FilterState = loadFilterState(window.localStorage)
+
+const persistFilterState = (): void => saveFilterState(window.localStorage, filterState)
+
+const methodGroupSwitches = new Map<MethodGroup, FilterSwitchElements>()
+for (const group of OBSERVABLE_METHOD_GROUPS) {
+  const elements = makeFilterSwitch((checked) => {
+    filterState = {
+      ...filterState,
+      methodGroups: { ...filterState.methodGroups, [group]: checked },
+    }
+    persistFilterState()
+    onFilterStateChanged()
+  })
+  methodGroupSwitches.set(group, elements)
+  filterMethodGroupList.append(elements.root)
+}
+
+const eventClassSwitches = new Map<EventClass, FilterSwitchElements>()
+for (const eventClass of OBSERVABLE_EVENT_CLASSES) {
+  const elements = makeFilterSwitch((checked) => {
+    filterState = {
+      ...filterState,
+      eventClasses: { ...filterState.eventClasses, [eventClass]: checked },
+    }
+    persistFilterState()
+    onFilterStateChanged()
+  })
+  eventClassSwitches.set(eventClass, elements)
+  filterEventClassList.append(elements.root)
+}
+
+const makeSearchField = (
+  onEnabledChange: (checked: boolean) => void,
+  onTextChange: (text: string) => void,
+): { row: HTMLElement; enabledInput: HTMLInputElement; labelText: HTMLElement; textInput: HTMLInputElement } => {
+  const row = make('label', 'filter-search')
+  const enabledInput = make('input')
+  enabledInput.type = 'checkbox'
+  const labelText = make('span')
+  const textInput = make('input', 'filter-search-text')
+  textInput.type = 'text'
+  row.append(enabledInput, labelText, textInput)
+  enabledInput.addEventListener('change', () => onEnabledChange(enabledInput.checked))
+  textInput.addEventListener('input', () => onTextChange(textInput.value))
+  return { row, enabledInput, labelText, textInput }
+}
+
+const orSearch = makeSearchField(
+  (checked) => {
+    filterState = { ...filterState, orSearch: { ...filterState.orSearch, enabled: checked } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+  (text) => {
+    filterState = { ...filterState, orSearch: { ...filterState.orSearch, text } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+)
+const andSearch = makeSearchField(
+  (checked) => {
+    filterState = { ...filterState, andSearch: { ...filterState.andSearch, enabled: checked } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+  (text) => {
+    filterState = { ...filterState, andSearch: { ...filterState.andSearch, text } }
+    persistFilterState()
+    onFilterStateChanged()
+  },
+)
+orSearch.enabledInput.checked = filterState.orSearch.enabled
+orSearch.textInput.value = filterState.orSearch.text
+andSearch.enabledInput.checked = filterState.andSearch.enabled
+andSearch.textInput.value = filterState.andSearch.text
+filterSearchList.append(orSearch.row, andSearch.row)
+
+for (const [group, elements] of methodGroupSwitches) elements.input.checked = filterState.methodGroups[group]
+for (const [eventClass, elements] of eventClassSwitches) elements.input.checked = filterState.eventClasses[eventClass]
+
+let filterPanelExpanded = false
+
+const refreshFilterToggle = (): void => {
+  filterToggle.textContent = t(filterPanelExpanded ? 'filterCollapse' : 'filterExpand')
+  filterToggle.setAttribute('aria-expanded', String(filterPanelExpanded))
+  filterBody.classList.toggle('hidden', !filterPanelExpanded)
+}
+
+filterToggle.addEventListener('click', () => {
+  filterPanelExpanded = !filterPanelExpanded
+  refreshFilterToggle()
+})
+
+// Re-applies the current filterState to the active stream's frame table
+// without touching the filter panel's own DOM (search inputs keep focus).
+let onFilterStateChanged: () => void = () => {}
+
 const content = make('section', 'content empty')
-shell.append(header, status, stationAttach, content)
+shell.append(header, status, stationAttach, filterPanel, content)
 root.append(shell)
 
 type ViewStatus =
@@ -77,6 +251,33 @@ let stationMode = false
 const t = (key: MessageKey, values?: Readonly<Record<string, string | number>>): string =>
   translate(locale, key, values)
 
+// Switch counts always reflect the current window, independent of the
+// filter's own on/off state, and are shown next to every switch per the
+// product decision — never hidden even when a switch is off.
+const updateFilterPanel = (frames: readonly ObserverFrame[]): void => {
+  const counts = filterCounts(frames)
+  for (const [group, elements] of methodGroupSwitches) elements.count.textContent = String(counts.methodGroups[group])
+  for (const [eventClass, elements] of eventClassSwitches) {
+    elements.count.textContent = String(counts.eventClasses[eventClass])
+  }
+  const visible = filterFrames(frames, filterState).length
+  filterSummaryText.textContent = t('filterSummary', { visible, total: frames.length })
+}
+
+const refreshFilterLabels = (): void => {
+  filterMethodGroupHeading.textContent = t('filterMethodGroupHeading')
+  filterEventClassHeading.textContent = t('filterEventClassHeading')
+  for (const [group, elements] of methodGroupSwitches) elements.labelText.textContent = t(methodGroupSwitchKey[group])
+  for (const [eventClass, elements] of eventClassSwitches) {
+    elements.labelText.textContent = t(eventClassSwitchKey[eventClass])
+  }
+  orSearch.labelText.textContent = t('filterOrSearchLabel')
+  andSearch.labelText.textContent = t('filterAndSearchLabel')
+  orSearch.textInput.placeholder = t('filterSearchPlaceholder')
+  andSearch.textInput.placeholder = t('filterSearchPlaceholder')
+  refreshFilterToggle()
+}
+
 const valueText = (value: unknown): string => (typeof value === 'string' ? value : JSON.stringify(value))
 
 const detail = (label: string, value: unknown): HTMLElement => {
@@ -85,17 +286,65 @@ const detail = (label: string, value: unknown): HTMLElement => {
   return item
 }
 
-const renderHello = (hello: ObserverHello): HTMLElement => {
+// --- Persistent target / history-window / streams DOM, built once. ---
+// content.replaceChildren() only ever runs on the rare empty <-> snapshot
+// transition below; every steady-state snapshot update (the observer client
+// polls roughly once a second) mutates these same nodes in place instead of
+// tearing them down, so an in-progress payload text selection in the frame
+// table survives repeated snapshot arrivals. See updateStreamFrames below
+// for why that specifically requires skipping unchanged content, not just
+// keeping the DOM nodes reachable.
+const target = make('section', 'target')
+const targetEyebrow = make('span', 'eyebrow')
+const targetTitle = make('h1')
+const targetHeading = make('div', 'target-heading')
+targetHeading.append(targetEyebrow, targetTitle)
+const targetBadge = make('span', 'read-only-badge')
+target.append(targetHeading, targetBadge)
+
+const historyWindowNotice = make('p', 'history-window-notice hidden')
+
+const streamTabs = make('div', 'stream-tabs')
+streamTabs.setAttribute('role', 'tablist')
+const streamStatusBadge = make('span', 'stream-status')
+const streamToolbar = make('div', 'stream-toolbar')
+streamToolbar.append(streamTabs, streamStatusBadge)
+
+const streamLayout = make('div', 'stream-layout')
+const streamPanel = make('article', 'stream')
+streamPanel.setAttribute('role', 'tabpanel')
+streamPanel.append(streamLayout)
+
+const streamsSection = make('section', 'streams')
+streamsSection.append(streamToolbar, streamPanel)
+
+let contentMode: 'empty' | 'snapshot' = 'empty'
+let mountedStreamId: string | null = null
+let lastTargetId: string | null = null
+
+interface StreamHelloState {
+  readonly section: HTMLElement
+  readonly heading: HTMLElement
+  readonly list: HTMLDListElement
+}
+
+const buildStreamHello = (): StreamHelloState => {
   const section = make('section', 'panel handshake-panel')
-  section.append(make('h2', '', t('handshake')))
+  const heading = make('h2')
   const list = make('dl', 'details-grid')
-  list.append(
+  section.append(heading, list)
+  return { section, heading, list }
+}
+
+const updateStreamHello = (state: StreamHelloState, hello: ObserverHello): void => {
+  state.heading.textContent = t('handshake')
+  const items = [
     detail(t('fieldProtocol'), hello.protocol),
     detail(t('fieldMinecraft'), hello.mc_version),
     detail(t('fieldSupported'), hello.supported_mc_versions.join(', ')),
-  )
+  ]
   if (hello.permissions) {
-    list.append(
+    items.push(
       detail(t('fieldPermissions'), {
         online: hello.permissions.online,
         offline: hello.permissions.offline,
@@ -103,77 +352,204 @@ const renderHello = (hello: ObserverHello): HTMLElement => {
       }),
     )
   }
-  list.append(
+  items.push(
     detail(t('fieldCatalogHash'), hello.catalog_hash ?? t('valueNone')),
     detail(t('fieldWorldConstants'), hello.world_constants),
     detail(t('fieldDimension'), hello.dimension),
     detail(t('fieldOrigin'), hello.origin.join(', ')),
   )
-  section.append(list)
-  return section
+  state.list.replaceChildren(...items)
 }
 
-const renderFrames = (frames: ObserverFrame[]): HTMLElement => {
-  const section = make('section', 'panel frames-panel')
+const streamHelloStates = new Map<string, StreamHelloState>()
+
+interface StreamFramesState {
+  readonly panel: HTMLElement
+  readonly headingTitle: HTMLElement
+  readonly countSpan: HTMLElement
+  readonly bodyContainer: HTMLElement
+  readonly headRow: HTMLTableRowElement
+  readonly tableWrap: HTMLElement
+  readonly tbody: HTMLTableSectionElement
+  readonly emptyMessage: HTMLElement
+  readonly pauseButton: HTMLButtonElement
+  readonly newArrivalsBadge: HTMLElement
+  bodyMode: 'empty' | 'table' | null
+  lastSignature: string | null
+  /**
+   * The client-only display pause (v1 UX candidate, 2026-08-27): frame
+   * collection, polling, and dropped_frames accounting are never affected —
+   * only which frames get projected into the table. `pausedFrames` is the
+   * held frame array captured at the moment pause was toggled on;
+   * `pausedMaxSequence` is its highest `sequence`, used to count arrivals
+   * since without replaying anything. Resuming re-projects the live frames
+   * once, immediately — no queued/replayed intermediate updates.
+   */
+  paused: boolean
+  pausedFrames: readonly ObserverFrame[] | null
+  pausedMaxSequence: number
+  /** The most recent live frame array passed to updateStreamFrames, kept so togglePause can capture it without needing snapshot data of its own. */
+  lastKnownFrames: readonly ObserverFrame[]
+}
+
+const buildStreamFrames = (): StreamFramesState => {
+  const panel = make('section', 'panel frames-panel')
+  const headingTitle = make('h2')
+  const headingControls = make('div', 'panel-heading-controls')
+  const countSpan = make('span', 'count')
+  const newArrivalsBadge = make('span', 'frames-new-arrivals hidden')
+  const pauseButton = make('button', 'frames-pause-toggle')
+  pauseButton.type = 'button'
+  headingControls.append(countSpan, newArrivalsBadge, pauseButton)
   const heading = make('div', 'panel-heading')
-  heading.append(make('h2', '', t('wireFrames')), make('span', 'count', String(frames.length)))
-  section.append(heading)
-  if (frames.length === 0) {
-    section.append(make('p', 'muted', t('noFrames')))
-    return section
-  }
+  heading.append(headingTitle, headingControls)
+  const bodyContainer = make('div')
+  panel.append(heading, bodyContainer)
+
+  const emptyMessage = make('p', 'muted')
+
   const tableWrap = make('div', 'table-wrap')
-  const table = make('table')
+  const tableElement = make('table')
   const head = make('thead')
   const headRow = make('tr')
-  for (const label of ['#', t('columnDirection'), t('columnMethod'), t('columnPayload')]) {
-    headRow.append(make('th', '', label))
-  }
+  headRow.append(make('th'), make('th'), make('th'), make('th'))
   head.append(headRow)
-  const body = make('tbody')
-  for (const frame of frames) {
+  const tbody = make('tbody')
+  tableElement.append(head, tbody)
+  tableWrap.append(tableElement)
+
+  const state: StreamFramesState = {
+    panel,
+    headingTitle,
+    countSpan,
+    bodyContainer,
+    headRow,
+    tableWrap,
+    tbody,
+    emptyMessage,
+    pauseButton,
+    newArrivalsBadge,
+    bodyMode: null,
+    lastSignature: null,
+    paused: false,
+    pausedFrames: null,
+    pausedMaxSequence: 0,
+    lastKnownFrames: [],
+  }
+  pauseButton.addEventListener('click', () => toggleStreamPause(state))
+  return state
+}
+
+/**
+ * Toggle the client-only display pause for one stream's frame table.
+ * Pausing captures the currently held frame array as of right now; resuming
+ * drops that capture and re-projects the live frames on the very next
+ * render, once, with no replay of what arrived while paused. Never touches
+ * the wire, plugin, Bridge, or events.poll cadence — frame collection and
+ * dropped_frames accounting continue unaffected either way.
+ * @param state - the stream's frame-table state to toggle.
+ */
+const toggleStreamPause = (state: StreamFramesState): void => {
+  if (state.paused) {
+    state.paused = false
+    state.pausedFrames = null
+    state.pausedMaxSequence = 0
+  } else {
+    state.paused = true
+    state.pausedFrames = state.lastKnownFrames
+    state.pausedMaxSequence = state.lastKnownFrames.reduce((max, frame) => Math.max(max, frame.sequence), 0)
+  }
+  if (currentSnapshot) renderSnapshot(currentSnapshot, { forceFrameTableRebuild: true })
+}
+
+const directionMessageKey = (frame: ObserverFrame): MessageKey =>
+  frame.direction === 'send' && frame.request_id === null
+    ? 'directionSentUnconfirmed'
+    : frame.direction === 'send'
+      ? 'directionSend'
+      : 'directionReceive'
+
+/**
+ * Update one stream's frame table in place. Skips rebuilding the visible
+ * rows entirely when `visibleFrameSignature` shows the filtered projection
+ * is unchanged from the last render (`force` false) — the common case while
+ * only hidden frames (a pending events.poll request, a filtered-out empty
+ * poll pair) keep arriving every second. Rebuilding `tbody`'s children only
+ * when something the viewer can actually see changed is what lets an
+ * in-progress payload text selection survive that steady-state noise.
+ * `force` bypasses the skip for a locale switch or a filter-state change,
+ * where the visible set may be textually different (translated labels,
+ * newly (un)hidden units) even when the signature happens to match.
+ *
+ * While `state.paused`, `allFrames` (the live held window) is used only to
+ * track `lastKnownFrames` (for a future pause) and count new arrivals for
+ * the badge; the table itself keeps projecting `state.pausedFrames`, the
+ * array captured at the moment pause was toggled on, so its signature never
+ * changes and the table naturally never rebuilds until resumed. Filter and
+ * search still apply live against that frozen array.
+ * @param state - the stream's persistent frame-table DOM state.
+ * @param allFrames - the stream's currently held frames, in observed order.
+ * @param force - re-render unconditionally, bypassing the signature check.
+ */
+const updateStreamFrames = (state: StreamFramesState, allFrames: readonly ObserverFrame[], force: boolean): void => {
+  state.lastKnownFrames = allFrames
+
+  state.headingTitle.textContent = t('wireFrames')
+  const headers = ['#', t('columnDirection'), t('columnMethod'), t('columnPayload')]
+  headers.forEach((label, index) => {
+    state.headRow.children[index].textContent = label
+  })
+  state.pauseButton.textContent = t(state.paused ? 'framesResume' : 'framesPause')
+  state.pauseButton.setAttribute('aria-pressed', String(state.paused))
+
+  if (state.paused) {
+    const newArrivals = allFrames.filter((frame) => frame.sequence > state.pausedMaxSequence).length
+    state.newArrivalsBadge.textContent = t('framesPausedNewArrivals', { count: newArrivals })
+    state.newArrivalsBadge.classList.remove('hidden')
+  } else {
+    state.newArrivalsBadge.classList.add('hidden')
+  }
+
+  const projectedFrames = state.paused && state.pausedFrames ? state.pausedFrames : allFrames
+
+  const signature = visibleFrameSignature(projectedFrames, filterState)
+  if (!force && signature === state.lastSignature) return
+  state.lastSignature = signature
+
+  const frames = filterFrames(projectedFrames, filterState)
+  state.countSpan.textContent = String(frames.length)
+
+  if (frames.length === 0) {
+    state.emptyMessage.textContent = t(projectedFrames.length === 0 ? 'noFrames' : 'noFramesMatchFilter')
+    if (state.bodyMode !== 'empty') {
+      state.bodyContainer.replaceChildren(state.emptyMessage)
+      state.bodyMode = 'empty'
+    }
+    return
+  }
+
+  const rows = frames.map((frame) => {
     const row = make('tr')
     row.append(
       make('td', 'sequence', String(frame.sequence)),
-      make(
-        'td',
-        `direction direction-${frame.direction}`,
-        t(
-          frame.direction === 'send' && frame.request_id === null
-            ? 'directionSentUnconfirmed'
-            : frame.direction === 'send'
-              ? 'directionSend'
-              : 'directionReceive',
-        ),
-      ),
+      make('td', `direction direction-${frame.direction}`, t(directionMessageKey(frame))),
       make('td', 'method', frame.method),
       make('td', 'payload', valueText(frame.payload)),
     )
-    body.append(row)
+    return row
+  })
+  state.tbody.replaceChildren(...rows)
+  if (state.bodyMode !== 'table') {
+    state.bodyContainer.replaceChildren(state.tableWrap)
+    state.bodyMode = 'table'
   }
-  table.append(head, body)
-  tableWrap.append(table)
-  section.append(tableWrap)
-  return section
 }
 
-const renderStream = (stream: ObserverStream, index: number): HTMLElement => {
-  const section = make('article', 'stream')
-  section.id = `stream-panel-${index}`
-  section.setAttribute('role', 'tabpanel')
-  section.setAttribute('aria-labelledby', `stream-tab-${index}`)
-  const layout = make('div', 'stream-layout')
-  layout.append(renderHello(stream.hello), renderFrames(stream.frames))
-  section.append(layout)
-  return section
-}
+const streamFramesStates = new Map<string, StreamFramesState>()
 
-const renderStreamTabs = (streams: readonly ObserverStream[], activeStream: ObserverStream): HTMLElement => {
-  const toolbar = make('div', 'stream-toolbar')
-  const tabs = make('div', 'stream-tabs')
-  tabs.setAttribute('role', 'tablist')
-  tabs.setAttribute('aria-label', t('streamTabs'))
-  streams.forEach((stream, index) => {
+const updateStreamTabs = (streams: readonly ObserverStream[], activeStream: ObserverStream): void => {
+  streamTabs.setAttribute('aria-label', t('streamTabs'))
+  const tabs = streams.map((stream, index) => {
     const tab = make('button', `stream-tab${stream.id === activeStream.id ? ' active' : ''}`)
     tab.type = 'button'
     tab.id = `stream-tab-${index}`
@@ -187,50 +563,93 @@ const renderStreamTabs = (streams: readonly ObserverStream[], activeStream: Obse
     )
     tab.addEventListener('click', () => {
       activeStreamId = stream.id
-      if (currentSnapshot) renderSnapshot(currentSnapshot)
+      if (currentSnapshot) renderSnapshot(currentSnapshot, { forceFrameTableRebuild: true })
     })
-    tabs.append(tab)
+    return tab
   })
+  streamTabs.replaceChildren(...tabs)
+
   const displayStatus = streamViewStatus(activeStream.status, currentStatus.kind === 'ended')
   const displayStatusKey: Record<typeof displayStatus, MessageKey> = {
     connected: 'streamConnected',
     error: 'streamError',
     ended: 'streamEnded',
   }
-  toolbar.append(tabs, make('span', `stream-status ${displayStatus}`, t(displayStatusKey[displayStatus])))
-  return toolbar
+  streamStatusBadge.className = `stream-status ${displayStatus}`
+  streamStatusBadge.textContent = t(displayStatusKey[displayStatus])
 }
 
 const renderEmpty = (): void => {
+  filterPanel.classList.add('hidden')
   content.className = 'content empty'
   content.replaceChildren(
     make('h1', '', t(stationMode ? 'stationEmptyTitle' : 'emptyTitle')),
     make('p', '', t(stationMode ? 'stationEmptyBody' : 'emptyBody')),
   )
+  contentMode = 'empty'
 }
 
-const renderSnapshot = (snapshot: ObserverSnapshot): void => {
-  content.replaceChildren()
-  content.className = 'content'
-  const target = make('section', 'target')
-  const heading = make('div', 'target-heading')
-  heading.append(
-    make('span', 'eyebrow', t(snapshot.target.source_kind === 'scratch' ? 'sourceScratch' : 'sourcePython')),
-    make('h1', '', snapshot.target.display_alias),
-  )
-  target.append(heading, make('span', 'read-only-badge', t('readOnly')))
-  content.append(target)
-  if (currentHistoryWindow.dropped_frames > 0) {
-    content.append(
-      make('p', 'history-window-notice', t('historyWindowTruncated', { count: currentHistoryWindow.dropped_frames })),
-    )
+interface RenderSnapshotOptions {
+  readonly forceFrameTableRebuild: boolean
+}
+
+const renderSnapshot = (
+  snapshot: ObserverSnapshot,
+  options: RenderSnapshotOptions = { forceFrameTableRebuild: false },
+): void => {
+  filterPanel.classList.remove('hidden')
+  if (contentMode !== 'snapshot') {
+    content.replaceChildren(target, historyWindowNotice, streamsSection)
+    content.className = 'content'
+    contentMode = 'snapshot'
   }
-  const streams = make('section', 'streams')
+
+  // A different observed target (a new handoff/session, not just a routine
+  // reconnect to the same one) drops every per-stream cache — including any
+  // display pause — rather than risk showing frozen or stale content from a
+  // prior target under a reused stream id.
+  if (snapshot.target.id !== lastTargetId) {
+    lastTargetId = snapshot.target.id
+    streamHelloStates.clear()
+    streamFramesStates.clear()
+    mountedStreamId = null
+    activeStreamId = null
+  }
+
+  targetEyebrow.textContent = t(snapshot.target.source_kind === 'scratch' ? 'sourceScratch' : 'sourcePython')
+  targetTitle.textContent = snapshot.target.display_alias
+  targetBadge.textContent = t('readOnly')
+
+  const droppedFrames = currentHistoryWindow.dropped_frames
+  historyWindowNotice.classList.toggle('hidden', droppedFrames <= 0)
+  if (droppedFrames > 0) historyWindowNotice.textContent = t('historyWindowTruncated', { count: droppedFrames })
+
   const activeStream = selectActiveStream(snapshot.streams, activeStreamId)
   activeStreamId = activeStream.id
   const activeIndex = snapshot.streams.indexOf(activeStream)
-  streams.append(renderStreamTabs(snapshot.streams, activeStream), renderStream(activeStream, activeIndex))
-  content.append(streams)
+  streamPanel.id = `stream-panel-${activeIndex}`
+  streamPanel.setAttribute('aria-labelledby', `stream-tab-${activeIndex}`)
+  updateStreamTabs(snapshot.streams, activeStream)
+
+  let helloState = streamHelloStates.get(activeStream.id)
+  if (!helloState) {
+    helloState = buildStreamHello()
+    streamHelloStates.set(activeStream.id, helloState)
+  }
+  updateStreamHello(helloState, activeStream.hello)
+
+  let framesState = streamFramesStates.get(activeStream.id)
+  if (!framesState) {
+    framesState = buildStreamFrames()
+    streamFramesStates.set(activeStream.id, framesState)
+  }
+  updateFilterPanel(activeStream.frames)
+  updateStreamFrames(framesState, activeStream.frames, options.forceFrameTableRebuild)
+
+  if (mountedStreamId !== activeStream.id) {
+    streamLayout.replaceChildren(helloState.section, framesState.panel)
+    mountedStreamId = activeStream.id
+  }
 }
 
 const clientStatusKey: Record<ObserverClientStatus | 'starting', MessageKey> = {
@@ -326,7 +745,12 @@ const renderStationAttach = (): void => {
   stationAttachButton.textContent = t('stationAttachSubmit')
 }
 
-const refreshLocale = (): void => {
+// `forceFrameTableRebuild` only needs to be true for an actual locale switch
+// (translated row labels must refresh even when the visible frame set
+// itself did not change). The periodic per-snapshot call from
+// startObserverClient's onStatus/onSnapshot below passes the default
+// (false) so routine ~1s poll noise never touches the frame table.
+const refreshLocale = (options: RenderSnapshotOptions = { forceFrameTableRebuild: false }): void => {
   document.documentElement.lang = locale
   document.title = t('documentTitle')
   subtitle.textContent = t('subtitle')
@@ -334,15 +758,20 @@ const refreshLocale = (): void => {
   languageSwitch.setAttribute('aria-label', t('languageSwitchLabel'))
   languageSwitch.title = t('languageSwitchLabel')
   languageSwitch.lang = nextLocale[locale]
-  if (currentSnapshot) renderSnapshot(currentSnapshot)
+  refreshFilterLabels()
+  if (currentSnapshot) renderSnapshot(currentSnapshot, options)
   else renderEmpty()
   renderStationAttach()
   renderStatus()
 }
 
+onFilterStateChanged = (): void => {
+  if (currentSnapshot) renderSnapshot(currentSnapshot, { forceFrameTableRebuild: true })
+}
+
 languageSwitch.addEventListener('click', () => {
   locale = nextLocale[locale]
-  refreshLocale()
+  refreshLocale({ forceFrameTableRebuild: true })
 })
 
 refreshLocale()

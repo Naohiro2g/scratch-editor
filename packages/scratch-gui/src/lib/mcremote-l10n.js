@@ -1,11 +1,17 @@
 /**
- * Fork-local translations for the McRemote extension.
+ * Fork-local translations.
  *
  * The published scratch-l10n catalog does not carry this fork's strings, so we
  * merge these into the locale catalog ourselves (see reducers/locales.js). The
  * same catalog feeds both react-intl (the `gui.extension.mcremote.*` library
- * tile) and the VM's format-message (the `mcremote.*` block labels), so one
- * entry per id covers both.
+ * tile, and any other fork-added `gui.*` string) and the VM's format-message
+ * (the `mcremote.*` block labels), so one entry per id covers both.
+ *
+ * Most entries here are McRemote-extension-specific, but this file also
+ * carries translations for a few pre-existing upstream Scratch string ids
+ * that scratch-l10n's Japanese catalog happens not to include yet (e.g.
+ * `gui.sharedMessages.loadFromComputerTitle`, `gui.menuBar.theme`,
+ * `gui.menuBar.colorMode`) — same mechanism, just not a fork addition.
  *
  * English is defined where the strings live (`defaultMessage` in the extension
  * library entry, `default:` in the VM extension's getInfo) and is used as the
@@ -19,6 +25,21 @@
  */
 const mcremoteMessages = {
     'ja': {
+        // Editor UI strings (not McRemote-specific) that scratch-l10n's ja
+        // catalog doesn't carry yet.
+        'gui.sharedMessages.loadFromComputerTitle': 'コンピューターから読み込む',
+        'gui.menuBar.theme': 'テーマ',
+        'gui.menuBar.colorMode': 'カラーモード',
+        // Local project/sprite browser save (McRemote save-track entry gate / b6).
+        'gui.menuBar.browserSavedProjects': 'ブラウザに保存した作品',
+        'gui.menuBar.deleteBrowserSavedProject': 'このブラウザ保存の作品を削除する',
+        'gui.menuBar.browserSavedSprites': 'ブラウザに保存したスプライト',
+        'gui.menuBar.deleteBrowserSavedSprite': 'このブラウザ保存のスプライトを削除する',
+        'gui.menuBar.storagePersistGranted': '永続化あり',
+        'gui.menuBar.storagePersistNotGranted': '永続化なし',
+        'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザ保存',
+        'gui.mcremote.notice.version': 'バージョン {version}',
+        'gui.mcremote.notice.homepageLink': 'ホームページ',
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft の操作が無効です。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「接続する」ブロックを実行してください。',
@@ -104,6 +125,24 @@ const mcremoteMessages = {
         'mcremote.blockInfoState': '[BLOCK_INFO] の状態',
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] の状態 [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] に状態 [PROPERTY] がある',
+        'mcremote.getSign': 'x:[X] y:[Y] z:[Z] の看板情報',
+        'mcremote.setSign': 'x:[X] y:[Y] z:[Z] の看板の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
+        'mcremote.updateSignLine': 'x:[X] y:[Y] z:[Z] の看板の[FACE] [LINE]を [TEXT] にする',
+        'mcremote.signLineText': '[SIGN_INFO] の[FACE] [LINE]の文字',
+        'mcremote.signLineColor': '[SIGN_INFO] の[FACE] [LINE]の色',
+        'mcremote.signLineHasDecoration': '[SIGN_INFO] の[FACE] [LINE]に[DECORATION]がある',
+        'mcremote.signIsWaxed': '[SIGN_INFO] はロウ引きされている',
+        'mcremote.signFace.front': '正面',
+        'mcremote.signFace.back': '背面',
+        'mcremote.signLineIndex.0': '1行目',
+        'mcremote.signLineIndex.1': '2行目',
+        'mcremote.signLineIndex.2': '3行目',
+        'mcremote.signLineIndex.3': '4行目',
+        'mcremote.signDecoration.bold': '太字',
+        'mcremote.signDecoration.italic': '斜体',
+        'mcremote.signDecoration.obfuscated': 'ランダム',
+        'mcremote.signDecoration.strikethrough': '取り消し線',
+        'mcremote.signDecoration.underlined': '下線',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
         'mcremote.spawnParticle':
             'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ ' +
@@ -112,7 +151,7 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] に生成し ハンドルを [VARIABLE] に入れる',
-        'mcremote.whenBlockRightClicked': 'ブロックが右クリックされたとき',
+        'mcremote.whenPickaxePoke': 'ツルハシでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットが投稿されたとき',
         'mcremote.whenProjectileHit': '飛び道具が当たったとき',
         'mcremote.eventValue': 'このMinecraftイベントの [PROPERTY]',
@@ -127,6 +166,7 @@ const mcremoteMessages = {
         'mcremote.eventValue.originZ': '原点z',
         'mcremote.eventValue.face': '面',
         'mcremote.eventValue.hand': '手',
+        'mcremote.eventValue.item': 'アイテム',
         'mcremote.eventValue.message': 'メッセージ',
         'mcremote.eventValue.block': 'ブロック情報',
         'mcremote.eventValue.projectile': '飛び道具',
@@ -157,6 +197,21 @@ const mcremoteMessages = {
         'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へ移動する'
     },
     'ja-Hira': {
+        // Editor UI strings (not McRemote-specific) that scratch-l10n's
+        // ja-Hira catalog doesn't carry yet.
+        'gui.sharedMessages.loadFromComputerTitle': 'コンピューターからよみこむ',
+        'gui.menuBar.theme': 'テーマ',
+        'gui.menuBar.colorMode': 'カラーモード',
+        // Local project/sprite browser save (McRemote save-track entry gate / b6).
+        'gui.menuBar.browserSavedProjects': 'ブラウザにほぞんしたさくひん',
+        'gui.menuBar.deleteBrowserSavedProject': 'このブラウザほぞんのさくひんをけす',
+        'gui.menuBar.browserSavedSprites': 'ブラウザにほぞんしたスプライト',
+        'gui.menuBar.deleteBrowserSavedSprite': 'このブラウザほぞんのスプライトをけす',
+        'gui.menuBar.storagePersistGranted': 'えいぞくかあり',
+        'gui.menuBar.storagePersistNotGranted': 'えいぞくかなし',
+        'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザほぞん',
+        'gui.mcremote.notice.version': 'バージョン {version}',
+        'gui.mcremote.notice.homepageLink': 'ホームページ',
         'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft をそうさします。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft をそうさできません。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「せつぞくする」ブロックをうごかしてください。',
@@ -247,6 +302,24 @@ const mcremoteMessages = {
         'mcremote.blockInfoState': '[BLOCK_INFO] のじょうたい',
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] のじょうたい [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] にじょうたい [PROPERTY] がある',
+        'mcremote.getSign': 'x:[X] y:[Y] z:[Z] のかんばんじょうほう',
+        'mcremote.setSign': 'x:[X] y:[Y] z:[Z] のかんばんの[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
+        'mcremote.updateSignLine': 'x:[X] y:[Y] z:[Z] のかんばんの[FACE] [LINE]を [TEXT] にする',
+        'mcremote.signLineText': '[SIGN_INFO] の[FACE] [LINE]のもじ',
+        'mcremote.signLineColor': '[SIGN_INFO] の[FACE] [LINE]のいろ',
+        'mcremote.signLineHasDecoration': '[SIGN_INFO] の[FACE] [LINE]に[DECORATION]がある',
+        'mcremote.signIsWaxed': '[SIGN_INFO] はロウびきされている',
+        'mcremote.signFace.front': 'しょうめん',
+        'mcremote.signFace.back': 'はいめん',
+        'mcremote.signLineIndex.0': '1ぎょうめ',
+        'mcremote.signLineIndex.1': '2ぎょうめ',
+        'mcremote.signLineIndex.2': '3ぎょうめ',
+        'mcremote.signLineIndex.3': '4ぎょうめ',
+        'mcremote.signDecoration.bold': 'ふとじ',
+        'mcremote.signDecoration.italic': 'イタリック',
+        'mcremote.signDecoration.obfuscated': 'ランダム',
+        'mcremote.signDecoration.strikethrough': 'とりけしせん',
+        'mcremote.signDecoration.underlined': 'かせん',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
         'mcremote.spawnParticle':
             'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ ' +
@@ -255,7 +328,7 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] にだして ハンドルを [VARIABLE] にいれる',
-        'mcremote.whenBlockRightClicked': 'ブロックがみぎクリックされたとき',
+        'mcremote.whenPickaxePoke': 'つるはしでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットがとうこうされたとき',
         'mcremote.whenProjectileHit': 'とびどうぐがあたったとき',
         'mcremote.eventValue': 'このMinecraftイベントの [PROPERTY]',
@@ -270,6 +343,7 @@ const mcremoteMessages = {
         'mcremote.eventValue.originZ': 'げんてんz',
         'mcremote.eventValue.face': 'めん',
         'mcremote.eventValue.hand': 'て',
+        'mcremote.eventValue.item': 'アイテム',
         'mcremote.eventValue.message': 'メッセージ',
         'mcremote.eventValue.block': 'ブロックじょうほう',
         'mcremote.eventValue.projectile': 'とびどうぐ',

@@ -29,6 +29,17 @@ const {
     initialEventStatus,
     validateEventPollResult
 } = require('./event');
+const {
+    DECORATIONS: SIGN_DECORATIONS,
+    FACES: SIGN_FACES,
+    formatSignInfoText,
+    signIsWaxed,
+    signLineColor,
+    signLineHasDecoration,
+    signLineText
+} = require('./sign');
+
+const SIGN_LINE_INDICES = [0, 1, 2, 3];
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -40,18 +51,18 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
- * protocol contract version (22.0.0); the package/channel suffix is not
+ * protocol contract version (23.0.0); the package/channel suffix is not
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '22.0.0';
+const PROTOCOL_VERSION = '23.0.0';
 
 /**
  * Scratch McRemote client build label for diagnostics. Compatibility is still
  * negotiated exclusively by PROTOCOL_VERSION.
  * @type {string}
  */
-const CLIENT_VERSION = '2200.0.0b5';
+const CLIENT_VERSION = '2300.0.0b6';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
@@ -118,7 +129,7 @@ const BuildMode = {
 };
 
 const EVENT_HAT_OPCODES = {
-    block_right_click: 'mcremote_whenBlockRightClicked',
+    pickaxe_poke: 'mcremote_whenPickaxePoke',
     chat_posted: 'mcremote_whenChatPosted',
     projectile_hit: 'mcremote_whenProjectileHit'
 };
@@ -149,7 +160,7 @@ const playerResult = (value, includeOrientation) => {
 };
 
 /**
- * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 22.0.0).
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.0.0).
  * One WebSocket message carries either one raw JSON-RPC object or, for the
  * pre-auth pairing methods only, one Bridge transport envelope containing the
  * untouched JSON-RPC string.
@@ -363,6 +374,16 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._frameSequence = 0;
+
+        /**
+         * Cumulative count of frames trimmed from `_frameLog` by
+         * FRAME_LOG_LIMIT, surfaced to WireScope as `history_window.
+         * dropped_frames` so a truncated window is never silently
+         * indistinguishable from a complete one. Resets with `_frameLog`.
+         * @type {number}
+         * @private
+         */
+        this._droppedFrameCount = 0;
 
         /**
          * Sandbox route snapshot for the active connection.
@@ -710,6 +731,111 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'getSign',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getSign',
+                        default: 'sign information at x:[X] y:[Y] z:[Z]',
+                        description: 'Get one immutable sign information snapshot at a position'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setSign',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setSign',
+                        default: 'set sign [FACE] at x:[X] y:[Y] z:[Z] to [LINE0] [LINE1] [LINE2] [LINE3]',
+                        description: 'Replace all four lines of one sign face with plain text'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
+                        LINE0: {type: ArgumentType.STRING, defaultValue: ''},
+                        LINE1: {type: ArgumentType.STRING, defaultValue: ''},
+                        LINE2: {type: ArgumentType.STRING, defaultValue: ''},
+                        LINE3: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'updateSignLine',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.updateSignLine',
+                        default: 'set sign [FACE] line [LINE] at x:[X] y:[Y] z:[Z] to [TEXT]',
+                        description: 'Replace one sign line with plain text, keeping the other three lines'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
+                        LINE: {type: ArgumentType.STRING, menu: 'signLineIndices', defaultValue: '0'},
+                        TEXT: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'signLineText',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.signLineText',
+                        default: '[FACE] line [LINE] text of [SIGN_INFO]',
+                        description: 'Read one line of text from McRemote SignInfoText without network access'
+                    }),
+                    arguments: {
+                        FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
+                        LINE: {type: ArgumentType.STRING, menu: 'signLineIndices', defaultValue: '0'},
+                        SIGN_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'signLineColor',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.signLineColor',
+                        default: '[FACE] line [LINE] color of [SIGN_INFO]',
+                        description: 'Read one line color from McRemote SignInfoText without network access'
+                    }),
+                    arguments: {
+                        FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
+                        LINE: {type: ArgumentType.STRING, menu: 'signLineIndices', defaultValue: '0'},
+                        SIGN_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'signLineHasDecoration',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.signLineHasDecoration',
+                        default: '[FACE] line [LINE] of [SIGN_INFO] has [DECORATION]',
+                        description: 'Check one line decoration from McRemote SignInfoText without network access'
+                    }),
+                    arguments: {
+                        FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
+                        LINE: {type: ArgumentType.STRING, menu: 'signLineIndices', defaultValue: '0'},
+                        SIGN_INFO: {type: ArgumentType.STRING, defaultValue: ''},
+                        DECORATION: {type: ArgumentType.STRING, menu: 'signDecorations', defaultValue: 'bold'}
+                    }
+                },
+                {
+                    opcode: 'signIsWaxed',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.signIsWaxed',
+                        default: '[SIGN_INFO] is waxed',
+                        description: 'Check whether McRemote SignInfoText reports a waxed sign'
+                    }),
+                    arguments: {
+                        SIGN_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
                     opcode: 'isMcRemoteError',
                     blockType: BlockType.BOOLEAN,
                     text: formatMessage({
@@ -766,14 +892,14 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
-                    opcode: 'whenBlockRightClicked',
+                    opcode: 'whenPickaxePoke',
                     blockType: BlockType.HAT,
                     isEdgeActivated: false,
                     shouldRestartExistingThreads: false,
                     text: formatMessage({
-                        id: 'mcremote.whenBlockRightClicked',
-                        default: 'when a block is right-clicked',
-                        description: 'Run once for each paired-player block right-click event'
+                        id: 'mcremote.whenPickaxePoke',
+                        default: 'when a block is poked with a pickaxe',
+                        description: 'Run once for each paired-player pickaxe-poke event'
                     })
                 },
                 {
@@ -914,6 +1040,7 @@ class Scratch3McRemoteBlocks {
                         menuItem('mcremote.eventValue.originZ', 'origin z', 'origin_z'),
                         menuItem('mcremote.eventValue.face', 'face', 'face'),
                         menuItem('mcremote.eventValue.hand', 'hand', 'hand'),
+                        menuItem('mcremote.eventValue.item', 'item', 'item'),
                         menuItem('mcremote.eventValue.message', 'message', 'message'),
                         menuItem('mcremote.eventValue.block', 'block information', 'block'),
                         menuItem('mcremote.eventValue.projectile', 'projectile', 'projectile'),
@@ -936,6 +1063,22 @@ class Scratch3McRemoteBlocks {
                         menuItem('mcremote.eventStatus.discarded', 'explicit discard', 'discarded'),
                         menuItem('mcremote.eventStatus.totalLoss', 'total loss', 'total_loss')
                     ]
+                },
+                signFaces: {
+                    acceptReporters: false,
+                    items: SIGN_FACES.map(face => menuItem(`mcremote.signFace.${face}`, face, face))
+                },
+                signLineIndices: {
+                    acceptReporters: false,
+                    items: SIGN_LINE_INDICES.map(index => menuItem(
+                        `mcremote.signLineIndex.${index}`, String(index), String(index)
+                    ))
+                },
+                signDecorations: {
+                    acceptReporters: false,
+                    items: SIGN_DECORATIONS.map(
+                        decoration => menuItem(`mcremote.signDecoration.${decoration}`, decoration, decoration)
+                    )
                 },
                 buildModes: {
                     acceptReporters: true,
@@ -1180,6 +1323,7 @@ class Scratch3McRemoteBlocks {
         this._lastError = null;
         this._frameLog = [];
         this._frameSequence = 0;
+        this._droppedFrameCount = 0;
         this._nextRequestId = 1;
         this._pairCode = '';
         this._pairCommand = '';
@@ -1332,7 +1476,8 @@ class Scratch3McRemoteBlocks {
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
             lastError: this._sanitizeWireValue(this._lastError),
-            frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame))
+            frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame)),
+            droppedFrames: this._droppedFrameCount
         };
     }
 
@@ -1412,7 +1557,9 @@ class Scratch3McRemoteBlocks {
             payload: this._sanitizeWireValue(message)
         });
         if (this._frameLog.length > FRAME_LOG_LIMIT) {
-            this._frameLog.splice(0, this._frameLog.length - FRAME_LOG_LIMIT);
+            const trimmed = this._frameLog.length - FRAME_LOG_LIMIT;
+            this._frameLog.splice(0, trimmed);
+            this._droppedFrameCount += trimmed;
         }
         this._emitObservation();
     }
@@ -2263,7 +2410,7 @@ class Scratch3McRemoteBlocks {
         return true;
     }
 
-    whenBlockRightClicked () {
+    whenPickaxePoke () {
         return true;
     }
 
@@ -2626,6 +2773,110 @@ class Scratch3McRemoteBlocks {
         );
     }
 
+    getSign (args) {
+        const params = [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ];
+        return this._request('world.getSign', params).then(result => {
+            try {
+                return formatSignInfoText(result);
+            } catch (error) {
+                return makeErrorText(error && error.reason ? error.reason : 'invalid_sign_info');
+            }
+        }, error => remoteErrorText(error));
+    }
+
+    /**
+     * Validate a Scratch sign face menu selection.
+     * @param {string} value - FACE argument.
+     * @returns {string} the validated face.
+     * @private
+     */
+    _signFace (value) {
+        if (SIGN_FACES.includes(value)) return value;
+        const error = new Error(`Sign face must be one of: ${SIGN_FACES.join(', ')}`);
+        error.reason = 'invalid_sign_face';
+        throw error;
+    }
+
+    /**
+     * Validate a Scratch sign line index menu selection.
+     * @param {string|number} value - LINE argument.
+     * @returns {number} the validated 0-based line index.
+     * @private
+     */
+    _signLineIndex (value) {
+        const index = Cast.toNumber(value);
+        if (SIGN_LINE_INDICES.includes(index)) return index;
+        const error = new Error('Sign line index must be an integer between 0 and 3');
+        error.reason = 'invalid_sign_line';
+        throw error;
+    }
+
+    setSign (args) {
+        let face;
+        try {
+            face = this._signFace(args.FACE);
+        } catch (error) {
+            return this._actionableCommandError('world.setSign', error);
+        }
+        return this._setBlockCommand('world.setSign', [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z),
+            {
+                [face]: [
+                    Cast.toString(args.LINE0),
+                    Cast.toString(args.LINE1),
+                    Cast.toString(args.LINE2),
+                    Cast.toString(args.LINE3)
+                ]
+            }
+        ]);
+    }
+
+    updateSignLine (args) {
+        let face;
+        let lineIndex;
+        try {
+            face = this._signFace(args.FACE);
+            lineIndex = this._signLineIndex(args.LINE);
+        } catch (error) {
+            return this._actionableCommandError('world.updateSignLine', error);
+        }
+        return this._setBlockCommand('world.updateSignLine', [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z),
+            face,
+            lineIndex,
+            Cast.toString(args.TEXT)
+        ]);
+    }
+
+    signLineText (args) {
+        return signLineText(Cast.toString(args.SIGN_INFO), Cast.toString(args.FACE), Cast.toNumber(args.LINE));
+    }
+
+    signLineColor (args) {
+        return signLineColor(Cast.toString(args.SIGN_INFO), Cast.toString(args.FACE), Cast.toNumber(args.LINE));
+    }
+
+    signLineHasDecoration (args) {
+        return signLineHasDecoration(
+            Cast.toString(args.SIGN_INFO),
+            Cast.toString(args.FACE),
+            Cast.toNumber(args.LINE),
+            Cast.toString(args.DECORATION)
+        );
+    }
+
+    signIsWaxed (args) {
+        return signIsWaxed(Cast.toString(args.SIGN_INFO));
+    }
+
     isMcRemoteError (args) {
         return isErrorText(Cast.toString(args.VALUE));
     }
@@ -2664,7 +2915,7 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.Z),
             Cast.toString(args.ENTITY)
         ]).then(handle => {
-            variable.value = typeof handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(handle) ?
+            variable.value = typeof handle === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(handle) ?
                 handle :
                 makeErrorText('remote_error');
         }, error => {
@@ -2768,5 +3019,9 @@ class Scratch3McRemoteBlocks {
         );
     }
 }
+
+// Exposed so tests can build protocol-version-aware fixtures/mocks instead of
+// hardcoding a major version that will silently go stale on the next bump.
+Scratch3McRemoteBlocks.PROTOCOL_VERSION = PROTOCOL_VERSION;
 
 module.exports = Scratch3McRemoteBlocks;

@@ -19,6 +19,9 @@ export const Method = {
   eventsPoll: 'events.poll',
   playerGetPose: 'player.getPose',
   playerSetPose: 'player.setPose',
+  worldGetSign: 'world.getSign',
+  worldSetSign: 'world.setSign',
+  worldUpdateSignLine: 'world.updateSignLine',
 } as const
 
 export type Method = (typeof Method)[keyof typeof Method]

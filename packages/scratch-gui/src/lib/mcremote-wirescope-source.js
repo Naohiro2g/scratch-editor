@@ -215,13 +215,15 @@ const allowEvent = function (value) {
     const origin = numberTuple(value.origin);
     if (!origin || !origin.every(Number.isInteger)) return null;
     const common = {sequence: value.sequence, type: value.type, dimension: value.dimension, origin};
-    if (value.type === 'block_right_click') {
+    if (value.type === 'pickaxe_poke') {
         const pos = numberTuple(value.pos);
         const block = allowBlock(value.block, true);
-        if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'pos', 'face', 'block', 'hand']) ||
+        if (!hasExactFields(
+            value, ['sequence', 'type', 'dimension', 'origin', 'pos', 'face', 'block', 'hand', 'item']
+        ) ||
             !pos || !pos.every(Number.isInteger) || !faceToken(value.face) || !block ||
-            (value.hand !== 'main' && value.hand !== 'off')) return null;
-        return Object.assign(common, {pos, face: value.face, block, hand: value.hand});
+            (value.hand !== 'main' && value.hand !== 'off') || !canonicalResourceId(value.item)) return null;
+        return Object.assign(common, {pos, face: value.face, block, hand: value.hand, item: value.item});
     }
     if (value.type === 'chat_posted') {
         if (!hasExactFields(value, ['sequence', 'type', 'dimension', 'origin', 'message']) ||
@@ -236,7 +238,7 @@ const allowEvent = function (value) {
         if (value.target.kind === 'player' && hasExactFields(value.target, ['kind'])) {
             target = {kind: 'player'};
         } else if (value.target.kind === 'entity' && hasExactFields(value.target, ['kind', 'handle']) &&
-            typeof value.target.handle === 'string' && /^mceh_[\x21-\x7e]+$/.test(value.target.handle)) {
+            typeof value.target.handle === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(value.target.handle)) {
             target = {kind: 'entity', handle: value.target.handle};
         } else if (value.target.kind === 'block' &&
             hasExactFields(value.target, ['kind', 'block', 'pos', 'face'])) {
@@ -368,7 +370,7 @@ const allowFramePayload = function (frame) {
         return Number.isInteger(payload.result) && payload.result >= 0 ? {result: payload.result} : null;
     }
     if (frame.method === 'world.spawnEntity') {
-        return typeof payload.result === 'string' && /^mceh_[\x21-\x7e]+$/.test(payload.result) ?
+        return typeof payload.result === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(payload.result) ?
             {result: payload.result} : null;
     }
     if (frame.method === 'events.poll') {
@@ -424,6 +426,15 @@ const toWireScopeSnapshot = (observation, targetId, emittedAt = Date.now()) => {
     };
 };
 
+// Trimmed from a non-negative integer to 0 for any observation that lacks a
+// droppedFrames field (older Scratch build) or carries a malformed one,
+// rather than forwarding a value WireScope's session envelope would reject.
+const droppedFramesOf = observation => (
+    isObject(observation) && Number.isInteger(observation.droppedFrames) && observation.droppedFrames >= 0 ?
+        observation.droppedFrames :
+        0
+);
+
 const randomToken = function (cryptoObject) {
     if (!cryptoObject || typeof cryptoObject.getRandomValues !== 'function') {
         throw new Error('createWireScopeSource: secure randomness is unavailable');
@@ -462,8 +473,10 @@ const createWireScopeSource = function (environment) {
         const snapshot = toWireScopeSnapshot(currentObservation, target.id, environment.now());
         if (!snapshot) return;
         target.snapshot = snapshot;
+        target.droppedFrames = droppedFramesOf(currentObservation);
+        const historyWindow = {dropped_frames: target.droppedFrames};
         for (const session of sessions) {
-            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot});
+            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot, history_window: historyWindow});
         }
     };
 
@@ -487,7 +500,11 @@ const createWireScopeSource = function (environment) {
             pending.delete(event.source);
             const session = {port: channel.port1, targetId: target.id};
             sessions.add(session);
-            postSession(session.port, {type: OBSERVER_SNAPSHOT, snapshot: target.snapshot});
+            postSession(session.port, {
+                type: OBSERVER_SNAPSHOT,
+                snapshot: target.snapshot,
+                history_window: {dropped_frames: target.droppedFrames || 0}
+            });
         });
         channel.port1.start();
         event.source.postMessage({
@@ -526,7 +543,8 @@ const createWireScopeSource = function (environment) {
                 target = {
                     id: `target-${randomToken(environment.crypto)}`,
                     displayAlias: observation.displayAlias,
-                    snapshot: null
+                    snapshot: null,
+                    droppedFrames: 0
                 };
             }
             publish();

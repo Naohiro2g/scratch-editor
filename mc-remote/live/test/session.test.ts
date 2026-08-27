@@ -12,7 +12,7 @@ import {
 
 const fixturePath = fileURLToPath(new URL('./fixtures/scratch-main-lifecycle.json', import.meta.url))
 const sessionFixturePath = fileURLToPath(new URL('./fixtures/observer-session-lifecycle.ndjson', import.meta.url))
-const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v22.json', import.meta.url))
+const eventsFixturePath = fileURLToPath(new URL('../../protocol/test/fixtures/events-v23.json', import.meta.url))
 const snapshots = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
 const eventsFixture = JSON.parse(readFileSync(eventsFixturePath, 'utf8')) as {
   limits: { max_compact_jsonrpc_response_bytes: number; max_observer_frame_bytes: number }

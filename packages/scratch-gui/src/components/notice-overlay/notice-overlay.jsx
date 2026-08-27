@@ -17,6 +17,16 @@ const messages = defineMessages({
         id: 'gui.mcremote.notice.collapse',
         defaultMessage: 'Hide notices',
         description: 'Accessible label for the control that closes the McRemote notice panel'
+    },
+    version: {
+        id: 'gui.mcremote.notice.version',
+        defaultMessage: 'Version {version}',
+        description: 'Fixed footer line showing the release identity, {version} is a build id like 2200.0.0b5'
+    },
+    homepageLink: {
+        id: 'gui.mcremote.notice.homepageLink',
+        defaultMessage: 'Homepage',
+        description: 'Fixed footer link to the McRemote homepage'
     }
 });
 
@@ -24,17 +34,20 @@ const messages = defineMessages({
  * Collapsible notice panel anchored to the Scratch logo. Closed state is a small badge
  * overlapping the logo's bottom-left corner; open state shows an overlay panel that does
  * not reflow the rest of the workspace. Always starts open on mount (i.e. on every load)
- * and never persists its closed state, so new notices are never silently missed.
+ * and never persists its closed state, so new notices are never silently missed. A fixed
+ * footer (release version, homepage link) is always shown below any deployment-configured
+ * notices, so that identity doesn't depend on the deployment remembering to add a notice
+ * entry for it, and doesn't get lost from the list as older notices are edited out.
  * @param {object} root0 - component props.
  * @param {string} root0.colorMode - the active Scratch Color Mode (`original`/`high-contrast`/`dark`).
- * @returns {?object} the notice overlay, or null when there is nothing to show.
+ * @returns {object} the notice overlay.
  */
 const NoticeOverlay = ({colorMode}) => {
     const intl = useIntl();
     const [isOpen, setIsOpen] = useState(true);
     const wrapperRef = useRef(null);
     const triggerRef = useRef(null);
-    const notices = getMcRemoteRuntimeConfig().notices;
+    const {notices, releaseIdentity, homepageUrl} = getMcRemoteRuntimeConfig();
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
 
     const toggleOpen = useCallback(() => {
@@ -60,7 +73,7 @@ const NoticeOverlay = ({colorMode}) => {
         return () => document.removeEventListener('pointerup', handlePointerUp);
     }, [isOpen]);
 
-    if (!Array.isArray(notices) || notices.length === 0) return null;
+    const noticeList = Array.isArray(notices) ? notices : [];
 
     return (
         <div
@@ -96,7 +109,7 @@ const NoticeOverlay = ({colorMode}) => {
                 aria-hidden={!isOpen}
                 onKeyDown={handleBodyKeyDown}
             >
-                {notices.map((notice, index) => (
+                {noticeList.map((notice, index) => (
                     <div
                         className={styles.notice}
                         key={`${notice.heading}-${index}`}
@@ -116,6 +129,22 @@ const NoticeOverlay = ({colorMode}) => {
                         )}
                     </div>
                 ))}
+                <div className={styles.footer}>
+                    <span className={styles.footerVersion}>
+                        {intl.formatMessage(messages.version, {version: releaseIdentity})}
+                    </span>
+                    {homepageUrl && (
+                        <a
+                            className={classNames(styles.link, styles.footerLink)}
+                            href={homepageUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            tabIndex={isOpen ? 0 : -1}
+                        >
+                            {intl.formatMessage(messages.homepageLink)}
+                        </a>
+                    )}
+                </div>
             </div>
         </div>
     );

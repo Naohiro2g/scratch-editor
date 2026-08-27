@@ -24,6 +24,7 @@ const SpriteList = function (props) {
         onDeleteSprite,
         onDuplicateSprite,
         onExportSprite,
+        onSaveSpriteToBrowser,
         onSelectSprite,
         onAddSortable,
         onRemoveSortable,
@@ -95,6 +96,7 @@ const SpriteList = function (props) {
                                 onDeleteButtonClick={onDeleteSprite}
                                 onDuplicateButtonClick={onDuplicateSprite}
                                 onExportButtonClick={onExportSprite}
+                                onSaveToBrowserButtonClick={onSaveSpriteToBrowser}
                                 withDeleteConfirmation
                                 deleteConfirmationModalPosition={'left'}
                             />
@@ -132,6 +134,7 @@ SpriteList.propTypes = {
     onDuplicateSprite: PropTypes.func,
     onExportSprite: PropTypes.func,
     onRemoveSortable: PropTypes.func,
+    onSaveSpriteToBrowser: PropTypes.func,
     onSelectSprite: PropTypes.func,
     ordering: PropTypes.arrayOf(PropTypes.number),
     raised: PropTypes.bool,

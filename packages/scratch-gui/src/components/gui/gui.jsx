@@ -408,6 +408,7 @@ const GUIComponent = props => {
                                 <Box
                                     role="region"
                                     aria-label={intl.formatMessage(ariaMessages.tabList)}
+                                    className={styles.tabBarRow}
                                 >
                                     <TabList
                                         className={tabClassNames.tabList}
@@ -469,6 +470,12 @@ const GUIComponent = props => {
                                             />
                                         </Tab>
                                     </TabList>
+                                    <WireScopePanel
+                                        connectionTarget={mcremoteConnectionTarget}
+                                        snapshot={mcremoteObservation}
+                                        colorMode={colorMode}
+                                        wireScopeUrl={getMcRemoteRuntimeConfig().wireScopeUrl}
+                                    />
                                 </Box>
                                 <TabPanel
                                     className={tabClassNames.tabPanel}
@@ -492,12 +499,6 @@ const GUIComponent = props => {
                                             theme={theme}
                                             vm={vm}
                                             colorMode={colorMode}
-                                        />
-                                        <WireScopePanel
-                                            connectionTarget={mcremoteConnectionTarget}
-                                            snapshot={mcremoteObservation}
-                                            colorMode={colorMode}
-                                            wireScopeUrl={getMcRemoteRuntimeConfig().wireScopeUrl}
                                         />
                                     </Box>
                                     <ExtensionsButton

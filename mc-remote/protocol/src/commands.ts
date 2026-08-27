@@ -113,15 +113,23 @@ export type EventsPollParams =
   | readonly [afterSequence: number]
   | readonly [afterSequence: number, options: EventsPollOptions]
 
-export interface BlockRightClickEvent {
+/**
+ * `pickaxe_poke` — protocol 23/b6 replacement for protocol 22/b5's
+ * `block_right_click` (DECISIONS 2026-08-26-06). Gated server-side to block
+ * right-clicks made while holding a pickaxe (`org.bukkit.Tag.ITEMS_PICKAXES`);
+ * carries the same payload as the event it replaces plus the canonical item
+ * type key.
+ */
+export interface PickaxePokeEvent {
   readonly sequence: number
-  readonly type: 'block_right_click'
+  readonly type: 'pickaxe_poke'
   readonly dimension: DimensionKey
   readonly origin: readonly [number, number, number]
   readonly pos: readonly [number, number, number]
   readonly face: string
   readonly block: BlockValue
   readonly hand: 'main' | 'off'
+  readonly item: string
 }
 
 export interface ChatPostedEvent {
@@ -152,7 +160,7 @@ export interface ProjectileHitEvent {
   readonly target: ProjectileTarget
 }
 
-export type McRemoteEvent = BlockRightClickEvent | ChatPostedEvent | ProjectileHitEvent
+export type McRemoteEvent = PickaxePokeEvent | ChatPostedEvent | ProjectileHitEvent
 
 export interface EventsPollResult {
   readonly events: readonly McRemoteEvent[]
@@ -163,3 +171,54 @@ export interface EventsPollResult {
   readonly capacity_dropped_total: number
   readonly explicitly_discarded_total: number
 }
+
+/**
+ * b6 sign trio (wire-format-design §5.8.1, DECISIONS 2026-08-26-05). A bare
+ * `string` is plain-text shorthand; `color` is one of the 16 standard
+ * Adventure `NamedTextColor` tokens or `#RRGGBB`; `decorations` is a subset
+ * of `bold`/`italic`/`underlined`/`strikethrough`/`obfuscated`.
+ */
+export type LineSpec =
+  | string
+  | { readonly text: string; readonly color?: string; readonly decorations?: readonly string[] }
+
+/** Canonical `world.getSign` line shape: all fields always present, decorations name-sorted. */
+export interface LineValue {
+  readonly text: string
+  readonly color: string
+  readonly decorations: readonly string[]
+}
+
+export type SignFace = 'front' | 'back'
+export type SignFaceLines = readonly [LineValue, LineValue, LineValue, LineValue]
+
+/** `world.getSign` — read-only; permitted even when the sign is waxed. */
+export type GetSignParams = readonly [x: number, y: number, z: number]
+export interface GetSignResult {
+  readonly front: SignFaceLines
+  readonly back: SignFaceLines
+  readonly waxed: boolean
+}
+
+/** `world.setSign` — replace each named face's 4 lines in one no-merge write. */
+export type SetSignParams = readonly [
+  x: number,
+  y: number,
+  z: number,
+  lines: {
+    readonly front?: readonly [LineSpec, LineSpec, LineSpec, LineSpec]
+    readonly back?: readonly [LineSpec, LineSpec, LineSpec, LineSpec]
+  },
+]
+export type SetSignResult = null
+
+/** `world.updateSignLine` — PATCH exactly one 0-indexed line on one face. */
+export type UpdateSignLineParams = readonly [
+  x: number,
+  y: number,
+  z: number,
+  face: SignFace,
+  line_index: number,
+  line: LineSpec,
+]
+export type UpdateSignLineResult = null

@@ -2,9 +2,14 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
-import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v22.json';
+import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v23.json';
 import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
+
+// spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
+// (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
+// use a protocol 23 handle here instead when exercising the current allowlist.
+const PROTOCOL_23_ENTITY_HANDLE = 'mcr_eh_example';
 
 const connectedObservation = () => ({
     status: 'connected',
@@ -296,7 +301,7 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             id: 5,
             method: 'world.spawnEntity',
-            payload: {result: spawnFixture.spawn_entity.result}
+            payload: {result: PROTOCOL_23_ENTITY_HANDLE}
         }, {
             sequence: 8,
             timestamp: 1007,
@@ -343,7 +348,7 @@ describe('McRemote WireScope source adapter', () => {
             direction: 'receive',
             request_id: 5,
             method: 'world.spawnEntity',
-            payload: {result: spawnFixture.spawn_entity.result}
+            payload: {result: PROTOCOL_23_ENTITY_HANDLE}
         }, {
             sequence: 8,
             observed_at: 1007,
@@ -383,6 +388,36 @@ describe('McRemote WireScope source adapter', () => {
 
         const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
         expect(snapshot.streams[0].frames).toHaveLength(2);
+    });
+
+    test('accepts a protocol 23 mcr_eh_ entity handle and rejects a protocol-22 mceh_ handle', () => {
+        const withMcrEh = connectedObservation();
+        withMcrEh.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'world.spawnEntity',
+            payload: {result: 'mcr_eh_abc123'}
+        });
+        const acceptedSnapshot = toWireScopeSnapshot(withMcrEh, 'target-01', 2000);
+        expect(acceptedSnapshot.streams[0].frames.map((...[frame]) => frame.method))
+            .toContain('world.spawnEntity');
+
+        const withMceh = connectedObservation();
+        withMceh.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'receive',
+            id: 4,
+            method: 'world.spawnEntity',
+            payload: {result: 'mceh_legacy'}
+        });
+        const rejectedSnapshot = toWireScopeSnapshot(withMceh, 'target-01', 2000);
+        expect(rejectedSnapshot.streams[0].frames.map((...[frame]) => frame.method))
+            .not.toContain('world.spawnEntity');
     });
 
     test('hands a one-time grant over MessageChannel and ends it with the target', () => {
@@ -475,6 +510,142 @@ describe('McRemote WireScope source adapter', () => {
             reason: 'target-ended'
         });
         expect(port1.close).toHaveBeenCalled();
+    });
+
+    test('forwards the observation\'s droppedFrames as history_window.dropped_frames, not a hardcoded 0', () => {
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const port2 = {};
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2})),
+            crypto: {getRandomValues: array => array.fill(7)},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
+        };
+        const source = createWireScopeSource(environment);
+        source.update(Object.assign({}, connectedObservation(), {droppedFrames: 12}));
+
+        source.launch('https://live.example/wirescope');
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        port1.listener({
+            data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+        });
+
+        expect(port1.postMessage.mock.calls[1][0].history_window).toEqual({dropped_frames: 12});
+
+        source.update(Object.assign({}, connectedObservation(), {droppedFrames: 15}));
+        expect(port1.postMessage.mock.calls[2][0].history_window).toEqual({dropped_frames: 15});
+    });
+
+    test('treats a missing, negative, or non-integer droppedFrames as 0 rather than forwarding it', () => {
+        const droppedFramesSentFor = invalidDroppedFrames => {
+            const windowListeners = {};
+            const observerWindow = {postMessage: jest.fn()};
+            const port1 = {
+                addEventListener: jest.fn((type, listener) => {
+                    port1.listener = listener;
+                }),
+                start: jest.fn(),
+                postMessage: jest.fn(),
+                close: jest.fn()
+            };
+            const sourceWindow = {
+                addEventListener: jest.fn((type, listener) => {
+                    windowListeners[type] = listener;
+                }),
+                removeEventListener: jest.fn(),
+                open: jest.fn(() => observerWindow)
+            };
+            const environment = {
+                window: sourceWindow,
+                MessageChannel: jest.fn(() => ({port1, port2: {}})),
+                crypto: {getRandomValues: array => array.fill(7)},
+                now: jest.fn(() => 5000),
+                setTimeout: jest.fn(() => 9),
+                clearTimeout: jest.fn()
+            };
+            const source = createWireScopeSource(environment);
+            source.update(Object.assign({}, connectedObservation(), {droppedFrames: invalidDroppedFrames}));
+            source.launch('https://live.example/wirescope');
+            windowListeners.message({
+                source: observerWindow,
+                origin: 'https://live.example',
+                data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+            });
+            const grantMessage = port1.postMessage.mock.calls[0][0];
+            port1.listener({
+                data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+            });
+            return port1.postMessage.mock.calls[1][0].history_window;
+        };
+
+        expect(droppedFramesSentFor(-1)).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor(1.5)).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor('twelve')).toEqual({dropped_frames: 0});
+        expect(droppedFramesSentFor(null)).toEqual({dropped_frames: 0});
+
+        const observationWithoutField = connectedObservation();
+        delete observationWithoutField.droppedFrames;
+        const windowListeners = {};
+        const observerWindow = {postMessage: jest.fn()};
+        const port1 = {
+            addEventListener: jest.fn((type, listener) => {
+                port1.listener = listener;
+            }),
+            start: jest.fn(),
+            postMessage: jest.fn(),
+            close: jest.fn()
+        };
+        const sourceWindow = {
+            addEventListener: jest.fn((type, listener) => {
+                windowListeners[type] = listener;
+            }),
+            removeEventListener: jest.fn(),
+            open: jest.fn(() => observerWindow)
+        };
+        const environment = {
+            window: sourceWindow,
+            MessageChannel: jest.fn(() => ({port1, port2: {}})),
+            crypto: {getRandomValues: array => array.fill(7)},
+            now: jest.fn(() => 5000),
+            setTimeout: jest.fn(() => 9),
+            clearTimeout: jest.fn()
+        };
+        const source = createWireScopeSource(environment);
+        source.update(observationWithoutField);
+        source.launch('https://live.example/wirescope');
+        windowListeners.message({
+            source: observerWindow,
+            origin: 'https://live.example',
+            data: {type: 'mcremote.wirescope.ready', protocol_version: 1}
+        });
+        const grantMessage = port1.postMessage.mock.calls[0][0];
+        port1.listener({
+            data: {type: 'mcremote.wirescope.redeem', protocol_version: 1, grant: grantMessage.grant}
+        });
+        expect(port1.postMessage.mock.calls[1][0].history_window).toEqual({dropped_frames: 0});
     });
 
     test('ends an active observer with source-closed when the Scratch page is hidden', () => {

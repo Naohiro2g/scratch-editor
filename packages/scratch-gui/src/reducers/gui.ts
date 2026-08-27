@@ -9,6 +9,8 @@ import blockDragReducer, {blockDragInitialState} from './block-drag';
 import dynamicAssetsReducer, {dynamicAssetsInitialState} from './dynamic-assets';
 import editorTabReducer, {editorTabInitialState} from './editor-tab';
 import hoveredTargetReducer, {hoveredTargetInitialState} from './hovered-target';
+import localProjectsReducer, {localProjectsInitialState} from './local-projects';
+import localSpritesReducer, {localSpritesInitialState} from './local-sprites';
 import menuReducer, {menuInitialState} from './menus';
 import mcremoteCatalogReducer, {mcremoteCatalogInitialState} from './mcremote-catalog';
 import mcremoteConnectionTargetReducer, {
@@ -56,6 +58,8 @@ const buildInitialState = (config: GUIConfig) => ({
     mode: modeInitialState,
     hoveredTarget: hoveredTargetInitialState,
     stageSize: stageSizeInitialState,
+    localProjects: localProjectsInitialState,
+    localSprites: localSpritesInitialState,
     menus: menuInitialState,
     mcremoteCatalog: mcremoteCatalogInitialState,
     mcremoteConnectionTarget: mcremoteConnectionTargetInitialState,
@@ -169,6 +173,8 @@ const guiReducer = combineReducers({
     mode: modeReducer,
     hoveredTarget: hoveredTargetReducer,
     stageSize: stageSizeReducer,
+    localProjects: localProjectsReducer,
+    localSprites: localSpritesReducer,
     menus: menuReducer,
     mcremoteCatalog: mcremoteCatalogReducer,
     mcremoteConnectionTarget: mcremoteConnectionTargetReducer,
