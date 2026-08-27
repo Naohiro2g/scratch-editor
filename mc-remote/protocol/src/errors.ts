@@ -46,6 +46,12 @@ export const ErrorReason = {
   entityDimensionChanged: 'entity_dimension_changed',
   entitySpawnFailed: 'entity_spawn_failed',
   internalError: 'internal_error',
+  /** b6 sign (wire-format-design §5.8.1): the target block is not a sign. */
+  notASign: 'not_a_sign',
+  /** b6 sign: a honeycomb-waxed sign rejects writes; reads remain allowed. */
+  signWaxed: 'sign_waxed',
+  /** b6 sign: the write's mutation point rejected a stale BlockState snapshot. */
+  signUpdateFailed: 'sign_update_failed',
 } as const
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason]
@@ -75,6 +81,9 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.entityDimensionChanged]: ErrorCode.serverError,
   [ErrorReason.entitySpawnFailed]: ErrorCode.serverError,
   [ErrorReason.internalError]: ErrorCode.internalError,
+  [ErrorReason.notASign]: ErrorCode.serverError,
+  [ErrorReason.signWaxed]: ErrorCode.serverError,
+  [ErrorReason.signUpdateFailed]: ErrorCode.serverError,
 }
 
 /** Safe structured `error.data` fields used by protocol 22. */

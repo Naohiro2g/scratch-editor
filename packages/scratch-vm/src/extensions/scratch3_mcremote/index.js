@@ -62,7 +62,7 @@ const PROTOCOL_VERSION = '23.0.0';
  * negotiated exclusively by PROTOCOL_VERSION.
  * @type {string}
  */
-const CLIENT_VERSION = '2200.0.0b5';
+const CLIENT_VERSION = '2300.0.0b6';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';

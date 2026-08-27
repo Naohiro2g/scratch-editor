@@ -171,3 +171,54 @@ export interface EventsPollResult {
   readonly capacity_dropped_total: number
   readonly explicitly_discarded_total: number
 }
+
+/**
+ * b6 sign trio (wire-format-design §5.8.1, DECISIONS 2026-08-26-05). A bare
+ * `string` is plain-text shorthand; `color` is one of the 16 standard
+ * Adventure `NamedTextColor` tokens or `#RRGGBB`; `decorations` is a subset
+ * of `bold`/`italic`/`underlined`/`strikethrough`/`obfuscated`.
+ */
+export type LineSpec =
+  | string
+  | { readonly text: string; readonly color?: string; readonly decorations?: readonly string[] }
+
+/** Canonical `world.getSign` line shape: all fields always present, decorations name-sorted. */
+export interface LineValue {
+  readonly text: string
+  readonly color: string
+  readonly decorations: readonly string[]
+}
+
+export type SignFace = 'front' | 'back'
+export type SignFaceLines = readonly [LineValue, LineValue, LineValue, LineValue]
+
+/** `world.getSign` — read-only; permitted even when the sign is waxed. */
+export type GetSignParams = readonly [x: number, y: number, z: number]
+export interface GetSignResult {
+  readonly front: SignFaceLines
+  readonly back: SignFaceLines
+  readonly waxed: boolean
+}
+
+/** `world.setSign` — replace each named face's 4 lines in one no-merge write. */
+export type SetSignParams = readonly [
+  x: number,
+  y: number,
+  z: number,
+  lines: {
+    readonly front?: readonly [LineSpec, LineSpec, LineSpec, LineSpec]
+    readonly back?: readonly [LineSpec, LineSpec, LineSpec, LineSpec]
+  },
+]
+export type SetSignResult = null
+
+/** `world.updateSignLine` — PATCH exactly one 0-indexed line on one face. */
+export type UpdateSignLineParams = readonly [
+  x: number,
+  y: number,
+  z: number,
+  face: SignFace,
+  line_index: number,
+  line: LineSpec,
+]
+export type UpdateSignLineResult = null

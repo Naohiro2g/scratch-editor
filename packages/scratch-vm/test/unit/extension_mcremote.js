@@ -255,7 +255,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.0.0', t => {
     t.equal(hello.method, 'hello');
     t.equal(hello.params.protocol, '23.0.0', 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2200.0.0b5', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2300.0.0b6', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });

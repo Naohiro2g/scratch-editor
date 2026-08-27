@@ -64,5 +64,17 @@
   "projectile_targets": {
     "player": { "kind": "player" },
     "entity": { "kind": "entity", "handle": "mcr_eh_fixture-1" }
+  },
+  "legacy_rejected_events": {
+    "block_right_click": {
+      "sequence": 1,
+      "type": "block_right_click",
+      "dimension": "minecraft:overworld",
+      "origin": [200, 0, 200],
+      "pos": [1, 2, 3],
+      "face": "up",
+      "block": { "block_id": "minecraft:stone", "state": {} },
+      "hand": "main"
+    }
   }
 }

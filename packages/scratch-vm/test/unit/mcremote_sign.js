@@ -1,12 +1,15 @@
 const test = require('tap').test;
 const {makeErrorText} = require('../../src/extensions/scratch3_mcremote/block-value');
 const {
+    DECORATIONS,
+    FACES,
     formatSignInfoText,
     signIsWaxed,
     signLineColor,
     signLineHasDecoration,
     signLineText
 } = require('../../src/extensions/scratch3_mcremote/sign');
+const signFixture = require('../../../../mc-remote/protocol/test/fixtures/sign-v23.json');
 
 const line = (text, color, decorations) => ({text, color, decorations});
 
@@ -100,5 +103,37 @@ test('sign line accessors return an ErrorText for an invalid face or out-of-rang
     t.ok(signLineText(info, 'front', 4).startsWith('⟦mcr-error:'));
     t.ok(signLineText(info, 'front', -1).startsWith('⟦mcr-error:'));
     t.notOk(signLineHasDecoration(info, 'sideways', 0, 'bold'));
+    t.end();
+});
+
+test('FACES and DECORATIONS match the shared protocol fixture (mc-remote/protocol/test/fixtures/sign-v23.json)', t => {
+    t.same(FACES, Object.keys(signFixture.get_sign['B6-S03'].result).filter(key => key !== 'waxed'));
+    t.same(DECORATIONS, signFixture.decorations.canonical_order);
+    t.same(DECORATIONS.slice().sort(), DECORATIONS, 'sign.js decoration order is already alphabetical');
+    t.end();
+});
+
+test('formatSignInfoText accepts the shared B6-S03 world.getSign fixture result and round-trips', t => {
+    const {result} = signFixture.get_sign['B6-S03'];
+    const info = formatSignInfoText(result);
+    t.equal(signLineText(info, 'front', 1), result.front[1].text);
+    t.equal(signLineColor(info, 'front', 1), result.front[1].color);
+    t.ok(signLineHasDecoration(info, 'front', 1, 'bold'));
+    t.equal(signLineColor(info, 'back', 0), result.back[0].color);
+    t.ok(signLineHasDecoration(info, 'back', 0, 'italic'));
+    t.ok(signIsWaxed(info), 'B6-S03 fixture sign is waxed and must still be readable');
+    t.end();
+});
+
+test('formatSignInfoText normalizes the shared B6-S02 unsorted-decorations fixture case to canonical name order', t => {
+    const {result} = signFixture.line_values['B6-S02'].from_object_unsorted_input;
+    const info = formatSignInfoText({
+        front: [result, result, result, result],
+        back: [result, result, result, result],
+        waxed: false
+    });
+    for (const decoration of result.decorations) {
+        t.ok(signLineHasDecoration(info, 'front', 0, decoration));
+    }
     t.end();
 });
