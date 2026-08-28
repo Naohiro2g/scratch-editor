@@ -2,10 +2,20 @@ import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {defineMessages, useIntl} from 'react-intl';
+import {MCREMOTE_CLIENT_VERSION} from '@scratch/scratch-vm';
 
 import {getMcRemoteRuntimeConfig} from '../../lib/mcremote-runtime-config.js';
 import {HIGH_CONTRAST_MODE} from '../../lib/settings/color-mode/index.js';
 import styles from './notice-overlay.css';
+
+// The footer version and any `{version}` token in a configured notice always show this label,
+// not the deployment's own `release_identity` (which a showcase build sets to a raw commit SHA
+// for build-identity tracking, not for display) -- see mcremote-runtime-config.js's docs on
+// `releaseIdentity`. Reading the version from scratch-vm keeps this label correct at every
+// future release without a deployment needing to remember to update any notice text by hand.
+const RELEASE_LABEL = `McRemote Scratch ${MCREMOTE_CLIENT_VERSION}`;
+const VERSION_TOKEN = '{version}';
+const substituteVersion = text => (typeof text === 'string' ? text.split(VERSION_TOKEN).join(RELEASE_LABEL) : text);
 
 const messages = defineMessages({
     expand: {
@@ -47,7 +57,7 @@ const NoticeOverlay = ({colorMode}) => {
     const [isOpen, setIsOpen] = useState(true);
     const wrapperRef = useRef(null);
     const triggerRef = useRef(null);
-    const {notices, releaseIdentity, homepageUrl} = getMcRemoteRuntimeConfig();
+    const {notices, homepageUrl} = getMcRemoteRuntimeConfig();
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
 
     const toggleOpen = useCallback(() => {
@@ -114,8 +124,8 @@ const NoticeOverlay = ({colorMode}) => {
                         className={styles.notice}
                         key={`${notice.heading}-${index}`}
                     >
-                        <h3 className={styles.heading}>{notice.heading}</h3>
-                        <p className={styles.text}>{notice.body}</p>
+                        <h3 className={styles.heading}>{substituteVersion(notice.heading)}</h3>
+                        <p className={styles.text}>{substituteVersion(notice.body)}</p>
                         {notice.link && (
                             <a
                                 className={styles.link}
@@ -124,14 +134,14 @@ const NoticeOverlay = ({colorMode}) => {
                                 target="_blank"
                                 tabIndex={isOpen ? 0 : -1}
                             >
-                                {notice.link.label}
+                                {substituteVersion(notice.link.label)}
                             </a>
                         )}
                     </div>
                 ))}
                 <div className={styles.footer}>
                     <span className={styles.footerVersion}>
-                        {intl.formatMessage(messages.version, {version: releaseIdentity})}
+                        {intl.formatMessage(messages.version, {version: RELEASE_LABEL})}
                     </span>
                     {homepageUrl && (
                         <a

@@ -31,9 +31,27 @@ describe('NoticeOverlay', () => {
         getMcRemoteRuntimeConfig.mockReset();
     });
 
-    test('always shows the fixed version footer, even with no deployment notices', () => {
+    test('always shows the fixed version footer, derived from the McRemote client build, ' +
+        'even with no deployment notices', () => {
         renderOverlay([]);
-        expect(screen.getByText('バージョン release-123')).toBeInTheDocument();
+        expect(screen.getByText('バージョン McRemote Scratch 2300.0.0b6')).toBeInTheDocument();
+    });
+
+    test('ignores a deployment-configured releaseIdentity for the footer (a showcase build sets ' +
+        'it to a raw commit SHA, not a display label)', () => {
+        renderOverlay([], {}, {releaseIdentity: 'df9264ec355dd722a848df46e96d4b0fc9340ca2'});
+        expect(screen.queryByText(/df9264ec/)).not.toBeInTheDocument();
+    });
+
+    test('substitutes a {version} token in a configured notice heading, body, and link label', () => {
+        renderOverlay([{
+            heading: 'Client {version}',
+            body: 'Running {version}.',
+            link: {href: 'https://example.com', label: 'About {version}'}
+        }]);
+        expect(screen.getByText('Client McRemote Scratch 2300.0.0b6')).toBeInTheDocument();
+        expect(screen.getByText('Running McRemote Scratch 2300.0.0b6.')).toBeInTheDocument();
+        expect(screen.getByRole('link', {name: 'About McRemote Scratch 2300.0.0b6'})).toBeInTheDocument();
     });
 
     test('shows a homepage link in the footer only when homepageUrl is configured', () => {

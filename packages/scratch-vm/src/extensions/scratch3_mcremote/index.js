@@ -4,6 +4,7 @@ const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
+const CLIENT_VERSION = require('./client-version');
 const {createDisplayAlias} = require('./display-alias');
 const {buildContext, dimensionKey, dimensionRef, sameBuildContext} = require('./dimension');
 const {
@@ -56,13 +57,6 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
  * @type {string}
  */
 const PROTOCOL_VERSION = '23.0.0';
-
-/**
- * Scratch McRemote client build label for diagnostics. Compatibility is still
- * negotiated exclusively by PROTOCOL_VERSION.
- * @type {string}
- */
-const CLIENT_VERSION = '2300.0.0b6';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';

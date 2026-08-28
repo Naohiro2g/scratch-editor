@@ -27,7 +27,7 @@
       "body": "Scratchと Minecraftの通信を観察できます。観察を始めるには、マインクラフトと接続後にMcRemoteパネルの『WireScopeを開く』を使います。"
     },
     {
-      "heading": "マイクラリモコンScratchクライアント ver.2200.0.0b5",
+      "heading": "マイクラリモコンScratchクライアント {version}",
       "body": "詳細はGitHub.comのリリースページへ。",
       "link": {
         "href": "https://github.com/Naohiro2g/scratch-editor/releases",

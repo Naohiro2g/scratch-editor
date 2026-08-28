@@ -70,9 +70,12 @@ const prunePagesArtifact = buildDir => {
  * `connection_disabled` block rejection (`mcremote.connectionDisabled` in the McRemote extension)
  * for consistency between the two surfaces.
  */
+// Notice text has no per-locale variants (see mc-remote-runtime-config.js), so English and
+// Japanese are both written into the same string rather than only showing English.
 const SHOWCASE_NOTICE = Object.freeze({
-    heading: 'Showcase build',
-    body: 'This page is a showcase with the Minecraft connection turned off.'
+    heading: 'Showcase build / ショーケースビルド',
+    body: 'This page is a showcase with the Minecraft connection turned off. ' +
+        'このページはショーケースで、Minecraftへの接続は無効になっています。'
 });
 
 /**

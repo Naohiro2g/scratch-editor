@@ -88,7 +88,11 @@ describe('showcaseRuntimeConfig', () => {
         const showcase = showcaseRuntimeConfig(deployed, 'abc123');
 
         expect(showcase.notices).toEqual([
-            {heading: 'Showcase build', body: 'This page is a showcase with the Minecraft connection turned off.'}
+            {
+                heading: 'Showcase build / ショーケースビルド',
+                body: 'This page is a showcase with the Minecraft connection turned off. ' +
+                    'このページはショーケースで、Minecraftへの接続は無効になっています。'
+            }
         ]);
     });
 
@@ -100,7 +104,11 @@ describe('showcaseRuntimeConfig', () => {
         const showcase = showcaseRuntimeConfig(withNotices, 'abc123');
 
         expect(showcase.notices).toEqual([
-            {heading: 'Showcase build', body: 'This page is a showcase with the Minecraft connection turned off.'},
+            {
+                heading: 'Showcase build / ショーケースビルド',
+                body: 'This page is a showcase with the Minecraft connection turned off. ' +
+                    'このページはショーケースで、Minecraftへの接続は無効になっています。'
+            },
             {heading: 'New blocks', body: 'player.getPos and player.setPos are here.'}
         ]);
     });
