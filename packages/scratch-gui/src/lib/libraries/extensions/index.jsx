@@ -428,7 +428,10 @@ export default [
         insetIconURL: mcremoteIconURL,
         description: (
             <FormattedMessage
-                defaultMessage="Control Minecraft from Scratch blocks."
+                defaultMessage={
+                    'Control Minecraft from Scratch blocks. Full lightning can cause damage, fire, ' +
+                    'lightning rod and copper reactions, events, and entity changes.'
+                }
                 description="Description for the 'McRemote' extension"
                 id="gui.extension.mcremote.description"
             />
