@@ -22,6 +22,11 @@ export const Method = {
   worldGetSign: 'world.getSign',
   worldSetSign: 'world.setSign',
   worldUpdateSignLine: 'world.updateSignLine',
+  playerGetDirection: 'player.getDirection',
+  playerSetDirection: 'player.setDirection',
+  entityGetDirection: 'entity.getDirection',
+  entitySetDirection: 'entity.setDirection',
+  worldStrikeLightning: 'world.strikeLightning',
 } as const
 
 export type Method = (typeof Method)[keyof typeof Method]

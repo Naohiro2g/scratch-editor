@@ -6,6 +6,11 @@ import type {
   BuildSetDimensionParams,
   ConnectionFlushParams,
   ConnectionFlushResult,
+  DirectionValue,
+  EntityGetDirectionParams,
+  EntityGetDirectionResult,
+  EntitySetDirectionParams,
+  EntitySetDirectionResult,
   EventsPollParams,
   EventsPollResult,
   GetBlocksParams,
@@ -17,6 +22,10 @@ import type {
   LineSpec,
   LineValue,
   McRemoteEvent,
+  PlayerGetDirectionParams,
+  PlayerGetDirectionResult,
+  PlayerSetDirectionParams,
+  PlayerSetDirectionResult,
   SetBlockResult,
   SetBlocksResult,
   SetSignParams,
@@ -25,18 +34,21 @@ import type {
   SpawnParticleResult,
   SpawnEntityParams,
   SpawnEntityResult,
+  StrikeLightningParams,
+  StrikeLightningResult,
   UpdateSignLineParams,
   UpdateSignLineResult,
 } from '../src/index.ts'
 import { ERROR_REASON_CODE, ErrorCode, ErrorReason, JSONRPC_VERSION, Method, PROTOCOL_VERSION } from '../src/index.ts'
 import dimensionsFixture from './fixtures/dimensions-v22.json'
+import directionLightningFixture from './fixtures/direction-lightning-v23.1.json'
 import eventsFixture from './fixtures/events-v23.json'
 import signFixture from './fixtures/sign-v23.json'
 import spawnFixture from './fixtures/spawn-v22.json'
 
 describe('protocol constants', () => {
   it('advertises the clean protocol semver without a channel suffix', () => {
-    expect(PROTOCOL_VERSION).toBe('23.0.0')
+    expect(PROTOCOL_VERSION).toBe('23.1.0')
   })
 
   it('pins the JSON-RPC envelope version', () => {
@@ -63,6 +75,188 @@ describe('protocol constants', () => {
     expect(Method.worldGetSign).toBe('world.getSign')
     expect(Method.worldSetSign).toBe('world.setSign')
     expect(Method.worldUpdateSignLine).toBe('world.updateSignLine')
+    expect(Method.playerGetDirection).toBe('player.getDirection')
+    expect(Method.playerSetDirection).toBe('player.setDirection')
+    expect(Method.entityGetDirection).toBe('entity.getDirection')
+    expect(Method.entitySetDirection).toBe('entity.setDirection')
+    expect(Method.worldStrikeLightning).toBe('world.strikeLightning')
+    expect(Object.values(Method)).not.toContain('world.strikeLightningEffect')
+  })
+})
+
+describe('b7 direction and full lightning owner fixture', () => {
+  it('pins the knowledge contract, protocol, methods, and unique case IDs', () => {
+    expect(directionLightningFixture.knowledge_contract).toEqual({
+      commit: '4ce7acd8644d3d895701dc6e103d87d99c6b21d2',
+      path: '10-protocol/wire-format-design_ja.md',
+      section: '5.8.2',
+    })
+    expect(directionLightningFixture.protocol).toBe(PROTOCOL_VERSION)
+    expect(directionLightningFixture.methods).toMatchObject({
+      player_get_direction: Method.playerGetDirection,
+      player_set_direction: Method.playerSetDirection,
+      entity_get_direction: Method.entityGetDirection,
+      entity_set_direction: Method.entitySetDirection,
+      strike_lightning: Method.worldStrikeLightning,
+    })
+    expect(directionLightningFixture.rejected_methods).toEqual(['world.strikeLightningEffect'])
+    expect(Object.values(Method)).not.toContain(directionLightningFixture.rejected_methods[0])
+
+    for (const reason of directionLightningFixture.reasons) {
+      expect(Object.values(ErrorReason)).toContain(reason)
+      expect(ERROR_REASON_CODE[reason as ErrorReason]).toBeTypeOf('number')
+    }
+
+    const serialized = JSON.stringify(directionLightningFixture)
+    const ids = [...serialized.matchAll(/"id":"(B7-[DHLP]\d+)"/g)].map((match) => match[1])
+    expect(ids.length).toBeGreaterThanOrEqual(50)
+    expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('B7-D: mirrors DirectionValue params/results, normalization edges, and post-read invariants', () => {
+    const vectors = directionLightningFixture.direction.valid_vectors
+    const byName = Object.fromEntries(vectors.map((item) => [item.name, item]))
+    const base: DirectionValue = byName.magnitude_equivalence_base.result as DirectionValue
+    const scaled: DirectionValue = byName.magnitude_equivalence_scaled.result as DirectionValue
+    const getParams: PlayerGetDirectionParams = []
+    const getResult: PlayerGetDirectionResult = directionLightningFixture.direction.method_cases[0]
+      .result as DirectionValue
+    const setParams: PlayerSetDirectionParams = [1, 2, 3]
+    const setResult: PlayerSetDirectionResult = base
+    const entityGetParams: EntityGetDirectionParams = ['mcr_eh_fixture-current']
+    const entityGetResult: EntityGetDirectionResult = byName.positive_x.result as DirectionValue
+    const entitySetParams: EntitySetDirectionParams = ['mcr_eh_fixture-current', 1, 2, 3]
+    const entitySetResult: EntitySetDirectionResult = scaled
+
+    expect(vectors.filter((item) => /^(positive|negative)_[xyz]$/.test(item.name))).toHaveLength(6)
+    expect(base).toEqual(scaled)
+    expect(byName.subnormal.result).toEqual([1, 0, 0])
+    expect(byName.double_max_value.result).toEqual([0.707107, 0.707107, 0])
+    expect(byName.signed_zero_component.result).toEqual([0, 1, 0])
+    expect(byName.half_up_boundary.result).toEqual([0.123457, 0.99235, 0])
+    expect(directionLightningFixture.direction.output).toMatchObject({
+      decimal_places: 6,
+      rounding: 'HALF_UP',
+      negative_zero: 0,
+      norm_tolerance: 0.0000015,
+    })
+    for (const vector of vectors) {
+      expect(Math.abs(Math.hypot(...vector.result) - 1)).toBeLessThanOrEqual(
+        directionLightningFixture.direction.output.norm_tolerance,
+      )
+    }
+    expect(getParams).toEqual([])
+    expect(getResult).toEqual([0, 0, 1])
+    expect(setParams).toEqual([1, 2, 3])
+    expect(setResult).toEqual(base)
+    expect(entityGetParams[0]).toMatch(/^mcr_eh_/)
+    expect(entityGetResult).toEqual([1, 0, 0])
+    expect(entitySetParams).toHaveLength(4)
+    expect(entitySetResult).toEqual(scaled)
+
+    const invalidReasons = new Set(directionLightningFixture.direction.invalid_vectors.map((item) => item.reason))
+    expect(invalidReasons).toEqual(new Set([ErrorReason.zeroDirection, ErrorReason.invalidParams]))
+    expect(directionLightningFixture.direction.method_cases[1]).toMatchObject({
+      work_cost: 1,
+      order: ['params', 'permission', 'work', 'set_rotation', 'post_read'],
+      invariants: ['position', 'dimension'],
+    })
+  })
+
+  it('B7-H: collapses unresolved handles and releases terminal handles after the first exact reason', () => {
+    const unresolved = directionLightningFixture.handles.unresolved_strings
+    expect(unresolved.map((item) => item.name)).toEqual(['empty', 'foreign', 'unknown', 'old_epoch', 'old_format'])
+    expect(new Set(unresolved.map((item) => item.reason))).toEqual(new Set([ErrorReason.entityNotFound]))
+    expect(directionLightningFixture.handles.invalid_type.reason).toBe(ErrorReason.invalidParams)
+    expect(directionLightningFixture.handles.terminal_transitions).toEqual([
+      expect.objectContaining({
+        first_reason: ErrorReason.entityUnavailable,
+        handle_released: true,
+        next_reason: ErrorReason.entityNotFound,
+      }),
+      expect.objectContaining({
+        first_reason: ErrorReason.entityDimensionChanged,
+        handle_released: true,
+        next_reason: ErrorReason.entityNotFound,
+      }),
+    ])
+  })
+
+  it('B7-L: fixes exact wire, permission order, rate/work boundaries, FIFO, and full-strike calls', () => {
+    const wire = directionLightningFixture.lightning.wire_cases[0]
+    const params: StrikeLightningParams = wire.params as StrikeLightningParams
+    const result: StrikeLightningResult = wire.result
+    expect(params).toEqual([1.25, 2.5, -3.75])
+    expect(wire.exact_target).toEqual([201.25, 2.5, 196.25])
+    expect(result).toBeNull()
+    expect(directionLightningFixture.lightning.permission_order).toEqual([
+      'params',
+      'bound_identity',
+      'construction_permission',
+      'mcr.lightning',
+      'build_range',
+      'rate',
+      'work',
+      'chunk',
+      'full_strike',
+    ])
+    expect(directionLightningFixture.lightning.rate_policy).toMatchObject({
+      window_ticks: 20,
+      connection_accepts: 1,
+      player_accepts: 1,
+      global_same_tick_accepts: 2,
+      global_window_accepts: 8,
+      atomic: true,
+      refund_after_later_failure: false,
+    })
+    expect(directionLightningFixture.lightning.work_policy).toMatchObject({
+      cost: 256,
+      distribution_max_work_per_request: 4096,
+      below_cost_rejection: ErrorReason.workLimitExceeded,
+      refund_after_later_failure: false,
+    })
+    expect(directionLightningFixture.lightning.request_mode_cases[1]).toMatchObject({
+      action: 'defer_fifo_head',
+      allows_overtake: false,
+    })
+    expect(directionLightningFixture.lightning.paper_cases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'loaded_chunk', load_chunk_calls: 0, full_strike_calls: 1, effect_calls: 0 }),
+        expect.objectContaining({
+          name: 'generated_chunk',
+          load_chunk_calls: 1,
+          full_strike_calls: 1,
+          effect_calls: 0,
+        }),
+        expect.objectContaining({
+          name: 'chunk_load_failure',
+          full_strike_calls: 0,
+          reason: ErrorReason.backpressure,
+        }),
+        expect.objectContaining({ name: 'full_strike', api: 'World#strikeLightning', calls: 1, cause: 'CUSTOM' }),
+        expect.objectContaining({ name: 'paper_exception', reason: ErrorReason.internalError, retry: false }),
+      ]),
+    )
+  })
+
+  it('B7-P: keeps ParticleBuilder Stage 1 wire-compatible with protocol 23 spawnParticle', () => {
+    const regression = directionLightningFixture.particle_builder_regression
+    const defaultParams = regression.cases[0].params as SpawnParticleParams
+    const explicitFalseParams = regression.cases[1].params as SpawnParticleParams
+    const defaultResult: SpawnParticleResult = regression.cases[0].result
+    expect(regression).toMatchObject({ stage: 1, wire_changed: false, method: Method.worldSpawnParticle })
+    expect(regression.default_receiver).toBe('world')
+    expect(defaultParams).toHaveLength(9)
+    expect(regression.cases[0]).toMatchObject({ effective_force: true, representative_render: 'minecraft:flame' })
+    expect(explicitFalseParams).toHaveLength(10)
+    expect(explicitFalseParams[9]).toBe(false)
+    expect(defaultResult).toBe(4)
+    expect(regression.cases.slice(2).map((item) => item.reason)).toEqual([
+      ErrorReason.unknownParticle,
+      ErrorReason.particleDataRequired,
+      ErrorReason.backpressure,
+      ErrorReason.workLimitExceeded,
+    ])
   })
 })
 

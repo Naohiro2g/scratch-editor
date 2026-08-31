@@ -222,3 +222,30 @@ export type UpdateSignLineParams = readonly [
   line: LineSpec,
 ]
 export type UpdateSignLineResult = null
+
+/**
+ * b7 direction (wire-format-design §5.8.2). Values are finite direction
+ * components. Results are normalized, rounded to at most six decimal places
+ * with HALF_UP, and never carry negative zero.
+ */
+export type DirectionValue = readonly [x: number, y: number, z: number]
+
+/** `player.getDirection` — read the paired player's current direction. */
+export type PlayerGetDirectionParams = readonly []
+export type PlayerGetDirectionResult = DirectionValue
+
+/** `player.setDirection` — normalize a nonzero vector and change rotation only. */
+export type PlayerSetDirectionParams = readonly [x: number, y: number, z: number]
+export type PlayerSetDirectionResult = DirectionValue
+
+/** `entity.getDirection` — read one current-epoch opaque handle's direction. */
+export type EntityGetDirectionParams = readonly [handle: string]
+export type EntityGetDirectionResult = DirectionValue
+
+/** `entity.setDirection` — normalize a nonzero vector and change rotation only. */
+export type EntitySetDirectionParams = readonly [handle: string, x: number, y: number, z: number]
+export type EntitySetDirectionResult = DirectionValue
+
+/** `world.strikeLightning` — request one full, damage-capable strike at an origin-relative position. */
+export type StrikeLightningParams = readonly [x: number, y: number, z: number]
+export type StrikeLightningResult = null

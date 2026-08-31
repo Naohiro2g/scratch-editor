@@ -12,4 +12,9 @@ It is baked into scratch-vm at build time and keeps the same constants inline;
 runtime compatibility is negotiated through the `protocol` semver in `hello`, not
 guaranteed by a shared import.
 
+Protocol 23.1's owner fixture for direction, full lightning, opaque-handle
+lifecycle, rate/work admission, and the ParticleBuilder Stage 1 regression is
+`test/fixtures/direction-lightning-v23.1.json`. The protocol 22 and 23.0 fixtures
+remain unchanged as historical contracts.
+
 Private — not published to npm.
