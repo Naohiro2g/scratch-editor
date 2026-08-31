@@ -7,7 +7,9 @@ import {initLocale, localesInitialState} from '../../../src/reducers/locales';
 describe('McRemote Japanese localization', () => {
     test('covers the extension, connection, blocks, picker, and WireScope mini', () => {
         expect(mcremoteMessages.ja).toMatchObject({
-            'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
+            'gui.extension.mcremote.description':
+                'Scratch のブロックから Minecraft を操作します。雷はダメージ、火災、避雷針や銅の反応、イベント、' +
+                'エンティティの変化を起こすことがあります。',
             'gui.menuBar.mcremoteConnection': '接続先',
             'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
             'gui.mcremote.blockPicker.statusNotAcquired':
@@ -19,6 +21,11 @@ describe('McRemote Japanese localization', () => {
             'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。',
             'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
             'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
+            'mcremote.playerDirection': 'プレイヤーの向き [AXIS]',
+            'mcremote.setPlayerDirection': 'プレイヤーの向きを x [X] y [Y] z [Z] にする',
+            'mcremote.entityDirection': 'エンティティ [HANDLE] の向き [AXIS]',
+            'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x [X] y [Y] z [Z] にする',
+            'mcremote.strikeLightning': 'x [X] y [Y] z [Z] に雷を落とす',
             'mcremote.buildMode.trace': 'TRACE（過程）',
             'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
             'gui.alerts.mcremoteBuildDeliveryFailed':
@@ -45,14 +52,20 @@ describe('McRemote Japanese localization', () => {
     test('provides kanji-free translations for the Japanese Hiragana locale', () => {
         expect(mcremoteMessages['ja-Hira']).toMatchObject({
             'gui.extension.mcremote.description':
-                'Scratch のブロックから Minecraft をそうさします。',
+                'Scratch のブロックから Minecraft をそうさします。かみなりはダメージ、ひ、ひらいしんやどうのはんのう、' +
+                'イベント、エンティティのへんかをおこすことがあります。',
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',
             'mcremote.setDimension': 'けんちくするじげんを [DIMENSION] にする',
             'mcremote.setBuildMode':
                 'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
-            'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ'
+            'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ',
+            'mcremote.playerDirection': 'プレイヤーのむき [AXIS]',
+            'mcremote.setPlayerDirection': 'プレイヤーのむきを x [X] y [Y] z [Z] にする',
+            'mcremote.entityDirection': 'エンティティ [HANDLE] のむき [AXIS]',
+            'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x [X] y [Y] z [Z] にする',
+            'mcremote.strikeLightning': 'x [X] y [Y] z [Z] にかみなりをおとす'
         });
         for (const message of Object.values(mcremoteMessages['ja-Hira'])) {
             expect(message).not.toMatch(/[\u3400-\u9fff]/u);

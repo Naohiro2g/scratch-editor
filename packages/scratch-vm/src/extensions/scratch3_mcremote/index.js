@@ -41,6 +41,7 @@ const {
 } = require('./sign');
 
 const SIGN_LINE_INDICES = [0, 1, 2, 3];
+const DIRECTION_AXES = ['x', 'y', 'z'];
 
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
@@ -52,11 +53,11 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
- * protocol contract version (23.0.0); the package/channel suffix is not
+ * protocol contract version (23.1.0); the package/channel suffix is not
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '23.0.0';
+const PROTOCOL_VERSION = '23.1.0';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
@@ -153,8 +154,18 @@ const playerResult = (value, includeOrientation) => {
     return result;
 };
 
+const directionResult = value => {
+    if (!Array.isArray(value) || value.length !== 3 ||
+        value.some(component => typeof component !== 'number' || !Number.isFinite(component))) {
+        const error = new Error('Invalid direction result');
+        error.reason = 'invalid_response';
+        throw error;
+    }
+    return value;
+};
+
 /**
- * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.0.0).
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.1.0).
  * One WebSocket message carries either one raw JSON-RPC object or, for the
  * pre-auth pairing methods only, one Bridge transport envelope containing the
  * untouched JSON-RPC string.
@@ -177,11 +188,16 @@ const playerResult = (value, includeOrientation) => {
  *   world.getHeight [x, z] or [x, z, maxY]                       -> integer
  *   world.spawnParticle [x, y, z, ox, oy, oz, particle, speed, count, (force)] -> accepted count
  *   world.spawnEntity [x, y, z, entity]                          -> entity handle
+ *   world.strikeLightning [x, y, z]                              -> null
  *   connection.flush []                                          -> null
  *   player.getPos   []         => {dimension, pos:[x,y,z]}        -> reply
  *   player.setPos   [dimension, x, y, z]                          -> reply
  *   player.getPose  []         => {dimension, pos:[x,y,z], yaw, pitch} -> reply
  *   player.setPose  [dimension, x, y, z, yaw, pitch]              -> reply
+ *   player.getDirection []                                        -> [x,y,z]
+ *   player.setDirection [x,y,z]                                   -> [x,y,z]
+ *   entity.getDirection [handle]                                  -> [x,y,z]
+ *   entity.setDirection [handle,x,y,z]                            -> [x,y,z]
  *   auth.pairBegin  object params                                 -> reply
  *   auth.pairPoll   object params                                 -> reply
  *
@@ -886,6 +902,84 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
+                    opcode: 'playerDirection',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.playerDirection',
+                        default: 'player direction [AXIS]',
+                        description: 'Report one component of the paired player direction'
+                    }),
+                    arguments: {
+                        AXIS: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionAxes',
+                            defaultValue: 'x'
+                        }
+                    }
+                },
+                {
+                    opcode: 'setPlayerDirection',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerDirection',
+                        default: 'set player direction to x [X] y [Y] z [Z]',
+                        description: 'Set the paired player direction and validate the post-read direction'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'entityDirection',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityDirection',
+                        default: 'direction [AXIS] of entity [HANDLE]',
+                        description: 'Report one direction component using an opaque entity handle'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        AXIS: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionAxes',
+                            defaultValue: 'x'
+                        }
+                    }
+                },
+                {
+                    opcode: 'setEntityDirection',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setEntityDirection',
+                        default: 'set direction of entity [HANDLE] to x [X] y [Y] z [Z]',
+                        description: 'Set an entity direction by opaque handle and validate the post-read direction'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'strikeLightning',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.strikeLightning',
+                        default: 'strike lightning at x [X] y [Y] z [Z]',
+                        description: 'Strike full lightning, which can cause damage, fire, lightning rod and copper ' +
+                            'reactions, events, and entity changes'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                '---',
+                {
                     opcode: 'whenPickaxePoke',
                     blockType: BlockType.HAT,
                     isEdgeActivated: false,
@@ -1123,6 +1217,10 @@ class Scratch3McRemoteBlocks {
                             value: 'false'
                         }
                     ]
+                },
+                directionAxes: {
+                    acceptReporters: false,
+                    items: DIRECTION_AXES.map(axis => ({text: axis, value: axis}))
                 },
                 playerAttributes: {
                     acceptReporters: false,
@@ -2915,6 +3013,71 @@ class Scratch3McRemoteBlocks {
         }, error => {
             variable.value = remoteErrorText(error);
         });
+    }
+
+    _directionReporter (method, params, axis) {
+        const index = DIRECTION_AXES.indexOf(Cast.toString(axis));
+        if (index < 0) return Promise.resolve(makeErrorText('invalid_params'));
+        return this._request(method, params).then(result => {
+            try {
+                return directionResult(result)[index];
+            } catch (error) {
+                return remoteErrorText(error);
+            }
+        }, error => remoteErrorText(error));
+    }
+
+    _directionCommand (method, params) {
+        return this._request(method, params).then(result => {
+            try {
+                directionResult(result);
+            } catch (error) {
+                return this._actionableCommandError(method, error);
+            }
+        }, error => this._actionableCommandError(method, error));
+    }
+
+    playerDirection (args) {
+        return this._directionReporter('player.getDirection', [], args.AXIS);
+    }
+
+    setPlayerDirection (args) {
+        return this._directionCommand('player.setDirection', [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]);
+    }
+
+    entityDirection (args) {
+        return this._directionReporter(
+            'entity.getDirection',
+            [Cast.toString(args.HANDLE)],
+            args.AXIS
+        );
+    }
+
+    setEntityDirection (args) {
+        return this._directionCommand('entity.setDirection', [
+            Cast.toString(args.HANDLE),
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]);
+    }
+
+    strikeLightning (args) {
+        const method = 'world.strikeLightning';
+        return this._request(method, [
+            Cast.toNumber(args.X),
+            Cast.toNumber(args.Y),
+            Cast.toNumber(args.Z)
+        ]).then(result => {
+            if (result === null) return;
+            const error = new Error('Invalid lightning result');
+            error.reason = 'invalid_response';
+            return this._actionableCommandError(method, error);
+        }, error => this._actionableCommandError(method, error));
     }
 
     /**

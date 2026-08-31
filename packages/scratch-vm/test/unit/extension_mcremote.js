@@ -1,4 +1,6 @@
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
 const {
@@ -11,6 +13,11 @@ const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/di
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
 const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
 const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
+const directionLightningFixturePath = path.resolve(
+    __dirname,
+    '../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json'
+);
+const directionLightningFixture = require(directionLightningFixturePath);
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
 // Read from the extension itself so this harness tracks the current protocol
@@ -227,7 +234,7 @@ const newConnectedBlocks = runtime => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -236,7 +243,7 @@ const newConnectedBlocks = runtime => {
     return connected.then(() => ({blocks, socket}));
 };
 
-test('hello uses a JSON-RPC 2.0 request with protocol 23.0.0', t => {
+test('hello uses a JSON-RPC 2.0 request with protocol 23.1.0', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -253,7 +260,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.0.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, '23.0.0', 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, directionLightningFixture.protocol, 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
     t.equal(hello.params.client.version, '2301.0.0b7', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
@@ -394,7 +401,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -410,7 +417,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
         t.equal(connected.sourceKind, 'scratch');
         t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -477,7 +484,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '26.1.2',
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
@@ -488,7 +495,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
 
     return result.then(() => {
         t.same(latestObservation(runtime).hello, {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '26.1.2',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -562,7 +569,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
-                    protocol: '23.0.0',
+                    protocol: '23.1.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -688,11 +695,22 @@ test('hello rejects an incompatible server protocol before commands can run', t 
     });
 });
 
-test('hello rejects a server protocol minor older than the client', t => {
+test('hello rejects a 23.0.x server as older than the 23.1 client', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
     const blocks = new McRemote({});
-    t.equal(blocks._isProtocolCompatible('23.0.0', '23.1.0'), false);
-    t.equal(blocks._isProtocolCompatible('23.1.0', '23.1.99'), true, 'patch is ignored');
-    t.end();
+    const connection = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.0.99'}});
+    t.equal(blocks._isProtocolCompatible('23.1.99'), true, 'server patch is ignored');
+    return connection.then(
+        () => t.fail('23.0.x must not be accepted'),
+        error => {
+            t.equal(error.reason, 'protocol_mismatch');
+            t.end();
+        }
+    );
 });
 
 test('commands are not sent after hello fails before connection is established', t => {
@@ -757,7 +775,7 @@ test('connect block resolves without exposing the hello result', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -812,7 +830,7 @@ test('successful reconnect resets disconnected command guidance', async t => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             catalogHash: null
         }
     });
@@ -837,7 +855,7 @@ test('connect block reuses an in-flight connection instead of opening a duplicat
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -946,6 +964,60 @@ test('b6 events expose three hats and thread-local accessors without raw poll co
     t.end();
 });
 
+test('b7 direction and full-lightning blocks expose the fixed learner surface', t => {
+    const info = new McRemote({}).getInfo();
+    const blocks = Object.fromEntries(info.blocks
+        .filter(block => typeof block !== 'string')
+        .map(block => [block.opcode, block]));
+
+    t.equal(blocks.playerDirection.blockType, 'reporter');
+    t.equal(blocks.playerDirection.text, 'player direction [AXIS]');
+    t.equal(blocks.setPlayerDirection.blockType, 'command');
+    t.equal(blocks.setPlayerDirection.text, 'set player direction to x [X] y [Y] z [Z]');
+    t.equal(blocks.entityDirection.blockType, 'reporter');
+    t.equal(blocks.entityDirection.text, 'direction [AXIS] of entity [HANDLE]');
+    t.equal(blocks.setEntityDirection.blockType, 'command');
+    t.equal(blocks.setEntityDirection.text, 'set direction of entity [HANDLE] to x [X] y [Y] z [Z]');
+    t.equal(blocks.strikeLightning.blockType, 'command');
+    t.equal(blocks.strikeLightning.text, 'strike lightning at x [X] y [Y] z [Z]');
+    t.same(info.menus.directionAxes.items.map(item => item.value), ['x', 'y', 'z']);
+    t.notOk(blocks.strikeLightningEffect, 'effect-only lightning is not public');
+    t.end();
+});
+
+test('b7 Scratch surface maps directly to the owner fixture contract', t => {
+    const fixtureBytes = fs.readFileSync(directionLightningFixturePath);
+    const methods = directionLightningFixture.methods;
+    t.equal(fixtureBytes.length, 14179, 'owner fixture size is unchanged');
+    t.equal(
+        crypto.createHash('sha256')
+            .update(fixtureBytes)
+            .digest('hex'),
+        'faad66c93d2c8ee8eb541f6b7297163cb681054b3de05ba3d130ac4288c1046a',
+        'owner fixture identity is unchanged'
+    );
+    t.equal(directionLightningFixture.protocol, McRemote.PROTOCOL_VERSION);
+    t.same([
+        methods.player_get_direction,
+        methods.player_set_direction,
+        methods.entity_get_direction,
+        methods.entity_set_direction,
+        methods.strike_lightning
+    ], [
+        'player.getDirection',
+        'player.setDirection',
+        'entity.getDirection',
+        'entity.setDirection',
+        'world.strikeLightning'
+    ]);
+    t.same(directionLightningFixture.rejected_methods, ['world.strikeLightningEffect']);
+    const caseCount = JSON.stringify(directionLightningFixture).match(/"id":"B7-/g);
+    t.equal(caseCount && caseCount.length, 81, 'all 81 owner cases remain addressable from the shared fixture');
+    t.equal(directionLightningFixture.particle_builder_regression.wire_changed, false);
+    t.equal(directionLightningFixture.particle_builder_regression.method, 'world.spawnParticle');
+    t.end();
+});
+
 test('pairing reporter blocks are exposed', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -1005,7 +1077,7 @@ test('reconnect reuses the sandbox token and starts build state from defaults', 
             nextSocket.fireMessage({jsonrpc: '2.0',
                 id: 1,
                 result: {
-                    protocol: '23.0.0',
+                    protocol: '23.1.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -1034,7 +1106,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
         nextSocket.fireMessage({jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '23.0.0',
+                protocol: '23.1.0',
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash: null,
@@ -1622,7 +1694,7 @@ test('one connection poller dispatches mixed b6 events with per-thread context a
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -1737,6 +1809,9 @@ test('spawnEntity treats a protocol-22 mceh_ handle from the server as a remote_
 
 test('spawnParticle sends coordinate-first params and preserves optional force', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
+        const particleCases = directionLightningFixture.particle_builder_regression.cases;
+        const defaultForceCase = particleCases.find(item => item.id === 'B7-P01');
+        const explicitFalseCase = particleCases.find(item => item.id === 'B7-P02');
         const baseArgs = {
             X: 1.25,
             Y: 2.5,
@@ -1750,21 +1825,21 @@ test('spawnParticle sends coordinate-first params and preserves optional force',
         };
         const omitted = blocks.spawnParticle(baseArgs);
         let request = socket.lastSent();
-        t.equal(request.method, 'world.spawnParticle');
-        t.same(request.params, spawnFixture.spawn_particle.default_force.params);
+        t.equal(request.method, directionLightningFixture.particle_builder_regression.method);
+        t.same(request.params, defaultForceCase.params);
         socket.fireMessage({
             jsonrpc: '2.0',
             id: request.id,
-            result: spawnFixture.spawn_particle.default_force.result
+            result: defaultForceCase.result
         });
         return omitted.then(() => {
             const explicit = blocks.spawnParticle(Object.assign({}, baseArgs, {FORCE: 'false'}));
             request = socket.lastSent();
-            t.same(request.params, spawnFixture.spawn_particle.explicit_false.params);
+            t.same(request.params, explicitFalseCase.params);
             socket.fireMessage({
                 jsonrpc: '2.0',
                 id: request.id,
-                result: spawnFixture.spawn_particle.explicit_false.result
+                result: explicitFalseCase.result
             });
             return explicit;
         }).then(() => t.end());
@@ -2072,6 +2147,138 @@ test('playerAttribute does not throttle explicit (non-monitor) calls', t =>
     })
 );
 
+test('direction reporters use exact methods and accept only finite triples', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const playerCase = directionLightningFixture.direction.method_cases.find(item => item.id === 'B7-D30');
+    let result = blocks.playerDirection({AXIS: 'z'});
+    let request = socket.lastSent();
+    t.equal(request.method, playerCase.method);
+    t.same(request.params, playerCase.params);
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: playerCase.result});
+    t.equal(await result, playerCase.result[2]);
+
+    const entityCase = directionLightningFixture.direction.method_cases.find(item => item.id === 'B7-D35');
+    result = blocks.entityDirection({HANDLE: entityCase.params[0], AXIS: 'x'});
+    request = socket.lastSent();
+    t.equal(request.method, entityCase.method);
+    t.same(request.params, entityCase.params, 'opaque handle is sent unchanged');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: entityCase.result});
+    t.equal(await result, entityCase.result[0]);
+
+    for (const invalid of [[1, 2], [1, 2, 3, 4], [1, '2', 3], [1, NaN, 3], [1, Infinity, 3]]) {
+        result = blocks.playerDirection({AXIS: 'x'});
+        request = socket.lastSent();
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: invalid});
+        t.equal(await result, '⟦mcr-error:remote_error⟧', `${JSON.stringify(invalid)} is rejected`);
+    }
+    t.end();
+});
+
+test('setDirection preserves inputs and validates the post-read direction', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const playerCase = directionLightningFixture.direction.method_cases.find(item => item.id === 'B7-D31');
+    const roundingCase = directionLightningFixture.direction.valid_vectors.find(item => item.id === 'B7-D14');
+    const exactInput = roundingCase.post_read;
+    let completion = blocks.setPlayerDirection({X: exactInput[0], Y: exactInput[1], Z: exactInput[2]});
+    let request = socket.lastSent();
+    t.equal(request.method, playerCase.method);
+    t.same(request.params, exactInput, 'Scratch does not normalize, round, or replace zero components');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: roundingCase.result});
+    await completion;
+    t.equal(actionableErrors(runtime).length, 0);
+
+    const entityCase = directionLightningFixture.direction.method_cases.find(item => item.id === 'B7-D36');
+    completion = blocks.setEntityDirection({
+        HANDLE: entityCase.params[0],
+        X: entityCase.params[1],
+        Y: entityCase.params[2],
+        Z: entityCase.params[3]
+    });
+    request = socket.lastSent();
+    t.equal(request.method, entityCase.method);
+    t.same(request.params, entityCase.params, 'entity handle remains opaque');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: [1, 0, 0]});
+    await completion;
+
+    completion = blocks.setPlayerDirection({X: 1, Y: 2, Z: 3});
+    request = socket.lastSent();
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+    await completion;
+    t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'invalid_response',
+        'malformed post-read result uses the actionable error path');
+    t.end();
+});
+
+test('direction errors remain observable and a zero vector reaches the server', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const zeroCase = directionLightningFixture.direction.invalid_vectors.find(item => item.id === 'B7-D20');
+    let completion = blocks.setPlayerDirection({X: 0, Y: 0, Z: 0});
+    let request = socket.lastSent();
+    t.same(request.params, zeroCase.params);
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: request.id,
+        error: {code: -32602, message: zeroCase.reason, data: {reason: zeroCase.reason}}
+    });
+    await completion;
+    t.equal(actionableErrors(runtime).slice(-1)[0].reason, zeroCase.reason);
+
+    const handleReasons = [
+        directionLightningFixture.handles.terminal_transitions[0].first_reason,
+        directionLightningFixture.handles.terminal_transitions[1].first_reason,
+        directionLightningFixture.handles.unresolved_strings[0].reason
+    ];
+    for (const reason of handleReasons) {
+        const value = blocks.entityDirection({HANDLE: 'mcr_eh_fixture-current', AXIS: 'y'});
+        request = socket.lastSent();
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            error: {code: -32000, message: reason, data: {reason}}});
+        t.equal(await value, `⟦mcr-error:${reason}⟧`);
+    }
+    t.end();
+});
+
+test('full lightning is an id-bearing request with null success and actionable failures', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const lightningCase = directionLightningFixture.lightning.wire_cases.find(item => item.id === 'B7-L01');
+    let completion = blocks.strikeLightning({
+        X: lightningCase.params[0],
+        Y: lightningCase.params[1],
+        Z: lightningCase.params[2]
+    });
+    let request = socket.lastSent();
+    t.equal(request.method, lightningCase.method);
+    t.same(request.params, lightningCase.params);
+    t.type(request.id, 'number', 'lightning is not notification-only');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: lightningCase.result});
+    await completion;
+
+    const failureCases = [
+        directionLightningFixture.lightning.permission_cases.find(item => item.id === 'B7-L13'),
+        directionLightningFixture.lightning.rate_cases.find(item => item.id === 'B7-L21'),
+        directionLightningFixture.lightning.work_cases.find(item => item.id === 'B7-L32'),
+        directionLightningFixture.lightning.paper_cases.find(item => item.id === 'B7-L52'),
+        directionLightningFixture.lightning.paper_cases.find(item => item.id === 'B7-L55')
+    ];
+    for (const failureCase of failureCases) {
+        const {reason} = failureCase;
+        completion = blocks.strikeLightning({X: 1, Y: 2, Z: 3});
+        request = socket.lastSent();
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: request.id,
+            error: {code: -32000, message: reason, data: {reason}}});
+        await completion;
+        t.ok(actionableErrors(runtime).some(error => error.reason === reason), `${failureCase.id} is actionable`);
+    }
+    t.end();
+});
+
 test('setPlayerPos is an acknowledged request with an explicit dimension', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setPlayerPos({DIMENSION: 'the_nether', X: 10, Y: 20, Z: 30});
@@ -2189,7 +2396,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2226,7 +2433,7 @@ test('catalog cache miss fetches after hello without delaying connection', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2267,7 +2474,7 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2306,7 +2513,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.0.0',
+            protocol: '23.1.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,

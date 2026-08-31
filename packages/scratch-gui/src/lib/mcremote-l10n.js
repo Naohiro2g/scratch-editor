@@ -40,7 +40,9 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザ保存',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
+        'gui.extension.mcremote.description':
+            'Scratch のブロックから Minecraft を操作します。雷はダメージ、火災、避雷針や銅の反応、イベント、' +
+            'エンティティの変化を起こすことがあります。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft の操作が無効です。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「接続する」ブロックを実行してください。',
         'gui.alerts.mcremoteInvalidBuildMode': '建築モードは DEBUG、TRACE、FAST から選んでください。',
@@ -151,6 +153,11 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] に生成し ハンドルを [VARIABLE] に入れる',
+        'mcremote.playerDirection': 'プレイヤーの向き [AXIS]',
+        'mcremote.setPlayerDirection': 'プレイヤーの向きを x [X] y [Y] z [Z] にする',
+        'mcremote.entityDirection': 'エンティティ [HANDLE] の向き [AXIS]',
+        'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x [X] y [Y] z [Z] にする',
+        'mcremote.strikeLightning': 'x [X] y [Y] z [Z] に雷を落とす',
         'mcremote.whenPickaxePoke': 'ツルハシでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットが投稿されたとき',
         'mcremote.whenProjectileHit': '飛び道具が当たったとき',
@@ -212,7 +219,9 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザほぞん',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft をそうさします。',
+        'gui.extension.mcremote.description':
+            'Scratch のブロックから Minecraft をそうさします。かみなりはダメージ、ひ、ひらいしんやどうのはんのう、' +
+            'イベント、エンティティのへんかをおこすことがあります。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft をそうさできません。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「せつぞくする」ブロックをうごかしてください。',
         'gui.alerts.mcremoteInvalidBuildMode': 'けんちくモードは DEBUG、TRACE、FAST からえらんでください。',
@@ -328,6 +337,11 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] にだして ハンドルを [VARIABLE] にいれる',
+        'mcremote.playerDirection': 'プレイヤーのむき [AXIS]',
+        'mcremote.setPlayerDirection': 'プレイヤーのむきを x [X] y [Y] z [Z] にする',
+        'mcremote.entityDirection': 'エンティティ [HANDLE] のむき [AXIS]',
+        'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x [X] y [Y] z [Z] にする',
+        'mcremote.strikeLightning': 'x [X] y [Y] z [Z] にかみなりをおとす',
         'mcremote.whenPickaxePoke': 'つるはしでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットがとうこうされたとき',
         'mcremote.whenProjectileHit': 'とびどうぐがあたったとき',

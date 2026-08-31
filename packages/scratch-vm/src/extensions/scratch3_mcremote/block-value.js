@@ -5,6 +5,7 @@ const NUMBER_PATTERN = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE]-?[0-9]+)?$/;
 const ERROR_TEXT_PATTERN = /^⟦mcr-error:([a-z][a-z0-9_]*)⟧$/u;
 
 const REMOTE_ERROR_REASONS = new Set([
+    'auth_required',
     'backpressure',
     'build_denied',
     'entity_capacity_exhausted',
@@ -12,8 +13,10 @@ const REMOTE_ERROR_REASONS = new Set([
     'entity_not_spawnable',
     'entity_removed',
     'entity_spawn_failed',
-    'entity_unloaded',
     'entity_dimension_changed',
+    'entity_not_found',
+    'entity_unloaded',
+    'entity_unavailable',
     'height_not_found',
     'internal_error',
     'invalid_params',
@@ -30,7 +33,8 @@ const REMOTE_ERROR_REASONS = new Set([
     'unknown_particle',
     'unknown_property',
     'unknown_dimension',
-    'work_limit_exceeded'
+    'work_limit_exceeded',
+    'zero_direction'
 ]);
 
 const blockValueError = reason => {
