@@ -19,6 +19,7 @@ import type {
   GetHeightResult,
   GetSignParams,
   GetSignResult,
+  HelloPermissions,
   LineSpec,
   LineValue,
   McRemoteEvent,
@@ -85,9 +86,9 @@ describe('protocol constants', () => {
 })
 
 describe('b7 direction and full lightning owner fixture', () => {
-  it('pins the knowledge contract, protocol, methods, and unique case IDs', () => {
+  it('pins the successor knowledge contract, protocol, methods, and complete case migration', () => {
     expect(directionLightningFixture.knowledge_contract).toEqual({
-      commit: '4ce7acd8644d3d895701dc6e103d87d99c6b21d2',
+      commit: '2bddadd1114e05a9076911de83aec0836df36345',
       path: '10-protocol/wire-format-design_ja.md',
       section: '5.8.2',
     })
@@ -107,10 +108,136 @@ describe('b7 direction and full lightning owner fixture', () => {
       expect(ERROR_REASON_CODE[reason as ErrorReason]).toBeTypeOf('number')
     }
 
+    const expandRange = (range: string): string[] => {
+      const match = /^(B7-[ADHLP])(\d+)\.\.B7-[ADHLP](\d+)$/.exec(range)
+      if (!match) return [range]
+      const width = match[2].length
+      return Array.from(
+        { length: Number(match[3]) - Number(match[2]) + 1 },
+        (_, index) => `${match[1]}${String(Number(match[2]) + index).padStart(width, '0')}`,
+      )
+    }
+    const manifest = directionLightningFixture.amendment_manifest.case_migration
+    const unchangedIds = manifest.unchanged_id_ranges.flatMap(expandRange)
+    const removedIds = manifest.removed_cases.map((item) => item.old_id)
+    const addedIds = manifest.added_ids
     const serialized = JSON.stringify(directionLightningFixture)
-    const ids = [...serialized.matchAll(/"id":"(B7-[DHLP]\d+)"/g)].map((match) => match[1])
-    expect(ids.length).toBeGreaterThanOrEqual(50)
+    const ids = [...serialized.matchAll(/"id":"(B7-[ADHLP]\d+)"/g)].map((match) => match[1])
+    const predecessorIds = [...unchangedIds, ...removedIds]
+    expect(manifest.predecessor_case_count).toBe(81)
+    expect(predecessorIds).toHaveLength(manifest.predecessor_case_count)
+    expect(new Set(predecessorIds).size).toBe(predecessorIds.length)
+    expect(ids).toHaveLength(93)
     expect(new Set(ids).size).toBe(ids.length)
+    expect(new Set(ids)).toEqual(new Set([...unchangedIds, ...addedIds]))
+    expect(removedIds.every((id) => !ids.includes(id))).toBe(true)
+    for (const removed of manifest.removed_cases) {
+      expect(removed.successor_ids.every((id) => addedIds.includes(id))).toBe(true)
+    }
+    expect(serialized).not.toContain(['mcr', 'lightning'].join('.'))
+  })
+
+  it('B7-A: fixes hello admission snapshots, independent permissions, transitions, and reconnect refresh', () => {
+    const admission = directionLightningFixture.session_admission
+    const helloCase = admission.hello_snapshot_cases[0]
+    const helloPermissions: HelloPermissions = helloCase.hello_permissions
+    expect(admission).toMatchObject({
+      snapshot_timing: 'hello',
+      permission_nodes: { online: 'mcr.online', offline: 'mcr.offline', independent: true },
+      immediate_revocation: { reuse: ['session_revoke', 'credential_revoke'], new_wire_method: false },
+    })
+    expect(helloPermissions).toEqual({ online: true, offline: false, buildRange: 100 })
+    expect(helloCase.session_snapshot).toEqual({ onlineAllowed: true, offlineAllowed: false, buildRange: 100 })
+
+    const matrix = admission.admission_matrix
+    expect(matrix).toEqual([
+      expect.objectContaining({
+        id: 'B7-A10',
+        player_state: 'online',
+        permissions: { online: false, offline: false },
+        accepted: false,
+      }),
+      expect.objectContaining({
+        id: 'B7-A11',
+        player_state: 'online',
+        permissions: { online: true, offline: false },
+        accepted: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A12',
+        player_state: 'online',
+        permissions: { online: false, offline: true },
+        accepted: false,
+      }),
+      expect.objectContaining({
+        id: 'B7-A13',
+        player_state: 'online',
+        permissions: { online: true, offline: true },
+        accepted: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A14',
+        player_state: 'offline',
+        permissions: { online: false, offline: false },
+        accepted: false,
+      }),
+      expect.objectContaining({
+        id: 'B7-A15',
+        player_state: 'offline',
+        permissions: { online: true, offline: false },
+        accepted: false,
+      }),
+      expect.objectContaining({
+        id: 'B7-A16',
+        player_state: 'offline',
+        permissions: { online: false, offline: true },
+        accepted: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A17',
+        player_state: 'offline',
+        permissions: { online: true, offline: true },
+        accepted: true,
+      }),
+    ])
+    expect(
+      matrix.filter((item) => !item.accepted).every((item) => item.reason === ErrorReason.permissionDenied),
+    ).toBe(true)
+    expect(admission.transition_cases).toEqual([
+      expect.objectContaining({
+        id: 'B7-A20',
+        permissions: { online: true, offline: false },
+        event: 'PlayerQuitEvent',
+        next_state: 'offline',
+        session_closed: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A21',
+        permissions: { online: false, offline: true },
+        event: 'PlayerJoinEvent',
+        next_state: 'online',
+        session_closed: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A22',
+        permissions: { online: true, offline: true },
+        event: 'PlayerQuitEvent',
+        session_closed: false,
+        commands_continue: true,
+      }),
+      expect.objectContaining({
+        id: 'B7-A23',
+        permissions: { online: true, offline: true },
+        event: 'PlayerJoinEvent',
+        session_closed: false,
+        commands_continue: true,
+      }),
+    ])
+    expect(admission.snapshot_change_cases).toEqual([
+      expect.objectContaining({ id: 'B7-A30', existing_session_changed: false, refresh: 'reconnect' }),
+      expect.objectContaining({ id: 'B7-A31', existing_session_changed: false, refresh: 'reconnect' }),
+      expect.objectContaining({ id: 'B7-A32', action: 'reconnect', snapshot_refreshed: true }),
+    ])
   })
 
   it('B7-D: mirrors DirectionValue params/results, normalization edges, and post-read invariants', () => {
@@ -182,7 +309,7 @@ describe('b7 direction and full lightning owner fixture', () => {
     ])
   })
 
-  it('B7-L: fixes exact wire, permission order, rate/work boundaries, FIFO, and full-strike calls', () => {
+  it('B7-L: fixes exact wire, session admission order, rate/work boundaries, FIFO, and full-strike calls', () => {
     const wire = directionLightningFixture.lightning.wire_cases[0]
     const params: StrikeLightningParams = wire.params as StrikeLightningParams
     const result: StrikeLightningResult = wire.result
@@ -191,10 +318,8 @@ describe('b7 direction and full lightning owner fixture', () => {
     expect(result).toBeNull()
     expect(directionLightningFixture.lightning.permission_order).toEqual([
       'params',
-      'bound_identity',
-      'construction_permission',
-      'mcr.lightning',
-      'build_range',
+      'bound_session_admission',
+      'build_range_snapshot',
       'rate',
       'work',
       'chunk',
