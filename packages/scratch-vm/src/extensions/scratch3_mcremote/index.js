@@ -1879,7 +1879,7 @@ class Scratch3McRemoteBlocks {
     _clientInfo () {
         return {
             name: 'scratch-mcremote',
-            version: this._runtimeConfig().releaseIdentity,
+            version: CLIENT_VERSION,
             locale: formatMessage.setup().locale
         };
     }

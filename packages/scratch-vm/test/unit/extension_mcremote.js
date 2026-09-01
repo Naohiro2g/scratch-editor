@@ -304,7 +304,7 @@ test('connect uses the runtime McRemote connection target', t => {
     t.end();
 });
 
-test('connect uses the runtime-configured bridge and default sandbox', t => {
+test('connect uses the runtime-configured bridge and default sandbox without overriding the client version', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const runtime = newRuntime();
@@ -323,7 +323,7 @@ test('connect uses the runtime-configured bridge and default sandbox', t => {
         socket.url,
         'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
     );
-    t.equal(socket.lastSent().params.client.version, 'test-release');
+    t.equal(socket.lastSent().params.client.version, '2301.0.0b7');
     t.end();
 });
 
@@ -536,6 +536,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
+            t.equal(pairBegin.params.client.version, '2301.0.0b7');
             t.equal(latestObservation(runtime).status, 'pairing');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 2,
@@ -988,13 +989,13 @@ test('b7 direction and full-lightning blocks expose the fixed learner surface', 
 test('b7 Scratch surface maps directly to the owner fixture contract', t => {
     const fixtureBytes = fs.readFileSync(directionLightningFixturePath);
     const methods = directionLightningFixture.methods;
-    t.equal(fixtureBytes.length, 14179, 'owner fixture size is unchanged');
+    t.equal(fixtureBytes.length, 20367, 'successor owner fixture size is unchanged');
     t.equal(
         crypto.createHash('sha256')
             .update(fixtureBytes)
             .digest('hex'),
-        'faad66c93d2c8ee8eb541f6b7297163cb681054b3de05ba3d130ac4288c1046a',
-        'owner fixture identity is unchanged'
+        '586d24bf40136eec31f1827f23ef5b317f15100a17a635d7fe9f165e0af40dce',
+        'successor owner fixture identity is unchanged'
     );
     t.equal(directionLightningFixture.protocol, McRemote.PROTOCOL_VERSION);
     t.same([
@@ -1012,7 +1013,12 @@ test('b7 Scratch surface maps directly to the owner fixture contract', t => {
     ]);
     t.same(directionLightningFixture.rejected_methods, ['world.strikeLightningEffect']);
     const caseCount = JSON.stringify(directionLightningFixture).match(/"id":"B7-/g);
-    t.equal(caseCount && caseCount.length, 81, 'all 81 owner cases remain addressable from the shared fixture');
+    const caseIds = Array.from(
+        JSON.stringify(directionLightningFixture).matchAll(/"id":"(B7-[^"]+)"/g),
+        match => match[1]
+    );
+    t.equal(caseCount && caseCount.length, 93, 'all 93 successor owner cases remain addressable');
+    t.equal(new Set(caseIds).size, 93, 'all successor owner case IDs are unique');
     t.equal(directionLightningFixture.particle_builder_regression.wire_changed, false);
     t.equal(directionLightningFixture.particle_builder_regression.method, 'world.spawnParticle');
     t.end();
@@ -2259,7 +2265,7 @@ test('full lightning is an id-bearing request with null success and actionable f
     await completion;
 
     const failureCases = [
-        directionLightningFixture.lightning.permission_cases.find(item => item.id === 'B7-L13'),
+        directionLightningFixture.session_admission.admission_matrix.find(item => item.id === 'B7-A10'),
         directionLightningFixture.lightning.rate_cases.find(item => item.id === 'B7-L21'),
         directionLightningFixture.lightning.work_cases.find(item => item.id === 'B7-L32'),
         directionLightningFixture.lightning.paper_cases.find(item => item.id === 'B7-L52'),
