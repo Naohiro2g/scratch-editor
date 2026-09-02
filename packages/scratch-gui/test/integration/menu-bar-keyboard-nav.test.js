@@ -44,6 +44,10 @@ describe('Menu bar keyboard navigation', () => {
 
         await clickKey(Key.TAB);
         activeElement = await driver.switchTo().activeElement();
+        expect(await activeElement.getAttribute('aria-label')).toBe('Show notices');
+
+        await clickKey(Key.TAB);
+        activeElement = await driver.switchTo().activeElement();
         expect(await activeElement.getAttribute('aria-label')).toBe('Settings menu');
 
         await clickKey(Key.TAB);
@@ -246,7 +250,7 @@ describe('Menu bar keyboard navigation', () => {
         await persianMenuItem.click();
         await clickKey(Key.ENTER);
 
-        await clickKeys([Key.TAB, Key.TAB, Key.ENTER]);
+        await clickKeys([Key.TAB, Key.TAB, Key.TAB, Key.ENTER]);
 
         await clickKey(Key.ARROW_LEFT);
         const activeElement = await driver.switchTo().activeElement();
@@ -255,7 +259,7 @@ describe('Menu bar keyboard navigation', () => {
         const englishMenuItem = await findByXpath('//li[text()="English"]');
         await englishMenuItem.click();
 
-        await clickKeys([Key.TAB, Key.TAB]);
+        await clickKeys([Key.TAB, Key.TAB, Key.TAB]);
         const activeElement2 = await driver.switchTo().activeElement();
         expect(await activeElement2.getAttribute('aria-label')).toBe('Settings menu');
     });

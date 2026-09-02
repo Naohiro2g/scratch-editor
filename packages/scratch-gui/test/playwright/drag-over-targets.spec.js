@@ -34,9 +34,19 @@ const findVisibleFlyoutBlock = function (page) {
  * Start dragging a block from the flyout into the workspace.
  */
 const startBlockDrag = async function (page) {
-    const block = await findVisibleFlyoutBlock(page);
-    if (!block) throw new Error('No visible flyout block found');
-    await page.mouse.move(block.x, block.y);
+    let block;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        block = await findVisibleFlyoutBlock(page);
+        if (!block) throw new Error('No visible flyout block found');
+        await page.mouse.move(block.x, block.y);
+        const isOverFlyoutBlock = await page.evaluate(({x, y}) => {
+            const hitElement = document.elementFromPoint(x, y);
+            return Boolean(hitElement && hitElement.closest('.blocklyDraggable'));
+        }, block);
+        if (isOverFlyoutBlock) break;
+        block = null;
+    }
+    if (!block) throw new Error('Flyout block moved before drag could start');
     await page.mouse.down();
     await page.mouse.move(block.x + 200, block.y, {steps: 10});
 };

@@ -27,28 +27,38 @@ test('backpack highlights when a block is dragged over it', async ({page}) => {
     // Find an unobstructed flyout block. The flyout contains blocks from all
     // categories (187+), most offscreen. Filter to blocks that are in
     // the viewport and large enough to be a real block (not a field).
-    const block = await page.evaluate(() => {
-        const blocks = document.querySelectorAll('.blocklyFlyout .blocklyDraggable');
-        for (const b of blocks) {
-            const rect = b.getBoundingClientRect();
-            const x = rect.x + (rect.width / 2);
-            const y = rect.y + (rect.height / 2);
-            const hitElement = document.elementFromPoint(x, y);
-            if (
-                rect.y > 80 && rect.y < window.innerHeight && rect.height > 20 && rect.width > 50 &&
-                hitElement && b.contains(hitElement)
-            ) {
-                return {x, y};
+    let block;
+    for (let attempt = 0; attempt < 5; attempt++) {
+        block = await page.evaluate(() => {
+            const blocks = document.querySelectorAll('.blocklyFlyout .blocklyDraggable');
+            for (const b of blocks) {
+                const rect = b.getBoundingClientRect();
+                const x = rect.x + (rect.width / 2);
+                const y = rect.y + (rect.height / 2);
+                const hitElement = document.elementFromPoint(x, y);
+                if (
+                    rect.y > 80 && rect.y < window.innerHeight && rect.height > 20 && rect.width > 50 &&
+                    hitElement && b.contains(hitElement)
+                ) {
+                    return {x, y};
+                }
             }
-        }
-        return null;
-    });
+            return null;
+        });
+        expect(block, 'should find a visible flyout block').not.toBeNull();
+        await page.mouse.move(block.x, block.y);
+        const isOverFlyoutBlock = await page.evaluate(({x, y}) => {
+            const hitElement = document.elementFromPoint(x, y);
+            return Boolean(hitElement && hitElement.closest('.blocklyDraggable'));
+        }, block);
+        if (isOverFlyoutBlock) break;
+        block = null;
+    }
     expect(block, 'should find a visible flyout block').not.toBeNull();
 
     const backpackBox = await backpackList.boundingBox();
 
     // Drag a block from the flyout across the workspace to the backpack.
-    await page.mouse.move(block.x, block.y);
     await page.mouse.down();
     await page.mouse.move(block.x + 200, block.y, {steps: 10});
     await page.mouse.move(

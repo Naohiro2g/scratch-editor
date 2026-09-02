@@ -72,6 +72,8 @@ describe('NoticeOverlay', () => {
             link: {href: 'https://example.com/mc-remote', label: 'Learn more'}
         }]);
 
+        expect(screen.getByRole('button', {name: 'お知らせを閉じる'}))
+            .toHaveAttribute('data-mcremote-notice-toggle', 'true');
         expect(screen.getByRole('button', {name: 'お知らせを閉じる'})).toHaveAttribute('aria-expanded', 'true');
         expect(screen.getByText('New blocks')).toBeInTheDocument();
         expect(screen.getByText('player.getPos and player.setPos are here.')).toBeInTheDocument();

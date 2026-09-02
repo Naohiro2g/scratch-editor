@@ -19,6 +19,11 @@ export const OBSERVED_METHODS = [
   'player.setPos',
   'player.getPose',
   'player.setPose',
+  'player.getDirection',
+  'player.setDirection',
+  'entity.getDirection',
+  'entity.setDirection',
+  'world.strikeLightning',
 ] as const
 
 export type ObservedMethod = (typeof OBSERVED_METHODS)[number]
@@ -590,6 +595,18 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
       ...(value.length === 10 ? [optionalBoolean(value[9], 'frame.payload.params[9]')] : []),
     ]
   }
+  if (method === 'player.getDirection') return exactParams(value, 0)
+  if (method === 'player.setDirection' || method === 'world.strikeLightning') {
+    return numberTuple(exactParams(value, 3), 'frame.payload.params')
+  }
+  if (method === 'entity.getDirection' || method === 'entity.setDirection') {
+    const params = exactParams(value, method === 'entity.getDirection' ? 1 : 4)
+    if (typeof params[0] !== 'string') throw new Error('frame.payload.params[0] must be a string')
+    return [
+      params[0],
+      ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+    ]
+  }
   if (method === 'connection.flush') return exactParams(value, 0)
   if (method === 'events.poll') return parseEventsPollParams(value)
   if (method === 'player.setPos' || method === 'player.setPose') {
@@ -653,6 +670,18 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
     if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
     return handle
   }
+  if (
+    method === 'player.getDirection' ||
+    method === 'player.setDirection' ||
+    method === 'entity.getDirection' ||
+    method === 'entity.setDirection'
+  ) {
+    return numberTuple(value, 'frame.payload.result')
+  }
+  if (method === 'world.strikeLightning') {
+    if (value !== null) throw new Error('frame.payload.result must be null')
+    return null
+  }
   if (method === 'events.poll') return parseEventsPollResult(value)
   return jsonScalar(value, 'frame.payload.result')
 }
@@ -683,9 +712,10 @@ const parseFrame = (value: unknown): ObserverFrame => {
   const method = frame.method as ObservedMethod
   if (
     requestId === null &&
-    (frame.direction !== 'send' || (method !== 'world.setBlock' && method !== 'world.setBlocks'))
+    (frame.direction !== 'send' ||
+      (method !== 'world.setBlock' && method !== 'world.setBlocks' && method !== 'world.strikeLightning'))
   ) {
-    throw new Error('frame.request_id may be null only for a setter notification')
+    throw new Error('frame.request_id may be null only for a supported notification')
   }
   return {
     sequence: finiteNumber(frame.sequence, 'frame.sequence'),

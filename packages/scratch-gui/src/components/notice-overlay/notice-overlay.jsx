@@ -94,6 +94,7 @@ const NoticeOverlay = ({colorMode}) => {
             <button
                 ref={triggerRef}
                 className={classNames(styles.trigger, {[styles.highContrast]: isHighContrast})}
+                data-mcremote-notice-toggle="true"
                 aria-expanded={isOpen}
                 aria-label={intl.formatMessage(isOpen ? messages.collapse : messages.expand)}
                 onClick={toggleOpen}

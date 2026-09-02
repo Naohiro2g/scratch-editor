@@ -11,14 +11,12 @@ import {
  * This never touches the wire, the server event ring, or frame payloads —
  * it only decides which already-observed frames to render.
  *
- * The eight method groups below are a candidate mapping derived from the
- * wire method catalog (wire-format-design_ja.md §4) and the extension's own
- * dispatch table, merging `hello` into `connection` to land on exactly
- * eight plus "other". This mapping has not been human-confirmed; see the
- * transport slip. `auth` and `catalog` are kept as named groups here (the
- * taxonomy stays forward-compatible if either namespace is later observed)
- * but are excluded from `OBSERVABLE_METHOD_GROUPS` below, so the UI does not
- * offer a switch that would always read 0.
+ * The eight method groups plus "other" are the fixed client-only UX v1
+ * mapping. `auth` and `catalog` are kept as named groups for forward
+ * compatibility, but are excluded from `OBSERVABLE_METHOD_GROUPS` while the
+ * observer allowlist has no member in either namespace. Protocol 23.1 entity
+ * methods intentionally use the existing "other" group rather than changing
+ * the fixed taxonomy.
  */
 export const METHOD_GROUPS = ['connection', 'auth', 'build', 'catalog', 'chat', 'events', 'player', 'world'] as const
 
@@ -50,10 +48,8 @@ export const methodGroupFor = (method: string): MethodGroup => {
  * entry. `auth` and `catalog` have none — observer.ts's allowlist excludes
  * those namespaces entirely — so their switches would always read 0 and
  * never change; the UI does not render a switch for a group that cannot
- * currently be reached (see the transport slip on this candidate). `other`
- * is kept regardless of reachability: unlike `auth`/`catalog` it is a
- * genuine catch-all for any future or unexpected method, not a
- * namespace-specific placeholder waiting on a contract.
+ * currently be reached. `other` contains the protocol 23.1 entity methods
+ * and remains the catch-all for any later observed namespace.
  */
 export const OBSERVABLE_METHOD_GROUPS: readonly MethodGroup[] = ALL_METHOD_GROUPS.filter(
   (group) => group === 'other' || OBSERVED_METHODS.some((method) => methodGroupFor(method) === group),

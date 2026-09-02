@@ -113,6 +113,7 @@ class SeleniumHelper {
             'clickText',
             'clickButton',
             'clickXpath',
+            'dismissNoticeOverlay',
             'scopeForBlockId',
             'scopeForBlockText',
             'scopeForCategoryId',
@@ -310,9 +311,28 @@ class SeleniumHelper {
                 async () => await this.driver.executeScript('return document.readyState;') === 'complete',
                 DEFAULT_TIMEOUT_MILLISECONDS
             );
+            await this.dismissNoticeOverlay();
         } catch (cause) {
             throw await enhanceError(outerError, cause, this.driver);
         }
+    }
+
+    /**
+     * Close the McRemote notice overlay through its real control. The overlay starts open on load and remounts after
+     * locale changes, while integration tests exercise the workspace behind it.
+     * @returns {Promise<void>} A promise that resolves when the overlay is closed or absent.
+     */
+    async dismissNoticeOverlay () {
+        const noticeToggles = await this.driver.findElements(By.css('[data-mcremote-notice-toggle]'));
+        if (!noticeToggles.length || await noticeToggles[0].getAttribute('aria-expanded') !== 'true') return;
+        await this.driver.executeScript('arguments[0].click();', noticeToggles[0]);
+        await this.driver.wait(
+            async () => {
+                const currentToggles = await this.driver.findElements(By.css('[data-mcremote-notice-toggle]'));
+                return !currentToggles.length || await currentToggles[0].getAttribute('aria-expanded') === 'false';
+            },
+            DEFAULT_TIMEOUT_MILLISECONDS
+        );
     }
 
     /**
@@ -323,6 +343,7 @@ class SeleniumHelper {
     async clickXpath (xpath) {
         const outerError = new Error(`clickXpath failed with arguments:\n\txpath: ${xpath}`);
         try {
+            await this.dismissNoticeOverlay();
             await this.setTitle(`clickXpath ${xpath}`);
             const el = await this.findByXpath(xpath);
             return el.click();
@@ -340,6 +361,7 @@ class SeleniumHelper {
     async clickText (text, scope) {
         const outerError = new Error(`clickText failed with arguments:\n\ttext: ${text}\n\tscope: ${scope}`);
         try {
+            await this.dismissNoticeOverlay();
             await this.setTitle(`clickText ${text}`);
             const el = await this.findByText(text, scope);
             return el.click();
@@ -430,6 +452,7 @@ class SeleniumHelper {
     async rightClickText (text, scope) {
         const outerError = new Error(`rightClickText failed with arguments:\n\ttext: ${text}\n\tscope: ${scope}`);
         try {
+            await this.dismissNoticeOverlay();
             await this.setTitle(`rightClickText ${text}`);
             const el = await this.findByText(text, scope);
             return this.driver.actions()

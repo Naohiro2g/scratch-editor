@@ -82,7 +82,8 @@ describe('methodGroupFor', () => {
   })
 
   it('classifies an unrecognized method as other', () => {
-    expect(methodGroupFor('entity.getPose')).toBe('other')
+    expect(methodGroupFor('entity.getDirection')).toBe('other')
+    expect(methodGroupFor('entity.setDirection')).toBe('other')
     expect(methodGroupFor('')).toBe('other')
   })
 })
@@ -93,8 +94,9 @@ describe('OBSERVABLE_METHOD_GROUPS / OBSERVABLE_EVENT_CLASSES', () => {
     expect(OBSERVABLE_METHOD_GROUPS).not.toContain('catalog')
   })
 
-  it('keeps other, unlike auth/catalog, even though it is also always 0 today', () => {
+  it('keeps other for the observed protocol 23.1 entity methods', () => {
     expect(OBSERVABLE_METHOD_GROUPS).toContain('other')
+    expect(methodGroupFor('entity.getDirection')).toBe('other')
   })
 
   it('keeps every group with at least one observed member', () => {

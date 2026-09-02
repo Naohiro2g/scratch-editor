@@ -5,6 +5,7 @@ import {
 import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v23.json';
 import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
+import b7Fixture from '../../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json';
 
 // spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
 // (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
@@ -364,6 +365,141 @@ describe('McRemote WireScope source adapter', () => {
             method: 'world.spawnParticle',
             payload: {result: spawnFixture.spawn_particle.explicit_false.result}
         }]);
+    });
+
+    test('projects all five protocol 23.1 methods from the owner fixture without changing values', () => {
+        const observation = connectedObservation();
+        observation.hello.protocol = '23.1.0';
+        const methodCase = id => b7Fixture.direction.method_cases.find(item => item.id === id);
+        const playerGet = methodCase('B7-D30');
+        const playerSet = methodCase('B7-D31');
+        const entityGet = methodCase('B7-D35');
+        const entitySet = methodCase('B7-D36');
+        const postRead = b7Fixture.direction.valid_vectors.find(item => item.id === 'B7-D09').result;
+        const lightning = b7Fixture.lightning.wire_cases.find(item => item.id === 'B7-L01');
+        const frames = [
+            [playerGet.method, playerGet.params, playerGet.result],
+            [playerSet.method, playerSet.params, postRead],
+            [entityGet.method, entityGet.params, entityGet.result],
+            [entitySet.method, entitySet.params, postRead],
+            [lightning.method, lightning.params, lightning.result]
+        ];
+        frames.forEach(([method, params, result], index) => {
+            observation.frameLog.push({
+                sequence: (index * 2) + 4,
+                timestamp: (index * 2) + 1003,
+                streamId: 'default',
+                direction: 'send',
+                id: index + 4,
+                method,
+                payload: {params}
+            }, {
+                sequence: (index * 2) + 5,
+                timestamp: (index * 2) + 1004,
+                streamId: 'default',
+                direction: 'receive',
+                id: index + 4,
+                method,
+                payload: {result}
+            });
+        });
+
+        const projected = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames.slice(-10);
+        expect(projected.map((...[frame]) => frame.method)).toEqual(frames.flatMap(([method]) => [method, method]));
+        expect(projected.map((...[frame]) => frame.payload)).toEqual(
+            frames.flatMap(([, params, result]) => [{params}, {result}])
+        );
+    });
+
+    test('keeps b7 handles opaque and projects reasons, bounds, and lightning notifications', () => {
+        const observation = connectedObservation();
+        observation.hello.protocol = '23.1.0';
+        b7Fixture.handles.unresolved_strings.forEach(({handle}, index) => {
+            observation.frameLog.push({
+                sequence: index + 4,
+                timestamp: index + 1003,
+                streamId: 'default',
+                direction: 'send',
+                id: index + 4,
+                method: b7Fixture.methods.entity_get_direction,
+                payload: {params: [handle]}
+            });
+        });
+        observation.frameLog.push({
+            sequence: 20,
+            timestamp: 1020,
+            streamId: 'default',
+            direction: 'receive',
+            id: 20,
+            method: b7Fixture.methods.strike_lightning,
+            payload: {
+                error: {
+                    code: -32000,
+                    message: 'McRemote error',
+                    data: {reason: 'build_denied', bounds: [-100, 100], violating: [101, 0]}
+                }
+            }
+        });
+        const notification = b7Fixture.lightning.wire_cases.find(item => item.id === 'B7-L02');
+        observation.frameLog.push({
+            sequence: 21,
+            timestamp: 1021,
+            streamId: 'default',
+            direction: 'send',
+            method: notification.method,
+            payload: {params: notification.params}
+        });
+
+        const projected = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames;
+        const handleFrames = projected.filter(frame => frame.method === b7Fixture.methods.entity_get_direction);
+        expect(handleFrames.map((...[frame]) => frame.payload.params[0]))
+            .toEqual(b7Fixture.handles.unresolved_strings.map((...[item]) => item.handle));
+        expect(projected.at(-2).payload).toEqual({
+            error: {
+                code: -32000,
+                message: 'McRemote error',
+                data: {reason: 'build_denied', bounds: [-100, 100], violating: [101, 0]}
+            }
+        });
+        expect(projected.at(-1)).toMatchObject({
+            request_id: null,
+            method: b7Fixture.methods.strike_lightning,
+            payload: {params: notification.params}
+        });
+    });
+
+    test('filters malformed direction, malformed lightning, and the effect-only method', () => {
+        const observation = connectedObservation();
+        const malformedDirection = b7Fixture.direction.invalid_vectors.find(item => item.id === 'B7-D24');
+        const malformedLightning = b7Fixture.lightning.wire_cases.find(item => item.id === 'B7-L03');
+        observation.frameLog.push({
+            sequence: 4,
+            timestamp: 1003,
+            streamId: 'default',
+            direction: 'send',
+            id: 4,
+            method: b7Fixture.methods.player_set_direction,
+            payload: {params: malformedDirection.params}
+        }, {
+            sequence: 5,
+            timestamp: 1004,
+            streamId: 'default',
+            direction: 'send',
+            id: 5,
+            method: b7Fixture.methods.strike_lightning,
+            payload: {params: malformedLightning.params}
+        }, {
+            sequence: 6,
+            timestamp: 1005,
+            streamId: 'default',
+            direction: 'send',
+            id: 6,
+            method: b7Fixture.rejected_methods[0],
+            payload: {params: [1, 2, 3]}
+        });
+
+        const projected = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames;
+        expect(projected).toHaveLength(2);
     });
 
     test('rejects legacy spawn order and malformed particle params', () => {

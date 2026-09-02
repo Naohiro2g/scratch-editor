@@ -24,7 +24,12 @@ const OBSERVED_METHODS = new Set([
     'player.getPos',
     'player.setPos',
     'player.getPose',
-    'player.setPose'
+    'player.setPose',
+    'player.getDirection',
+    'player.setDirection',
+    'entity.getDirection',
+    'entity.setDirection',
+    'world.strikeLightning'
 ]);
 
 const isObject = function (value) {
@@ -199,6 +204,16 @@ const allowParams = function (method, value) {
             (value.length === 10 && typeof value[9] !== 'boolean')) return null;
         return value.slice();
     }
+    if (method === 'player.getDirection') return Array.isArray(value) && value.length === 0 ? [] : null;
+    if (method === 'player.setDirection' || method === 'world.strikeLightning') {
+        return numberTuple(value);
+    }
+    if (method === 'entity.getDirection' || method === 'entity.setDirection') {
+        const length = method === 'entity.getDirection' ? 1 : 4;
+        if (!Array.isArray(value) || value.length !== length || typeof value[0] !== 'string' ||
+            !value.slice(1).every(finiteNumber)) return null;
+        return value.slice();
+    }
     if (method === 'connection.flush') return Array.isArray(value) && value.length === 0 ? [] : null;
     if (method === 'events.poll') return allowEventsPollParams(value);
     if (method === 'player.setPos' || method === 'player.setPose') {
@@ -323,6 +338,11 @@ const allowError = function (value) {
                 .filter((...[item]) => typeof item !== 'undefined');
             if (allowed.length === value.data.allowed.length) data.allowed = allowed;
         }
+        for (const field of ['bounds', 'violating']) {
+            if (Array.isArray(value.data[field]) && value.data[field].every(finiteNumber)) {
+                data[field] = value.data[field].slice();
+            }
+        }
         if (Object.keys(data).length) error.data = data;
     }
     return error;
@@ -373,6 +393,14 @@ const allowFramePayload = function (frame) {
         return typeof payload.result === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(payload.result) ?
             {result: payload.result} : null;
     }
+    if (frame.method === 'player.getDirection' || frame.method === 'player.setDirection' ||
+        frame.method === 'entity.getDirection' || frame.method === 'entity.setDirection') {
+        const result = numberTuple(payload.result);
+        return result ? {result} : null;
+    }
+    if (frame.method === 'world.strikeLightning') {
+        return payload.result === null ? {result: null} : null;
+    }
     if (frame.method === 'events.poll') {
         const result = allowEventsPollResult(payload.result);
         return result ? {result} : null;
@@ -389,9 +417,10 @@ const allowFrame = function (frame) {
     const payload = allowFramePayload(frame);
     if (!payload || !finiteNumber(frame.sequence) || !finiteNumber(frame.timestamp)) return null;
     const requestId = typeof frame.id === 'string' || finiteNumber(frame.id) ? frame.id : null;
-    const isSetterNotification = frame.direction === 'send' && requestId === null &&
-        (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks');
-    if (requestId === null && !isSetterNotification) return null;
+    const isSupportedNotification = frame.direction === 'send' && requestId === null &&
+        (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
+            frame.method === 'world.strikeLightning');
+    if (requestId === null && !isSupportedNotification) return null;
     return {
         sequence: frame.sequence,
         observed_at: frame.timestamp,

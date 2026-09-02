@@ -1,7 +1,7 @@
 # @mc-remote/live
 
 WireScope is McRemote's read-only observer web app. This package owns the shared observer schema, handoff message
-types, lifecycle fixture, and browser UI used by Scratch now and by the Python adapter later.
+types, lifecycle fixture, and browser UI used by both Scratch and Python.
 
 ## Local use
 
@@ -34,12 +34,19 @@ envelope shape for adapter conformance.
 
 The shared `test/fixtures/display-alias-v1.json` fixture fixes the vocabulary and `WORD-WORD-NNNNNN` shape for
 source-side alias conformance. The Scratch generator is checked against it. The alias is display-only: it is not
-a discovery key, target identity, attach capability, or authorization input. The b5 compatibility-set revision continues to
+a discovery key, target identity, attach capability, or authorization input. The compatibility set continues to
 accept existing non-empty aliases so recorded sessions and other source implementations can migrate independently.
 
-The b5 compatibility-set revision observes protocol 22 block IDs and state as structured objects. It distinguishes acknowledged setter
+The compatibility set observes protocol 22 block IDs and state as structured objects. It distinguishes acknowledged setter
 requests, FAST setter notifications, `result: null`, and `connection.flush`; FAST frames are shown as sent and
 unconfirmed, without a synthetic response or an inferred DEBUG/TRACE/FAST mode.
+
+The protocol 23.1 compatibility set also observes `player.getDirection`, `player.setDirection`,
+`entity.getDirection`, `entity.setDirection`, and the damage-capable `world.strikeLightning`. Direction tuples are
+validated as exactly three finite numbers without client-side normalization or rounding. Entity handles remain opaque
+strings. Full-lightning requests, notifications, `null` results, and server errors are observed without retargeting,
+retrying, or synthesizing a result. The effect-only `world.strikeLightningEffect` method is not observable. These
+additions keep observer schema, session, Scratch handoff, and station attach versions at 1.
 
 The current Scratch transport remains a distinct-origin `MessageChannel` adapter. An opener plus a distinct
 absolute referrer makes Scratch only a candidate. The adapter must receive an exact source, origin, protocol, and
@@ -48,8 +55,8 @@ falls back to another adapter. If the window expires, the client removes the Scr
 the same-origin station adapter. The station adapter validates the versioned bootstrap response, accepts the
 short-lived code only through an in-memory browser form, and parses the successful bounded NDJSON stream into
 the same observer session core. `test/fixtures/station-attach-v1.json` fixes the initial bootstrap, attach,
-bounded error, framing-limit, and response-header contract for Python conformance. The Python loopback HTTP
-server and real-browser E2E remain separate follow-up slices.
+bounded error, framing-limit, and response-header contract for Python conformance. Python packages the exact common
+app ZIP and detached manifest produced here; its loopback HTTP server and real-browser E2E verify that bundled pair.
 
 ## Immutable app artifact
 

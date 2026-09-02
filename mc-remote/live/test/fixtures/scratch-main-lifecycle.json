@@ -14,7 +14,7 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "22.0.0",
+          "protocol": "23.1.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
@@ -42,7 +42,7 @@
         "kind": "main",
         "status": "connected",
         "hello": {
-          "protocol": "22.0.0",
+          "protocol": "23.1.0",
           "mc_version": "1.21.11",
           "supported_mc_versions": ["1.21.11"],
           "catalog_hash": null,
@@ -84,6 +84,86 @@
                 "pitch": -20
               }
             }
+          },
+          {
+            "sequence": 6,
+            "observed_at": 1786032000400,
+            "direction": "send",
+            "request_id": 4,
+            "method": "player.getDirection",
+            "payload": { "params": [] }
+          },
+          {
+            "sequence": 7,
+            "observed_at": 1786032000500,
+            "direction": "receive",
+            "request_id": 4,
+            "method": "player.getDirection",
+            "payload": { "result": [0, 0, 1] }
+          },
+          {
+            "sequence": 8,
+            "observed_at": 1786032000600,
+            "direction": "send",
+            "request_id": 5,
+            "method": "player.setDirection",
+            "payload": { "params": [1, 2, 3] }
+          },
+          {
+            "sequence": 9,
+            "observed_at": 1786032000700,
+            "direction": "receive",
+            "request_id": 5,
+            "method": "player.setDirection",
+            "payload": { "result": [0.267261, 0.534522, 0.801784] }
+          },
+          {
+            "sequence": 10,
+            "observed_at": 1786032000800,
+            "direction": "send",
+            "request_id": 6,
+            "method": "entity.getDirection",
+            "payload": { "params": ["mcr_eh_fixture-current"] }
+          },
+          {
+            "sequence": 11,
+            "observed_at": 1786032000900,
+            "direction": "receive",
+            "request_id": 6,
+            "method": "entity.getDirection",
+            "payload": { "result": [1, 0, 0] }
+          },
+          {
+            "sequence": 12,
+            "observed_at": 1786032001000,
+            "direction": "send",
+            "request_id": 7,
+            "method": "entity.setDirection",
+            "payload": { "params": ["mcr_eh_fixture-current", 1, 2, 3] }
+          },
+          {
+            "sequence": 13,
+            "observed_at": 1786032001100,
+            "direction": "receive",
+            "request_id": 7,
+            "method": "entity.setDirection",
+            "payload": { "result": [0.267261, 0.534522, 0.801784] }
+          },
+          {
+            "sequence": 14,
+            "observed_at": 1786032001200,
+            "direction": "send",
+            "request_id": 8,
+            "method": "world.strikeLightning",
+            "payload": { "params": [1.25, 2.5, -3.75] }
+          },
+          {
+            "sequence": 15,
+            "observed_at": 1786032001300,
+            "direction": "receive",
+            "request_id": 8,
+            "method": "world.strikeLightning",
+            "payload": { "result": null }
           }
         ]
       }
