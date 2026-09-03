@@ -173,7 +173,7 @@ const targetText = function (target) {
     let label = '';
     if (target.label) {
         label = String(target.label);
-    } else if (knownTarget.sandboxRoute === sandboxRoute) {
+    } else if (knownTarget && knownTarget.sandboxRoute === sandboxRoute) {
         label = knownTarget.label;
     }
     return label ? `${label} - ${sandboxRoute}` : sandboxRoute;
