@@ -15,7 +15,7 @@ const normalizeMcRemoteConnectionTargetRoute = function (route) {
 const getMcRemoteConnectionTargetByRoute = function (route) {
     const sandboxRoute = normalizeMcRemoteConnectionTargetRoute(route);
     return MCREMOTE_CONNECTION_TARGETS.find(({sandboxRoute: targetRoute}) => targetRoute === sandboxRoute) ||
-        DEFAULT_MCREMOTE_CONNECTION_TARGET;
+        DEFAULT_MCREMOTE_CONNECTION_TARGET || null;
 };
 
 export {

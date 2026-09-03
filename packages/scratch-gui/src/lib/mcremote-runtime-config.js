@@ -1,31 +1,38 @@
+import {MCREMOTE_CLIENT_VERSION} from '@scratch/scratch-vm';
+import Ajv from 'ajv';
+
+import productConfigSchema from '../../contracts/product-config/schema.json';
+import runtimeConfigSchema from '../../contracts/runtime-config/schema.json';
 import log from './log.js';
 
-const DEFAULT_CONNECTION_TARGETS = Object.freeze([
-    Object.freeze({id: 'stable', sandboxRoute: 'sb.mc-remote.com', label: 'Stable'})
-]);
-
 const EMPTY_NOTICES = Object.freeze([]);
+const EMPTY_TARGETS = Object.freeze([]);
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
-const DEFAULT_RUNTIME_CONFIG = Object.freeze({
-    bridgeUrl: 'wss://bridge.mc-remote.com',
-    defaultSandbox: 'sb.mc-remote.com',
-    connectionTargets: DEFAULT_CONNECTION_TARGETS,
-    connectionEnabled: true,
-    wireScopeUrl: null,
-    releaseIdentity: 'embedded-default',
+const ajv = new Ajv({allErrors: true, strict: true});
+const validateProductConfig = ajv.compile(productConfigSchema);
+const validateRuntimeConfig = ajv.compile(runtimeConfigSchema);
+
+const EMPTY_PRODUCT_CONFIG = Object.freeze({
     homepageUrl: null,
+    notices: EMPTY_NOTICES
+});
+
+const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
+    bridgeUrl: null,
+    defaultSandbox: null,
+    connectionTargets: EMPTY_TARGETS,
+    connectionEnabled: false,
+    wireScopeUrl: null,
+    releaseIdentity: MCREMOTE_CLIENT_VERSION,
     notices: EMPTY_NOTICES,
     storagePersistEnabled: false
 });
 
-const UNAVAILABLE_RUNTIME_CONFIG = Object.freeze({
-    ...DEFAULT_RUNTIME_CONFIG,
-    connectionEnabled: false,
-    releaseIdentity: 'runtime-config-unavailable'
+let currentRuntimeConfig = Object.freeze({
+    ...UNAVAILABLE_RUNTIME_CONFIG,
+    ...EMPTY_PRODUCT_CONFIG
 });
-
-let currentRuntimeConfig = DEFAULT_RUNTIME_CONFIG;
 
 const isAllowedBridgeUrl = (bridgeUrl, pageUrl) => bridgeUrl.protocol === 'wss:' || (
     bridgeUrl.protocol === 'ws:' &&
@@ -43,20 +50,19 @@ const isAllowedWireScopeUrl = (wireScopeUrl, pageUrl) => wireScopeUrl.origin !==
     )
 ) && !wireScopeUrl.username && !wireScopeUrl.password && !wireScopeUrl.search && !wireScopeUrl.hash;
 
+const assertSchema = (validate, value, configName) => {
+    if (validate(value)) return;
+    throw new Error(`${configName} ${ajv.errorsText(validate.errors)}`);
+};
+
 // Rest destructuring preserves single-argument semantics under both active arrow-parens rules.
 const normalizeConnectionTargets = (...[value]) => {
-    if (!Array.isArray(value) || value.length === 0) {
-        throw new Error('connection_targets must be a non-empty array');
-    }
     const ids = new Set();
     const sandboxRoutes = new Set();
     return Object.freeze(value.map((target, index) => {
-        if (!target || typeof target !== 'object') {
-            throw new Error(`connection_targets[${index}] must be an object`);
-        }
-        const id = typeof target.id === 'string' ? target.id.trim() : '';
-        const sandboxRoute = typeof target.sandbox === 'string' ? target.sandbox.trim() : '';
-        const label = typeof target.label === 'string' ? target.label.trim() : '';
+        const id = target.id.trim();
+        const sandboxRoute = target.sandbox.trim();
+        const label = target.label.trim();
         if (!id || !sandboxRoute || !label) {
             throw new Error(`connection_targets[${index}] must have non-empty id, label, and sandbox values`);
         }
@@ -71,12 +77,9 @@ const normalizeConnectionTargets = (...[value]) => {
 };
 
 const normalizeNoticeLink = (link, index) => {
-    if (typeof link === 'undefined' || link === null) return null;
-    if (typeof link !== 'object') {
-        throw new Error(`notices[${index}].link must be an object`);
-    }
-    const href = typeof link.href === 'string' ? link.href.trim() : '';
-    const label = typeof link.label === 'string' ? link.label.trim() : '';
+    if (typeof link === 'undefined') return null;
+    const href = link.href.trim();
+    const label = link.label.trim();
     if (!href || !label) {
         throw new Error(`notices[${index}].link must have non-empty href and label`);
     }
@@ -92,28 +95,27 @@ const normalizeNoticeLink = (link, index) => {
     return Object.freeze({href: url.toString(), label});
 };
 
-const normalizeNotices = (...[value]) => {
-    if (typeof value === 'undefined') return EMPTY_NOTICES;
-    if (!Array.isArray(value)) {
-        throw new Error('notices must be an array');
+const normalizeNotices = (...[value]) => Object.freeze((value || []).map((notice, index) => {
+    const heading = notice.heading.trim();
+    const body = notice.body.trim();
+    if (!heading || !body) {
+        throw new Error(`notices[${index}] must have non-empty heading and body`);
     }
-    return Object.freeze(value.map((notice, index) => {
-        if (!notice || typeof notice !== 'object') {
-            throw new Error(`notices[${index}] must be an object`);
-        }
-        const heading = typeof notice.heading === 'string' ? notice.heading.trim() : '';
-        const body = typeof notice.body === 'string' ? notice.body.trim() : '';
-        if (!heading || !body) {
-            throw new Error(`notices[${index}] must have non-empty heading and body`);
-        }
-        return Object.freeze({heading, body, link: normalizeNoticeLink(notice.link, index)});
-    }));
-};
+    return Object.freeze({heading, body, link: normalizeNoticeLink(notice.link, index)});
+}));
 
 const normalizeRuntimeConfig = (...[value]) => {
-    if (!value || typeof value !== 'object') {
-        throw new Error('configuration must be an object');
+    assertSchema(validateRuntimeConfig, value, 'runtime config');
+    const notices = normalizeNotices(value.notices);
+    const storagePersistEnabled = value.storage_persist_enabled || false;
+    if (!value.connection_enabled) {
+        return Object.freeze({
+            ...UNAVAILABLE_RUNTIME_CONFIG,
+            notices,
+            storagePersistEnabled
+        });
     }
+
     const bridgeUrl = new URL(value.bridge_url);
     const pageUrl = new URL(window.location.href);
     if (!isAllowedBridgeUrl(bridgeUrl, pageUrl) || bridgeUrl.username || bridgeUrl.password || bridgeUrl.hash) {
@@ -122,22 +124,14 @@ const normalizeRuntimeConfig = (...[value]) => {
             'without credentials or a fragment'
         );
     }
-    if (typeof value.default_sandbox !== 'string' || !value.default_sandbox.trim()) {
-        throw new Error('default_sandbox must be a non-empty string');
-    }
     const defaultSandbox = value.default_sandbox.trim();
     const connectionTargets = normalizeConnectionTargets(value.connection_targets);
     if (!connectionTargets.some(({sandboxRoute}) => sandboxRoute === defaultSandbox)) {
         throw new Error('default_sandbox must be listed in connection_targets');
     }
-    if (typeof value.connection_enabled !== 'boolean') {
-        throw new Error('connection_enabled must be a boolean');
-    }
-    if (typeof value.release_identity !== 'string' || !value.release_identity.trim()) {
-        throw new Error('release_identity must be a non-empty string');
-    }
+
     let wireScopeUrl = null;
-    if (typeof value.wirescope_url !== 'undefined' && value.wirescope_url !== null) {
+    if (typeof value.wirescope_url !== 'undefined') {
         const candidate = new URL(value.wirescope_url);
         if (!isAllowedWireScopeUrl(candidate, pageUrl)) {
             throw new Error(
@@ -147,55 +141,58 @@ const normalizeRuntimeConfig = (...[value]) => {
         }
         wireScopeUrl = candidate.toString();
     }
-    let homepageUrl = null;
-    if (typeof value.homepage_url !== 'undefined' && value.homepage_url !== null) {
-        const candidate = new URL(value.homepage_url);
-        if (candidate.protocol !== 'https:' && candidate.protocol !== 'http:') {
-            throw new Error('homepage_url must use http or https');
-        }
-        homepageUrl = candidate.toString();
-    }
-    const notices = normalizeNotices(value.notices);
-    let storagePersistEnabled = false;
-    if (typeof value.storage_persist_enabled !== 'undefined' && value.storage_persist_enabled !== null) {
-        if (typeof value.storage_persist_enabled !== 'boolean') {
-            throw new Error('storage_persist_enabled must be a boolean');
-        }
-        storagePersistEnabled = value.storage_persist_enabled;
-    }
     return Object.freeze({
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
         connectionTargets,
-        connectionEnabled: value.connection_enabled,
+        connectionEnabled: true,
         wireScopeUrl,
-        releaseIdentity: value.release_identity.trim(),
-        homepageUrl,
+        releaseIdentity: MCREMOTE_CLIENT_VERSION,
         notices,
         storagePersistEnabled
     });
 };
 
-const runtimeConfigUrl = () => new URL('mc-remote-runtime-config.json', window.location.href).toString();
+const normalizeProductConfig = (...[value]) => {
+    assertSchema(validateProductConfig, value, 'product config');
+    const candidate = new URL(value.homepage_url);
+    if (candidate.protocol !== 'https:' && candidate.protocol !== 'http:') {
+        throw new Error('homepage_url must use http or https');
+    }
+    return Object.freeze({
+        homepageUrl: candidate.toString(),
+        notices: normalizeNotices(value.notices)
+    });
+};
 
-const loadMcRemoteRuntimeConfig = () => {
-    const url = runtimeConfigUrl();
+const configUrl = fileName => new URL(fileName, window.location.href).toString();
+
+const loadConfig = (fileName, normalize, fallback) => {
+    const url = configUrl(fileName);
     return Promise.resolve()
         .then(() => fetch(url, {cache: 'no-store', credentials: 'same-origin'}))
         .then((...[response]) => {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.json();
         })
-        .then((...[value]) => {
-            currentRuntimeConfig = normalizeRuntimeConfig(value);
-            return currentRuntimeConfig;
-        })
+        .then(normalize)
         .catch(({message}) => {
             log.warn(`loadMcRemoteRuntimeConfig: ${url}: ${message}`);
-            currentRuntimeConfig = UNAVAILABLE_RUNTIME_CONFIG;
-            return currentRuntimeConfig;
+            return fallback;
         });
 };
+
+const loadMcRemoteRuntimeConfig = () => Promise.all([
+    loadConfig('mc-remote-runtime-config.json', normalizeRuntimeConfig, UNAVAILABLE_RUNTIME_CONFIG),
+    loadConfig('mc-remote-product-config.json', normalizeProductConfig, EMPTY_PRODUCT_CONFIG)
+]).then(([runtimeConfig, productConfig]) => {
+    currentRuntimeConfig = Object.freeze({
+        ...runtimeConfig,
+        homepageUrl: productConfig.homepageUrl,
+        notices: Object.freeze([...runtimeConfig.notices, ...productConfig.notices])
+    });
+    return currentRuntimeConfig;
+});
 
 const getMcRemoteRuntimeConfig = () => currentRuntimeConfig;
 

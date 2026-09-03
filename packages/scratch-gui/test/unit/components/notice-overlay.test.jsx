@@ -7,6 +7,7 @@ import NoticeOverlay from '../../../src/components/notice-overlay/notice-overlay
 import mcremoteMessages from '../../../src/lib/mcremote-l10n';
 import {HIGH_CONTRAST_MODE} from '../../../src/lib/settings/color-mode/index.js';
 
+jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}), {virtual: true});
 jest.mock('../../../src/lib/mcremote-runtime-config.js', () => ({
     getMcRemoteRuntimeConfig: jest.fn()
 }));

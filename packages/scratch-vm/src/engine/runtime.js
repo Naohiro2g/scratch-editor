@@ -2348,14 +2348,16 @@ class Runtime extends EventEmitter {
      * @param {object} config - normalized runtime configuration.
      */
     setMcRemoteRuntimeConfig (config) {
-        const requiredStrings = ['bridgeUrl', 'defaultSandbox', 'releaseIdentity'];
+        if (!config || typeof config.connectionEnabled !== 'boolean') {
+            throw new Error('Runtime.setMcRemoteRuntimeConfig: connectionEnabled must be a boolean');
+        }
+        const requiredStrings = config.connectionEnabled ?
+            ['bridgeUrl', 'defaultSandbox', 'releaseIdentity'] :
+            ['releaseIdentity'];
         for (const key of requiredStrings) {
             if (!config || typeof config[key] !== 'string' || !config[key].trim()) {
                 throw new Error(`Runtime.setMcRemoteRuntimeConfig: ${key} must be a non-empty string`);
             }
-        }
-        if (typeof config.connectionEnabled !== 'boolean') {
-            throw new Error('Runtime.setMcRemoteRuntimeConfig: connectionEnabled must be a boolean');
         }
         this._mcremoteRuntimeConfig = {
             bridgeUrl: config.bridgeUrl,
@@ -2364,7 +2366,7 @@ class Runtime extends EventEmitter {
             releaseIdentity: config.releaseIdentity
         };
         this._mcremoteConnectionTarget = {
-            sandboxRoute: config.defaultSandbox,
+            sandboxRoute: config.defaultSandbox || '',
             label: ''
         };
     }

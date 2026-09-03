@@ -224,6 +224,10 @@ const buildConfig = baseConfig.clone()
                 to: 'mc-remote-runtime-config.json'
             },
             {
+                from: 'static/mc-remote-product-config.json',
+                to: 'mc-remote-product-config.json'
+            },
+            {
                 from: 'static',
                 to: 'static'
             },

@@ -64,6 +64,25 @@ test('McRemote deployment runtime config is normalized and exposed through the V
     t.end();
 });
 
+test('McRemote disabled runtime config does not require connection coordinates', t => {
+    const vm = new VirtualMachine();
+    vm.setMcRemoteRuntimeConfig({
+        bridgeUrl: null,
+        defaultSandbox: null,
+        connectionEnabled: false,
+        releaseIdentity: 'release-123'
+    });
+
+    t.same(vm.getMcRemoteRuntimeConfig(), {
+        bridgeUrl: null,
+        defaultSandbox: null,
+        connectionEnabled: false,
+        releaseIdentity: 'release-123'
+    });
+    t.same(vm.getMcRemoteConnectionTarget(), {sandboxRoute: '', label: ''});
+    t.end();
+});
+
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
     const rt = new Runtime();

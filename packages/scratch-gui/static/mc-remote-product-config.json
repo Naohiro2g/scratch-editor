@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "homepage_url": "https://mc-remote.com/",
+  "notices": [
+    {
+      "heading": "今後のリリース予定",
+      "body": "10月RC版、年内に安定版リリース予定です。",
+      "link": {
+        "href": "https://mc-remote.com/",
+        "label": "公式サイトを見る"
+      }
+    },
+    {
+      "heading": "WireScope（ワイヤースコープ）ライブ画面",
+      "body": "Scratchと Minecraftの通信を観察できます。観察を始めるには、マインクラフトと接続後にMcRemoteパネルの『WireScopeを開く』を使います。"
+    },
+    {
+      "heading": "マイクラリモコンScratchクライアント {version}",
+      "body": "詳細はGitHub.comのリリースページへ。",
+      "link": {
+        "href": "https://github.com/Naohiro2g/scratch-editor/releases",
+        "label": "リリースページを見る"
+      }
+    }
+  ]
+}

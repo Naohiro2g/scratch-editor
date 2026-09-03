@@ -62,4 +62,19 @@ describe('GUI playground McRemote initialization', () => {
             vm.setMcRemoteConnectionTarget.mock.invocationCallOrder[0]
         );
     });
+
+    test('does not set a connection target when a deployment is disabled', () => {
+        const targets = require('../../../src/lib/mcremote-connection-targets.js');
+        targets.getMcRemoteConnectionTargetByRoute = jest.fn(() => null);
+        const vm = {
+            disableMcRemoteConnection: jest.fn(),
+            setMcRemoteConnectionTarget: jest.fn(),
+            setMcRemoteRuntimeConfig: jest.fn()
+        };
+
+        handleVmInit(vm);
+
+        expect(vm.setMcRemoteRuntimeConfig).toHaveBeenCalled();
+        expect(vm.setMcRemoteConnectionTarget).not.toHaveBeenCalled();
+    });
 });

@@ -1,4 +1,8 @@
-import {planPagesArtifact, showcaseRuntimeConfig} from '../../../scripts/pages-artifact.mjs';
+import {
+    planPagesArtifact,
+    showcaseProductConfig,
+    showcaseRuntimeConfig
+} from '../../../scripts/pages-artifact.mjs';
 
 const ALL_ENTRY_HTML = [
     'index.html',
@@ -50,66 +54,25 @@ describe('planPagesArtifact', () => {
     });
 });
 
-describe('showcaseRuntimeConfig', () => {
-    const deployed = {
-        bridge_url: 'wss://bridge.example.test',
-        default_sandbox: 'sb.example.test',
-        connection_targets: [{id: 'stable', sandbox: 'sb.example.test'}],
-        connection_enabled: true,
-        wirescope_url: 'http://127.0.0.1:4173/',
-        release_identity: 'local-development'
-    };
-
-    test('turns the connection off so the runtime guard agrees with the build', () => {
-        expect(showcaseRuntimeConfig(deployed, 'abc123').connection_enabled).toBe(false);
+describe('showcase configuration', () => {
+    test('serves the canonical disabled runtime configuration', () => {
+        expect(showcaseRuntimeConfig()).toEqual({schema_version: 1, connection_enabled: false});
     });
 
-    test('stamps the release identity of the source being published', () => {
-        expect(showcaseRuntimeConfig(deployed, 'abc123').release_identity).toBe('abc123');
-    });
-
-    test('removes the development WireScope endpoint from the HTTPS showcase', () => {
-        expect(showcaseRuntimeConfig(deployed, 'abc123').wirescope_url).toBeNull();
-    });
-
-    test('preserves the configured connection routing', () => {
-        const showcase = showcaseRuntimeConfig(deployed, 'abc123');
-
-        expect(showcase.bridge_url).toBe(deployed.bridge_url);
-        expect(showcase.default_sandbox).toBe(deployed.default_sandbox);
-        expect(showcase.connection_targets).toEqual(deployed.connection_targets);
-    });
-
-    test('rejects a release identity that would not identify anything', () => {
-        expect(() => showcaseRuntimeConfig(deployed, '   ')).toThrow(/release identity/i);
-    });
-
-    test('prepends the showcase disclaimer notice when none are configured', () => {
-        const showcase = showcaseRuntimeConfig(deployed, 'abc123');
-
-        expect(showcase.notices).toEqual([
-            {
-                heading: 'Showcase build / ショーケースビルド',
-                body: 'This page is a showcase with the Minecraft connection turned off. ' +
-                    'このページはショーケースで、Minecraftへの接続は無効になっています。'
-            }
-        ]);
-    });
-
-    test('prepends the showcase disclaimer ahead of configured notices, keeping them intact', () => {
-        const withNotices = Object.assign({}, deployed, {
-            notices: [{heading: 'New blocks', body: 'player.getPos and player.setPos are here.'}]
+    test('prepends the showcase explanation to product notices', () => {
+        const product = showcaseProductConfig({
+            schema_version: 1,
+            homepage_url: 'https://mc-remote.com/',
+            notices: [{heading: 'Product', body: 'Product body'}]
         });
 
-        const showcase = showcaseRuntimeConfig(withNotices, 'abc123');
-
-        expect(showcase.notices).toEqual([
+        expect(product.notices).toEqual([
             {
                 heading: 'Showcase build / ショーケースビルド',
                 body: 'This page is a showcase with the Minecraft connection turned off. ' +
                     'このページはショーケースで、Minecraftへの接続は無効になっています。'
             },
-            {heading: 'New blocks', body: 'player.getPos and player.setPos are here.'}
+            {heading: 'Product', body: 'Product body'}
         ]);
     });
 });
