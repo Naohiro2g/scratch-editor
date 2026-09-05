@@ -52,28 +52,16 @@ jobs:
       - name: Build workspace packages
         run: npm run build
 
-      - name: Stamp default runtime identity
-        env:
-          SOURCE_IDENTITY: scratch-editor@${{ steps.release.outputs.commit }}
-        run: |
-          jq --arg identity "$SOURCE_IDENTITY" \
-            '.release_identity = $identity' \
-            packages/scratch-gui/build/mc-remote-runtime-config.json \
-            > packages/scratch-gui/build/mc-remote-runtime-config.json.tmp
-          mv packages/scratch-gui/build/mc-remote-runtime-config.json.tmp \
-            packages/scratch-gui/build/mc-remote-runtime-config.json
-
       - name: Verify image inputs
-        env:
-          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
         run: |
           test -f packages/scratch-gui/build/index.html
+          test -f packages/scratch-gui/build/mc-remote-product-config.json
           test -f packages/scratch-gui/build/mc-remote-runtime-config.json
-          test -f packages/scratch-gui/docker/40-mcremote-runtime-config.sh
           test -f mc-remote/bridge/dist/main.js
           test -f mc-remote/bridge/node_modules/ws/package.json
-          test "$(jq -r .release_identity packages/scratch-gui/build/mc-remote-runtime-config.json)" \
-            = "scratch-editor@${RELEASE_COMMIT}"
+          test "$(jq -r .schema_version packages/scratch-gui/build/mc-remote-product-config.json)" = "1"
+          test "$(jq -r .schema_version packages/scratch-gui/build/mc-remote-runtime-config.json)" = "1"
+          test "$(jq -r .connection_enabled packages/scratch-gui/build/mc-remote-runtime-config.json)" = "false"
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:

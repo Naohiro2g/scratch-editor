@@ -42,7 +42,7 @@ jobs:
       # The build compiles the connection off; the served config turns it off too, so neither
       # guard alone decides whether this page can reach a sandbox.
       - name: Serve a Showcase Runtime Config
-        run: node scripts/write-showcase-runtime-config.mjs build "${{ github.sha }}"
+        run: node scripts/write-showcase-runtime-config.mjs build
         working-directory: packages/scratch-gui
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         with:

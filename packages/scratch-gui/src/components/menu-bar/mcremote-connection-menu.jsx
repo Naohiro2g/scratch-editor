@@ -41,7 +41,7 @@ const McRemoteConnectionMenu = ({
 }) => {
     const intl = useIntl();
     const selectedTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
-    const selectedLabel = selectedTarget.label;
+    const selectedLabel = selectedTarget ? selectedTarget.label : '';
 
     const {
         menuRef,
@@ -58,6 +58,8 @@ const McRemoteConnectionMenu = ({
         onChangeConnectionTarget(target.sandboxRoute);
         persistMcRemoteConnectionTargetRoute(target.sandboxRoute);
     };
+
+    if (!selectedTarget) return null;
 
     return (
         <MenuItem

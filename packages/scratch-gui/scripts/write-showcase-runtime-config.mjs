@@ -3,12 +3,11 @@
 
 import {writeShowcaseRuntimeConfig} from './pages-artifact.mjs';
 
-const [buildDir, releaseIdentity] = process.argv.slice(2);
-if (!buildDir || !releaseIdentity) {
-    console.error('usage: node scripts/write-showcase-runtime-config.mjs <build-dir> <release-identity>');
+const [buildDir] = process.argv.slice(2);
+if (!buildDir) {
+    console.error('usage: node scripts/write-showcase-runtime-config.mjs <build-dir>');
     process.exit(1);
 }
 
-const showcase = writeShowcaseRuntimeConfig(buildDir, releaseIdentity);
-console.log(`write-showcase-runtime-config: connection_enabled=${showcase.connection_enabled}`);
-console.log(`write-showcase-runtime-config: release_identity=${showcase.release_identity}`);
+const {runtime} = writeShowcaseRuntimeConfig(buildDir);
+console.log(`write-showcase-runtime-config: connection_enabled=${runtime.connection_enabled}`);

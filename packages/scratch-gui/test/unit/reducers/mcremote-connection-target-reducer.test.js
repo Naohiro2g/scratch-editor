@@ -8,16 +8,16 @@ test('initialState', () => {
     expect(reducer(defaultState, {type: 'anything'})).toEqual(mcremoteConnectionTargetInitialState);
 });
 
-test('setMcRemoteConnectionTarget stores the configured sandbox route', () => {
+test('setMcRemoteConnectionTarget keeps the bundled disabled runtime without a route', () => {
     let defaultState;
     expect(reducer(defaultState, setMcRemoteConnectionTarget('sb.mc-remote.com'))).toEqual({
-        sandboxRoute: 'sb.mc-remote.com'
+        sandboxRoute: null
     });
 });
 
-test('setMcRemoteConnectionTarget falls back to the default route for removed sb-dev input', () => {
+test('setMcRemoteConnectionTarget does not revive a removed route while disabled', () => {
     let defaultState;
     expect(reducer(defaultState, setMcRemoteConnectionTarget('sb-dev.mc-remote.com'))).toEqual({
-        sandboxRoute: 'sb.mc-remote.com'
+        sandboxRoute: null
     });
 });

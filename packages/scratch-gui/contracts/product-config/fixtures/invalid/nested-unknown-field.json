@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "homepage_url": "https://mc-remote.com/",
+  "notices": [
+    {
+      "heading": "McRemote",
+      "body": "Control Minecraft from Scratch.",
+      "audience": "operator"
+    }
+  ]
+}

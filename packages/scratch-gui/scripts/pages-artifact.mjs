@@ -1,5 +1,6 @@
 // GitHub Pages serves every file in the build directory, but `index.html` is the only entry
-// that loads `mc-remote-runtime-config.json` and pushes it into the VM. Every other entry runs
+// that loads the McRemote product and runtime configuration and pushes runtime state into the VM.
+// Every other entry runs
 // on the built-in defaults, which enable the McRemote connection and point at the production
 // bridge, so publishing them would let a viewer reach a real sandbox from a deployment whose
 // runtime config sets `connection_enabled` to false. Drop those entries from what Pages serves.
@@ -79,43 +80,39 @@ const SHOWCASE_NOTICE = Object.freeze({
 });
 
 /**
- * Derive the runtime configuration a showcase deployment serves. The build already compiles the
- * connection off; turning it off here as well is the second half of the guard, so neither one
- * standing alone decides whether the page can reach a sandbox. Notices behave the same way as a
- * container deployment (whatever is configured is shown as-is), except the showcase disclaimer is
- * always prepended so a viewer is not left thinking a stalled connection is a real one. The
- * development WireScope URL is cleared because an HTTP loopback endpoint is not valid runtime
- * configuration for the HTTPS Pages origin.
- * @param {object} config - runtime configuration the build produced.
- * @param {string} releaseIdentity - identity of the source being published, e.g. a commit SHA.
+ * Derive the deployment-owned configuration for a showcase.
  * @returns {object} runtime configuration to serve.
- * @throws {Error} when the release identity would not identify anything.
  */
-const showcaseRuntimeConfig = (config, releaseIdentity) => {
-    const identity = typeof releaseIdentity === 'string' ? releaseIdentity.trim() : '';
-    if (!identity) {
-        throw new Error('showcaseRuntimeConfig: a non-empty release identity is required');
-    }
-    const configuredNotices = Array.isArray(config.notices) ? config.notices : [];
-    return Object.assign({}, config, {
-        connection_enabled: false,
-        wirescope_url: null,
-        release_identity: identity,
-        notices: [SHOWCASE_NOTICE, ...configuredNotices]
-    });
-};
+const showcaseRuntimeConfig = () => ({schema_version: 1, connection_enabled: false});
 
 /**
- * Rewrite the served runtime configuration in place for a showcase deployment.
- * @param {string} buildDir - directory holding the webpack `build` output.
- * @param {string} releaseIdentity - identity of the source being published.
- * @returns {object} the configuration written.
+ * Add the showcase explanation to image-owned product information.
+ * @param {object} config - product configuration the build produced.
+ * @returns {object} product configuration to serve.
  */
-const writeShowcaseRuntimeConfig = (buildDir, releaseIdentity) => {
-    const configPath = path.join(buildDir, 'mc-remote-runtime-config.json');
-    const showcase = showcaseRuntimeConfig(JSON.parse(fs.readFileSync(configPath, 'utf8')), releaseIdentity);
-    fs.writeFileSync(configPath, `${JSON.stringify(showcase, null, 2)}\n`);
-    return showcase;
+const showcaseProductConfig = config => Object.assign({}, config, {
+    notices: [SHOWCASE_NOTICE, ...(Array.isArray(config.notices) ? config.notices : [])]
+});
+
+/**
+ * Rewrite the served runtime and product configuration in place for a showcase deployment.
+ * @param {string} buildDir - directory holding the webpack `build` output.
+ * @returns {{runtime: object, product: object}} the configurations written.
+ */
+const writeShowcaseRuntimeConfig = buildDir => {
+    const runtimePath = path.join(buildDir, 'mc-remote-runtime-config.json');
+    const productPath = path.join(buildDir, 'mc-remote-product-config.json');
+    const runtime = showcaseRuntimeConfig();
+    const product = showcaseProductConfig(JSON.parse(fs.readFileSync(productPath, 'utf8')));
+    fs.writeFileSync(runtimePath, `${JSON.stringify(runtime, null, 2)}\n`);
+    fs.writeFileSync(productPath, `${JSON.stringify(product, null, 2)}\n`);
+    return {runtime, product};
 };
 
-export {planPagesArtifact, prunePagesArtifact, showcaseRuntimeConfig, writeShowcaseRuntimeConfig};
+export {
+    planPagesArtifact,
+    prunePagesArtifact,
+    showcaseProductConfig,
+    showcaseRuntimeConfig,
+    writeShowcaseRuntimeConfig
+};

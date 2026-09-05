@@ -1,5 +1,7 @@
 const STORAGE_KEY = 'mcremote.connectionTarget.v1';
 
+jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}), {virtual: true});
+
 describe('McRemote connection target persistence', () => {
     beforeEach(() => {
         jest.resetModules();
@@ -11,28 +13,32 @@ describe('McRemote connection target persistence', () => {
     });
 
     const loadBetaProfile = async () => {
-        global.fetch = jest.fn().mockResolvedValue({
+        global.fetch = jest.fn().mockImplementation(url => Promise.resolve({
             ok: true,
-            json: () => Promise.resolve({
+            json: () => Promise.resolve(url.includes('mc-remote-product-config.json') ? {
+                schema_version: 1,
+                homepage_url: 'https://mc-remote.com/',
+                notices: []
+            } : {
+                schema_version: 1,
                 bridge_url: 'wss://bridge-beta.mc-remote.com',
                 default_sandbox: 'sb-beta.mc-remote.com',
                 connection_targets: [
                     {id: 'stable', label: 'Stable', sandbox: 'sb.mc-remote.com'},
                     {id: 'beta', label: 'Beta', sandbox: 'sb-beta.mc-remote.com'}
                 ],
-                connection_enabled: true,
-                release_identity: 'beta'
+                connection_enabled: true
             })
-        });
+        }));
         const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
         await loadMcRemoteRuntimeConfig();
         return require('../../../src/lib/mcremote-connection-target-persistence.js');
     };
 
-    test('returns the default route when localStorage is empty', () => {
+    test('returns no route before a deployment config is loaded', () => {
         const {detectMcRemoteConnectionTargetRoute} =
             require('../../../src/lib/mcremote-connection-target-persistence.js');
-        expect(detectMcRemoteConnectionTargetRoute()).toEqual('sb.mc-remote.com');
+        expect(detectMcRemoteConnectionTargetRoute()).toBeNull();
     });
 
     test('persists a route in the deployment profile', async () => {

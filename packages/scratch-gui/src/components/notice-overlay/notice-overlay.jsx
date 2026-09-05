@@ -8,11 +8,8 @@ import {getMcRemoteRuntimeConfig} from '../../lib/mcremote-runtime-config.js';
 import {HIGH_CONTRAST_MODE} from '../../lib/settings/color-mode/index.js';
 import styles from './notice-overlay.css';
 
-// The footer version and any `{version}` token in a configured notice always show this label,
-// not the deployment's own `release_identity` (which a showcase build sets to a raw commit SHA
-// for build-identity tracking, not for display) -- see mcremote-runtime-config.js's docs on
-// `releaseIdentity`. Reading the version from scratch-vm keeps this label correct at every
-// future release without a deployment needing to remember to update any notice text by hand.
+// The footer version and any `{version}` token in a configured notice always use the client build
+// identity. Reading it from scratch-vm keeps the label independent of deployment configuration.
 const RELEASE_LABEL = `McRemote Scratch ${MCREMOTE_CLIENT_VERSION}`;
 const VERSION_TOKEN = '{version}';
 const substituteVersion = text => (typeof text === 'string' ? text.split(VERSION_TOKEN).join(RELEASE_LABEL) : text);

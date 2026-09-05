@@ -32,10 +32,12 @@ const handleVmInit = function (vm) {
     }
     vm.setMcRemoteRuntimeConfig(getMcRemoteRuntimeConfig());
     const connectionTarget = getMcRemoteConnectionTargetByRoute(detectMcRemoteConnectionTargetRoute());
-    vm.setMcRemoteConnectionTarget({
-        sandboxRoute: connectionTarget.sandboxRoute,
-        label: connectionTarget.label
-    });
+    if (connectionTarget) {
+        vm.setMcRemoteConnectionTarget({
+            sandboxRoute: connectionTarget.sandboxRoute,
+            label: connectionTarget.label
+        });
+    }
     if (autoLoadExtensionId) {
         vm.extensionManager.loadExtensionURL(autoLoadExtensionId).catch(logExtensionLoadFailure);
     }

@@ -10,10 +10,12 @@ const initialState = {
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
     switch (action.type) {
-    case SET:
+    case SET: {
+        const target = getMcRemoteConnectionTargetByRoute(action.sandboxRoute);
         return {
-            sandboxRoute: getMcRemoteConnectionTargetByRoute(action.sandboxRoute).sandboxRoute
+            sandboxRoute: target ? target.sandboxRoute : null
         };
+    }
     default:
         return state;
     }

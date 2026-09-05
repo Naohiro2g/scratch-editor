@@ -16,16 +16,17 @@ import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-
  */
 const McRemoteConnectionTargetSync = ({sandboxRoute, vm}) => {
     const selectedTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
-    const selectedLabel = selectedTarget.label;
+    const selectedRoute = selectedTarget ? selectedTarget.sandboxRoute : '';
+    const selectedLabel = selectedTarget ? selectedTarget.label : '';
 
     useEffect(() => {
-        if (vm && typeof vm.setMcRemoteConnectionTarget === 'function') {
+        if (selectedTarget && vm && typeof vm.setMcRemoteConnectionTarget === 'function') {
             vm.setMcRemoteConnectionTarget({
-                sandboxRoute: selectedTarget.sandboxRoute,
+                sandboxRoute: selectedRoute,
                 label: selectedLabel
             });
         }
-    }, [vm, selectedTarget.sandboxRoute, selectedLabel]);
+    }, [vm, selectedTarget, selectedRoute, selectedLabel]);
 
     return null;
 };

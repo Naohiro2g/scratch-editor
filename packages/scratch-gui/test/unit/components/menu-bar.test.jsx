@@ -92,7 +92,7 @@ describe('MenuBar Component', () => {
         });
     });
 
-    test('McRemote connection menu pushes the deployment default to VM for a removed target', () => {
+    test('McRemote target sync does not push a target while the bundled runtime is disabled', () => {
         const vm = new VM();
         vm.setMcRemoteConnectionTarget = jest.fn();
         renderWithIntl(getComponent({}, {
@@ -100,27 +100,19 @@ describe('MenuBar Component', () => {
             vm
         }));
 
-        expect(vm.setMcRemoteConnectionTarget).toHaveBeenCalledWith({
-            sandboxRoute: 'sb.mc-remote.com',
-            label: 'Stable'
-        });
+        expect(vm.setMcRemoteConnectionTarget).not.toHaveBeenCalled();
     });
 
-    test('McRemote connection menu saves selected route', () => {
+    test('McRemote connection menu is absent while the bundled runtime is disabled', () => {
         localStorage.removeItem('mcremote.connectionTarget.v1');
         const {component, store} = getComponentWithStore();
-        const {container, getByText} = renderWithIntl(component);
+        const {container} = renderWithIntl(component);
         const settingsButton = container.querySelector('button[aria-label="Settings menu"]');
         fireEvent.click(settingsButton);
         const button = container.querySelector('button[aria-label="McRemote connection menu"]');
 
-        fireEvent.click(button);
-        fireEvent.click(getByText('sb.mc-remote.com'));
-
-        expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBe('sb.mc-remote.com');
-        expect(store.getActions()).toContainEqual({
-            type: 'scratch-gui/mcremote-connection-target/SET',
-            sandboxRoute: 'sb.mc-remote.com'
-        });
+        expect(button).toBeNull();
+        expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBeNull();
+        expect(store.getActions()).toEqual([]);
     });
 });

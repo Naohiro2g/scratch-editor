@@ -18,6 +18,7 @@ const detectMcRemoteConnectionTargetRoute = () => {
     try {
         const storedRoute = normalizeMcRemoteConnectionTargetRoute(localStorage.getItem(STORAGE_KEY));
         const target = getMcRemoteConnectionTargetByRoute(storedRoute);
+        if (!target) return null;
         if (storedRoute && storedRoute !== target.sandboxRoute) {
             localStorage.setItem(STORAGE_KEY, target.sandboxRoute);
         }
@@ -29,6 +30,7 @@ const detectMcRemoteConnectionTargetRoute = () => {
 
 const persistMcRemoteConnectionTargetRoute = function (route) {
     const target = getMcRemoteConnectionTargetByRoute(route);
+    if (!target) return;
     const localStorage = storage();
     if (!localStorage) return;
 
