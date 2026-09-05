@@ -1,14 +1,21 @@
 name: Build McRemote OCI Images
 
 on:
+  release:
+    types: [published]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag to build images for
+        required: true
+        type: string
 
 permissions:
-  contents: read
+  contents: write # to attach the image identity record to the release
   packages: write
 
 concurrency:
-  group: mc-remote-images-${{ github.ref }}
+  group: mc-remote-images-${{ github.event.release.tag_name || inputs.release_tag }}
   cancel-in-progress: false
 
 jobs:
@@ -16,7 +23,25 @@ jobs:
     name: Build and publish
     runs-on: ubuntu-latest
     steps:
+      # The release tag is the single collection point for this build: the resulting
+      # OCI images and the identity record are attached to this same release, the way
+      # the McRemote plugin JAR already is. `github.sha` is not used here because a
+      # manual rerun (workflow_dispatch) would resolve it against the ref the run was
+      # started from, not against the release tag's commit.
+      - name: Resolve release tag and commit
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
+        run: |
+          test -n "$TAG"
+          COMMIT="$(gh api "repos/${{ github.repository }}/commits/$TAG" --jq .sha)"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: ${{ steps.release.outputs.commit }}
       - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           cache: npm
@@ -29,7 +54,7 @@ jobs:
 
       - name: Stamp default runtime identity
         env:
-          SOURCE_IDENTITY: scratch-editor@${{ github.sha }}
+          SOURCE_IDENTITY: scratch-editor@${{ steps.release.outputs.commit }}
         run: |
           jq --arg identity "$SOURCE_IDENTITY" \
             '.release_identity = $identity' \
@@ -39,13 +64,16 @@ jobs:
             packages/scratch-gui/build/mc-remote-runtime-config.json
 
       - name: Verify image inputs
+        env:
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
         run: |
           test -f packages/scratch-gui/build/index.html
           test -f packages/scratch-gui/build/mc-remote-runtime-config.json
+          test -f packages/scratch-gui/docker/40-mcremote-runtime-config.sh
           test -f mc-remote/bridge/dist/main.js
           test -f mc-remote/bridge/node_modules/ws/package.json
           test "$(jq -r .release_identity packages/scratch-gui/build/mc-remote-runtime-config.json)" \
-            = "scratch-editor@${GITHUB_SHA}"
+            = "scratch-editor@${RELEASE_COMMIT}"
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -55,6 +83,9 @@ jobs:
       - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
+      # Images are tagged both by commit (stable, always-correct identity) and by the
+      # release tag (the human-facing name a collector already knows, matching how the
+      # release notes and the McRemote plugin JAR are found).
       - name: Build and push Scratch image
         id: scratch
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
@@ -65,10 +96,12 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ghcr.io/naohiro2g/mc-remote-scratch:sha-${{ github.sha }}
+          tags: |
+            ghcr.io/naohiro2g/mc-remote-scratch:sha-${{ steps.release.outputs.commit }}
+            ghcr.io/naohiro2g/mc-remote-scratch:${{ steps.release.outputs.tag }}
           build-args: |
-            SOURCE_REVISION=${{ github.sha }}
-            RELEASE_VERSION=sha-${{ github.sha }}
+            SOURCE_REVISION=${{ steps.release.outputs.commit }}
+            RELEASE_VERSION=${{ steps.release.outputs.tag }}
 
       - name: Build and push Bridge image
         id: bridge
@@ -80,13 +113,16 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: ghcr.io/naohiro2g/mc-remote-bridge:sha-${{ github.sha }}
+          tags: |
+            ghcr.io/naohiro2g/mc-remote-bridge:sha-${{ steps.release.outputs.commit }}
+            ghcr.io/naohiro2g/mc-remote-bridge:${{ steps.release.outputs.tag }}
           build-args: |
-            SOURCE_REVISION=${{ github.sha }}
-            RELEASE_VERSION=sha-${{ github.sha }}
+            SOURCE_REVISION=${{ steps.release.outputs.commit }}
+            RELEASE_VERSION=${{ steps.release.outputs.tag }}
 
       - name: Record immutable image identities
         env:
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
           SCRATCH_DIGEST: ${{ steps.scratch.outputs.digest }}
           BRIDGE_DIGEST: ${{ steps.bridge.outputs.digest }}
         run: |
@@ -95,7 +131,7 @@ jobs:
           docker buildx imagetools inspect --raw "$scratch_ref" > scratch-manifest.json
           docker buildx imagetools inspect --raw "$bridge_ref" > bridge-manifest.json
           jq -n \
-            --arg source_revision "$GITHUB_SHA" \
+            --arg source_revision "$RELEASE_COMMIT" \
             --arg scratch "$scratch_ref" \
             --arg scratch_amd64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' scratch-manifest.json)" \
             --arg scratch_arm64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' scratch-manifest.json)" \
@@ -105,9 +141,15 @@ jobs:
             '{source_revision: $source_revision, images: {scratch: {index: $scratch, linux_amd64: $scratch_amd64, linux_arm64: $scratch_arm64}, bridge: {index: $bridge, linux_amd64: $bridge_amd64, linux_arm64: $bridge_arm64}}}' \
             > mc-remote-image-identities.json
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: mc-remote-image-identities-${{ github.sha }}
-          retention-days: 90
-          path: mc-remote-image-identities.json
-          if-no-files-found: error
+      # A release asset, not a workflow-run artifact: workflow-run artifacts expire
+      # (90 days) and aren't reachable from the release page. The release is meant to
+      # be the one place a collector looks, the same way it already is for the
+      # McRemote plugin JAR.
+      - name: Attach image identities to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.release.outputs.tag }}" \
+            mc-remote-image-identities.json \
+            --repo "${{ github.repository }}" \
+            --clobber
