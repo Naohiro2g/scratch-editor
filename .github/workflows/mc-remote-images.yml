@@ -22,6 +22,15 @@ jobs:
   build:
     name: Build and publish
     runs-on: ubuntu-latest
+    # npm package releases (from publish.yml, e.g. v15.1.0) and McRemote releases
+    # (e.g. v2301.0.0b7) are two unrelated tag series on this repo -- see
+    # 10-protocol/versioning-design_ja.md in the knowledge repo for why McRemote
+    # deliberately uses a 4-digit-or-larger major. Only the latter carries a
+    # matching Scratch/Bridge image; skip the job rather than build one for an
+    # npm-only release. workflow_dispatch always runs: a human chose the tag.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      startsWith(github.event.release.tag_name, 'v1') == false
     steps:
       # The release tag is the single collection point for this build: the resulting
       # OCI images and the identity record are attached to this same release, the way
