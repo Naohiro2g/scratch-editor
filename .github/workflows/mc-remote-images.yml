@@ -119,13 +119,16 @@ jobs:
       # consumer keeps reading it straight from the commit via `git archive` or the
       # Git Data API (DECISIONS 2026-09-06-02) -- that path is untouched. This tarball
       # is the same bytes offered as a release asset for the formal-stage manifest.
-      # Fixed entry order, timestamps and ownership, and a gzip header without its own
-      # timestamp, so identical contract bytes hash the same on every run. Otherwise the
-      # checkout time leaks into the archive and the sha256 in the manifest churns for
-      # content that never changed.
+      # Fixed entry order, timestamps, ownership and permissions, and a gzip header
+      # without its own timestamp, so identical contract bytes hash the same however
+      # and wherever the archive is produced. Without this the checkout time and the
+      # building machine's umask leak into the archive: the manifest sha256 churns for
+      # content that never changed, and nobody can rebuild the archive from the commit
+      # to check it against the manifest.
       - name: Archive Scratch contract directory
         run: |
           tar --sort=name --mtime='UTC 1980-01-01' --owner=0 --group=0 --numeric-owner \
+            --mode='a+rX,u+w,go-w' \
             -cf - -C packages/scratch-gui contracts | gzip -n > contracts.tar.gz
           test -s contracts.tar.gz
 
