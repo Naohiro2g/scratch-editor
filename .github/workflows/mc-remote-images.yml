@@ -142,12 +142,13 @@ jobs:
             SOURCE_REVISION=${{ steps.release.outputs.commit }}
             RELEASE_VERSION=${{ steps.release.outputs.tag }}
 
-      # One manifest, one collection step (DECISIONS 2026-09-06-02): a collector reads
-      # this single file off the release instead of cross-referencing GHCR, the release
-      # notes, and rebuilt-from-source bytes to work out what belongs to this release.
-      # `kind` distinguishes an OCI reference (locator+digest, pulled from the registry)
-      # from a plain downloadable file (file+sha256, this release's own asset) -- the
-      # scratch/bridge roles stay OCI per that decision; only the shape is standardized.
+      # One manifest, one collection step (DECISIONS 2026-09-06-02/03/04): a collector
+      # reads this single file off the release instead of cross-referencing GHCR, the
+      # release notes, and rebuilt-from-source bytes to work out what belongs to this
+      # release. `kind` is always explicit (oci: locator+digest; https-file: file+
+      # sha256) -- no implicit default, so an unrecognized shape fails closed instead
+      # of being silently misread. scratch/bridge stay OCI; only the shape is shared.
+      # schema/schema_version let a future shape change fail closed the same way.
       - name: Build release manifest
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
@@ -169,6 +170,8 @@ jobs:
             --arg wirescope_manifest_sha256 "$wirescope_manifest_sha256" \
             --arg contracts_sha256 "$contracts_sha256" \
             '{
+              schema: "mc-remote.release-manifest",
+              schema_version: 1,
               release_tag: $release_tag,
               source_commit: $source_commit,
               artifacts: [
