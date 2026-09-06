@@ -72,6 +72,18 @@ jobs:
           test "$(jq -r .schema_version packages/scratch-gui/build/mc-remote-runtime-config.json)" = "1"
           test "$(jq -r .connection_enabled packages/scratch-gui/build/mc-remote-runtime-config.json)" = "false"
 
+      # The WireScope browser app has no OCI image and no persistent artifact
+      # location of its own; a collector otherwise has to rebuild it from source
+      # by hand to get bytes matching a given release. Building and attaching it
+      # here, at the exact release commit, gives it the same one-release-page
+      # collection story as everything else in this workflow.
+      - name: Build WireScope artifact
+        run: |
+          npm run build:artifact --workspace=@mc-remote/live -- \
+            --source-commit "${{ steps.release.outputs.commit }}"
+          test -f mc-remote/live/dist/artifacts/wirescope-app.zip
+          test -f mc-remote/live/dist/artifacts/wirescope-app.manifest.json
+
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
@@ -138,15 +150,17 @@ jobs:
             '{source_revision: $source_revision, images: {scratch: {index: $scratch, linux_amd64: $scratch_amd64, linux_arm64: $scratch_arm64}, bridge: {index: $bridge, linux_amd64: $bridge_amd64, linux_arm64: $bridge_arm64}}}' \
             > mc-remote-image-identities.json
 
-      # A release asset, not a workflow-run artifact: workflow-run artifacts expire
+      # Release assets, not workflow-run artifacts: workflow-run artifacts expire
       # (90 days) and aren't reachable from the release page. The release is meant to
       # be the one place a collector looks, the same way it already is for the
       # McRemote plugin JAR.
-      - name: Attach image identities to the release
+      - name: Attach image identities and WireScope artifact to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ steps.release.outputs.tag }}" \
             mc-remote-image-identities.json \
+            mc-remote/live/dist/artifacts/wirescope-app.zip \
+            mc-remote/live/dist/artifacts/wirescope-app.manifest.json \
             --repo "${{ github.repository }}" \
             --clobber
