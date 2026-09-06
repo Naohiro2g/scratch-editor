@@ -55,6 +55,33 @@ jobs:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
         with:
           ref: ${{ steps.release.outputs.commit }}
+          fetch-depth: 0 # the baseline commit must be diffable against this one
+
+      # The newest earlier release that carries a manifest is the baseline this run
+      # compares against. Absent one (the first manifest-bearing release), every
+      # artifact is built. This runs after checkout because checkout cleans the
+      # workspace, which would delete a directory written before it.
+      - name: Resolve the baseline release manifest
+        id: baseline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          mkdir -p baseline
+          for candidate in $(gh release list --repo "${{ github.repository }}" --limit 20 \
+              --json tagName,createdAt -q 'sort_by(.createdAt) | reverse | .[].tagName'); do
+            if [ "$candidate" = "$TAG" ]; then
+              continue
+            fi
+            if gh release download "$candidate" --repo "${{ github.repository }}" \
+                --pattern manifest.json --dir baseline 2>/dev/null; then
+              echo "tag=$candidate" >> "$GITHUB_OUTPUT"
+              echo "commit=$(jq -r .source_commit baseline/manifest.json)" >> "$GITHUB_OUTPUT"
+              echo "baseline release: $candidate"
+              exit 0
+            fi
+          done
+          echo "no baseline release with a manifest; building every artifact"
       - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           cache: npm
@@ -92,10 +119,60 @@ jobs:
       # consumer keeps reading it straight from the commit via `git archive` or the
       # Git Data API (DECISIONS 2026-09-06-02) -- that path is untouched. This tarball
       # is the same bytes offered as a release asset for the formal-stage manifest.
+      # Fixed entry order, timestamps and ownership, and a gzip header without its own
+      # timestamp, so identical contract bytes hash the same on every run. Otherwise the
+      # checkout time leaks into the archive and the sha256 in the manifest churns for
+      # content that never changed.
       - name: Archive Scratch contract directory
         run: |
-          tar -czf contracts.tar.gz -C packages/scratch-gui contracts
+          tar --sort=name --mtime='UTC 1980-01-01' --owner=0 --group=0 --numeric-owner \
+            -cf - -C packages/scratch-gui contracts | gzip -n > contracts.tar.gz
           test -s contracts.tar.gz
+
+      # Whether an image needs building is decided by whether its own sources changed
+      # since the baseline release, not by the fact that a release happened
+      # (DECISIONS 2026-09-07-01). Unchanged sources reuse the baseline's exact image
+      # digest, which also keeps one identity across releases instead of minting a new
+      # digest for identical content. This is a criterion, not a ban on rebuilding: with
+      # no baseline, or any doubt about the paths below, everything builds.
+      #
+      # The path sets come from the workspace dependency graph in package.json:
+      # scratch-gui depends on scratch-paint/render/storage/svg-renderer/vm, and
+      # scratch-vm pulls render/storage/svg-renderer, so a change anywhere in that set
+      # can reach the Scratch bundle. mc-remote/bridge and mc-remote/live declare no
+      # workspace dependencies at all. package-lock.json and .nvmrc pin what `npm ci`
+      # installs and which Node builds it, so both count for every image.
+      - name: Decide which images need a rebuild
+        id: rebuild
+        env:
+          BASELINE_COMMIT: ${{ steps.baseline.outputs.commit }}
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        run: |
+          if [ -n "$BASELINE_COMMIT" ] && ! git cat-file -e "${BASELINE_COMMIT}^{commit}" 2>/dev/null; then
+            echo "baseline commit ${BASELINE_COMMIT} is not in this repository; building every artifact"
+            BASELINE_COMMIT=""
+          fi
+          decide() {
+            name="$1"
+            shift
+            if [ -z "$BASELINE_COMMIT" ]; then
+              verdict=true
+              reason="no usable baseline"
+            elif git diff --quiet "$BASELINE_COMMIT" "$RELEASE_COMMIT" -- "$@"; then
+              verdict=false
+              reason="unchanged since ${BASELINE_COMMIT}"
+            else
+              verdict=true
+              reason="changed since ${BASELINE_COMMIT}"
+            fi
+            echo "$name=$verdict" >> "$GITHUB_OUTPUT"
+            echo "$name: build=$verdict ($reason)"
+          }
+          decide scratch \
+            packages/scratch-gui packages/scratch-vm packages/scratch-render \
+            packages/scratch-svg-renderer packages/scratch-storage packages/scratch-paint \
+            package-lock.json .nvmrc
+          decide bridge mc-remote/bridge package-lock.json .nvmrc
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -110,6 +187,7 @@ jobs:
       # release notes and the McRemote plugin JAR are found).
       - name: Build and push Scratch image
         id: scratch
+        if: steps.rebuild.outputs.scratch == 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: packages/scratch-gui
@@ -127,6 +205,7 @@ jobs:
 
       - name: Build and push Bridge image
         id: bridge
+        if: steps.rebuild.outputs.bridge == 'true'
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
           context: mc-remote/bridge
@@ -141,6 +220,32 @@ jobs:
           build-args: |
             SOURCE_REVISION=${{ steps.release.outputs.commit }}
             RELEASE_VERSION=${{ steps.release.outputs.tag }}
+
+      # A reused image is not rebuilt; the baseline digest is given this release's tag
+      # as well, so a collector can pull any release's images by that release's tag and
+      # not only by digest. This is registry metadata, not a build.
+      - name: Tag reused images for this release
+        if: steps.rebuild.outputs.scratch != 'true' || steps.rebuild.outputs.bridge != 'true'
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          REBUILT_SCRATCH: ${{ steps.rebuild.outputs.scratch }}
+          REBUILT_BRIDGE: ${{ steps.rebuild.outputs.bridge }}
+        run: |
+          retag() {
+            role="$1"
+            locator="$2"
+            digest="$(jq -r --arg role "$role" \
+              '.artifacts[] | select(.role == $role) | .digest' baseline/manifest.json)"
+            test -n "$digest"
+            test "$digest" != "null"
+            docker buildx imagetools create --tag "${locator}:${TAG}" "${locator}@${digest}"
+          }
+          if [ "$REBUILT_SCRATCH" != "true" ]; then
+            retag scratch ghcr.io/naohiro2g/mc-remote-scratch
+          fi
+          if [ "$REBUILT_BRIDGE" != "true" ]; then
+            retag bridge ghcr.io/naohiro2g/mc-remote-bridge
+          fi
 
       # One manifest, one collection step (DECISIONS 2026-09-06-02/03/04): a collector
       # reads this single file off the release instead of cross-referencing GHCR, the
@@ -159,13 +264,23 @@ jobs:
           wirescope_zip_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.zip | cut -d' ' -f1)"
           wirescope_manifest_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.manifest.json | cut -d' ' -f1)"
           contracts_sha256="$(sha256sum contracts.tar.gz | cut -d' ' -f1)"
+          # A skipped build leaves its digest output empty; that role carries the
+          # baseline digest forward instead.
+          baseline_digest() {
+            jq -r --arg role "$1" \
+              '.artifacts[] | select(.role == $role) | .digest' baseline/manifest.json
+          }
+          scratch_digest="${SCRATCH_DIGEST:-$(baseline_digest scratch)}"
+          bridge_digest="${BRIDGE_DIGEST:-$(baseline_digest bridge)}"
+          test -n "$scratch_digest" && test "$scratch_digest" != "null"
+          test -n "$bridge_digest" && test "$bridge_digest" != "null"
           jq -n \
             --arg release_tag "$RELEASE_TAG" \
             --arg source_commit "$RELEASE_COMMIT" \
             --arg scratch_locator "ghcr.io/naohiro2g/mc-remote-scratch" \
-            --arg scratch_digest "$SCRATCH_DIGEST" \
+            --arg scratch_digest "$scratch_digest" \
             --arg bridge_locator "ghcr.io/naohiro2g/mc-remote-bridge" \
-            --arg bridge_digest "$BRIDGE_DIGEST" \
+            --arg bridge_digest "$bridge_digest" \
             --arg wirescope_sha256 "$wirescope_zip_sha256" \
             --arg wirescope_manifest_sha256 "$wirescope_manifest_sha256" \
             --arg contracts_sha256 "$contracts_sha256" \
