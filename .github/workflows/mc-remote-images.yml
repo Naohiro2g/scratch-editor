@@ -44,6 +44,10 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
         run: |
           test -n "$TAG"
+          # A workflow_dispatch rerun must target an actual published release, not any
+          # ref -- that gap is exactly how an unmerged branch commit ended up pushed to
+          # GHCR and pinned by a production preset (DECISIONS 2026-09-06-02).
+          gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /dev/null
           COMMIT="$(gh api "repos/${{ github.repository }}/commits/$TAG" --jq .sha)"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
@@ -83,6 +87,15 @@ jobs:
             --source-commit "${{ steps.release.outputs.commit }}"
           test -f mc-remote/live/dist/artifacts/wirescope-app.zip
           test -f mc-remote/live/dist/artifacts/wirescope-app.manifest.json
+
+      # The contract directory is plain source with no build step, so a candidate
+      # consumer keeps reading it straight from the commit via `git archive` or the
+      # Git Data API (DECISIONS 2026-09-06-02) -- that path is untouched. This tarball
+      # is the same bytes offered as a release asset for the formal-stage manifest.
+      - name: Archive Scratch contract directory
+        run: |
+          tar -czf contracts.tar.gz -C packages/scratch-gui contracts
+          test -s contracts.tar.gz
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -129,37 +142,56 @@ jobs:
             SOURCE_REVISION=${{ steps.release.outputs.commit }}
             RELEASE_VERSION=${{ steps.release.outputs.tag }}
 
-      - name: Record immutable image identities
+      # One manifest, one collection step (DECISIONS 2026-09-06-02): a collector reads
+      # this single file off the release instead of cross-referencing GHCR, the release
+      # notes, and rebuilt-from-source bytes to work out what belongs to this release.
+      # `kind` distinguishes an OCI reference (locator+digest, pulled from the registry)
+      # from a plain downloadable file (file+sha256, this release's own asset) -- the
+      # scratch/bridge roles stay OCI per that decision; only the shape is standardized.
+      - name: Build release manifest
         env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
           RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
           SCRATCH_DIGEST: ${{ steps.scratch.outputs.digest }}
           BRIDGE_DIGEST: ${{ steps.bridge.outputs.digest }}
         run: |
-          scratch_ref="ghcr.io/naohiro2g/mc-remote-scratch@${SCRATCH_DIGEST}"
-          bridge_ref="ghcr.io/naohiro2g/mc-remote-bridge@${BRIDGE_DIGEST}"
-          docker buildx imagetools inspect --raw "$scratch_ref" > scratch-manifest.json
-          docker buildx imagetools inspect --raw "$bridge_ref" > bridge-manifest.json
+          wirescope_zip_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.zip | cut -d' ' -f1)"
+          wirescope_manifest_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.manifest.json | cut -d' ' -f1)"
+          contracts_sha256="$(sha256sum contracts.tar.gz | cut -d' ' -f1)"
           jq -n \
-            --arg source_revision "$RELEASE_COMMIT" \
-            --arg scratch "$scratch_ref" \
-            --arg scratch_amd64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' scratch-manifest.json)" \
-            --arg scratch_arm64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' scratch-manifest.json)" \
-            --arg bridge "$bridge_ref" \
-            --arg bridge_amd64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "amd64") | .digest' bridge-manifest.json)" \
-            --arg bridge_arm64 "$(jq -r '.manifests[] | select(.platform.os == "linux" and .platform.architecture == "arm64") | .digest' bridge-manifest.json)" \
-            '{source_revision: $source_revision, images: {scratch: {index: $scratch, linux_amd64: $scratch_amd64, linux_arm64: $scratch_arm64}, bridge: {index: $bridge, linux_amd64: $bridge_amd64, linux_arm64: $bridge_arm64}}}' \
-            > mc-remote-image-identities.json
+            --arg release_tag "$RELEASE_TAG" \
+            --arg source_commit "$RELEASE_COMMIT" \
+            --arg scratch_locator "ghcr.io/naohiro2g/mc-remote-scratch" \
+            --arg scratch_digest "$SCRATCH_DIGEST" \
+            --arg bridge_locator "ghcr.io/naohiro2g/mc-remote-bridge" \
+            --arg bridge_digest "$BRIDGE_DIGEST" \
+            --arg wirescope_sha256 "$wirescope_zip_sha256" \
+            --arg wirescope_manifest_sha256 "$wirescope_manifest_sha256" \
+            --arg contracts_sha256 "$contracts_sha256" \
+            '{
+              release_tag: $release_tag,
+              source_commit: $source_commit,
+              artifacts: [
+                {role: "scratch", kind: "oci", locator: $scratch_locator, digest: $scratch_digest},
+                {role: "bridge", kind: "oci", locator: $bridge_locator, digest: $bridge_digest},
+                {role: "wirescope", kind: "https-file", file: "wirescope-app.zip", sha256: $wirescope_sha256},
+                {role: "wirescope-manifest", kind: "https-file", file: "wirescope-app.manifest.json", sha256: $wirescope_manifest_sha256},
+                {role: "contracts", kind: "https-file", file: "contracts.tar.gz", sha256: $contracts_sha256}
+              ]
+            }' \
+            > manifest.json
 
       # Release assets, not workflow-run artifacts: workflow-run artifacts expire
       # (90 days) and aren't reachable from the release page. The release is meant to
       # be the one place a collector looks, the same way it already is for the
       # McRemote plugin JAR.
-      - name: Attach image identities and WireScope artifact to the release
+      - name: Attach manifest and files to the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ steps.release.outputs.tag }}" \
-            mc-remote-image-identities.json \
+            manifest.json \
+            contracts.tar.gz \
             mc-remote/live/dist/artifacts/wirescope-app.zip \
             mc-remote/live/dist/artifacts/wirescope-app.manifest.json \
             --repo "${{ github.repository }}" \
