@@ -126,9 +126,9 @@ fixture. The scratch-vm McRemote extension does **not** import `@mc-remote/proto
 at build time and keeps the wire constants inline. The bridge also avoids protocol imports so that it stays a
 payload-transparent transport proxy.
 
-McRemote OCI images are built only by the explicit `mc-remote-images.yml` workflow. Scratch packages the
-prebuilt `scratch-gui/build` directory with `Dockerfile.mc-remote`; Bridge packages its prebuilt `dist` and
-lock-installed runtime dependency. Do not compile source on a deployment host.
+McRemote OCI images are built by the `mc-remote-images.yml` workflow, which runs when a McRemote release is
+published. Scratch packages the prebuilt `scratch-gui/build` directory with `Dockerfile.mc-remote`; Bridge
+packages its prebuilt `dist` and lock-installed runtime dependency.
 
 ## Packages at a glance
 
