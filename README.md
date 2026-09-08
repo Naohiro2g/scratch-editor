@@ -1,135 +1,94 @@
-# scratch-editor: The Scratch Editor Monorepo
+# scratch-editor (McRemote Fork)
 
-If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
-Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.
+マイクラリモコン（Minecraft Remote / mc-remote）のためのWeb版Scratchエディタです。ブラウザだけで最新のマインクラフトの世界をプログラミング・遠隔操作できます。
 
-This is a source code repository for the packages that make up the Scratch editor and a few additional support
-packages. Use this if you'd like to learn about how the Scratch editor works or to contribute to its development.
+> [!NOTE]
+> **🌐 言語方針について / Language Policy**  
+> 本リポジトリは、一次情報（SSOT）の鮮度と正確性を保つため、日本語を正本として記述しています。多言語参加やIssue/PRの利用方針については [主要言語についての方針転換 / Language Policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) をご覧ください。  
+> *This repository is maintained in Japanese as its primary Single Source of Truth (SSOT). Multi-language contributions are welcome. Please see our [Language Policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md).*
 
-## McRemote fork
+---
 
-This fork adds Minecraft Remote (McRemote), a Scratch extension for controlling a Minecraft/Paper server through
-the McRemote plugin. The browser editor connects over WSS to the payload-transparent Bridge, which relays the
-JSON-RPC stream to the plugin over TCP. WireScope can observe a sanitized, read-only view of that stream.
+## 3分で動かす（ブラウザ最短クイックスタート）
 
-The current published beta is McRemote Scratch `2300.0.0b6`, using protocol `23.0.0`. Its exact prerelease identity
-and artifact declarations are in the
-[`v2300.0.0b6` release notes](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2300.0.0b6).
+ソフトウェアのインストールは不要です。PCやタブレット（iPad等）のブラウザですぐに動かせます。
 
-### Start the editor from source
+### Step 1: Web版エディタを開く
 
-Install the workspace dependencies and start the Scratch GUI from the repository root:
+👉 **[Web版エディタ（scratch-beta）を開く](https://scratch-beta.mc-remote.com/)**
 
-```sh
+### Step 2: マインクラフトを起動して箱庭サーバーに接続
+
+1. マインクラフトを起動し、「マルチプレイ」を選択します。
+2. サーバーアドレスに公式箱庭サーバー **`sb-beta.mc-remote.com`** を入力して接続します。
+3. **推奨バージョン**: Java版 **1.21.1**
+4. **統合版（Bedrock / Switch / iPad / スマホ等）で接続する場合**:
+   - サーバーアドレス: `sb-beta.mc-remote.com`
+   - **ポート番号: `25565`**（※通常の統合版ポート 19132 ではなく、Java版と同じ 25565 に変更してください）
+   - > [!WARNING]
+     > マインクラフト統合版の大型アップデート直後は、Geyser/Floodgateの追従待ちのため数日間接続できなくなる場合があります。
+
+### Step 3: Scratchから接続して動かす
+
+1. Scratchエディタ画面の左下にある **「拡張機能を追加」** アイコンをクリックし、**「Minecraft Remote」** を選択します。
+2. ブロックパレットの `マインクラフトに接続する` ブロックをクリックして実行します。
+3. 画面下部のWireScope miniペインに `/mcremote pair NNN-NNN`（数字6桁）が表示されます。
+4. マインクラフト内のチャットを開き、そのコマンドを貼り付けてEnterキーを押します。
+5. ペアリングが完了したら、`マインクラフトのチャットに [こんにちは] と表示する` ブロックを実行します。マイクラのチャットにメッセージが表示されれば成功です！
+
+---
+
+## 主な機能と特徴
+
+- **ブラウザ自動保存**: 作成したプロジェクトはブラウザ（IndexedDB）に自動保存されます。メニューの **「ファイル」→「ブラウザ保存した作品」** からいつでも再開・管理できます。通常の `.sb3` ファイルとしての保存・読み込みにも対応しています。
+- **WireScope（パケット観察）**: ブラウザとマインクラフトの間でどのような通信（JSON-RPC 2.0メッセージ）が行われているかを、WireScope画面でリアルタイムに観察できます。プログラミングと同時にネットワーク通信の仕組みを学ぶことができます。
+- **豊富なマイクラ操作ブロック**:
+  - ブロックの設置・取得（自動建築）
+  - プレイヤーの座標移動・向きの制御
+  - 看板のテキスト書き込み・読み取り
+  - 落雷（ライトニング）やパーティクルの演出
+  - ツルハシでブロックを叩いたイベントの検知
+
+---
+
+## 開発者向け情報（ソースコードからの起動）
+
+ローカル環境でScratchエディタをビルド・起動する手順です。
+
+```bash
+git clone https://github.com/Naohiro2g/scratch-editor.git
+cd scratch-editor
 npm ci
 npm start
 ```
 
-Open <http://localhost:8601/>. The checked-in
-[`mc-remote-runtime-config.json`](packages/scratch-gui/static/mc-remote-runtime-config.json) selects the Bridge,
-Sandbox, connection availability, WireScope URL, and notices for local development. Starting the editor does not
-start Minecraft, the McRemote plugin, or the Bridge; the selected deployment must provide a compatible protocol
-23 server path. The public GitHub Pages build is a showcase whose Minecraft connection is deliberately disabled.
+ブラウザで `http://localhost:8601/` を開きます。  
+*(※ローカル開発時の接続先設定は `packages/scratch-gui/static/mc-remote-runtime-config.json` で管理されます)*
 
-For a self-hosted path, build and configure the
-[`@mc-remote/bridge`](mc-remote/bridge/README.md) separately. WireScope local development is described in the
-[`@mc-remote/live` README](mc-remote/live/README.md).
+### リポジトリ構成とUpstream（MIT Scratch）との関係
 
-### Shortest b6 success
+本リポジトリは、MITメディアラボによる [Scratch Editor Monorepo (`scratchfoundation/scratch-editor`)](https://github.com/scratchfoundation/scratch-editor) の公式フォークです。
 
-This path makes no persistent world change, so it needs no world cleanup:
+- **`mc-remote/`**: McRemote固有の独立パッケージ群
+  - `protocol`: TypeScript型定義およびワイヤ契約
+  - `bridge`: ブラウザ（WSS）とマイクラサーバー（TCP）を繋ぐ中継プロキシ
+  - `live`: 通信観察ツール WireScope
+- **`packages/scratch-vm/src/extensions/scratch3_mcremote/`**: Scratch VM内のMcRemote拡張機能
+- **`packages/scratch-gui/`**: McRemote向けUI統合（接続パネル、WireScope miniなど）
+- その他の `packages/*` は上流Scratch monorepoに追従しています。
 
-1. Open a connection-enabled McRemote Scratch deployment and add the Minecraft Remote extension.
-2. Run the `connect` block. If the browser has no valid session token, WireScope mini shows a pairing command in
-   the form `/mcremote pair NNN-NNN`.
-3. Enter that command in Minecraft chat as the player to pair, then wait for the Scratch connection to complete.
-4. Run `say [Hello from Scratch] in chat`.
+---
 
-Expected result: the paired Minecraft session shows `Hello from Scratch`. The pairing session token is scoped to
-the selected connection target; it is not saved inside the Scratch project.
+## 関連プロジェクト & 設計思想
 
-### Saving
+- **プロジェクト公式サイト**: [mc-remote.com](https://mc-remote.com/)（カリキュラム全体像、Python版案内、開発ロードマップ）
+- **ナレッジベース & 設計正本 (SSOT)**: [Naohiro2g/mc-remote-knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)
+  - Scratchクライアント設計仕様: [`13-scratch-client/`](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/13-scratch-client)
+  - 作品の保存・移送設計: [`13-scratch-client/scratch-project-storage-transfer-design_ja.md`](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-project-storage-transfer-design_ja.md)
+  - 通信プロトコル仕様: [`10-protocol/`](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/10-protocol)
 
-Projects are automatically saved to IndexedDB in the current browser and origin. Use **File → Browser-saved
-projects** to restore or delete them. Save an individual sprite with **Save to browser** in the sprite context menu,
-then restore or delete it from **File → Browser-saved sprites**. These records contain project or sprite data, not
-McRemote credentials, connection targets, or WireScope observations. Standard `.sb3` download and upload remain
-available for file transfer. Clearing site data or using another browser or origin does not carry browser-saved
-records across; export a file when transfer or backup matters.
+---
 
-### WireScope
+## ライセンス
 
-WireScope is the read-only observer app in [`mc-remote/live`](mc-remote/live). Build and preview it from the root:
-
-```sh
-npm run build --workspace=@mc-remote/live
-npm run preview --workspace=@mc-remote/live
-```
-
-The default preview is <http://127.0.0.1:4173/>. It must use an origin distinct from the Scratch editor. Connect
-Scratch to Minecraft first, then open WireScope from the connected WireScope mini panel; direct navigation
-intentionally receives no observation capability. WireScope does not send Minecraft commands and does not save
-observer sessions or transport state.
-
-### Fork and upstream boundary
-
-McRemote-specific packages live under `mc-remote/`; the Scratch VM extension lives under
-`packages/scratch-vm/src/extensions/scratch3_mcremote/`, with its UI integration in `packages/scratch-gui/`.
-Everything else continues to track the Scratch editor monorepo. McRemote is a fork feature: it is not part of the
-Scratch website or the upstream `scratchfoundation/scratch-editor` product. Keep generally useful Scratch changes
-separable from McRemote product behavior when contributing upstream.
-
-## What's in this repository?
-
-The `packages` directory in this repository contains:
-
-- `scratch-gui` provides the buttons, menus, and other elements that you interact with when creating and editing a
-  project. It's also the "glue" that brings most of the other modules together at runtime.
-- `scratch-media-lib-scripts` builds (or rebuilds) media libraries for the editor.
-- `scratch-paint` provides a way to draw vector (SVG) or bitmap (PNG) images for costumes and backdrops.
-- `scratch-render` draws backdrops, sprites, and clones on the stage.
-- `scratch-storage` helps load project assets like images and sounds. It also provides `ScratchFetch`, a customized
-  wrapper around `fetch`.
-- `scratch-svg-renderer` processes SVG (vector) images for use with Scratch projects.
-- `scratch-vm` is the virtual machine that runs Scratch projects.
-- `task-herder` manages queues of tasks with throttling and concurrency limits.
-
-The McRemote fork also contains private workspace packages under `mc-remote/`:
-
-- `protocol` mirrors the versioned McRemote wire contract as dependency-free TypeScript types and fixtures.
-- `bridge` is the payload-transparent WSS-to-TCP proxy used by browser clients.
-- `live` is the WireScope browser app, observer schema, and source/station adapters.
-
-_Please add to this list as more packages are migrated to the monorepo._
-
-Each package has its own `README.md` file with more information about that package.
-
-## Monorepo migration
-
-### What's going on?
-
-We're migrating the Scratch editor packages into this monorepo. This will allow us to manage all the packages that
-make up the Scratch editor in one place, making  it easier to manage dependencies and make changes that affect
-multiple packages.
-
-### Why are there only a few packages in this repo?
-
-We're migrating packages in stages. The current plan, which is subject to change, has us migrating repositories in
-four batches. We plan to complete the migration within 2025.
-
-### What will happen to the existing repositories?
-
-The existing repositories will be archived and made read-only. Those repositories contain valuable work and
-information, including but not limited to issues and pull requests. We plan to keep that information available for
-reference, and to selectively migrate it to this new repository.
-
-## Thank you
-
-Scratch would not be what it is today without help from the global community of Scratchers and open-source
-contributors. Thank you for your contributions and support. _[Scratch on!](https://scratch.mit.edu/projects/65347738/fullscreen/)_
-
-## Donate
-
-We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a
-[donation](https://www.scratchfoundation.org/donate) to support our continued engineering, design, community, and
-resource development efforts. Donations of any size are appreciated. Thank you!
+本リポジトリのコードは、上流Scratchのライセンス（GPL-2.0 / MIT等）に準拠しています。McRemote固有パッケージのうち、WireScope (`@mc-remote/live`) は **AGPL-3.0-only** です。詳細は各パッケージの `package.json` およびライセンス表示を参照してください。
