@@ -15,13 +15,13 @@
 
 ### Step 1: Web版エディタを開く
 
-👉 **[Web版エディタ（scratch-beta）を開く](https://scratch-beta.mc-remote.com/)**
+👉 **[Web版エディタ（scratch-beta）を開く](https://scratch-beta.mc-remote.com/?extension=mcremote)**
 
 ### Step 2: マインクラフトを起動して箱庭サーバーに接続
 
 1. マインクラフトを起動し、「マルチプレイ」を選択します。
 2. サーバーアドレスに公式箱庭サーバー **`sb-beta.mc-remote.com`** を入力して接続します。
-3. **推奨バージョン**: Java版 **1.21.1**
+3. **推奨バージョン**: Java版 **1.21.1**（RC移行時に最新版へ追従予定）
 4. **統合版（Bedrock / Switch / iPad / スマホ等）で接続する場合**:
    - サーバーアドレス: `sb-beta.mc-remote.com`
    - **ポート番号: `25565`**（※通常の統合版ポート 19132 ではなく、Java版と同じ 25565 に変更してください）
@@ -30,11 +30,16 @@
 
 ### Step 3: Scratchから接続して動かす
 
-1. Scratchエディタ画面の左下にある **「拡張機能を追加」** アイコンをクリックし、**「Minecraft Remote」** を選択します。
-2. ブロックパレットの `マインクラフトに接続する` ブロックをクリックして実行します。
-3. 画面下部のWireScope miniペインに `/mcremote pair NNN-NNN`（数字6桁）が表示されます。
-4. マインクラフト内のチャットを開き、そのコマンドを貼り付けてEnterキーを押します。
-5. ペアリングが完了したら、`マインクラフトのチャットに [こんにちは] と表示する` ブロックを実行します。マイクラのチャットにメッセージが表示されれば成功です！
+1. Scratchエディタで「Minecraft Remote」拡張機能のブロックパレットを開きます。
+2. `マインクラフトに接続する` ブロックをクリックして実行します。
+3. 画面下部のWireScope miniペインに表示されたペアリングコマンド `/mcremote pair NNN-NNN`（数字6桁）をマインクラフト内のチャットに貼り付けてEnterキーを押します（先頭にスペースが入らないよう注意）。
+4. ペアリングが完了したら、以下のブロックを連結して実行します：
+   - `建築原点(X, Y, Z)を (200) , (0) , (200) にする`
+   - `プレイヤーを x: (200) y: (100) z: (200) へ移動する`
+   - `チャットに [Hello, Minecraft!] と言う`
+   - `x: (5) y: (67) z: (5) に ブロックID (sea_lantern) 状態 () を置く`
+5. プレイヤーが `(200, 100, 200)` へ移動し、チャットが表示され、建築原点からの相対座標 `(5, 67, 5)`（絶対座標 `(205, 67, 205)`）にシーランタンが光れば成功です！  
+   *(※これは公式Pythonクライアント `minecraft-remote-api` のクイックスタートと全く同一の動作・座標です)*
 
 ---
 
@@ -81,7 +86,7 @@ npm start
 
 ## 関連プロジェクト & 設計思想
 
-- **プロジェクト公式サイト**: [mc-remote.com](https://mc-remote.com/)（カリキュラム全体像、Python版案内、開発ロードマップ）
+- **プロジェクト公式サイト**: [mc-remote.com](https://mc-remote.com/)（探究の全体像、Python版案内、開発ロードマップ）
 - **ナレッジベース & 設計正本 (SSOT)**: [Naohiro2g/mc-remote-knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)
   - Scratchクライアント設計仕様: [`13-scratch-client/`](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/13-scratch-client)
   - 作品の保存・移送設計: [`13-scratch-client/scratch-project-storage-transfer-design_ja.md`](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-project-storage-transfer-design_ja.md)
