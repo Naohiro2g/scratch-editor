@@ -105,7 +105,7 @@ const mcremoteMessages = {
         'mcremote.pairCommand': 'ペアリングコマンド',
         'mcremote.whenPaired': 'ペアリングできたとき',
         'mcremote.setDimension': '建築する次元を [DIMENSION] にする',
-        'mcremote.setBuildOrigin': '建築原点(X, Y, Z)を [X], 0, [Z] にする',
+        'mcremote.setBuildOrigin': '建築原点 (x, y, z) を[X],  0,  [Z]にする',
         'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
         'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
         'mcremote.buildMode.debug': 'DEBUG（確認）',
@@ -115,21 +115,21 @@ const mcremoteMessages = {
         'mcremote.dimension.nether': 'ネザー',
         'mcremote.dimension.theEnd': 'エンド',
         'mcremote.postToChat': 'チャットに [MSG] と言う',
-        'mcremote.setBlock': 'x:[X] y:[Y] z:[Z] に ブロックID [BLOCK] 状態 [STATE] を置く [PICKER]',
+        'mcremote.setBlock': 'x :[X]  y :[Y]  z :[Z] に ブロックID [BLOCK] 状態 [STATE] を置く [PICKER]',
         'mcremote.setBlocks':
-            'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] まで ブロックID [BLOCK] 状態 [STATE] を置く [PICKER]',
-        'mcremote.getBlock': 'x:[X] y:[Y] z:[Z] のブロック情報',
+            'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] まで ブロックID [BLOCK] 状態 [STATE] を置く [PICKER]',
+        'mcremote.getBlock': 'x :[X]  y :[Y]  z :[Z] のブロック情報',
         'mcremote.getBlocks':
-            'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] までのブロック情報を [LIST] に入れる',
-        'mcremote.getHeight': 'x:[X] z:[Z] の地面の高さ',
-        'mcremote.getHeightBelow': 'x:[X] z:[Z] の y:[MAX_Y] 以下の地面の高さ',
+            'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] までのブロック情報を [LIST] に入れる',
+        'mcremote.getHeight': 'x :[X]  z :[Z] の地面の高さ',
+        'mcremote.getHeightBelow': 'x :[X]  z :[Z] の y :[MAX_Y] 以下の地面の高さ',
         'mcremote.blockInfoId': '[BLOCK_INFO] のブロックID',
         'mcremote.blockInfoState': '[BLOCK_INFO] の状態',
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] の状態 [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] に状態 [PROPERTY] がある',
-        'mcremote.getSign': 'x:[X] y:[Y] z:[Z] の看板情報',
-        'mcremote.setSign': 'x:[X] y:[Y] z:[Z] の看板の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
-        'mcremote.updateSignLine': 'x:[X] y:[Y] z:[Z] の看板の[FACE] [LINE]を [TEXT] にする',
+        'mcremote.getSign': '看板 x :[X]  y :[Y]  z :[Z] の情報',
+        'mcremote.setSign': '看板 x :[X]  y :[Y]  z :[Z] の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
+        'mcremote.updateSignLine': '看板 x :[X]  y :[Y]  z :[Z] の[FACE] [LINE]を [TEXT] にする',
         'mcremote.signLineText': '[SIGN_INFO] の[FACE] [LINE]の文字',
         'mcremote.signLineColor': '[SIGN_INFO] の[FACE] [LINE]の色',
         'mcremote.signLineHasDecoration': '[SIGN_INFO] の[FACE] [LINE]に[DECORATION]がある',
@@ -147,17 +147,17 @@ const mcremoteMessages = {
         'mcremote.signDecoration.underlined': '下線',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
         'mcremote.spawnParticle':
-            'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ ' +
-            'x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する',
+            'パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ ' +
+            'x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する',
         'mcremote.particleVisibility.far': '遠くにも表示',
         'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
-            'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] に生成し ハンドルを [VARIABLE] に入れる',
+            'エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] に生成し ハンドルを [VARIABLE] に入れる',
         'mcremote.playerDirection': 'プレイヤーの向き [AXIS]',
-        'mcremote.setPlayerDirection': 'プレイヤーの向きを x [X] y [Y] z [Z] にする',
+        'mcremote.setPlayerDirection': 'プレイヤーの向きを x[X]  y[Y]  z[Z] にする',
         'mcremote.entityDirection': 'エンティティ [HANDLE] の向き [AXIS]',
-        'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x [X] y [Y] z [Z] にする',
-        'mcremote.strikeLightning': 'x [X] y [Y] z [Z] に雷を落とす',
+        'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする',
+        'mcremote.strikeLightning': '雷を x :[X]  y :[Y]  z :[Z] に落とす',
         'mcremote.whenPickaxePoke': 'ツルハシでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットが投稿されたとき',
         'mcremote.whenProjectileHit': '飛び道具が当たったとき',
@@ -198,10 +198,10 @@ const mcremoteMessages = {
         'mcremote.playerAttribute.z': 'z座標',
         'mcremote.playerAttribute.yaw': '水平方向',
         'mcremote.playerAttribute.pitch': '上下方向',
-        'mcremote.setPlayerPos': 'プレイヤーを [DIMENSION] x:[X] y:[Y] z:[Z] へ移動する',
+        'mcremote.setPlayerPos': 'プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] へ移動する',
         'mcremote.setPlayerPose':
-            'プレイヤーを [DIMENSION] x:[X] y:[Y] z:[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する',
-        'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へ移動する'
+            'プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する',
+        'mcremote.setPlayerXYZ': 'プレイヤーを x :[X]  y :[Y]  z :[Z] へ移動する'
     },
     'ja-Hira': {
         // Editor UI strings (not McRemote-specific) that scratch-l10n's
@@ -288,7 +288,7 @@ const mcremoteMessages = {
         'mcremote.pairCommand': 'ペアリングコマンド',
         'mcremote.whenPaired': 'ペアリングできたとき',
         'mcremote.setDimension': 'けんちくするじげんを [DIMENSION] にする',
-        'mcremote.setBuildOrigin': 'けんちくのげんてん (X, Y, Z) を [X], 0, [Z] にする',
+        'mcremote.setBuildOrigin': 'けんちくのげんてん (x, y, z) を[X],  0,  [Z]にする',
         'mcremote.setBuildMode': 'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
         'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ',
         'mcremote.buildMode.debug': 'DEBUG（かくにん）',
@@ -299,21 +299,21 @@ const mcremoteMessages = {
         'mcremote.dimension.theEnd': 'エンド',
         'mcremote.postToChat': 'チャットに [MSG] という',
         'mcremote.setBlock':
-            'x:[X] y:[Y] z:[Z] に ブロックID [BLOCK] じょうたい [STATE] をおく [PICKER]',
+            'x :[X]  y :[Y]  z :[Z] に ブロックID [BLOCK] じょうたい [STATE] をおく [PICKER]',
         'mcremote.setBlocks':
-            'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] まで ブロックID [BLOCK] じょうたい [STATE] をおく [PICKER]',
-        'mcremote.getBlock': 'x:[X] y:[Y] z:[Z] のブロックじょうほう',
+            'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] まで ブロックID [BLOCK] じょうたい [STATE] をおく [PICKER]',
+        'mcremote.getBlock': 'x :[X]  y :[Y]  z :[Z] のブロックじょうほう',
         'mcremote.getBlocks':
-            'x:[X1] y:[Y1] z:[Z1] から x:[X2] y:[Y2] z:[Z2] までのブロックじょうほうを [LIST] にいれる',
-        'mcremote.getHeight': 'x:[X] z:[Z] のじめんのたかさ',
-        'mcremote.getHeightBelow': 'x:[X] z:[Z] の y:[MAX_Y] いかのじめんのたかさ',
+            'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] までのブロックじょうほうを [LIST] にいれる',
+        'mcremote.getHeight': 'x :[X]  z :[Z] のじめんのたかさ',
+        'mcremote.getHeightBelow': 'x :[X]  z :[Z] の y :[MAX_Y] いかのじめんのたかさ',
         'mcremote.blockInfoId': '[BLOCK_INFO] のブロックID',
         'mcremote.blockInfoState': '[BLOCK_INFO] のじょうたい',
         'mcremote.blockInfoStateProperty': '[BLOCK_INFO] のじょうたい [PROPERTY]',
         'mcremote.blockInfoHasStateProperty': '[BLOCK_INFO] にじょうたい [PROPERTY] がある',
-        'mcremote.getSign': 'x:[X] y:[Y] z:[Z] のかんばんじょうほう',
-        'mcremote.setSign': 'x:[X] y:[Y] z:[Z] のかんばんの[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
-        'mcremote.updateSignLine': 'x:[X] y:[Y] z:[Z] のかんばんの[FACE] [LINE]を [TEXT] にする',
+        'mcremote.getSign': 'かんばん x :[X]  y :[Y]  z :[Z] のじょうほう',
+        'mcremote.setSign': 'かんばん x :[X]  y :[Y]  z :[Z] の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
+        'mcremote.updateSignLine': 'かんばん x :[X]  y :[Y]  z :[Z] の[FACE] [LINE]を [TEXT] にする',
         'mcremote.signLineText': '[SIGN_INFO] の[FACE] [LINE]のもじ',
         'mcremote.signLineColor': '[SIGN_INFO] の[FACE] [LINE]のいろ',
         'mcremote.signLineHasDecoration': '[SIGN_INFO] の[FACE] [LINE]に[DECORATION]がある',
@@ -331,17 +331,17 @@ const mcremoteMessages = {
         'mcremote.signDecoration.underlined': 'かせん',
         'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
         'mcremote.spawnParticle':
-            'パーティクル [PARTICLE] を x:[X] y:[Y] z:[Z] ずれ ' +
-            'x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] はやさ:[SPEED] かず:[COUNT] ひょうじ:[FORCE] でだす',
+            'パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ ' +
+            'x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] はやさ:[SPEED] かず:[COUNT] ひょうじ:[FORCE] でだす',
         'mcremote.particleVisibility.far': 'とおくにもひょうじ',
         'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
-            'エンティティ [ENTITY] を x:[X] y:[Y] z:[Z] にだして ハンドルを [VARIABLE] にいれる',
+            'エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] にだして ハンドルを [VARIABLE] にいれる',
         'mcremote.playerDirection': 'プレイヤーのむき [AXIS]',
-        'mcremote.setPlayerDirection': 'プレイヤーのむきを x [X] y [Y] z [Z] にする',
+        'mcremote.setPlayerDirection': 'プレイヤーのむきを x[X]  y[Y]  z[Z] にする',
         'mcremote.entityDirection': 'エンティティ [HANDLE] のむき [AXIS]',
-        'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x [X] y [Y] z [Z] にする',
-        'mcremote.strikeLightning': 'x [X] y [Y] z [Z] にかみなりをおとす',
+        'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x[X]  y[Y]  z[Z] にする',
+        'mcremote.strikeLightning': 'かみなりを x :[X]  y :[Y]  z :[Z] におとす',
         'mcremote.whenPickaxePoke': 'つるはしでブロックがつつかれたとき',
         'mcremote.whenChatPosted': 'チャットがとうこうされたとき',
         'mcremote.whenProjectileHit': 'とびどうぐがあたったとき',
@@ -382,10 +382,10 @@ const mcremoteMessages = {
         'mcremote.playerAttribute.z': 'zざひょう',
         'mcremote.playerAttribute.yaw': 'よこのむき',
         'mcremote.playerAttribute.pitch': 'うえしたのむき',
-        'mcremote.setPlayerPos': 'プレイヤーを [DIMENSION] x:[X] y:[Y] z:[Z] へうごかす',
+        'mcremote.setPlayerPos': 'プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] へうごかす',
         'mcremote.setPlayerPose':
-            'プレイヤーを [DIMENSION] x:[X] y:[Y] z:[Z] よこのむき:[YAW] うえしたのむき:[PITCH] へうごかす',
-        'mcremote.setPlayerXYZ': 'プレイヤーを x:[X] y:[Y] z:[Z] へうごかす'
+            'プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] よこのむき:[YAW] うえしたのむき:[PITCH] へうごかす',
+        'mcremote.setPlayerXYZ': 'プレイヤーを x :[X]  y :[Y]  z :[Z] へうごかす'
     }
 };
 

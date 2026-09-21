@@ -21,11 +21,15 @@ describe('McRemote Japanese localization', () => {
             'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。',
             'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
             'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
+            'mcremote.setBuildOrigin': '建築原点 (x, y, z) を[X],  0,  [Z]にする',
+            'mcremote.setBlock': 'x :[X]  y :[Y]  z :[Z] に ブロックID [BLOCK] 状態 [STATE] を置く [PICKER]',
+            'mcremote.getSign': '看板 x :[X]  y :[Y]  z :[Z] の情報',
+            'mcremote.setSign': '看板 x :[X]  y :[Y]  z :[Z] の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする',
             'mcremote.playerDirection': 'プレイヤーの向き [AXIS]',
-            'mcremote.setPlayerDirection': 'プレイヤーの向きを x [X] y [Y] z [Z] にする',
+            'mcremote.setPlayerDirection': 'プレイヤーの向きを x[X]  y[Y]  z[Z] にする',
             'mcremote.entityDirection': 'エンティティ [HANDLE] の向き [AXIS]',
-            'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x [X] y [Y] z [Z] にする',
-            'mcremote.strikeLightning': 'x [X] y [Y] z [Z] に雷を落とす',
+            'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする',
+            'mcremote.strikeLightning': '雷を x :[X]  y :[Y]  z :[Z] に落とす',
             'mcremote.buildMode.trace': 'TRACE（過程）',
             'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
             'gui.alerts.mcremoteBuildDeliveryFailed':
@@ -49,6 +53,31 @@ describe('McRemote Japanese localization', () => {
         }
     });
 
+    test('formats coordinate axes with a spaced colon directly before their inputs in Japanese', () => {
+        const coordinateMessageIds = [
+            'mcremote.setBlock',
+            'mcremote.setBlocks',
+            'mcremote.getBlock',
+            'mcremote.getBlocks',
+            'mcremote.getHeight',
+            'mcremote.getHeightBelow',
+            'mcremote.getSign',
+            'mcremote.setSign',
+            'mcremote.updateSignLine',
+            'mcremote.spawnParticle',
+            'mcremote.spawnEntity',
+            'mcremote.strikeLightning',
+            'mcremote.setPlayerPos',
+            'mcremote.setPlayerPose',
+            'mcremote.setPlayerXYZ'
+        ];
+        for (const locale of ['ja', 'ja-Hira']) {
+            for (const id of coordinateMessageIds) {
+                expect(mcremoteMessages[locale][id]).toMatch(/\bx :\[X(?:1)?\]/);
+            }
+        }
+    });
+
     test('provides kanji-free translations for the Japanese Hiragana locale', () => {
         expect(mcremoteMessages['ja-Hira']).toMatchObject({
             'gui.extension.mcremote.description':
@@ -62,10 +91,10 @@ describe('McRemote Japanese localization', () => {
                 'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
             'mcremote.flushBuildCommands': 'おくったブロックせっちがおわるまでまつ',
             'mcremote.playerDirection': 'プレイヤーのむき [AXIS]',
-            'mcremote.setPlayerDirection': 'プレイヤーのむきを x [X] y [Y] z [Z] にする',
+            'mcremote.setPlayerDirection': 'プレイヤーのむきを x[X]  y[Y]  z[Z] にする',
             'mcremote.entityDirection': 'エンティティ [HANDLE] のむき [AXIS]',
-            'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x [X] y [Y] z [Z] にする',
-            'mcremote.strikeLightning': 'x [X] y [Y] z [Z] にかみなりをおとす'
+            'mcremote.setEntityDirection': 'エンティティ [HANDLE] のむきを x[X]  y[Y]  z[Z] にする',
+            'mcremote.strikeLightning': 'かみなりを x :[X]  y :[Y]  z :[Z] におとす'
         });
         for (const message of Object.values(mcremoteMessages['ja-Hira'])) {
             expect(message).not.toMatch(/[\u3400-\u9fff]/u);

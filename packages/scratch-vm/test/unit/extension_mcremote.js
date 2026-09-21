@@ -930,8 +930,26 @@ test('setBuildOrigin block shows the fixed y value', t => {
     global.localStorage.clear();
     const blocks = new McRemote({});
     const setBuildOrigin = blocks.getInfo().blocks.find(block => block.opcode === 'setBuildOrigin');
-    t.equal(setBuildOrigin.text, 'set build origin (X, Y, Z) to [X], 0, [Z]');
+    t.equal(setBuildOrigin.text, 'set build origin (x, y, z) to [X],  0,  [Z]');
     t.same(Object.keys(setBuildOrigin.arguments), ['X', 'Z']);
+    t.end();
+});
+
+test('position coordinates use spaced colons while direction vectors stay compact', t => {
+    const info = new McRemote({}).getInfo();
+    const blocks = Object.fromEntries(info.blocks
+        .filter(block => typeof block !== 'string')
+        .map(block => [block.opcode, block]));
+    for (const opcode of [
+        'setBlock', 'setBlocks', 'getBlock', 'getBlocks', 'getHeight', 'getHeightBelow',
+        'getSign', 'setSign', 'updateSignLine', 'spawnParticle', 'spawnEntity', 'strikeLightning',
+        'setPlayerPos', 'setPlayerPose', 'setPlayerXYZ'
+    ]) {
+        t.match(blocks[opcode].text, /\bx :\[X(?:1)?\]/, `${opcode} formats its x position as "x :"`);
+    }
+    for (const opcode of ['setPlayerDirection', 'setEntityDirection']) {
+        t.match(blocks[opcode].text, /\bx\[X\]/, `${opcode} keeps its vector component compact`);
+    }
     t.end();
 });
 
@@ -974,13 +992,13 @@ test('b7 direction and full-lightning blocks expose the fixed learner surface', 
     t.equal(blocks.playerDirection.blockType, 'reporter');
     t.equal(blocks.playerDirection.text, 'player direction [AXIS]');
     t.equal(blocks.setPlayerDirection.blockType, 'command');
-    t.equal(blocks.setPlayerDirection.text, 'set player direction to x [X] y [Y] z [Z]');
+    t.equal(blocks.setPlayerDirection.text, 'set player direction to x[X]  y[Y]  z[Z]');
     t.equal(blocks.entityDirection.blockType, 'reporter');
     t.equal(blocks.entityDirection.text, 'direction [AXIS] of entity [HANDLE]');
     t.equal(blocks.setEntityDirection.blockType, 'command');
-    t.equal(blocks.setEntityDirection.text, 'set direction of entity [HANDLE] to x [X] y [Y] z [Z]');
+    t.equal(blocks.setEntityDirection.text, 'set direction of entity [HANDLE] to x[X]  y[Y]  z[Z]');
     t.equal(blocks.strikeLightning.blockType, 'command');
-    t.equal(blocks.strikeLightning.text, 'strike lightning at x [X] y [Y] z [Z]');
+    t.equal(blocks.strikeLightning.text, 'strike lightning at x :[X]  y :[Y]  z :[Z]');
     t.same(info.menus.directionAxes.items.map(item => item.value), ['x', 'y', 'z']);
     t.notOk(blocks.strikeLightningEffect, 'effect-only lightning is not public');
     t.end();

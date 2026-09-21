@@ -1,3 +1,6 @@
+import configureContinuousFlyout from './configure-continuous-flyout';
+import configureMcRemoteBlockRendering from './configure-mcremote-block-rendering';
+
 /**
  * Connect scratch blocks with the vm
  * @param {VirtualMachine} vm - The scratch vm
@@ -5,6 +8,9 @@
  */
 export default function (vm) {
     const ScratchBlocks = require('scratch-blocks');
+
+    configureContinuousFlyout(ScratchBlocks);
+    configureMcRemoteBlockRendering(ScratchBlocks);
 
     const jsonForMenuBlock = function (name, menuOptionsFn, category, start) {
         return {

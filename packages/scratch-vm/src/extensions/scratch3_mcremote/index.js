@@ -539,7 +539,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBuildOrigin',
-                        default: 'set build origin (X, Y, Z) to [X], 0, [Z]',
+                        default: 'set build origin (x, y, z) to [X],  0,  [Z]',
                         description: 'Set the x and z coordinates of the build origin, with y fixed at 0'
                     }),
                     arguments: {
@@ -597,7 +597,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlock',
-                        default: 'set block at x:[X] y:[Y] z:[Z] to ID [BLOCK] state [STATE] [PICKER]',
+                        default: 'set block at x :[X]  y :[Y]  z :[Z] to ID [BLOCK] state [STATE] [PICKER]',
                         description: 'Set a single block using separate block ID and StateText inputs'
                     }),
                     arguments: {
@@ -614,7 +614,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setBlocks',
-                        default: 'set blocks from x:[X1] y:[Y1] z:[Z1] to x:[X2] y:[Y2] z:[Z2] ' +
+                        default: 'set blocks from x :[X1]  y :[Y1]  z :[Z1] to x :[X2]  y :[Y2]  z :[Z2] ' +
                             'as ID [BLOCK] state [STATE] [PICKER]',
                         description: 'Fill a cuboid using separate block ID and StateText inputs'
                     }),
@@ -635,7 +635,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.getBlock',
-                        default: 'block information at x:[X] y:[Y] z:[Z]',
+                        default: 'block information at x :[X]  y :[Y]  z :[Z]',
                         description: 'Get one immutable block information snapshot at a position'
                     }),
                     arguments: {
@@ -649,8 +649,8 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.getBlocks',
-                        default: 'put block information from x:[X1] y:[Y1] z:[Z1] to ' +
-                            'x:[X2] y:[Y2] z:[Z2] in [LIST]',
+                        default: 'put block information from x :[X1]  y :[Y1]  z :[Z1] to ' +
+                            'x :[X2]  y :[Y2]  z :[Z2] in [LIST]',
                         description: 'Replace a selected Scratch list with one bounded block information query'
                     }),
                     arguments: {
@@ -668,7 +668,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.getHeight',
-                        default: 'ground height at x:[X] z:[Z]',
+                        default: 'ground height at x :[X]  z :[Z]',
                         description: 'Get the highest ground surface in one Minecraft column'
                     }),
                     arguments: {
@@ -681,7 +681,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.getHeightBelow',
-                        default: 'ground height at x:[X] z:[Z] at or below y:[MAX_Y]',
+                        default: 'ground height at x :[X]  z :[Z] at or below y :[MAX_Y]',
                         description: 'Get the highest ground surface at or below an inclusive maximum y'
                     }),
                     arguments: {
@@ -745,7 +745,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.getSign',
-                        default: 'sign information at x:[X] y:[Y] z:[Z]',
+                        default: 'sign information at x :[X]  y :[Y]  z :[Z]',
                         description: 'Get one immutable sign information snapshot at a position'
                     }),
                     arguments: {
@@ -759,7 +759,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setSign',
-                        default: 'set sign [FACE] at x:[X] y:[Y] z:[Z] to [LINE0] [LINE1] [LINE2] [LINE3]',
+                        default: 'set sign [FACE] at x :[X]  y :[Y]  z :[Z] to [LINE0] [LINE1] [LINE2] [LINE3]',
                         description: 'Replace all four lines of one sign face with plain text'
                     }),
                     arguments: {
@@ -778,7 +778,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.updateSignLine',
-                        default: 'set sign [FACE] line [LINE] at x:[X] y:[Y] z:[Z] to [TEXT]',
+                        default: 'set sign [FACE] line [LINE] at x :[X]  y :[Y]  z :[Z] to [TEXT]',
                         description: 'Replace one sign line with plain text, keeping the other three lines'
                     }),
                     arguments: {
@@ -862,8 +862,8 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.spawnParticle',
-                        default: 'spawn particle [PARTICLE] at x:[X] y:[Y] z:[Z] ' +
-                            'offset x:[OFFSET_X] y:[OFFSET_Y] z:[OFFSET_Z] ' +
+                        default: 'spawn particle [PARTICLE] at x :[X]  y :[Y]  z :[Z] ' +
+                            'offset x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] ' +
                             'speed:[SPEED] count:[COUNT] visibility:[FORCE]',
                         description: 'Spawn data-free particles at an origin-relative position'
                     }),
@@ -889,7 +889,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.spawnEntity',
-                        default: 'spawn entity [ENTITY] at x:[X] y:[Y] z:[Z] and put its handle in [VARIABLE]',
+                        default: 'spawn entity [ENTITY] at x :[X]  y :[Y]  z :[Z] and put its handle in [VARIABLE]',
                         description: 'Spawn one entity and store its connection-scoped handle in a variable'
                     }),
                     arguments: {
@@ -922,7 +922,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerDirection',
-                        default: 'set player direction to x [X] y [Y] z [Z]',
+                        default: 'set player direction to x[X]  y[Y]  z[Z]',
                         description: 'Set the paired player direction and validate the post-read direction'
                     }),
                     arguments: {
@@ -953,7 +953,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setEntityDirection',
-                        default: 'set direction of entity [HANDLE] to x [X] y [Y] z [Z]',
+                        default: 'set direction of entity [HANDLE] to x[X]  y[Y]  z[Z]',
                         description: 'Set an entity direction by opaque handle and validate the post-read direction'
                     }),
                     arguments: {
@@ -968,7 +968,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.strikeLightning',
-                        default: 'strike lightning at x [X] y [Y] z [Z]',
+                        default: 'strike lightning at x :[X]  y :[Y]  z :[Z]',
                         description: 'Strike full lightning, which can cause damage, fire, lightning rod and copper ' +
                             'reactions, events, and entity changes'
                     }),
@@ -1063,7 +1063,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerPos',
-                        default: 'move player to [DIMENSION] x:[X] y:[Y] z:[Z]',
+                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z]',
                         description: 'Teleport the paired player to a dimension and position'
                     }),
                     arguments: {
@@ -1082,7 +1082,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerPose',
-                        default: 'move player to [DIMENSION] x:[X] y:[Y] z:[Z] yaw:[YAW] pitch:[PITCH]',
+                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
                         description: 'Teleport the paired player to a dimension, position and orientation'
                     }),
                     arguments: {
@@ -1103,7 +1103,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
                         id: 'mcremote.setPlayerXYZ',
-                        default: 'move player to x:[X] y:[Y] z:[Z]',
+                        default: 'move player to x :[X]  y :[Y]  z :[Z]',
                         description: 'Teleport the paired player within the player\'s current dimension'
                     }),
                     arguments: {
