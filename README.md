@@ -1,25 +1,27 @@
 # scratch-editor: The Scratch Editor Monorepo
 
 > [!NOTE]
-> このリポジトリは、Scratch エディターに「マイクラリモコン」のブロックを加えた版です。
+> このリポジトリの Scratch エディターは、マイクラリモコンのクライアントです。
+> ブロックで作った命令を、ゲームとは別の接続でマインクラフトサーバーへ送ります。
 > [公式サイト](https://mc-remote.com/)から使い始められます。この版の使い方は
 > [マイクラリモコン版の案内](README_mc-remote.md)、コードの見方は
-> [実装の案内](mc-remote/README_ja.md)をご覧ください。
+> [実装の案内](mc-remote/README.md)をご覧ください。
 >
-> This fork adds Minecraft Remote blocks to the Scratch editor. Start at the
+> This fork makes the Scratch editor a Minecraft Remote client. It sends block commands
+> to the Minecraft server through a connection separate from the game. Start at the
 > [project website](https://mc-remote.com/), or read the [guide to this fork](README_mc-remote.md)
-> and its [code map](mc-remote/README_ja.md).
+> and its [code map](mc-remote/README.md).
 >
 > 公開文書の[言語方針](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md)もご覧ください。
 > See the [language policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) for public documentation.
 
 ## マイクラリモコン版を開く / Open the Minecraft Remote edition
 
-- [公式サイト](https://mc-remote.com/)：マインクラフトに接続して使うエディターへの入口
-- [ショーケース](https://naohiro2g.github.io/scratch-editor/)：画面とブロックの見本。マインクラフトへの接続は無効
+- [公式サイト](https://mc-remote.com/)：マイクラリモコンでマインクラフトに接続して使うエディターへの入口
+- [ショーケース](https://naohiro2g.github.io/scratch-editor/)：画面とブロックの見本。マイクラリモコンの接続は無効
 
 The [project website](https://mc-remote.com/) leads to the connected editor. The
-[showcase](https://naohiro2g.github.io/scratch-editor/) previews the interface and blocks with Minecraft connection disabled.
+[showcase](https://naohiro2g.github.io/scratch-editor/) previews the interface and blocks with the Minecraft Remote connection disabled.
 
 ソースコードを手元で動かすには、Node.js（[`.nvmrc`](.nvmrc) の版）を用意して次を実行します。新規に複製した場合は、各パッケージの成果物を作るため `npm run build` が必要です。
 
@@ -34,9 +36,9 @@ npm run build
 npm start
 ```
 
-ブラウザで <http://localhost:8601/> を開きます。これは開発用画面です。既定ではマインクラフトへの接続が無効なので、実際に遊ぶ場合は公式サイトのエディターを使ってください。
+ブラウザで <http://localhost:8601/> を開きます。これは開発用画面です。既定ではマイクラリモコンの接続が無効なので、実際に遊ぶ場合は公式サイトのエディターを使ってください。
 
-Open <http://localhost:8601/> in a browser. The local development editor has Minecraft connection disabled by default. Use the editor linked from the project website to play. The original Scratch Foundation README continues below.
+Open <http://localhost:8601/> in a browser. The local development editor has the Minecraft Remote connection disabled by default. Use the editor linked from the project website to play. The original Scratch Foundation README continues below.
 
 If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
 Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.

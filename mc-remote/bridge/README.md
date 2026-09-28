@@ -1,11 +1,11 @@
 # 中継（Bridge）
 
-このパッケージは、ブラウザの Scratch エディターとマインクラフト側の McRemote プラグインをつなぎます。ブラウザ側の WebSocket とサーバー側の TCP の間で通信を中継します。[このリポジトリのコード地図](../README_ja.md)から、ほかの部品との関係を確認できます。
+このパッケージは、ブラウザの Scratch エディターとマインクラフト側の McRemote プラグインをつなぎます。ブラウザ側の WebSocket と McRemote プラグインの TCP ポートの間で通信を中継します。[このリポジトリのコード地図](../README.md)から、ほかの部品との関係を確認できます。
 
 ## 役割と境界
 
 - 通常の WebSocket メッセージを、改行で区切る TCP メッセージへ変換します。認証前のペアリングに限り、`one-shot-v1` の中継用包みを外します。
-- 接続元（Origin）と接続先サーバー（Sandbox）の許可リストを確認します。
+- 接続元（Origin）と接続先のマインクラフトサーバー（Sandbox）の許可リストを確認します。
 - 通常の命令、結果、認証の内容は解釈しません。命令の意味と応答は McRemote プラグインが決めます。
 
 公開環境では、Bridge の前段が TLS を終端します。接続先の選択肢は、エディターの `mc-remote-runtime-config.json` と Bridge の設定で揃える必要があります。通信形式と配備上の判断は[knowledge の設計文書](https://github.com/Naohiro2g/mc-remote-knowledge)を参照してください。

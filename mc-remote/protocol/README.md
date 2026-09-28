@@ -2,7 +2,7 @@
 
 このパッケージは、マイクラリモコンの通信形式を TypeScript の型と定数に写したものです。命令名、`hello` の形、エラーの形、JSON-RPC 2.0 の外枠を扱います。仕様の正本は [knowledge の通信設計](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/10-protocol)です。このパッケージだけで新しい通信仕様を決めません。
 
-[このリポジトリのコード地図](../README_ja.md)に、Scratch エディターやほかの部品との関係があります。
+[このリポジトリのコード地図](../README.md)に、Scratch エディターやほかの部品との関係があります。
 
 ## 役割と検証
 
