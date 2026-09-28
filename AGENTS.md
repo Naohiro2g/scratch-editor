@@ -52,8 +52,9 @@ Use these defaults unless the user asks otherwise:
 1. Keep changes minimal and scoped to the user request. Do not refactor surrounding code, add features, or clean up
    style in areas you weren't asked to touch.
 2. Do not preserve backward compatibility when it isn't required. When all callers are internal to a package,
-   rename or restructure freely. All packages in this repo are published to npm and consumed externally, so treat
-   each package's public exports as a contract and preserve compatibility unless explicitly told otherwise.
+   rename or restructure freely. The `@scratch/` packages are published to npm and consumed externally, so treat
+   their public exports as a contract and preserve compatibility unless explicitly told otherwise. The
+   `@mc-remote/` packages in this fork are private.
 3. Write comments that explain the current code, not its history. Do not reference prior implementations,
    intermediate states, or what the code "used to do." If an approach seems counterintuitive, explain why it is
    correct now — not why it changed.
@@ -76,8 +77,16 @@ Use these defaults unless the user asks otherwise:
 `scratch-editor` is an npm workspaces monorepo containing the packages that make up the Scratch editor. It was
 assembled by migrating previously separate repositories into a single repo.
 
-All packages are published to npm under the `@scratch/` scope. They are consumed both internally (e.g.,
-`scratch-www` loads `scratch-gui`) and by third parties.
+The `@scratch/` packages are published to npm. They are consumed both internally (e.g., `scratch-www` loads
+`scratch-gui`) and by third parties. The `@mc-remote/` packages are private additions in this fork.
+
+## Documentation entry points
+
+- `README.md` preserves the upstream README after a short bilingual fork introduction and local-start guide.
+- `README_mc-remote.md` guides people who want to try, revisit, or develop the McRemote edition.
+- `mc-remote/README_ja.md` maps the McRemote code in this repository; package READMEs cover each component.
+- `Release.md` covers the upstream npm release process and distinguishes McRemote GitHub releases.
+- `SETUP_ja.md`, if present locally, is an ignored historical note. Do not use it as the current setup or deployment authority.
 
 ## Build and lint
 
