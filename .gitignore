@@ -138,3 +138,6 @@ CLAUDE.md
 
 # McRemote evidence handoff material generated in this dev repo.
 handoff-materials/
+
+# Local Obsidian workspace settings.
+.obsidian/

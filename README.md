@@ -1,16 +1,10 @@
 # scratch-editor: The Scratch Editor Monorepo
 
 > [!NOTE]
-> このリポジトリの Scratch エディターは、マイクラリモコンのクライアントです。
-> ブロックで作った命令を、ゲームとは別の接続でマインクラフトサーバーへ送ります。
-> [公式サイト](https://mc-remote.com/)から使い始められます。この版の使い方は
-> [マイクラリモコン版の案内](README_mc-remote.md)、コードの見方は
-> [実装の案内](mc-remote/README.md)をご覧ください。
+> このリポジトリの Scratch エディターは、マイクラリモコンのクライアントです。ブロックで作った命令を、ゲームとは別の接続でマインクラフトサーバーへ送ります。
+> [公式サイト](https://mc-remote.com/)から使い始められます。この版の使い方は [マイクラリモコン版の案内](README_mc-remote.md)、コードの見方は [実装の案内](mc-remote/README.md)をご覧ください。
 >
-> This fork makes the Scratch editor a Minecraft Remote client. It sends block commands
-> to the Minecraft server through a connection separate from the game. Start at the
-> [project website](https://mc-remote.com/), or read the [guide to this fork](README_mc-remote.md)
-> and its [code map](mc-remote/README.md).
+> This fork makes the Scratch editor a Minecraft Remote client. It sends block commands to the Minecraft server through a connection separate from the game. Start at the [project website](https://mc-remote.com/), or read the [guide to this fork](README_mc-remote.md) and its [code map](mc-remote/README.md).
 >
 > 公開文書の[言語方針](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md)もご覧ください。
 > See the [language policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) for public documentation.
