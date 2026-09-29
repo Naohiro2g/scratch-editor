@@ -15,13 +15,13 @@ npm run preview --workspace=@mc-remote/live
 
 ## コードと検証例
 
-| 場所 | 役割 |
-| --- | --- |
-| [`src/observer.ts`](src/observer.ts) | 表示してよい観察データの検証と整形 |
-| [`src/scratch-adapter.ts`](src/scratch-adapter.ts) | Scratch から観察対象を受け取る処理 |
+| 場所                                               | 役割                                         |
+| -------------------------------------------------- | -------------------------------------------- |
+| [`src/observer.ts`](src/observer.ts)               | 表示してよい観察データの検証と整形           |
+| [`src/scratch-adapter.ts`](src/scratch-adapter.ts) | Scratch から観察対象を受け取る処理           |
 | [`src/station-adapter.ts`](src/station-adapter.ts) | 同じ配信元の中継局から観察対象を受け取る処理 |
-| [`src/session.ts`](src/session.ts) | 観察の開始・更新・終了 |
-| [`test/fixtures/`](test/fixtures/) | 接続、表示名、観察の経過を確かめる共通例 |
+| [`src/session.ts`](src/session.ts)                 | 観察の開始・更新・終了                       |
+| [`test/fixtures/`](test/fixtures/)                 | 接続、表示名、観察の経過を確かめる共通例     |
 
 観察対象を渡す手順、データの形、対応する通信版の詳しい契約は [knowledge の WireScope 文書](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/15-wirescope)を正本とします。この README に通信方式や版ごとの命令一覧を複製しません。
 

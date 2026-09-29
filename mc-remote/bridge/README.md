@@ -21,11 +21,11 @@ npm start --workspace=mc-remote/bridge
 
 `npm run dev --workspace=mc-remote/bridge` は変更時に再ビルドします。テストは `npm test --workspace=mc-remote/bridge` です。接続先と待ち受けの設定項目は [`src/config.ts`](src/config.ts) にあります。
 
-| 設定項目 | 意味 |
-| --- | --- |
-| `BRIDGE_WS_HOST`、`BRIDGE_WS_PORT` | WebSocket の待ち受け |
-| `BRIDGE_ORIGIN_ALLOWLIST` | 接続を許すエディターの配信元 |
+| 設定項目                                             | 意味                                     |
+| ---------------------------------------------------- | ---------------------------------------- |
+| `BRIDGE_WS_HOST`、`BRIDGE_WS_PORT`                   | WebSocket の待ち受け                     |
+| `BRIDGE_ORIGIN_ALLOWLIST`                            | 接続を許すエディターの配信元             |
 | `BRIDGE_SANDBOX_ALLOWLIST`、`BRIDGE_DEFAULT_SANDBOX` | 接続を許すマインクラフトサーバーと既定値 |
-| `BRIDGE_SANDBOX_PORT` | マインクラフト側 McRemote 接続先のポート |
+| `BRIDGE_SANDBOX_PORT`                                | マインクラフト側 McRemote 接続先のポート |
 
 このパッケージは非公開の作業単位（workspace）です。公開用のコンテナー画像は [`.github/workflows/mc-remote-images.yml`](../../.github/workflows/mc-remote-images.yml) がビルド済みの `dist/` から作ります。
