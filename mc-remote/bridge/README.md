@@ -1,68 +1,31 @@
-# @mc-remote/bridge
+# 中継（Bridge）
 
-A thin, transparent **wss⇄TCP proxy** that lets the browser Scratch editor reach
-a McRemote Sandbox. The browser cannot open a plain `ws://` to an external host
-(mixed content) and the loopback exception is narrowing, so the editor connects
-over `wss://` to this bridge, which relays to the Sandbox's plain TCP port
-(scratch-plan §2.1).
+このパッケージは、ブラウザの Scratch エディターとマインクラフト側の McRemote プラグインをつなぎます。ブラウザ側の WebSocket と McRemote プラグインの TCP ポートの間で通信を中継します。[このリポジトリのコード地図](../README.md)から、ほかの部品との関係を確認できます。
 
-## What it does
+## 役割と境界
 
-- **Frame translation** — a normal WS message becomes one `\n`-terminated TCP
-  line (wire-format-design §2). For pre-auth pairing only, the Bridge removes a
-  `one-shot-v1` transport envelope and sends its embedded JSON-RPC string
-  unchanged on a fresh TCP generation.
-- **Exact browser transport** — the editor and Bridge negotiate
-  `mcremote.bridge.one-shot.v1` as a WebSocket subprotocol. Old/new artifact
-  mixtures fail before `hello` instead of silently losing a pairing request.
-- **Origin allowlist** — only editor Origins configured for that channel
-  complete the WS handshake.
-- **Sandbox allowlist** — the WSS connection URL names the Sandbox to dial
-  (for example, `?sandbox=sb-beta.mc-remote.com`); anything outside the allowlist
-  is refused, so the bridge can't be used as an SSRF / port-scan relay.
-- **Persistent-path push transparency** — `hello`, authenticated commands, and
-  credential management remain full-duplex and pass server→client messages
-  through without interpreting JSON-RPC semantics.
+- 通常の WebSocket メッセージを、改行で区切る TCP メッセージへ変換します。認証前のペアリングに限り、`one-shot-v1` の中継用包みを外します。
+- 接続元（Origin）と接続先のマインクラフトサーバー（Sandbox）の許可リストを確認します。
+- 通常の命令、結果、認証の内容は解釈しません。命令の意味と応答は McRemote プラグインが決めます。
 
-It does **not** parse protocol methods, params, results, or auth. Scratch chooses
-which pairing requests carry the transport hint; the McRemote plugin remains
-the protocol source of truth. The hint never reaches plugin TCP. TLS is
-terminated by Caddy in front, so the bridge listens on plain ws on localhost.
+公開環境では、Bridge の前段が TLS を終端します。接続先の選択肢は、エディターの `mc-remote-runtime-config.json` と Bridge の設定で揃える必要があります。通信形式と配備上の判断は[knowledge の設計文書](https://github.com/Naohiro2g/mc-remote-knowledge)を参照してください。
 
-## Run
+## 手元で動かす
+
+リポジトリのルートから実行します。
 
 ```sh
-npm run build --workspace=mc-remote/bridge   # bundle to dist/ (Node ES)
-npm start     --workspace=mc-remote/bridge   # node dist/main.js
-npm run dev   --workspace=mc-remote/bridge   # rebuild on change
+npm run build --workspace=mc-remote/bridge
+npm start --workspace=mc-remote/bridge
 ```
 
-Configuration is via environment variables (see `src/config.ts`):
-`BRIDGE_WS_HOST`, `BRIDGE_WS_PORT`, `BRIDGE_ORIGIN_ALLOWLIST`,
-`BRIDGE_SANDBOX_ALLOWLIST`, `BRIDGE_DEFAULT_SANDBOX`, `BRIDGE_SANDBOX_PORT`.
+`npm run dev --workspace=mc-remote/bridge` は変更時に再ビルドします。テストは `npm test --workspace=mc-remote/bridge` です。接続先と待ち受けの設定項目は [`src/config.ts`](src/config.ts) にあります。
 
-Each deployment profile must configure the same sandbox route set in the
-editor's `mc-remote-runtime-config.json` `connection_targets` and the Bridge's
-`BRIDGE_SANDBOX_ALLOWLIST`. `default_sandbox` and
-`BRIDGE_DEFAULT_SANDBOX` must both name one of those routes. For example, a
-beta editor may list stable and beta routes while its Bridge uses:
+| 設定項目                                             | 意味                                     |
+| ---------------------------------------------------- | ---------------------------------------- |
+| `BRIDGE_WS_HOST`、`BRIDGE_WS_PORT`                   | WebSocket の待ち受け                     |
+| `BRIDGE_ORIGIN_ALLOWLIST`                            | 接続を許すエディターの配信元             |
+| `BRIDGE_SANDBOX_ALLOWLIST`、`BRIDGE_DEFAULT_SANDBOX` | 接続を許すマインクラフトサーバーと既定値 |
+| `BRIDGE_SANDBOX_PORT`                                | マインクラフト側 McRemote 接続先のポート |
 
-```sh
-BRIDGE_ORIGIN_ALLOWLIST=https://scratch-beta.mc-remote.com
-BRIDGE_SANDBOX_ALLOWLIST=sb.mc-remote.com,sb-beta.mc-remote.com
-BRIDGE_DEFAULT_SANDBOX=sb-beta.mc-remote.com
-```
-
-The runtime JSON belongs to the deployment profile and can be replaced without
-rebuilding the editor. Public profiles must contain only publicly reachable
-DNS names; localhost and private-address routes belong only in private local
-profiles. DNS or the profile may change physical hosting without changing the
-channel name.
-
-Private — not published to npm.
-
-## OCI image
-
-The repository workflow builds the bridge output first, then packages only
-`dist/`, `package.json`, and the lock-installed production `ws` dependency. The
-runtime image does not compile source and runs as the non-root `node` user.
+このパッケージは非公開の作業単位（workspace）です。公開用のコンテナー画像は [`.github/workflows/mc-remote-images.yml`](../../.github/workflows/mc-remote-images.yml) がビルド済みの `dist/` から作ります。

@@ -1,99 +1,90 @@
-# scratch-editor (McRemote Fork)
-
-マイクラリモコン（Minecraft Remote / mc-remote）のためのWeb版Scratchエディタです。ブラウザだけで最新のマインクラフトの世界をプログラミング・遠隔操作できます。
+# scratch-editor: The Scratch Editor Monorepo
 
 > [!NOTE]
-> **🌐 言語方針について / Language Policy**  
-> 本リポジトリは、一次情報（SSOT）の鮮度と正確性を保つため、日本語を正本として記述しています。多言語参加やIssue/PRの利用方針については [主要言語についての方針転換 / Language Policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) をご覧ください。  
-> *This repository is maintained in Japanese as its primary Single Source of Truth (SSOT). Multi-language contributions are welcome. Please see our [Language Policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md).*
+> このリポジトリの Scratch エディターは、マイクラリモコンのクライアントです。ブロックで作った命令を、ゲームとは別の接続でマインクラフトサーバーへ送ります。
+> [公式サイト](https://mc-remote.com/)から使い始められます。この版の使い方は [マイクラリモコン版の案内](README_mc-remote.md)、コードの見方は [実装の案内](mc-remote/README.md)をご覧ください。
+>
+> This fork makes the Scratch editor a Minecraft Remote client. It sends block commands to the Minecraft server through a connection separate from the game. Start at the [project website](https://mc-remote.com/), or read the [guide to this fork](README_mc-remote.md) and its [code map](mc-remote/README.md).
+>
+> 公開文書の[言語方針](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md)もご覧ください。
+> See the [language policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) for public documentation.
 
----
+## マイクラリモコン版を開く / Open the Minecraft Remote edition
 
-## 3分で動かす（ブラウザ最短クイックスタート）
+- [公式サイト](https://mc-remote.com/)：マイクラリモコンでマインクラフトに接続して使うエディターへの入口
+- [ショーケース](https://naohiro2g.github.io/scratch-editor/)：画面とブロックの見本。マイクラリモコンの接続は無効
 
-ソフトウェアのインストールは不要です。PCやタブレット（iPad等）のブラウザですぐに動かせます。
+The [project website](https://mc-remote.com/) leads to the connected editor. The
+[showcase](https://naohiro2g.github.io/scratch-editor/) previews the interface and blocks with the Minecraft Remote connection disabled.
 
-### Step 1: Web版エディタを開く
+ソースコードを手元で動かすには、Node.js（[`.nvmrc`](.nvmrc) の版）を用意して次を実行します。新規に複製した場合は、各パッケージの成果物を作るため `npm run build` が必要です。
 
-👉 **[Web版エディタ（scratch-beta）を開く](https://scratch-beta.mc-remote.com/?extension=mcremote)**
+To run the source locally, install the Node.js version in [`.nvmrc`](.nvmrc) and use the commands below. A fresh clone
+needs `npm run build` to create the workspace packages' build outputs.
 
-### Step 2: マインクラフトを起動して箱庭サーバーに接続
-
-1. マインクラフトを起動し、「マルチプレイ」を選択します。
-2. サーバーアドレスに公式箱庭サーバー **`sb-beta.mc-remote.com`** を入力して接続します。
-3. **推奨バージョン**: Java版 **1.21.1**（RC移行時に最新版へ追従予定）
-4. **統合版（Bedrock / Switch / iPad / スマホ等）で接続する場合**:
-   - サーバーアドレス: `sb-beta.mc-remote.com`
-   - **ポート番号: `25565`**（※通常の統合版ポート 19132 ではなく、Java版と同じ 25565 に変更してください）
-   - > [!WARNING]
-     > マインクラフト統合版の大型アップデート直後は、Geyser/Floodgateの追従待ちのため数日間接続できなくなる場合があります。
-
-### Step 3: Scratchから接続して動かす
-
-1. Scratchエディタで「Minecraft Remote」拡張機能のブロックパレットを開きます。
-2. `マインクラフトに接続する` ブロックをクリックして実行します。
-3. 画面下部のWireScope miniペインに表示されたペアリングコマンド `/mcremote pair NNN-NNN`（数字6桁）をマインクラフト内のチャットに貼り付けてEnterキーを押します（先頭にスペースが入らないよう注意）。
-4. ペアリングが完了したら、以下のブロックを連結して実行します：
-   - `建築原点(X, Y, Z)を (200) , (0) , (200) にする`
-   - `プレイヤーを x: (200) y: (100) z: (200) へ移動する`
-   - `チャットに [Hello, Minecraft!] と言う`
-   - `x: (5) y: (67) z: (5) に ブロックID (sea_lantern) 状態 () を置く`
-5. プレイヤーが `(200, 100, 200)` へ移動し、チャットが表示され、建築原点からの相対座標 `(5, 67, 5)`（絶対座標 `(205, 67, 205)`）にシーランタンが光れば成功です！  
-   *(※これは公式Pythonクライアント `minecraft-remote-api` のクイックスタートと全く同一の動作・座標です)*
-
----
-
-## 主な機能と特徴
-
-- **ブラウザ自動保存**: 作成したプロジェクトはブラウザ（IndexedDB）に自動保存されます。メニューの **「ファイル」→「ブラウザ保存した作品」** からいつでも再開・管理できます。通常の `.sb3` ファイルとしての保存・読み込みにも対応しています。
-- **WireScope（パケット観察）**: ブラウザとマインクラフトの間でどのような通信（JSON-RPC 2.0メッセージ）が行われているかを、WireScope画面でリアルタイムに観察できます。プログラミングと同時にネットワーク通信の仕組みを学ぶことができます。
-- **豊富なマイクラ操作ブロック**:
-  - ブロックの設置・取得（自動建築）
-  - プレイヤーの座標移動・向きの制御
-  - 看板のテキスト書き込み・読み取り
-  - 落雷（ライトニング）やパーティクルの演出
-  - ツルハシでブロックを叩いたイベントの検知
-
----
-
-## 開発者向け情報（ソースコードからの起動）
-
-ローカル環境でScratchエディタをビルド・起動する手順です。
-
-```bash
+```sh
 git clone https://github.com/Naohiro2g/scratch-editor.git
 cd scratch-editor
 npm ci
+npm run build
 npm start
 ```
 
-ブラウザで `http://localhost:8601/` を開きます。  
-*(※ローカル開発時の接続先設定は `packages/scratch-gui/static/mc-remote-runtime-config.json` で管理されます)*
+ブラウザで <http://localhost:8601/> を開きます。これは開発用画面です。既定ではマイクラリモコンの接続が無効なので、実際に遊ぶ場合は公式サイトのエディターを使ってください。
 
-### リポジトリ構成とUpstream（MIT Scratch）との関係
+Open <http://localhost:8601/> in a browser. The local development editor has the Minecraft Remote connection disabled by default. Use the editor linked from the project website to play. The original Scratch Foundation README continues below.
 
-本リポジトリは、MITメディアラボによる [Scratch Editor Monorepo (`scratchfoundation/scratch-editor`)](https://github.com/scratchfoundation/scratch-editor) の公式フォークです。
+If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
+Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.
 
-- **`mc-remote/`**: McRemote固有の独立パッケージ群
-  - `protocol`: TypeScript型定義およびワイヤ契約
-  - `bridge`: ブラウザ（WSS）とマイクラサーバー（TCP）を繋ぐ中継プロキシ
-  - `live`: 通信観察ツール WireScope
-- **`packages/scratch-vm/src/extensions/scratch3_mcremote/`**: Scratch VM内のMcRemote拡張機能
-- **`packages/scratch-gui/`**: McRemote向けUI統合（接続パネル、WireScope miniなど）
-- その他の `packages/*` は上流Scratch monorepoに追従しています。
+This is a source code repository for the packages that make up the Scratch editor and a few additional support
+packages. Use this if you'd like to learn about how the Scratch editor works or to contribute to its development.
 
----
+## What's in this repository?
 
-## 関連プロジェクト & 設計思想
+The `packages` directory in this repository contains:
 
-- **プロジェクト公式サイト**: [mc-remote.com](https://mc-remote.com/)（探究の全体像、Python版案内、開発ロードマップ）
-- **ナレッジベース & 設計正本 (SSOT)**: [Naohiro2g/mc-remote-knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)
-  - Scratchクライアント設計仕様: [`13-scratch-client/`](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/13-scratch-client)
-  - 作品の保存・移送設計: [`13-scratch-client/scratch-project-storage-transfer-design_ja.md`](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-project-storage-transfer-design_ja.md)
-  - 通信プロトコル仕様: [`10-protocol/`](https://github.com/Naohiro2g/mc-remote-knowledge/tree/main/10-protocol)
+- `scratch-gui` provides the buttons, menus, and other elements that you interact with when creating and editing a
+  project. It's also the "glue" that brings most of the other modules together at runtime.
+- `scratch-media-lib-scripts` builds (or rebuilds) media libraries for the editor.
+- `scratch-paint` provides a way to draw vector (SVG) or bitmap (PNG) images for costumes and backdrops.
+- `scratch-render` draws backdrops, sprites, and clones on the stage.
+- `scratch-storage` helps load project assets like images and sounds. It also provides `ScratchFetch`, a customized
+  wrapper around `fetch`.
+- `scratch-svg-renderer` processes SVG (vector) images for use with Scratch projects.
+- `scratch-vm` is the virtual machine that runs Scratch projects.
+- `task-herder` manages queues of tasks with throttling and concurrency limits.
 
----
+_Please add to this list as more packages are migrated to the monorepo._
 
-## ライセンス
+Each package has its own `README.md` file with more information about that package.
 
-本リポジトリのコードは、上流Scratchのライセンス（GPL-2.0 / MIT等）に準拠しています。McRemote固有パッケージのうち、WireScope (`@mc-remote/live`) は **AGPL-3.0-only** です。詳細は各パッケージの `package.json` およびライセンス表示を参照してください。
+## Monorepo migration
+
+### What's going on?
+
+We're migrating the Scratch editor packages into this monorepo. This will allow us to manage all the packages that
+make up the Scratch editor in one place, making  it easier to manage dependencies and make changes that affect
+multiple packages.
+
+### Why are there only a few packages in this repo?
+
+We're migrating packages in stages. The current plan, which is subject to change, has us migrating repositories in
+four batches. We plan to complete the migration within 2025.
+
+### What will happen to the existing repositories?
+
+The existing repositories will be archived and made read-only. Those repositories contain valuable work and
+information, including but not limited to issues and pull requests. We plan to keep that information available for
+reference, and to selectively migrate it to this new repository.
+
+## Thank you
+
+Scratch would not be what it is today without help from the global community of Scratchers and open-source
+contributors. Thank you for your contributions and support. _[Scratch on!](https://scratch.mit.edu/projects/65347738/fullscreen/)_
+
+## Donate
+
+We provide [Scratch](https://scratch.mit.edu) free of charge, and want to keep it that way! Please consider making a
+[donation](https://www.scratchfoundation.org/donate) to support our continued engineering, design, community, and
+resource development efforts. Donations of any size are appreciated. Thank you!

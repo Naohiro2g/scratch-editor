@@ -1,8 +1,14 @@
 # Release process
 
+> [!NOTE]
+> 以下は上流由来の Scratch パッケージを npm へ公開する手順です。マイクラリモコン版 Scratch の
+> GitHub リリースは別系列で、タグ `v<mc-remote-version>` から表示名
+> `mc-remote Scratch <mc-remote-version>` を導出します。公開時に起動する
+> [`mc-remote-images.yml`](.github/workflows/mc-remote-images.yml) が表示名を設定します。
+
 _For maintainers of this monorepo._
 
-All packages in this monorepo are published to npm with a shared version number. Releases are produced by the
+The Scratch packages in this monorepo are published to npm with a shared version number. Releases are produced by the
 **Publish** workflow, triggered manually from the Actions tab. The next version number and the changelog are
 both computed from the Conventional Commits on the release branch.
 

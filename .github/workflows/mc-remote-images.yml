@@ -86,6 +86,17 @@ jobs:
         with:
           cache: npm
           node-version-file: .nvmrc
+
+      - name: Set mc-remote Scratch release title
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          node --test scripts/mcremote-scratch-release-title.test.mjs
+          TITLE="$(node scripts/mcremote-scratch-release-title.mjs "$TAG")"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --title "$TITLE"
+
       - uses: ./.github/actions/install-dependencies
 
       # Workspace packages consume each other's compiled dist in this declared order.
