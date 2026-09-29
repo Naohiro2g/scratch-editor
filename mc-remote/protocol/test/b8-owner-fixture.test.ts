@@ -1,4 +1,16 @@
 import { describe, expect, it } from 'vitest'
+import type {
+  EntityGetPoseParams,
+  EntityGetPoseResult,
+  EntityRemoveParams,
+  EntityRemoveResult,
+  EntitySetPoseParams,
+  EntitySetPoseResult,
+  GetNearbyEntitiesParams,
+  GetNearbyEntitiesResult,
+  SpawnParticleParams,
+} from '../src/index.ts'
+import { ERROR_REASON_CODE, ErrorCode, ErrorReason, Method, PROTOCOL_VERSION } from '../src/index.ts'
 import fixture from './fixtures/entity-particle-v23.2.json'
 
 interface Candidate {
@@ -35,7 +47,16 @@ describe('B8 shared owner fixture', () => {
       section: '5.8.3',
       decision: '2026-09-30-01',
     })
-    expect(fixture.protocol).toBe('23.2.0')
+    expect(fixture.protocol).toBe(PROTOCOL_VERSION)
+    expect(fixture.methods).toEqual({
+      nearby: Method.worldGetNearbyEntities,
+      get_pose: Method.entityGetPose,
+      set_pose: Method.entitySetPose,
+      remove: Method.entityRemove,
+      particle: Method.worldSpawnParticle,
+    })
+    expect(ErrorReason.particleDataUnsupported).toBe('particle_data_unsupported')
+    expect(ERROR_REASON_CODE[ErrorReason.particleDataUnsupported]).toBe(ErrorCode.invalidParams)
     const ids = [
       ...fixture.nearby.cases,
       ...fixture.nearby.handle_transaction_cases,
@@ -44,6 +65,29 @@ describe('B8 shared owner fixture', () => {
     ].map((item) => item.id)
     expect(ids).toHaveLength(59)
     expect(new Set(ids).size).toBe(ids.length)
+  })
+
+  it('mirrors the exact B8 method params and result shapes', () => {
+    const nearby = nearbyCase('B8-N02')
+    const nearbyParams: GetNearbyEntitiesParams = nearby.params as GetNearbyEntitiesParams
+    const nearbyResult: GetNearbyEntitiesResult = [{ handle: 'mcr_eh_cow', type: 'minecraft:cow', pos: [3, 4, 0] }]
+    const getPose: EntityGetPoseParams = fixture.entity_lifecycle.cases[0].params as EntityGetPoseParams
+    const getPoseResult: EntityGetPoseResult = fixture.entity_lifecycle.cases[0].result as EntityGetPoseResult
+    const setPose: EntitySetPoseParams = fixture.entity_lifecycle.cases[1].params as EntitySetPoseParams
+    const setPoseResult: EntitySetPoseResult = fixture.entity_lifecycle.cases[1].result as EntitySetPoseResult
+    const remove: EntityRemoveParams = fixture.entity_lifecycle.cases[3].params as EntityRemoveParams
+    const removeResult: EntityRemoveResult = fixture.entity_lifecycle.cases[3].result as EntityRemoveResult
+    const particle: SpawnParticleParams = fixture.particle_stage_2.cases[3].params as SpawnParticleParams
+
+    expect(nearbyParams).toEqual([0, 0, 0, 5, 2])
+    expect(nearbyResult).toEqual(nearby.result)
+    expect(getPose).toEqual(['mcr_eh_pose'])
+    expect(getPoseResult.dimension).toBe('minecraft:overworld')
+    expect(setPose).toHaveLength(7)
+    expect(setPoseResult.dimension).toBe('minecraft:the_nether')
+    expect(remove).toEqual(['mcr_eh_pose'])
+    expect(removeResult).toBeNull()
+    expect(particle[6]).toMatchObject({ particle_id: 'minecraft:dust', data: { color: [0, 0, 0], size: 0.01 } })
   })
 
   it('keeps the runtime defaults within the protocol caps', () => {

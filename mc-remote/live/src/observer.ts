@@ -24,6 +24,10 @@ export const OBSERVED_METHODS = [
   'entity.getDirection',
   'entity.setDirection',
   'world.strikeLightning',
+  'world.getNearbyEntities',
+  'entity.getPose',
+  'entity.setPose',
+  'entity.remove',
 ] as const
 
 export type ObservedMethod = (typeof OBSERVED_METHODS)[number]
@@ -346,6 +350,53 @@ const canonicalResourceId = (value: unknown, context: string): string => {
   return resourceId
 }
 
+const entityHandle = (value: unknown, context: string): string => {
+  const handle = requiredString(value, context)
+  if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context} must be an entity handle`)
+  return handle
+}
+
+const handleParam = (value: unknown, context: string): string => {
+  if (typeof value !== 'string') throw new Error(`${context} must be a string`)
+  return value
+}
+
+const parseParticleArgument = (value: unknown, context: string): unknown => {
+  if (typeof value === 'string') return canonicalResourceId(value, context)
+  const spec = objectValue(value, context)
+  exactFields(spec, ['particle_id', 'receiver', 'data'], context)
+  const particleId = canonicalResourceId(spec.particle_id, `${context}.particle_id`)
+  const parsed: Record<string, unknown> = { particle_id: particleId }
+  if (typeof spec.receiver !== 'undefined') {
+    if (spec.receiver !== 'world' && spec.receiver !== 'self') {
+      throw new Error(`${context}.receiver must be world or self`)
+    }
+    parsed.receiver = spec.receiver
+  }
+  if (Object.prototype.hasOwnProperty.call(spec, 'data')) {
+    if (particleId === 'minecraft:dust') {
+      const data = objectValue(spec.data, `${context}.data`)
+      exactFields(data, ['color', 'size'], `${context}.data`)
+      if (!Array.isArray(data.color) || data.color.length !== 3) {
+        throw new Error(`${context}.data.color must be an RGB tuple`)
+      }
+      const color = data.color.map((channel: unknown, index: number) => {
+        const number = integer(channel, `${context}.data.color[${index}]`)
+        if (number < 0 || number > 255) throw new Error(`${context}.data.color[${index}] must be 0..255`)
+        return number
+      })
+      const size = finiteNumber(data.size, `${context}.data.size`)
+      if (size < 0.01 || size > 4) throw new Error(`${context}.data.size must be 0.01..4`)
+      parsed.data = { color, size }
+    } else if (particleId === 'minecraft:block') {
+      parsed.data = parseBlock(spec.data, `${context}.data`, false)
+    } else {
+      throw new Error(`${context}.data is unsupported for ${particleId}`)
+    }
+  }
+  return parsed
+}
+
 const dimensionRef = (value: unknown, context: string): string => {
   const dimension = requiredString(value, context)
   if (!/^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(dimension)) {
@@ -589,7 +640,7 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     return [
       ...value.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
       ...value.slice(3, 6).map((item, index) => nonNegativeFiniteNumber(item, `frame.payload.params[${index + 3}]`)),
-      canonicalResourceId(value[6], 'frame.payload.params[6]'),
+      parseParticleArgument(value[6], 'frame.payload.params[6]'),
       nonNegativeFiniteNumber(value[7], 'frame.payload.params[7]'),
       nonNegativeInteger(value[8], 'frame.payload.params[8]'),
       ...(value.length === 10 ? [optionalBoolean(value[9], 'frame.payload.params[9]')] : []),
@@ -605,6 +656,32 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     return [
       params[0],
       ...params.slice(1).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 1}]`)),
+    ]
+  }
+  if (method === 'world.getNearbyEntities') {
+    const params = exactParams(value, 5)
+    const radius = finiteNumber(params[3], 'frame.payload.params[3]')
+    const maxEntities = integer(params[4], 'frame.payload.params[4]')
+    if (radius < 0 || radius > 64) throw new Error('frame.payload.params[3] must be 0..64')
+    if (maxEntities < 1 || maxEntities > 64) throw new Error('frame.payload.params[4] must be 1..64')
+    return [
+      ...params.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
+      radius,
+      maxEntities,
+    ]
+  }
+  if (method === 'entity.getPose' || method === 'entity.remove') {
+    return [handleParam(exactParams(value, 1)[0], 'frame.payload.params[0]')]
+  }
+  if (method === 'entity.setPose') {
+    const params = exactParams(value, 7)
+    const pitch = finiteNumber(params[6], 'frame.payload.params[6]')
+    if (pitch < -90 || pitch > 90) throw new Error('frame.payload.params[6] must be -90..90')
+    return [
+      handleParam(params[0], 'frame.payload.params[0]'),
+      dimensionRef(params[1], 'frame.payload.params[1]'),
+      ...params.slice(2, 6).map((item, index) => finiteNumber(item, `frame.payload.params[${index + 2}]`)),
+      pitch,
     ]
   }
   if (method === 'connection.flush') return exactParams(value, 0)
@@ -645,7 +722,13 @@ const parsePose = (
 const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'hello') return parseHello(value)
   if (method === 'player.getPos' || method === 'player.setPos') return parsePosition(value)
-  if (method === 'player.getPose' || method === 'player.setPose') return parsePose(value)
+  if (
+    method === 'player.getPose' ||
+    method === 'player.setPose' ||
+    method === 'entity.getPose' ||
+    method === 'entity.setPose'
+  )
+    return parsePose(value)
   if (method === 'build.setDimension' || method === 'build.setOrigin') {
     const context = objectValue(value, 'frame.payload.result')
     exactFields(context, ['dimension', 'origin'], 'frame.payload.result')
@@ -666,9 +749,20 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   if (method === 'world.getHeight') return integer(value, 'frame.payload.result')
   if (method === 'world.spawnParticle') return nonNegativeInteger(value, 'frame.payload.result')
   if (method === 'world.spawnEntity') {
-    const handle = requiredString(value, 'frame.payload.result')
-    if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error('frame.payload.result must be an entity handle')
-    return handle
+    return entityHandle(value, 'frame.payload.result')
+  }
+  if (method === 'world.getNearbyEntities') {
+    if (!Array.isArray(value)) throw new Error('frame.payload.result must be an array')
+    return value.map((item, index) => {
+      const context = `frame.payload.result[${index}]`
+      const entity = objectValue(item, context)
+      exactFields(entity, ['handle', 'type', 'pos'], context)
+      return {
+        handle: entityHandle(entity.handle, `${context}.handle`),
+        type: canonicalResourceId(entity.type, `${context}.type`),
+        pos: numberTuple(entity.pos, `${context}.pos`),
+      }
+    })
   }
   if (
     method === 'player.getDirection' ||
@@ -678,7 +772,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
   ) {
     return numberTuple(value, 'frame.payload.result')
   }
-  if (method === 'world.strikeLightning') {
+  if (method === 'world.strikeLightning' || method === 'entity.remove') {
     if (value !== null) throw new Error('frame.payload.result must be null')
     return null
   }
@@ -713,7 +807,10 @@ const parseFrame = (value: unknown): ObserverFrame => {
   if (
     requestId === null &&
     (frame.direction !== 'send' ||
-      (method !== 'world.setBlock' && method !== 'world.setBlocks' && method !== 'world.strikeLightning'))
+      (method !== 'world.setBlock' &&
+        method !== 'world.setBlocks' &&
+        method !== 'world.spawnParticle' &&
+        method !== 'world.strikeLightning'))
   ) {
     throw new Error('frame.request_id may be null only for a supported notification')
   }

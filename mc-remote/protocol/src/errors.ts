@@ -17,7 +17,7 @@ export const ErrorCode = {
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
 
-/** Stable `data.reason` enum carried on protocol errors through protocol 23.1. */
+/** Stable `data.reason` enum carried on protocol errors through protocol 23.2. */
 export const ErrorReason = {
   invalidParams: 'invalid_params',
   /** A player-bound authenticated operation has no bound identity. */
@@ -38,7 +38,10 @@ export const ErrorReason = {
   teleportFailed: 'teleport_failed',
   heightNotFound: 'height_not_found',
   unknownParticle: 'unknown_particle',
+  /** Typed particle data was omitted, including by the string shorthand. */
   particleDataRequired: 'particle_data_required',
+  /** An object supplied data for a registered typed particle outside B8's supported data forms. */
+  particleDataUnsupported: 'particle_data_unsupported',
   unknownEntity: 'unknown_entity',
   entityNotSpawnable: 'entity_not_spawnable',
   backpressure: 'backpressure',
@@ -75,6 +78,7 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.unknownDimension]: ErrorCode.invalidParams,
   [ErrorReason.unknownParticle]: ErrorCode.invalidParams,
   [ErrorReason.particleDataRequired]: ErrorCode.invalidParams,
+  [ErrorReason.particleDataUnsupported]: ErrorCode.invalidParams,
   [ErrorReason.unknownEntity]: ErrorCode.invalidParams,
   [ErrorReason.entityNotSpawnable]: ErrorCode.invalidParams,
   [ErrorReason.buildDenied]: ErrorCode.serverError,

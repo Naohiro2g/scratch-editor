@@ -70,7 +70,22 @@ export type GetBlocksResult = readonly BlockValue[]
 export type GetHeightParams = readonly [x: number, z: number] | readonly [x: number, z: number, maxY: number]
 export type GetHeightResult = number
 
-/** `world.spawnParticle` — spawn a data-free particle, defaulting force to true when omitted. */
+/** B8 Dust data: exact RGB channels and a positive particle size are checked by the server. */
+export interface DustParticleData {
+  readonly color: readonly [red: number, green: number, blue: number]
+  readonly size: number
+}
+
+/** B8 particle argument. Missing receiver means world; missing data means no typed data. */
+export interface ParticleSpec {
+  readonly particle_id: string
+  readonly receiver?: 'world' | 'self'
+  readonly data?: DustParticleData | BlockSpec
+}
+
+export type ParticleArgument = string | ParticleSpec
+
+/** `world.spawnParticle` — one point, defaulting force to true when omitted. */
 export type SpawnParticleParams =
   | readonly [
       x: number,
@@ -79,7 +94,7 @@ export type SpawnParticleParams =
       offsetX: number,
       offsetY: number,
       offsetZ: number,
-      particle: string,
+      particle: ParticleArgument,
       speed: number,
       count: number,
     ]
@@ -90,7 +105,7 @@ export type SpawnParticleParams =
       offsetX: number,
       offsetY: number,
       offsetZ: number,
-      particle: string,
+      particle: ParticleArgument,
       speed: number,
       count: number,
       force: boolean,
@@ -100,6 +115,40 @@ export type SpawnParticleResult = number
 /** `world.spawnEntity` — spawn one entity and return its connection-epoch handle. */
 export type SpawnEntityParams = readonly [x: number, y: number, z: number, entity: string]
 export type SpawnEntityResult = string
+
+/** `world.getNearbyEntities` — bounded sphere query in the current stream dimension. */
+export type GetNearbyEntitiesParams = readonly [x: number, y: number, z: number, radius: number, max_entities: number]
+
+export interface NearbyEntityValue {
+  readonly handle: string
+  readonly type: string
+  readonly pos: readonly [x: number, y: number, z: number]
+}
+
+export type GetNearbyEntitiesResult = readonly NearbyEntityValue[]
+
+/** `entity.*Pose` shares player pose's dimension, origin, and angle rules. */
+export interface EntityPoseValue {
+  readonly dimension: DimensionKey
+  readonly pos: readonly [x: number, y: number, z: number]
+  readonly yaw: number
+  readonly pitch: number
+}
+
+export type EntityGetPoseParams = readonly [handle: string]
+export type EntityGetPoseResult = EntityPoseValue
+export type EntitySetPoseParams = readonly [
+  handle: string,
+  dimension_ref: DimensionRef,
+  x: number,
+  y: number,
+  z: number,
+  yaw: number,
+  pitch: number,
+]
+export type EntitySetPoseResult = EntityPoseValue
+export type EntityRemoveParams = readonly [handle: string]
+export type EntityRemoveResult = null
 
 /** `connection.flush` — wait for earlier work in this connection epoch. */
 export type ConnectionFlushParams = readonly []

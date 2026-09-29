@@ -12,6 +12,9 @@ const dimensionsFixturePath = fileURLToPath(
 const b7FixturePath = fileURLToPath(
   new URL('../../protocol/test/fixtures/direction-lightning-v23.1.json', import.meta.url),
 )
+const b8FixturePath = fileURLToPath(
+  new URL('../../protocol/test/fixtures/entity-particle-v23.2.json', import.meta.url),
+)
 const eventsFixture = JSON.parse(readFileSync(eventsFixturePath, 'utf8')) as {
   poll_requests: { default: unknown[]; rejected: unknown[][] }
   poll_result: Record<string, unknown>
@@ -38,6 +41,13 @@ const b7Fixture = JSON.parse(readFileSync(b7FixturePath, 'utf8')) as {
   reasons: string[]
   rejected_methods: string[]
 }
+const b8Fixture = JSON.parse(readFileSync(b8FixturePath, 'utf8')) as {
+  protocol: string
+  methods: Record<string, string>
+  nearby: { cases: { id: string; params?: unknown[]; result?: unknown }[] }
+  entity_lifecycle: { cases: { id: string; method: string; params: unknown[]; result?: unknown }[] }
+  particle_stage_2: { cases: { id: string; params?: unknown[] }[] }
+}
 // spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
 // (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
 // use a protocol 23 handle here instead when exercising the current parser.
@@ -48,6 +58,114 @@ interface MutableSnapshotFixture {
 }
 
 describe('observer schema v1 compatibility set', () => {
+  test('accepts B8 entity lifecycle and typed particle frames from the owner fixture', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.streams[0].hello.protocol = b8Fixture.protocol
+    const nearby = b8Fixture.nearby.cases.find((item) => item.id === 'B8-N02')
+    const getPose = b8Fixture.entity_lifecycle.cases.find((item) => item.id === 'B8-E01')
+    const setPose = b8Fixture.entity_lifecycle.cases.find((item) => item.id === 'B8-E02')
+    const remove = b8Fixture.entity_lifecycle.cases.find((item) => item.id === 'B8-E04')
+    const dust = b8Fixture.particle_stage_2.cases.find((item) => item.id === 'B8-P04')
+    const block = b8Fixture.particle_stage_2.cases.find((item) => item.id === 'B8-P12')
+    if (
+      !nearby?.params ||
+      !nearby.result ||
+      !getPose?.result ||
+      !setPose?.result ||
+      !dust?.params ||
+      !block?.params ||
+      !remove
+    ) {
+      throw new Error('incomplete B8 owner fixture')
+    }
+    const exchanges = [
+      [b8Fixture.methods.nearby, nearby.params, nearby.result],
+      [getPose.method, getPose.params, getPose.result],
+      [setPose.method, setPose.params, setPose.result],
+      [remove.method, remove.params, remove.result],
+      [b8Fixture.methods.particle, dust.params, 1],
+      [b8Fixture.methods.particle, block.params, 1],
+    ] as const
+    snapshot.streams[0].frames = exchanges.flatMap(([method, params, result], index) => [
+      {
+        sequence: index * 2 + 1,
+        observed_at: index * 2 + 1,
+        direction: 'send',
+        request_id: index + 1,
+        method,
+        payload: { params },
+      },
+      {
+        sequence: index * 2 + 2,
+        observed_at: index * 2 + 2,
+        direction: 'receive',
+        request_id: index + 1,
+        method,
+        payload: { result },
+      },
+    ])
+    expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+  })
+
+  test('accepts B8 typed particle FAST notifications used by the 3D graph sample', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.streams[0].hello.protocol = b8Fixture.protocol
+    const dust = b8Fixture.particle_stage_2.cases.find((item) => item.id === 'B8-P04')
+    if (!dust?.params) throw new Error('incomplete B8 dust owner case')
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'send',
+        request_id: null,
+        method: b8Fixture.methods.particle,
+        payload: { params: dust.params },
+      },
+    ]
+    expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+  })
+
+  test('rejects B8 particle unknown fields and explicit null data while preserving an unsupported-data error', () => {
+    const lifecycle = JSON.parse(readFileSync(fixturePath, 'utf8')) as unknown[]
+    const snapshot = structuredClone(lifecycle[0]) as MutableSnapshotFixture
+    snapshot.streams[0].hello.protocol = b8Fixture.protocol
+    const frame = (particle: unknown) => ({
+      sequence: 1,
+      observed_at: 1,
+      direction: 'send',
+      request_id: 1,
+      method: b8Fixture.methods.particle,
+      payload: { params: [1, 2, 3, 0, 0, 0, particle, 0, 1] },
+    })
+    for (const particle of [
+      { particle_id: 'minecraft:dust', data: { color: [0, 0, 0], size: 0.01, alpha: 255 } },
+      { particle_id: 'minecraft:block', data: { block_id: 'minecraft:stone', state: {}, legacy: true } },
+      { particle_id: 'minecraft:flame', data: null },
+    ]) {
+      snapshot.streams[0].frames = [frame(particle)]
+      expect(() => parseObserverSnapshot(snapshot)).toThrow()
+    }
+    snapshot.streams[0].frames = [
+      {
+        sequence: 1,
+        observed_at: 1,
+        direction: 'receive',
+        request_id: 1,
+        method: b8Fixture.methods.particle,
+        payload: {
+          error: {
+            code: -32602,
+            message: 'Unsupported particle data',
+            data: { reason: 'particle_data_unsupported' },
+          },
+        },
+      },
+    ]
+    expect(parseObserverSnapshot(snapshot)).toEqual(snapshot)
+  })
+
   test('accepts the Scratch main-stream lifecycle fixture', () => {
     const lifecycle: unknown = JSON.parse(readFileSync(fixturePath, 'utf8'))
     expect(Array.isArray(lifecycle)).toBe(true)

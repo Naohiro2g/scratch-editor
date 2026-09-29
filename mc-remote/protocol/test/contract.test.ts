@@ -49,7 +49,7 @@ import spawnFixture from './fixtures/spawn-v22.json'
 
 describe('protocol constants', () => {
   it('advertises the clean protocol semver without a channel suffix', () => {
-    expect(PROTOCOL_VERSION).toBe('23.1.0')
+    expect(PROTOCOL_VERSION).toBe('23.2.0')
   })
 
   it('pins the JSON-RPC envelope version', () => {
@@ -92,7 +92,7 @@ describe('b7 direction and full lightning owner fixture', () => {
       path: '10-protocol/wire-format-design_ja.md',
       section: '5.8.2',
     })
-    expect(directionLightningFixture.protocol).toBe(PROTOCOL_VERSION)
+    expect(directionLightningFixture.protocol).toBe('23.1.0')
     expect(directionLightningFixture.methods).toMatchObject({
       player_get_direction: Method.playerGetDirection,
       player_set_direction: Method.playerSetDirection,

@@ -23,6 +23,7 @@ const REMOTE_ERROR_REASONS = new Set([
     'invalid_property_value',
     'not_a_sign',
     'particle_data_required',
+    'particle_data_unsupported',
     'permission_denied',
     'player_offline',
     'sign_update_failed',

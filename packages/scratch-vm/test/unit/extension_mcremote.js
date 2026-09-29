@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
+const {remoteErrorText} = require('../../src/extensions/scratch3_mcremote/block-value');
 const {
     DISPLAY_ALIAS_WORDS,
     createDisplayAlias
@@ -18,6 +19,7 @@ const directionLightningFixturePath = path.resolve(
     '../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json'
 );
 const directionLightningFixture = require(directionLightningFixturePath);
+const b8Fixture = require('../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json');
 const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
 
 // Read from the extension itself so this harness tracks the current protocol
@@ -234,7 +236,7 @@ const newConnectedBlocks = runtime => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -243,7 +245,7 @@ const newConnectedBlocks = runtime => {
     return connected.then(() => ({blocks, socket}));
 };
 
-test('hello uses a JSON-RPC 2.0 request with protocol 23.1.0', t => {
+test('hello uses a JSON-RPC 2.0 request with protocol 23.2.0', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -260,9 +262,9 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.1.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, directionLightningFixture.protocol, 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, b8Fixture.protocol, 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2301.0.0b7', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2320.0.0b8', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
@@ -323,7 +325,7 @@ test('connect uses the runtime-configured bridge and default sandbox without ove
         socket.url,
         'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
     );
-    t.equal(socket.lastSent().params.client.version, '2301.0.0b7');
+    t.equal(socket.lastSent().params.client.version, '2320.0.0b8');
     t.end();
 });
 
@@ -401,7 +403,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -417,7 +419,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
         t.equal(connected.sourceKind, 'scratch');
         t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -484,7 +486,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '26.1.2',
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
@@ -495,7 +497,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
 
     return result.then(() => {
         t.same(latestObservation(runtime).hello, {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '26.1.2',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -536,7 +538,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
-            t.equal(pairBegin.params.client.version, '2301.0.0b7');
+            t.equal(pairBegin.params.client.version, '2320.0.0b8');
             t.equal(latestObservation(runtime).status, 'pairing');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 2,
@@ -570,7 +572,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
-                    protocol: '23.1.0',
+                    protocol: '23.2.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -696,7 +698,7 @@ test('hello rejects an incompatible server protocol before commands can run', t 
     });
 });
 
-test('hello rejects a 23.0.x server as older than the 23.1 client', t => {
+test('hello rejects a 23.0.x server as older than the 23.2 client', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -704,7 +706,7 @@ test('hello rejects a 23.0.x server as older than the 23.1 client', t => {
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
     socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.0.99'}});
-    t.equal(blocks._isProtocolCompatible('23.1.99'), true, 'server patch is ignored');
+    t.equal(blocks._isProtocolCompatible('23.2.99'), true, 'server patch is ignored');
     return connection.then(
         () => t.fail('23.0.x must not be accepted'),
         error => {
@@ -776,7 +778,7 @@ test('connect block resolves without exposing the hello result', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -831,7 +833,7 @@ test('successful reconnect resets disconnected command guidance', async t => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             catalogHash: null
         }
     });
@@ -856,7 +858,7 @@ test('connect block reuses an in-flight connection instead of opening a duplicat
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -1015,7 +1017,7 @@ test('b7 Scratch surface maps directly to the owner fixture contract', t => {
         '586d24bf40136eec31f1827f23ef5b317f15100a17a635d7fe9f165e0af40dce',
         'successor owner fixture identity is unchanged'
     );
-    t.equal(directionLightningFixture.protocol, McRemote.PROTOCOL_VERSION);
+    t.equal(directionLightningFixture.protocol, '23.1.0');
     t.same([
         methods.player_get_direction,
         methods.player_set_direction,
@@ -1101,7 +1103,7 @@ test('reconnect reuses the sandbox token and starts build state from defaults', 
             nextSocket.fireMessage({jsonrpc: '2.0',
                 id: 1,
                 result: {
-                    protocol: '23.1.0',
+                    protocol: '23.2.0',
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -1130,7 +1132,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
         nextSocket.fireMessage({jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '23.1.0',
+                protocol: '23.2.0',
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash: null,
@@ -1718,7 +1720,7 @@ test('one connection poller dispatches mixed b6 events with per-thread context a
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -1886,6 +1888,14 @@ test('getBlock returns allowlisted ErrorText for a JSON-RPC error', t =>
         });
     })
 );
+
+test('B8 particle data error keeps its stable reason in ErrorText', t => {
+    t.equal(
+        remoteErrorText({reason: 'particle_data_unsupported'}),
+        '⟦mcr-error:particle_data_unsupported⟧'
+    );
+    t.end();
+});
 
 test('getBlock folds unknown remote reasons without reflecting server messages', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
@@ -2420,7 +2430,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2457,7 +2467,7 @@ test('catalog cache miss fetches after hello without delaying connection', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2498,7 +2508,7 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2537,7 +2547,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.1.0',
+            protocol: '23.2.0',
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,

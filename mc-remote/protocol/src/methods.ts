@@ -27,6 +27,10 @@ export const Method = {
   entityGetDirection: 'entity.getDirection',
   entitySetDirection: 'entity.setDirection',
   worldStrikeLightning: 'world.strikeLightning',
+  worldGetNearbyEntities: 'world.getNearbyEntities',
+  entityGetPose: 'entity.getPose',
+  entitySetPose: 'entity.setPose',
+  entityRemove: 'entity.remove',
 } as const
 
 export type Method = (typeof Method)[keyof typeof Method]

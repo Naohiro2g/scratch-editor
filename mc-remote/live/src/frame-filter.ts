@@ -48,7 +48,7 @@ export const methodGroupFor = (method: string): MethodGroup => {
  * entry. `auth` and `catalog` have none — observer.ts's allowlist excludes
  * those namespaces entirely — so their switches would always read 0 and
  * never change; the UI does not render a switch for a group that cannot
- * currently be reached. `other` contains the protocol 23.1 entity methods
+ * currently be reached. `other` contains the entity methods
  * and remains the catch-all for any later observed namespace.
  */
 export const OBSERVABLE_METHOD_GROUPS: readonly MethodGroup[] = ALL_METHOD_GROUPS.filter(
