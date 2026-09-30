@@ -14,7 +14,7 @@ import {
  * The eight method groups plus "other" are the fixed client-only UX v1
  * mapping. `auth` and `catalog` are kept as named groups for forward
  * compatibility, but are excluded from `OBSERVABLE_METHOD_GROUPS` while the
- * observer allowlist has no member in either namespace. Protocol 23.1 entity
+ * observer allowlist has no member in either namespace. Entity
  * methods intentionally use the existing "other" group rather than changing
  * the fixed taxonomy.
  */

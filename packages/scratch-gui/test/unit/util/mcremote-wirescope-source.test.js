@@ -6,6 +6,7 @@ import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/event
 import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 import b7Fixture from '../../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json';
+import soundFixture from '../../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json';
 
 // spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
 // (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
@@ -70,6 +71,87 @@ const connectedObservation = () => ({
         method: 'world.setBlock',
         payload: {params: [1, 2, 3, {block_id: 'minecraft:stone', state: {}}]}
     }]
+});
+
+describe('B8 WireScope sound and resource projection', () => {
+    const project = (method, payload, id = 1) => {
+        const observation = connectedObservation();
+        observation.hello.protocol = soundFixture.protocol;
+        observation.frameLog = [{
+            sequence: 1,
+            timestamp: 1,
+            direction: Object.prototype.hasOwnProperty.call(payload, 'params') ? 'send' : 'receive',
+            id,
+            method,
+            payload
+        }];
+        return toWireScopeSnapshot(observation, 'target-01', 2).streams[0].frames;
+    };
+
+    test('projects sound requests, notifications, and null results', () => {
+        for (const item of soundFixture.sound.cases.filter(
+            entry => Object.prototype.hasOwnProperty.call(entry, 'result')
+        )) {
+            expect(project(item.method, {params: item.params}, null)[0]).toMatchObject({
+                request_id: null,
+                payload: {params: item.params}
+            });
+            expect(project(item.method, {result: null})[0].payload).toEqual({result: null});
+        }
+    });
+
+    test('drops malformed sound inputs and preserves valid resource references', () => {
+        for (const item of soundFixture.sound.cases.filter(entry => entry.reason === 'invalid_params' ||
+            entry.id === 'B8-S11')) {
+            expect(project(item.method, {params: item.params})).toHaveLength(0);
+        }
+        expect(project('world.playSound', {result: 1})).toHaveLength(0);
+        expect(project('world.spawnEntity', {params: [0, 0, 0, 'cow']})[0].payload.params[3]).toBe('cow');
+        expect(project('world.spawnParticle', {params: [0, 0, 0, 0, 0, 0, 'flame', 0, 1]}, null))
+            .toHaveLength(1);
+        expect(project('world.spawnParticle', {params: [0, 0, 0, 0, 0, 0,
+            {particle_id: 'dust', data: {color: [1, 2, 3], size: 1}}, 0, 1]})[0].payload.params[6])
+            .toEqual({particle_id: 'dust', data: {color: [1, 2, 3], size: 1}});
+        expect(project('world.spawnEntity', {params: [0, 0, 0, 'COW']})).toHaveLength(0);
+    });
+
+    test('applies the shared resource reference matrix to all five input types', () => {
+        for (const item of soundFixture.resource_ids.cases) {
+            let method;
+            let params;
+            if (item.kind === 'block') {
+                method = 'world.setBlock';
+                params = [0, 0, 0, {block_id: item.input, state: {}}];
+            } else if (item.kind === 'dimension') {
+                method = 'build.setDimension';
+                params = [item.input];
+            } else if (item.kind === 'entity') {
+                method = 'world.spawnEntity';
+                params = [0, 0, 0, item.input];
+            } else if (item.kind === 'particle') {
+                method = 'world.spawnParticle';
+                params = [0, 0, 0, 0, 0, 0, item.input, 0, 1];
+            } else {
+                method = 'world.playSound';
+                params = [0, 0, 0, item.input];
+            }
+            expect(project(method, {params})).toHaveLength(item.canonical ? 1 : 0);
+        }
+    });
+
+    test('projects entity lifecycle results with only allowed fields', () => {
+        expect(project('world.getNearbyEntities', {result: [{
+            handle: 'mcr_eh_cow', type: 'minecraft:cow', pos: [1, 2, 3], future_secret: 'no'
+        }]})[0].payload.result).toEqual([{
+            handle: 'mcr_eh_cow', type: 'minecraft:cow', pos: [1, 2, 3]
+        }]);
+        expect(project('entity.getPose', {result: {
+            dimension: 'minecraft:overworld', pos: [1, 2, 3], yaw: 4, pitch: 5, credential_id: 'no'
+        }})[0].payload.result).toEqual({
+            dimension: 'minecraft:overworld', pos: [1, 2, 3], yaw: 4, pitch: 5
+        });
+        expect(project('entity.remove', {result: null})[0].payload).toEqual({result: null});
+    });
 });
 
 describe('McRemote WireScope source adapter', () => {

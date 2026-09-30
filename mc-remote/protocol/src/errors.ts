@@ -38,6 +38,8 @@ export const ErrorReason = {
   teleportFailed: 'teleport_failed',
   heightNotFound: 'height_not_found',
   unknownParticle: 'unknown_particle',
+  unknownSound: 'unknown_sound',
+  noBlock: 'no_block',
   /** Typed particle data was omitted, including by the string shorthand. */
   particleDataRequired: 'particle_data_required',
   /** An object supplied data for a registered typed particle outside B8's supported data forms. */
@@ -77,6 +79,8 @@ export const ERROR_REASON_CODE: Record<ErrorReason, ErrorCode> = {
   [ErrorReason.invalidPropertyValue]: ErrorCode.invalidParams,
   [ErrorReason.unknownDimension]: ErrorCode.invalidParams,
   [ErrorReason.unknownParticle]: ErrorCode.invalidParams,
+  [ErrorReason.unknownSound]: ErrorCode.invalidParams,
+  [ErrorReason.noBlock]: ErrorCode.serverError,
   [ErrorReason.particleDataRequired]: ErrorCode.invalidParams,
   [ErrorReason.particleDataUnsupported]: ErrorCode.invalidParams,
   [ErrorReason.unknownEntity]: ErrorCode.invalidParams,

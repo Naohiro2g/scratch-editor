@@ -14,6 +14,8 @@ export const Method = {
   worldGetBlocks: 'world.getBlocks',
   worldGetHeight: 'world.getHeight',
   worldSpawnParticle: 'world.spawnParticle',
+  worldPlaySound: 'world.playSound',
+  worldPlayBlockSound: 'world.playBlockSound',
   worldSpawnEntity: 'world.spawnEntity',
   connectionFlush: 'connection.flush',
   eventsPoll: 'events.poll',

@@ -112,6 +112,27 @@ export type SpawnParticleParams =
     ]
 export type SpawnParticleResult = number
 
+/** B8 sound options; the wire rejects unknown keys and simultaneous pitch/note. */
+export interface SoundOptions {
+  readonly volume?: number
+  readonly pitch?: number
+  readonly note?: number
+  readonly receiver?: 'world' | 'self'
+}
+
+/** `world.playSound` uses continuous coordinates and a sound registry reference. */
+export type PlaySoundParams =
+  | readonly [x: number, y: number, z: number, sound_id: string]
+  | readonly [x: number, y: number, z: number, sound_id: string, options: SoundOptions]
+export type PlaySoundResult = null
+
+/** `world.playBlockSound` uses integer block coordinates and a fixed sound kind. */
+export type BlockSoundKind = 'place' | 'hit' | 'break' | 'step' | 'fall'
+export type PlayBlockSoundParams =
+  | readonly [x: number, y: number, z: number, kind: BlockSoundKind]
+  | readonly [x: number, y: number, z: number, kind: BlockSoundKind, options: SoundOptions]
+export type PlayBlockSoundResult = null
+
 /** `world.spawnEntity` — spawn one entity and return its connection-epoch handle. */
 export type SpawnEntityParams = readonly [x: number, y: number, z: number, entity: string]
 export type SpawnEntityResult = string

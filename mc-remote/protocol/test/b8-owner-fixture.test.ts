@@ -42,10 +42,10 @@ const nearbyCase = (id: string): NearbyCase => {
 describe('B8 shared owner fixture', () => {
   it('identifies the landed contract and gives every case a unique ID', () => {
     expect(fixture.knowledge_contract).toEqual({
-      commit: 'b853078bb0af1bc5cacb4b4ce08ffe7227190f60',
+      commit: '0318332a2b3395a5d74b46d7da6946030a2fc172',
       path: '10-protocol/wire-format-design_ja.md',
-      section: '5.8.3',
-      decision: '2026-09-30-01',
+      sections: ['5.0.2', '5.8.3'],
+      decisions: ['2026-09-30-01', '2026-09-30-02', '2026-09-30-06'],
     })
     expect(fixture.protocol).toBe(PROTOCOL_VERSION)
     expect(fixture.methods).toEqual({
@@ -54,6 +54,8 @@ describe('B8 shared owner fixture', () => {
       set_pose: Method.entitySetPose,
       remove: Method.entityRemove,
       particle: Method.worldSpawnParticle,
+      sound: Method.worldPlaySound,
+      block_sound: Method.worldPlayBlockSound,
     })
     expect(ErrorReason.particleDataUnsupported).toBe('particle_data_unsupported')
     expect(ERROR_REASON_CODE[ErrorReason.particleDataUnsupported]).toBe(ErrorCode.invalidParams)

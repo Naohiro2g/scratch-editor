@@ -12,6 +12,8 @@ export const OBSERVED_METHODS = [
   'world.getBlocks',
   'world.getHeight',
   'world.spawnParticle',
+  'world.playSound',
+  'world.playBlockSound',
   'world.spawnEntity',
   'connection.flush',
   'events.poll',
@@ -350,6 +352,14 @@ const canonicalResourceId = (value: unknown, context: string): string => {
   return resourceId
 }
 
+const resourceRef = (value: unknown, context: string): string => {
+  const resourceId = requiredString(value, context)
+  if (!/^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(resourceId)) {
+    throw new Error(`${context} must be a resource reference`)
+  }
+  return resourceId
+}
+
 const entityHandle = (value: unknown, context: string): string => {
   const handle = requiredString(value, context)
   if (!/^mcr_eh_[\x21-\x7e]+$/.test(handle)) throw new Error(`${context} must be an entity handle`)
@@ -362,10 +372,11 @@ const handleParam = (value: unknown, context: string): string => {
 }
 
 const parseParticleArgument = (value: unknown, context: string): unknown => {
-  if (typeof value === 'string') return canonicalResourceId(value, context)
+  if (typeof value === 'string') return resourceRef(value, context)
   const spec = objectValue(value, context)
   exactFields(spec, ['particle_id', 'receiver', 'data'], context)
-  const particleId = canonicalResourceId(spec.particle_id, `${context}.particle_id`)
+  const particleId = resourceRef(spec.particle_id, `${context}.particle_id`)
+  const canonicalParticleId = particleId.includes(':') ? particleId : `minecraft:${particleId}`
   const parsed: Record<string, unknown> = { particle_id: particleId }
   if (typeof spec.receiver !== 'undefined') {
     if (spec.receiver !== 'world' && spec.receiver !== 'self') {
@@ -374,7 +385,7 @@ const parseParticleArgument = (value: unknown, context: string): unknown => {
     parsed.receiver = spec.receiver
   }
   if (Object.prototype.hasOwnProperty.call(spec, 'data')) {
-    if (particleId === 'minecraft:dust') {
+    if (canonicalParticleId === 'minecraft:dust') {
       const data = objectValue(spec.data, `${context}.data`)
       exactFields(data, ['color', 'size'], `${context}.data`)
       if (!Array.isArray(data.color) || data.color.length !== 3) {
@@ -388,11 +399,42 @@ const parseParticleArgument = (value: unknown, context: string): unknown => {
       const size = finiteNumber(data.size, `${context}.data.size`)
       if (size < 0.01 || size > 4) throw new Error(`${context}.data.size must be 0.01..4`)
       parsed.data = { color, size }
-    } else if (particleId === 'minecraft:block') {
+    } else if (canonicalParticleId === 'minecraft:block') {
       parsed.data = parseBlock(spec.data, `${context}.data`, false)
     } else {
       throw new Error(`${context}.data is unsupported for ${particleId}`)
     }
+  }
+  return parsed
+}
+
+const parseSoundOptions = (value: unknown, context: string): Record<string, unknown> => {
+  const options = objectValue(value, context)
+  exactFields(options, ['volume', 'pitch', 'note', 'receiver'], context)
+  const parsed: Record<string, unknown> = {}
+  if (Object.prototype.hasOwnProperty.call(options, 'volume')) {
+    const volume = finiteNumber(options.volume, `${context}.volume`)
+    if (volume < 0 || volume > 1) throw new Error(`${context}.volume must be 0..1`)
+    parsed.volume = volume
+  }
+  if (Object.prototype.hasOwnProperty.call(options, 'pitch')) {
+    const pitch = finiteNumber(options.pitch, `${context}.pitch`)
+    if (pitch < 0.5 || pitch > 2) throw new Error(`${context}.pitch must be 0.5..2`)
+    parsed.pitch = pitch
+  }
+  if (Object.prototype.hasOwnProperty.call(options, 'note')) {
+    const note = integer(options.note, `${context}.note`)
+    if (note < 0 || note > 24) throw new Error(`${context}.note must be 0..24`)
+    parsed.note = note
+  }
+  if (typeof parsed.pitch !== 'undefined' && typeof parsed.note !== 'undefined') {
+    throw new Error(`${context}.pitch and note are mutually exclusive`)
+  }
+  if (Object.prototype.hasOwnProperty.call(options, 'receiver')) {
+    if (options.receiver !== 'world' && options.receiver !== 'self') {
+      throw new Error(`${context}.receiver must be world or self`)
+    }
+    parsed.receiver = options.receiver
   }
   return parsed
 }
@@ -630,7 +672,7 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
     const params = exactParams(value, 4)
     return [
       ...params.slice(0, 3).map((item, index) => finiteNumber(item, `frame.payload.params[${index}]`)),
-      canonicalResourceId(params[3], 'frame.payload.params[3]'),
+      resourceRef(params[3], 'frame.payload.params[3]'),
     ]
   }
   if (method === 'world.spawnParticle') {
@@ -644,6 +686,27 @@ const parseParams = (method: ObservedMethod, value: unknown): unknown => {
       nonNegativeFiniteNumber(value[7], 'frame.payload.params[7]'),
       nonNegativeInteger(value[8], 'frame.payload.params[8]'),
       ...(value.length === 10 ? [optionalBoolean(value[9], 'frame.payload.params[9]')] : []),
+    ]
+  }
+  if (method === 'world.playSound' || method === 'world.playBlockSound') {
+    if (!Array.isArray(value) || (value.length !== 4 && value.length !== 5)) {
+      throw new Error('frame.payload.params must contain 4 or 5 items')
+    }
+    const coordinates = value
+      .slice(0, 3)
+      .map((item, index) =>
+        method === 'world.playSound'
+          ? finiteNumber(item, `frame.payload.params[${index}]`)
+          : integer(item, `frame.payload.params[${index}]`),
+      )
+    const sound: unknown = method === 'world.playSound' ? resourceRef(value[3], 'frame.payload.params[3]') : value[3]
+    if (method === 'world.playBlockSound' && !['place', 'hit', 'break', 'step', 'fall'].includes(sound as string)) {
+      throw new Error('frame.payload.params[3] must be a block sound kind')
+    }
+    return [
+      ...coordinates,
+      sound,
+      ...(value.length === 5 ? [parseSoundOptions(value[4], 'frame.payload.params[4]')] : []),
     ]
   }
   if (method === 'player.getDirection') return exactParams(value, 0)
@@ -737,7 +800,13 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
       origin: numberTuple(context.origin, 'frame.payload.result.origin'),
     }
   }
-  if (method === 'world.setBlock' || method === 'world.setBlocks' || method === 'connection.flush') {
+  if (
+    method === 'world.setBlock' ||
+    method === 'world.setBlocks' ||
+    method === 'connection.flush' ||
+    method === 'world.playSound' ||
+    method === 'world.playBlockSound'
+  ) {
     if (value !== null) throw new Error('frame.payload.result must be null')
     return null
   }
@@ -810,6 +879,8 @@ const parseFrame = (value: unknown): ObserverFrame => {
       (method !== 'world.setBlock' &&
         method !== 'world.setBlocks' &&
         method !== 'world.spawnParticle' &&
+        method !== 'world.playSound' &&
+        method !== 'world.playBlockSound' &&
         method !== 'world.strikeLightning'))
   ) {
     throw new Error('frame.request_id may be null only for a supported notification')

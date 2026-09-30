@@ -18,7 +18,13 @@ const OBSERVED_METHODS = new Set([
     'world.getBlocks',
     'world.getHeight',
     'world.spawnParticle',
+    'world.playSound',
+    'world.playBlockSound',
     'world.spawnEntity',
+    'world.getNearbyEntities',
+    'entity.getPose',
+    'entity.setPose',
+    'entity.remove',
     'connection.flush',
     'events.poll',
     'player.getPos',
@@ -165,6 +171,56 @@ const canonicalResourceId = function (value) {
 const dimensionRef = function (value) {
     return typeof value === 'string' && /^(?:[a-z0-9_.-]+:)?[a-z0-9_./-]+$/.test(value);
 };
+const resourceRef = dimensionRef;
+const allowSoundOptions = function (value) {
+    if (!hasExactFields(value, ['volume', 'pitch', 'note', 'receiver'])) return null;
+    const options = {};
+    if (Object.prototype.hasOwnProperty.call(value, 'volume')) {
+        if (!finiteNumber(value.volume) || value.volume < 0 || value.volume > 1) return null;
+        options.volume = value.volume;
+    }
+    if (Object.prototype.hasOwnProperty.call(value, 'pitch')) {
+        if (!finiteNumber(value.pitch) || value.pitch < 0.5 || value.pitch > 2) return null;
+        options.pitch = value.pitch;
+    }
+    if (Object.prototype.hasOwnProperty.call(value, 'note')) {
+        if (!Number.isInteger(value.note) || value.note < 0 || value.note > 24) return null;
+        options.note = value.note;
+    }
+    if (typeof options.pitch !== 'undefined' && typeof options.note !== 'undefined') return null;
+    if (Object.prototype.hasOwnProperty.call(value, 'receiver')) {
+        if (value.receiver !== 'world' && value.receiver !== 'self') return null;
+        options.receiver = value.receiver;
+    }
+    return options;
+};
+const allowParticleArgument = function (value) {
+    if (typeof value === 'string') return resourceRef(value) ? value : null;
+    if (!hasExactFields(value, ['particle_id', 'receiver', 'data']) || !resourceRef(value.particle_id)) return null;
+    const result = {particle_id: value.particle_id};
+    if (Object.prototype.hasOwnProperty.call(value, 'receiver')) {
+        if (value.receiver !== 'world' && value.receiver !== 'self') return null;
+        result.receiver = value.receiver;
+    }
+    if (Object.prototype.hasOwnProperty.call(value, 'data')) {
+        const particleId = value.particle_id.includes(':') ? value.particle_id : `minecraft:${value.particle_id}`;
+        if (particleId === 'minecraft:block') {
+            const block = allowBlock(value.data, false);
+            if (!block) return null;
+            result.data = block;
+        } else if (particleId === 'minecraft:dust') {
+            if (!hasExactFields(value.data, ['color', 'size']) ||
+                Object.keys(value.data).length !== 2 || !Array.isArray(value.data.color) ||
+                value.data.color.length !== 3 || !value.data.color.every(channel =>
+                Number.isInteger(channel) && channel >= 0 && channel <= 255) ||
+                !finiteNumber(value.data.size) || value.data.size < 0.01 || value.data.size > 4) return null;
+            result.data = {color: value.data.color.slice(), size: value.data.size};
+        } else {
+            return null;
+        }
+    }
+    return result;
+};
 const faceToken = function (value) {
     return typeof value === 'string' && /^[a-z_]+$/.test(value);
 };
@@ -192,17 +248,39 @@ const allowParams = function (method, value) {
     }
     if (method === 'world.spawnEntity') {
         if (!Array.isArray(value) || value.length !== 4 || !value.slice(0, 3).every(finiteNumber) ||
-            !canonicalResourceId(value[3])) return null;
+            !resourceRef(value[3])) return null;
         return value.slice();
     }
     if (method === 'world.spawnParticle') {
         if (!Array.isArray(value) || (value.length !== 9 && value.length !== 10) ||
             !value.slice(0, 3).every(finiteNumber) ||
             !value.slice(3, 6).every(item => finiteNumber(item) && item >= 0) ||
-            !canonicalResourceId(value[6]) || !finiteNumber(value[7]) || value[7] < 0 ||
+            !allowParticleArgument(value[6]) || !finiteNumber(value[7]) || value[7] < 0 ||
             !Number.isInteger(value[8]) || value[8] < 0 ||
             (value.length === 10 && typeof value[9] !== 'boolean')) return null;
-        return value.slice();
+        return value.slice(0, 6).concat([allowParticleArgument(value[6])], value.slice(7));
+    }
+    if (method === 'world.playSound' || method === 'world.playBlockSound') {
+        if (!Array.isArray(value) || (value.length !== 4 && value.length !== 5) ||
+            !value.slice(0, 3).every(method === 'world.playSound' ? finiteNumber : Number.isInteger) ||
+            (method === 'world.playSound' ? !resourceRef(value[3]) :
+                !['place', 'hit', 'break', 'step', 'fall'].includes(value[3]))) return null;
+        if (value.length === 4) return value.slice();
+        const options = allowSoundOptions(value[4]);
+        return options ? value.slice(0, 4).concat([options]) : null;
+    }
+    if (method === 'world.getNearbyEntities') {
+        return Array.isArray(value) && value.length === 5 && value.slice(0, 4).every(finiteNumber) &&
+            value[3] >= 0 && value[3] <= 64 && Number.isInteger(value[4]) && value[4] >= 1 && value[4] <= 64 ?
+            value.slice() : null;
+    }
+    if (method === 'entity.getPose' || method === 'entity.remove') {
+        return Array.isArray(value) && value.length === 1 && typeof value[0] === 'string' ? value.slice() : null;
+    }
+    if (method === 'entity.setPose') {
+        return Array.isArray(value) && value.length === 7 && typeof value[0] === 'string' &&
+            dimensionRef(value[1]) && value.slice(2).every(finiteNumber) &&
+            value[6] >= -90 && value[6] <= 90 ? value.slice() : null;
     }
     if (method === 'player.getDirection') return Array.isArray(value) && value.length === 0 ? [] : null;
     if (method === 'player.setDirection' || method === 'world.strikeLightning') {
@@ -319,6 +397,14 @@ const allowPose = function (value) {
     return Object.assign(position, {yaw: value.yaw, pitch: value.pitch});
 };
 
+const allowNearbyEntity = function (value) {
+    if (!isObject(value) ||
+        typeof value.handle !== 'string' || !/^mcr_eh_[\x21-\x7e]+$/.test(value.handle) ||
+        !canonicalResourceId(value.type)) return null;
+    const pos = numberTuple(value.pos);
+    return pos ? {handle: value.handle, type: value.type, pos} : null;
+};
+
 const allowError = function (value) {
     if (!isObject(value)) return null;
     const code = typeof value.code === 'string' || finiteNumber(value.code) ? value.code : null;
@@ -364,7 +450,8 @@ const allowFramePayload = function (frame) {
         const result = allowPosition(payload.result);
         return result ? {result} : null;
     }
-    if (frame.method === 'player.getPose' || frame.method === 'player.setPose') {
+    if (frame.method === 'player.getPose' || frame.method === 'player.setPose' ||
+        frame.method === 'entity.getPose' || frame.method === 'entity.setPose') {
         const result = allowPose(payload.result);
         return result ? {result} : null;
     }
@@ -373,7 +460,10 @@ const allowFramePayload = function (frame) {
         return result ? {result} : null;
     }
     if (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
-        frame.method === 'connection.flush') return payload.result === null ? {result: null} : null;
+        frame.method === 'connection.flush' || frame.method === 'world.playSound' ||
+        frame.method === 'world.playBlockSound' || frame.method === 'entity.remove') {
+        return payload.result === null ? {result: null} : null;
+    }
     if (frame.method === 'world.getBlock') {
         const result = allowBlock(payload.result, true);
         return result ? {result} : null;
@@ -392,6 +482,11 @@ const allowFramePayload = function (frame) {
     if (frame.method === 'world.spawnEntity') {
         return typeof payload.result === 'string' && /^mcr_eh_[\x21-\x7e]+$/.test(payload.result) ?
             {result: payload.result} : null;
+    }
+    if (frame.method === 'world.getNearbyEntities') {
+        if (!Array.isArray(payload.result)) return null;
+        const result = payload.result.map(allowNearbyEntity);
+        return result.every(Boolean) ? {result} : null;
     }
     if (frame.method === 'player.getDirection' || frame.method === 'player.setDirection' ||
         frame.method === 'entity.getDirection' || frame.method === 'entity.setDirection') {
@@ -419,7 +514,8 @@ const allowFrame = function (frame) {
     const requestId = typeof frame.id === 'string' || finiteNumber(frame.id) ? frame.id : null;
     const isSupportedNotification = frame.direction === 'send' && requestId === null &&
         (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
-            frame.method === 'world.strikeLightning');
+            frame.method === 'world.spawnParticle' || frame.method === 'world.strikeLightning' ||
+            frame.method === 'world.playSound' || frame.method === 'world.playBlockSound');
     if (requestId === null && !isSupportedNotification) return null;
     return {
         sequence: frame.sequence,
