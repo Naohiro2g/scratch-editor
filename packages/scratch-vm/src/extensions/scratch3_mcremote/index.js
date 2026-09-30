@@ -43,6 +43,20 @@ const {
 const SIGN_LINE_INDICES = [0, 1, 2, 3];
 const DIRECTION_AXES = ['x', 'y', 'z'];
 
+const nearbyEntityResult = value => {
+    if (!value || typeof value !== 'object' || Array.isArray(value) ||
+        Object.keys(value).length !== 3 ||
+        typeof value.handle !== 'string' || !/^mcr_eh_[\x21-\x7e]+$/.test(value.handle) ||
+        typeof value.type !== 'string' || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(value.type) ||
+        !Array.isArray(value.pos) || value.pos.length !== 3 ||
+        value.pos.some(component => typeof component !== 'number' || !Number.isFinite(component))) {
+        const error = new Error('Invalid nearby entity snapshot');
+        error.reason = 'invalid_response';
+        throw error;
+    }
+    return {handle: value.handle, type: value.type, pos: value.pos.slice()};
+};
+
 /**
  * Default Scratch Bridge endpoint. The bridge terminates wss from the browser
  * and forwards each message onto the McRemote plugin over plain TCP, so the
@@ -347,6 +361,7 @@ class Scratch3McRemoteBlocks {
          */
         this._catalogCache = new IndexedDBCatalogCache();
         this._catalogGeneration = 0;
+        this._catalogPromise = null;
 
         /**
          * Suppress repeated connection guidance during one disconnected period.
@@ -664,6 +679,19 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'catalogToList',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.catalogToList',
+                        default: 'put catalog [KIND] in [LIST]',
+                        description: 'Replace a selected Scratch list with IDs from the current server catalog'
+                    }),
+                    arguments: {
+                        KIND: {type: ArgumentType.STRING, menu: 'catalogKinds', defaultValue: 'block'},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'catalog list'}
+                    }
+                },
+                {
                     opcode: 'getHeight',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -865,7 +893,7 @@ class Scratch3McRemoteBlocks {
                         default: 'spawn particle [PARTICLE] at x :[X]  y :[Y]  z :[Z] ' +
                             'offset x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] ' +
                             'speed:[SPEED] count:[COUNT] visibility:[FORCE]',
-                        description: 'Spawn data-free particles at an origin-relative position'
+                        description: 'Spawn particles from an ID or specification at an origin-relative position'
                     }),
                     arguments: {
                         PARTICLE: {type: ArgumentType.STRING, defaultValue: 'minecraft:flame'},
@@ -898,6 +926,132 @@ class Scratch3McRemoteBlocks {
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0},
                         VARIABLE: {type: ArgumentType.VARIABLE, defaultValue: 'entity handle'}
+                    }
+                },
+                {
+                    opcode: 'getNearbyEntities',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.getNearbyEntities',
+                        default: 'put entities near x :[X]  y :[Y]  z :[Z] ' +
+                            'radius [RADIUS] limit [MAX_ENTITIES] in [LIST]',
+                        description: 'Replace a Scratch list with bounded nearby entity snapshots'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        RADIUS: {type: ArgumentType.NUMBER, defaultValue: 10},
+                        MAX_ENTITIES: {type: ArgumentType.NUMBER, defaultValue: 16},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'entity list'}
+                    }
+                },
+                {
+                    opcode: 'entityInfo',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityInfo',
+                        default: '[PROPERTY] of entity information [ENTITY_INFO]',
+                        description: 'Read one nearby entity snapshot property without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, menu: 'entityProperties', defaultValue: 'handle'},
+                        ENTITY_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'getEntityPose',
+                    blockType: BlockType.REPORTER,
+                    disableMonitor: true,
+                    text: formatMessage({
+                        id: 'mcremote.getEntityPose',
+                        default: 'pose of entity [HANDLE]',
+                        description: 'Get one entity pose snapshot by its connection-scoped handle'
+                    }),
+                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
+                },
+                {
+                    opcode: 'entityPoseInfo',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityPoseInfo',
+                        default: '[PROPERTY] of entity pose [POSE]',
+                        description: 'Read one entity pose snapshot property without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, menu: 'playerAttributes', defaultValue: 'x'},
+                        POSE: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'setEntityPose',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setEntityPose',
+                        default: 'move entity [HANDLE] to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
+                        description: 'Set entity dimension, position and orientation with one acknowledged teleport'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        DIMENSION: {type: ArgumentType.STRING, menu: 'dimensions', defaultValue: 'overworld'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'removeEntity',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.removeEntity',
+                        default: 'remove entity [HANDLE]',
+                        description: 'Remove one entity and invalidate its connection-scoped handle'
+                    }),
+                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
+                },
+                {
+                    opcode: 'particleSpec',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.particleSpec',
+                        default: 'particle [PARTICLE] for [RECEIVER]',
+                        description: 'Build a data-free particle specification with a receiver'
+                    }),
+                    arguments: {
+                        PARTICLE: {type: ArgumentType.STRING, defaultValue: 'minecraft:flame'},
+                        RECEIVER: {type: ArgumentType.STRING, menu: 'particleReceivers', defaultValue: 'world'}
+                    }
+                },
+                {
+                    opcode: 'dustParticleSpec',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.dustParticleSpec',
+                        default: 'dust particle red [RED] green [GREEN] blue [BLUE] size [SIZE] for [RECEIVER]',
+                        description: 'Build a dust particle specification with RGB color and size'
+                    }),
+                    arguments: {
+                        RED: {type: ArgumentType.NUMBER, defaultValue: 255},
+                        GREEN: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        BLUE: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        SIZE: {type: ArgumentType.NUMBER, defaultValue: 1},
+                        RECEIVER: {type: ArgumentType.STRING, menu: 'particleReceivers', defaultValue: 'world'}
+                    }
+                },
+                {
+                    opcode: 'blockParticleSpec',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.blockParticleSpec',
+                        default: 'block particle [BLOCK] state [STATE] for [RECEIVER]',
+                        description: 'Build a block particle specification using the existing block state syntax'
+                    }),
+                    arguments: {
+                        BLOCK: {type: ArgumentType.STRING, defaultValue: 'minecraft:stone'},
+                        STATE: {type: ArgumentType.STRING, defaultValue: ''},
+                        RECEIVER: {type: ArgumentType.STRING, menu: 'particleReceivers', defaultValue: 'world'}
                     }
                 },
                 '---',
@@ -1114,6 +1268,35 @@ class Scratch3McRemoteBlocks {
                 }
             ],
             menus: {
+                catalogKinds: {
+                    acceptReporters: false,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.catalogKind.block',
+                                default: 'block IDs',
+                                description: 'Menu label for the block catalog IDs'
+                            }),
+                            value: 'block'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.catalogKind.entity',
+                                default: 'entity IDs',
+                                description: 'Menu label for the entity catalog IDs'
+                            }),
+                            value: 'entity'
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'mcremote.catalogKind.particle',
+                                default: 'particle IDs',
+                                description: 'Menu label for the particle catalog IDs'
+                            }),
+                            value: 'particle'
+                        }
+                    ]
+                },
                 eventValues: {
                     acceptReporters: false,
                     items: [
@@ -1216,6 +1399,43 @@ class Scratch3McRemoteBlocks {
                             }),
                             value: 'false'
                         }
+                    ]
+                },
+                entityProperties: {
+                    acceptReporters: false,
+                    items: [
+                        {text: formatMessage({
+                            id: 'mcremote.entityProperty.handle',
+                            default: 'handle',
+                            description: 'Connection-scoped entity handle in a nearby snapshot'
+                        }),
+                        value: 'handle'},
+                        {text: formatMessage({
+                            id: 'mcremote.entityProperty.type',
+                            default: 'entity type',
+                            description: 'Namespaced entity type in a nearby snapshot'
+                        }),
+                        value: 'type'},
+                        {text: 'x', value: 'x'},
+                        {text: 'y', value: 'y'},
+                        {text: 'z', value: 'z'}
+                    ]
+                },
+                particleReceivers: {
+                    acceptReporters: false,
+                    items: [
+                        {text: formatMessage({
+                            id: 'mcremote.particleReceiver.world',
+                            default: 'nearby players',
+                            description: 'Send particles to nearby players in the world'
+                        }),
+                        value: 'world'},
+                        {text: formatMessage({
+                            id: 'mcremote.particleReceiver.self',
+                            default: 'paired player only',
+                            description: 'Send particles only to the paired player'
+                        }),
+                        value: 'self'}
                     ]
                 },
                 directionAxes: {
@@ -1439,6 +1659,7 @@ class Scratch3McRemoteBlocks {
      */
     _resetCatalog () {
         this._catalogGeneration++;
+        this._catalogPromise = null;
         this._catalogState = {
             status: CatalogStatus.NOT_ACQUIRED,
             mcVersion: '',
@@ -1831,7 +2052,7 @@ class Scratch3McRemoteBlocks {
             if (!this._displayAlias) this._displayAlias = createDisplayAlias();
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
             this._disconnectedCommandNoticeShown = false;
-            this._acquireCatalog(result);
+            this._catalogPromise = this._acquireCatalog(result);
             this._startEventPoller();
             return result;
         });
@@ -2753,6 +2974,34 @@ class Scratch3McRemoteBlocks {
         return this._getBlockInfo(args, util);
     }
 
+    catalogToList (args, util) {
+        const kind = Cast.toString(args.KIND);
+        if (!['block', 'entity', 'particle'].includes(kind)) {
+            const error = new Error(`Unknown McRemote catalog kind: ${kind}`);
+            error.reason = 'invalid_params';
+            return this._actionableCommandError('catalogToList', error);
+        }
+        const reference = args.LIST;
+        const list = util && util.target && reference &&
+            typeof util.target.lookupOrCreateList === 'function' ?
+            util.target.lookupOrCreateList(reference.id, reference.name) : null;
+        if (!list) {
+            const error = new Error('McRemote catalog output list is unavailable');
+            error.reason = 'invalid_output_list';
+            return this._actionableCommandError('catalogToList', error);
+        }
+        const generation = this._catalogGeneration;
+        return Promise.resolve(this._catalogPromise).then(() => {
+            if (generation !== this._catalogGeneration || this._catalogState.status !== CatalogStatus.CURRENT) {
+                const error = new Error('The current connection catalog is unavailable');
+                error.reason = 'catalog_unavailable';
+                return this._actionableCommandError('catalogToList', error);
+            }
+            list.value = Object.keys(this._catalogState.catalog[kind]).sort();
+            list._monitorUpToDate = false;
+        });
+    }
+
     getBlocks (args, util) {
         const params = [
             Cast.toNumber(args.X1),
@@ -2974,6 +3223,18 @@ class Scratch3McRemoteBlocks {
     }
 
     spawnParticle (args) {
+        let particle = Cast.toString(args.PARTICLE);
+        try {
+            if (isErrorText(particle)) {
+                const error = new Error('Particle specification contains an error');
+                error.reason = particle.slice('⟦mcr-error:'.length, -1);
+                throw error;
+            }
+            if (particle.trim().startsWith('{')) particle = JSON.parse(particle);
+        } catch (error) {
+            error.reason = error.reason || 'invalid_params';
+            return this._actionableCommandError('world.spawnParticle', error);
+        }
         const params = [
             Cast.toNumber(args.X),
             Cast.toNumber(args.Y),
@@ -2981,12 +3242,126 @@ class Scratch3McRemoteBlocks {
             Cast.toNumber(args.OFFSET_X),
             Cast.toNumber(args.OFFSET_Y),
             Cast.toNumber(args.OFFSET_Z),
-            Cast.toString(args.PARTICLE),
+            particle,
             Cast.toNumber(args.SPEED),
             Cast.toNumber(args.COUNT)
         ];
         if (typeof args.FORCE !== 'undefined') params.push(Cast.toBoolean(args.FORCE));
         return this._commandRequest('world.spawnParticle', params);
+    }
+
+    _particleSpecText (particle, receiver, data) {
+        if (!['world', 'self'].includes(receiver)) return makeErrorText('invalid_params');
+        const spec = {particle_id: particle, receiver};
+        if (typeof data !== 'undefined') spec.data = data;
+        return JSON.stringify(spec);
+    }
+
+    particleSpec (args) {
+        return this._particleSpecText(Cast.toString(args.PARTICLE), Cast.toString(args.RECEIVER));
+    }
+
+    dustParticleSpec (args) {
+        const color = [args.RED, args.GREEN, args.BLUE].map(Cast.toNumber);
+        const size = Cast.toNumber(args.SIZE);
+        if (color.some(channel => !Number.isInteger(channel) || channel < 0 || channel > 255) ||
+            !Number.isFinite(size) || size < 0.01 || size > 4) return makeErrorText('invalid_params');
+        return this._particleSpecText('minecraft:dust', Cast.toString(args.RECEIVER), {color, size});
+    }
+
+    blockParticleSpec (args) {
+        try {
+            return this._particleSpecText('minecraft:block', Cast.toString(args.RECEIVER), this._blockSpec(args));
+        } catch (error) {
+            return makeErrorText(error.reason || 'invalid_params');
+        }
+    }
+
+    getNearbyEntities (args, util) {
+        const reference = args.LIST;
+        const list = util && util.target && reference &&
+            typeof util.target.lookupOrCreateList === 'function' ?
+            util.target.lookupOrCreateList(reference.id, reference.name) : null;
+        const method = 'world.getNearbyEntities';
+        if (!list) {
+            const error = new Error('McRemote entity list is unavailable');
+            error.reason = 'invalid_output_list';
+            return this._actionableCommandError(method, error);
+        }
+        const params = [args.X, args.Y, args.Z, args.RADIUS, args.MAX_ENTITIES].map(Cast.toNumber);
+        return this._request(method, params).then(result => {
+            try {
+                if (!Array.isArray(result) || result.length > params[4]) {
+                    const error = new Error('Nearby result must be an array within max_entities');
+                    error.reason = 'invalid_response';
+                    throw error;
+                }
+                const values = result.map(value => JSON.stringify(nearbyEntityResult(value)));
+                list.value = values;
+                list._monitorUpToDate = false;
+            } catch (error) {
+                return this._actionableCommandError(method, error);
+            }
+        }, error => this._actionableCommandError(method, error));
+    }
+
+    entityInfo (args) {
+        return this._entitySnapshotProperty(args.ENTITY_INFO, args.PROPERTY, false);
+    }
+
+    entityPoseInfo (args) {
+        return this._entitySnapshotProperty(args.POSE, args.PROPERTY, true);
+    }
+
+    _entitySnapshotProperty (text, property, pose) {
+        const value = Cast.toString(text);
+        if (isErrorText(value)) return value;
+        try {
+            const parsed = JSON.parse(value);
+            const snapshot = pose ? playerResult(parsed, true) : nearbyEntityResult(parsed);
+            const name = Cast.toString(property);
+            const axis = DIRECTION_AXES.indexOf(name);
+            if (axis !== -1) return snapshot.pos[axis];
+            if ((pose ? ['dimension', 'yaw', 'pitch'] : ['handle', 'type']).includes(name)) return snapshot[name];
+            return makeErrorText('invalid_params');
+        } catch {
+            return makeErrorText('invalid_params');
+        }
+    }
+
+    getEntityPose (args) {
+        return this._request('entity.getPose', [Cast.toString(args.HANDLE)]).then(result => {
+            try {
+                return JSON.stringify(playerResult(result, true));
+            } catch (error) {
+                return remoteErrorText(error);
+            }
+        }, error => remoteErrorText(error));
+    }
+
+    setEntityPose (args) {
+        const method = 'entity.setPose';
+        return this._request(method, [
+            Cast.toString(args.HANDLE),
+            dimensionRef(Cast.toString(args.DIMENSION)),
+            ...[args.X, args.Y, args.Z, args.YAW, args.PITCH].map(Cast.toNumber)
+        ]).then(result => {
+            try {
+                playerResult(result, true);
+            } catch (error) {
+                return this._actionableCommandError(method, error);
+            }
+        }, error => this._actionableCommandError(method, error));
+    }
+
+    removeEntity (args) {
+        const method = 'entity.remove';
+        return this._request(method, [Cast.toString(args.HANDLE)]).then(result => {
+            if (result === null) return;
+            const error = new Error('Invalid entity.remove result: expected null');
+            error.reason = 'invalid_response';
+            return this._actionableCommandError(method, error);
+        }, error => this._actionableCommandError(method, error));
     }
 
     spawnEntity (args, util) {

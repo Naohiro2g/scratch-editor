@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
+const entityParticleFixture = require('../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json');
 const {remoteErrorText} = require('../../src/extensions/scratch3_mcremote/block-value');
 const {
     DISPLAY_ALIAS_WORDS,
@@ -244,6 +245,118 @@ const newConnectedBlocks = runtime => {
         }});
     return connected.then(() => ({blocks, socket}));
 };
+
+test('catalog list copies sorted IDs from all three catalogs without requests', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    blocks._catalogState = {
+        status: 'current',
+        catalog: {
+            ...catalogResult,
+            block: {
+                'minecraft:oak_log': catalogBody.block['minecraft:oak_log'],
+                'examplemod:ruby_block': catalogBody.block['examplemod:ruby_block']
+            }
+        }
+    };
+    const list = {value: ['previous'], _monitorUpToDate: true};
+    const lookups = [];
+    const util = {target: {lookupOrCreateList: (id, name) => {
+        lookups.push({id, name});
+        return list;
+    }}};
+    const sent = socket.sent.length;
+    for (const kind of ['block', 'entity', 'particle']) {
+        await blocks.catalogToList({KIND: kind, LIST: {id: 'ids', name: 'IDs'}}, util);
+        t.same(list.value, Object.keys(catalogBody[kind]).sort());
+        t.equal(list._monitorUpToDate, false);
+    }
+    t.same(lookups[0], {id: 'ids', name: 'IDs'});
+    t.equal(socket.sent.length, sent, 'copying IDs does not issue a new RPC');
+    list.value.push('user edit');
+    t.same(Object.keys(catalogBody.particle), ['minecraft:ash'], 'the list is independent of the catalog');
+    blocks._catalogState = {status: 'current', catalog: {block: {}, entity: {}, particle: {}}};
+    await blocks.catalogToList({KIND: 'block', LIST: {id: 'ids', name: 'IDs'}}, util);
+    t.same(list.value, [], 'an available empty catalog clears the selected list');
+});
+
+test('catalog list waits for the hello acquisition and preserves the list on failure', async t => {
+    for (const fail of [false, true]) {
+        FakeWebSocket.instances = [];
+        global.localStorage.clear();
+        const runtime = newRuntime();
+        const blocks = new McRemote(runtime);
+        blocks._catalogCache = {get: () => Promise.resolve(null), set: () => Promise.resolve(true)};
+        const connected = blocks.connect();
+        const socket = FakeWebSocket.instances[0];
+        socket.fireOpen();
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: 1,
+            result: {
+                protocol: '23.2.0',
+                mc_version: '1.21.11',
+                supported_mc_versions: ['1.21.11'],
+                catalogHash,
+                world_constants: {y_sea: 63}
+            }
+        });
+        await connected;
+        const list = {value: ['previous'], _monitorUpToDate: true};
+        const completion = blocks.catalogToList({KIND: 'block', LIST: {id: 'ids', name: 'IDs'}},
+            {target: {lookupOrCreateList: () => list}});
+        t.same(list.value, ['previous'], 'the list remains intact while acquisition is pending');
+        await waitFor(() => socket.sent.some(payload => JSON.parse(payload).method === 'catalog.get'));
+        const request = socket.lastSent();
+        if (fail) {
+            socket.fireMessage({
+                jsonrpc: '2.0',
+                id: request.id,
+                error: {code: -32000, message: 'Unavailable', data: {reason: 'permission_denied'}}
+            });
+        } else {
+            socket.fireMessage({jsonrpc: '2.0', id: request.id, result: catalogResult});
+        }
+        await completion;
+        t.equal(socket.sent.length, 2, 'only hello and its catalog.get are sent');
+        t.same(list.value, fail ? ['previous'] : ['examplemod:ruby_block', 'minecraft:oak_log']);
+        if (fail) {
+            t.equal(list._monitorUpToDate, true);
+            t.equal(actionableErrors(runtime).pop().reason, 'catalog_unavailable');
+        }
+    }
+});
+
+test('catalog list rejects unavailable catalogs, invalid inputs and obsolete connection generations', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const list = {value: ['previous'], _monitorUpToDate: true};
+    const args = {KIND: 'block', LIST: {id: 'ids', name: 'IDs'}};
+    const util = {target: {lookupOrCreateList: () => list}};
+    for (const status of ['not_acquired', 'unavailable']) {
+        blocks._catalogState = {status, catalog: catalogResult};
+        await blocks.catalogToList(args, util);
+        t.equal(actionableErrors(runtime).pop().reason, 'catalog_unavailable');
+        t.same(list.value, ['previous']);
+    }
+    blocks._catalogState = {status: 'current', catalog: catalogResult};
+    await blocks.catalogToList({...args, KIND: 'other'}, util);
+    t.equal(actionableErrors(runtime).pop().reason, 'invalid_params');
+    await blocks.catalogToList(args, {target: {lookupOrCreateList: () => null}});
+    t.equal(actionableErrors(runtime).pop().reason, 'invalid_output_list');
+    let finishAcquisition;
+    blocks._catalogPromise = new Promise(resolve => {
+        finishAcquisition = resolve;
+    });
+    const completion = blocks.catalogToList(args, util);
+    blocks._resetCatalog();
+    blocks._catalogState = {status: 'current', catalog: catalogResult};
+    finishAcquisition();
+    await completion;
+    t.equal(actionableErrors(runtime).pop().reason, 'catalog_unavailable');
+    t.same(list.value, ['previous'], 'an old request cannot copy the successor connection catalog');
+    t.equal(list._monitorUpToDate, true);
+    t.equal(socket.sent.length, 1);
+});
 
 test('hello uses a JSON-RPC 2.0 request with protocol 23.2.0', t => {
     FakeWebSocket.instances = [];
@@ -2639,4 +2752,150 @@ test('a disabled deployment still shows every block', t => {
     const disabled = new McRemote(disabledRuntime()).getInfo();
     t.same(disabled.blocks.map(block => block.opcode), enabled.blocks.map(block => block.opcode));
     t.end();
+});
+
+test('B8 nearby list stores complete snapshots atomically and clears on an empty result', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const example = entityParticleFixture.nearby.cases.find(item => item.id === 'B8-N02');
+    const list = {value: ['previous'], _monitorUpToDate: true};
+    const args = {X: 0, Y: 0, Z: 0, RADIUS: 5, MAX_ENTITIES: 2, LIST: {id: 'entities', name: 'entities'}};
+    const util = {target: {lookupOrCreateList: () => list}};
+    let completion = blocks.getNearbyEntities(args, util);
+    t.same(socket.lastSent().params, example.params);
+    t.same(list.value, ['previous']);
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: example.result});
+    await completion;
+    t.equal(list._monitorUpToDate, false);
+    const sent = socket.sent.length;
+    const properties = {handle: 'mcr_eh_cow', type: 'minecraft:cow', x: 3, y: 4, z: 0};
+    for (const [property, expected] of Object.entries(properties)) {
+        t.equal(blocks.entityInfo({ENTITY_INFO: list.value[0], PROPERTY: property}), expected);
+    }
+    t.equal(socket.sent.length, sent, 'accessors do not request live data');
+    const snapshot = list.value.slice();
+    completion = blocks.getNearbyEntities(args, util);
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: [example.result[0], {handle: 'raw-uuid'}]});
+    await completion;
+    t.same(list.value, snapshot, 'a malformed item preserves the whole previous list');
+    completion = blocks.getNearbyEntities(args, util);
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: []});
+    await completion;
+    t.same(list.value, []);
+});
+
+test('B8 entity lifecycle maps owner fixture params and propagates handle errors', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const cases = entityParticleFixture.entity_lifecycle.cases;
+    const get = cases.find(item => item.id === 'B8-E01');
+    let completion = blocks.getEntityPose({HANDLE: get.params[0]});
+    t.equal(socket.lastSent().method, get.method);
+    t.same(socket.lastSent().params, get.params);
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: get.result});
+    const pose = await completion;
+    for (const [property, expected] of Object.entries({dimension: 'minecraft:overworld',
+        x: 1.235,
+        y: 64.556,
+        z: 3,
+        yaw: -170,
+        pitch: 45.36})) {
+        t.equal(blocks.entityPoseInfo({POSE: pose, PROPERTY: property}), expected);
+    }
+    const set = cases.find(item => item.id === 'B8-E02');
+    const [handle, dimension, x, y, z, yaw, pitch] = set.params;
+    completion = blocks.setEntityPose({HANDLE: handle,
+        DIMENSION: dimension,
+        X: x,
+        Y: y,
+        Z: z,
+        YAW: yaw,
+        PITCH: pitch});
+    t.equal(socket.lastSent().method, set.method);
+    t.same(socket.lastSent().params, set.params, 'preserves input precision');
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: set.result});
+    await completion;
+    completion = blocks.removeEntity({HANDLE: handle});
+    t.equal(socket.lastSent().method, 'entity.remove');
+    t.same(socket.lastSent().params, [handle]);
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: null});
+    await completion;
+    completion = blocks.getEntityPose({HANDLE: handle});
+    socket.fireMessage({jsonrpc: '2.0',
+        id: socket.lastSent().id,
+        error: {code: -32000, message: 'removed', data: {reason: 'entity_not_found'}}});
+    t.equal(await completion, '⟦mcr-error:entity_not_found⟧');
+});
+
+test('B8 particle constructors send structured data and preserve explicit force', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    blocks._catalogState = {status: 'current', catalog: catalogBody};
+    for (const [spec, expected] of [
+        [blocks.particleSpec({PARTICLE: 'minecraft:flame', RECEIVER: 'self'}),
+            {particle_id: 'minecraft:flame', receiver: 'self'}],
+        [blocks.dustParticleSpec({RED: 0, GREEN: 255, BLUE: 10, SIZE: 0.01, RECEIVER: 'world'}),
+            {particle_id: 'minecraft:dust', receiver: 'world', data: {color: [0, 255, 10], size: 0.01}}],
+        [blocks.blockParticleSpec({BLOCK: 'minecraft:oak_log', STATE: 'axis=y', RECEIVER: 'self'}),
+            {particle_id: 'minecraft:block',
+                receiver: 'self',
+                data: {block_id: 'minecraft:oak_log', state: {axis: 'y'}}}]
+    ]) {
+        const completion = blocks.spawnParticle({X: 1,
+            Y: 2,
+            Z: 3,
+            OFFSET_X: 0,
+            OFFSET_Y: 0,
+            OFFSET_Z: 0,
+            PARTICLE: spec,
+            SPEED: 0,
+            COUNT: 4,
+            FORCE: 'false'});
+        t.same(socket.lastSent().params, [1, 2, 3, 0, 0, 0, expected, 0, 4, false]);
+        socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: 4});
+        await completion;
+    }
+    t.equal(blocks.dustParticleSpec({RED: 256, GREEN: 0, BLUE: 0, SIZE: 1, RECEIVER: 'self'}),
+        '⟦mcr-error:invalid_params⟧');
+    const sent = socket.sent.length;
+    blocks.spawnParticle({PARTICLE: '⟦mcr-error:invalid_params⟧'});
+    t.equal(socket.sent.length, sent, 'constructor errors are not sent as particle IDs');
+});
+
+test('B8 entity commands remain acknowledged in FAST and report invalid results and remote errors', async t => {
+    const runtime = {emit: () => {}, emitted: []};
+    runtime.emit = (event, payload) => runtime.emitted.push({event, payload});
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    blocks._buildMode = 'FAST';
+    let completion = blocks.setEntityPose({HANDLE: 'mcr_eh_pose',
+        DIMENSION: 'overworld',
+        X: 1,
+        Y: 2,
+        Z: 3,
+        YAW: 0,
+        PITCH: 0});
+    t.type(socket.lastSent().id, 'number', 'a pose setter has a response even in FAST');
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: null});
+    await completion;
+    t.equal(actionableErrors(runtime).pop().reason, 'invalid_response');
+    completion = blocks.removeEntity({HANDLE: 'mcr_eh_pose'});
+    t.type(socket.lastSent().id, 'number', 'removal is acknowledged in FAST');
+    socket.fireMessage({jsonrpc: '2.0',
+        id: socket.lastSent().id,
+        error: {code: -32000, message: 'unloaded', data: {reason: 'entity_unavailable'}}});
+    await completion;
+    t.equal(actionableErrors(runtime).pop().reason, 'entity_unavailable');
+    const list = {value: ['previous']};
+    completion = blocks.getNearbyEntities({X: 0,
+        Y: 0,
+        Z: 0,
+        RADIUS: 33,
+        MAX_ENTITIES: 1,
+        LIST: {id: 'entities', name: 'entities'}}, {target: {lookupOrCreateList: () => list}});
+    socket.fireMessage({jsonrpc: '2.0',
+        id: socket.lastSent().id,
+        error: {code: -32602, message: 'runtime radius cap', data: {reason: 'invalid_params'}}});
+    await completion;
+    t.same(list.value, ['previous'], 'runtime policy rejection preserves the previous list');
+    t.equal(actionableErrors(runtime).pop().reason, 'invalid_params');
+    t.equal(blocks.entityPoseInfo({POSE: '⟦mcr-error:entity_not_found⟧', PROPERTY: 'x'}),
+        '⟦mcr-error:entity_not_found⟧');
+    t.equal(blocks.entityInfo({ENTITY_INFO: 'raw-uuid', PROPERTY: 'handle'}), '⟦mcr-error:invalid_params⟧');
 });

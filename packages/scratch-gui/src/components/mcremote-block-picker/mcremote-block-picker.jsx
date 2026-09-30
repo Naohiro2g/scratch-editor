@@ -5,6 +5,7 @@ import React, {useCallback, useMemo, useState} from 'react';
 
 import Box from '../box/box.jsx';
 import Modal from '../../containers/modal.jsx';
+import {getBlockNames, searchBlockIds} from '../../lib/mcremote-block-names';
 import {
     buildStateText,
     catalogBlockId,
@@ -22,7 +23,7 @@ const messages = defineMessages({
         id: 'gui.mcremote.blockPicker.title'
     },
     search: {
-        defaultMessage: 'Search blocks',
+        defaultMessage: 'Search by block ID or name',
         description: 'Search field in the McRemote block picker',
         id: 'gui.mcremote.blockPicker.search'
     },
@@ -42,6 +43,7 @@ const McRemoteBlockPicker = ({
     onCancel
 }) => {
     const intl = useIntl();
+    const isJapanese = /^ja(?:-|$)/i.test(intl.locale);
     const hasCurrentCatalog = catalogState.status === 'current';
     const blockCatalog = hasCurrentCatalog && catalogState.catalog && catalogState.catalog.block ?
         catalogState.catalog.block :
@@ -57,11 +59,9 @@ const McRemoteBlockPicker = ({
         initialSelection ? initialSelection.selectedStates : {}
     );
     const blockIds = useMemo(() => Object.keys(blockCatalog).sort(), [blockCatalog]);
-    const visibleBlockIds = useMemo(() => {
-        const query = search.trim().toLowerCase();
-        if (!query) return blockIds;
-        return blockIds.filter(id => id.toLowerCase().includes(query));
-    }, [blockIds, search]);
+    const visibleBlockIds = useMemo(() =>
+        searchBlockIds(blockIds, catalogState.mcVersion, search),
+    [blockIds, catalogState.mcVersion, search]);
     const selectedEntry = selectedId ? blockCatalog[selectedId] : null;
 
     const selectBlock = useCallback(id => {
@@ -203,26 +203,57 @@ const McRemoteBlockPicker = ({
                             value={search}
                             onChange={handleSearchChange}
                         />
+                        {hasCurrentCatalog ? (
+                            <div
+                                aria-live="polite"
+                                className={styles.resultCount}
+                            >
+                                <FormattedMessage
+                                    defaultMessage="{count, plural, one {# block} other {# blocks}}"
+                                    description="Number of block choices matching the McRemote picker search"
+                                    id="gui.mcremote.blockPicker.resultCount"
+                                    values={{count: visibleBlockIds.length}}
+                                />
+                            </div>
+                        ) : null}
                         <div className={styles.blockList}>
-                            {visibleBlockIds.map(id => (
-                                <button
-                                    className={selectedId === id ? styles.selectedBlock : styles.blockButton}
-                                    data-block-id={id}
-                                    key={id}
-                                    type="button"
-                                    onClick={handleBlockClick}
-                                >
-                                    {pickerBlockId(id)}
-                                </button>
-                            ))}
+                            {visibleBlockIds.map(id => {
+                                const names = getBlockNames(catalogState.mcVersion, id);
+                                const name = names && (isJapanese ? names.ja || names.en : names.en);
+                                return (
+                                    <button
+                                        className={selectedId === id ? styles.selectedBlock : styles.blockButton}
+                                        data-block-id={id}
+                                        key={id}
+                                        type="button"
+                                        onClick={handleBlockClick}
+                                    >
+                                        <span className={styles.blockLabel}>
+                                            <span className={styles.blockId}>{pickerBlockId(id)}</span>
+                                            {name ? ` ${name}` : null}
+                                        </span>
+                                        {isJapanese && names && names.en ? (
+                                            <span className={styles.englishName}>{names.en}</span>
+                                        ) : null}
+                                    </button>
+                                );
+                            })}
                             {visibleBlockIds.length === 0 ? (
                                 <div className={styles.emptyList}>
-                                    <FormattedMessage
-                                        defaultMessage={'No catalog block is available. ' +
-                                            'You can still type a value above.'}
-                                        description="Empty McRemote catalog picker list"
-                                        id="gui.mcremote.blockPicker.empty"
-                                    />
+                                    {blockIds.length > 0 ? (
+                                        <FormattedMessage
+                                            defaultMessage="No blocks match your search."
+                                            description="No matching blocks in the McRemote block picker"
+                                            id="gui.mcremote.blockPicker.noMatches"
+                                        />
+                                    ) : (
+                                        <FormattedMessage
+                                            defaultMessage={'No catalog block is available. ' +
+                                                'You can still type a value above.'}
+                                            description="Empty McRemote catalog picker list"
+                                            id="gui.mcremote.blockPicker.empty"
+                                        />
+                                    )}
                                 </div>
                             ) : null}
                         </div>

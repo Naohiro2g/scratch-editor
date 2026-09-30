@@ -51,6 +51,8 @@ const mcremoteMessages = {
             'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。',
         'gui.alerts.mcremoteGroundNotFound': '地面が見つかりません。',
         'gui.alerts.mcremoteOperationFailed': 'Minecraftの操作に失敗しました。McRemoteエラーを確認してください。',
+        'gui.alerts.mcremoteCatalogUnavailable':
+            'カタログを取得できません。Minecraftへの接続を確認して、もう一度実行してください。',
         'gui.aria.mcremoteConnectionMenu': 'McRemote 接続先メニュー',
         'gui.menuBar.mcremoteConnection': '接続先',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
@@ -61,9 +63,11 @@ const mcremoteMessages = {
         'gui.mcremote.blockPicker.empty':
             '利用できるカタログのブロックがありません。上の欄へ自由に入力できます。',
         'gui.mcremote.blockPicker.minecraftDefaultValue': 'Minecraft のデフォルト（{value}）',
+        'gui.mcremote.blockPicker.noMatches': '検索に一致するブロックがありません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたは変数が接続されています。picker は取り外しません。両方の入力を文字列へ戻してから適用してください。',
-        'gui.mcremote.blockPicker.search': 'ブロックを検索',
+        'gui.mcremote.blockPicker.resultCount': '{count}件',
+        'gui.mcremote.blockPicker.search': 'ブロックID・名前で検索',
         'gui.mcremote.blockPicker.stateHeading': 'ブロックの状態',
         'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':
@@ -122,6 +126,10 @@ const mcremoteMessages = {
         'mcremote.getBlocks':
             'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] までのブロック情報を [LIST] に入れる',
         'mcremote.getHeight': 'x :[X]  z :[Z] の地面の高さ',
+        'mcremote.catalogToList': 'カタログの [KIND] を [LIST] に入れる',
+        'mcremote.catalogKind.block': 'ブロックID',
+        'mcremote.catalogKind.entity': 'エンティティID',
+        'mcremote.catalogKind.particle': 'パーティクルID',
         'mcremote.getHeightBelow': 'x :[X]  z :[Z] の y :[MAX_Y] 以下の地面の高さ',
         'mcremote.blockInfoId': '[BLOCK_INFO] のブロックID',
         'mcremote.blockInfoState': '[BLOCK_INFO] の状態',
@@ -153,6 +161,19 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': '近くだけ表示',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] に生成し ハンドルを [VARIABLE] に入れる',
+        'mcremote.getNearbyEntities': 'x :[X]  y :[Y]  z :[Z] の半径 [RADIUS] 以内のエンティティを最大 [MAX_ENTITIES] 件 [LIST] に入れる',
+        'mcremote.entityInfo': 'エンティティ情報 [ENTITY_INFO] の [PROPERTY]',
+        'mcremote.getEntityPose': 'エンティティ [HANDLE] の姿勢',
+        'mcremote.entityPoseInfo': 'エンティティの姿勢 [POSE] の [PROPERTY]',
+        'mcremote.setEntityPose': 'エンティティ [HANDLE] を [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する',
+        'mcremote.removeEntity': 'エンティティ [HANDLE] を取り除く',
+        'mcremote.particleSpec': '[RECEIVER] に表示するパーティクル [PARTICLE]',
+        'mcremote.dustParticleSpec': '[RECEIVER] に表示するダスト 赤 [RED] 緑 [GREEN] 青 [BLUE] 大きさ [SIZE]',
+        'mcremote.blockParticleSpec': '[RECEIVER] に表示するブロックのパーティクル [BLOCK] 状態 [STATE]',
+        'mcremote.entityProperty.handle': 'ハンドル',
+        'mcremote.entityProperty.type': '種類',
+        'mcremote.particleReceiver.world': '近くのプレイヤー',
+        'mcremote.particleReceiver.self': '接続したプレイヤーだけ',
         'mcremote.playerDirection': 'プレイヤーの向き [AXIS]',
         'mcremote.setPlayerDirection': 'プレイヤーの向きを x[X]  y[Y]  z[Z] にする',
         'mcremote.entityDirection': 'エンティティ [HANDLE] の向き [AXIS]',
@@ -231,6 +252,8 @@ const mcremoteMessages = {
         'gui.alerts.mcremoteGroundNotFound': 'じめんがみつかりません。',
         'gui.alerts.mcremoteOperationFailed':
             'Minecraftのそうさにしっぱいしました。McRemoteエラーをかくにんしてください。',
+        'gui.alerts.mcremoteCatalogUnavailable':
+            'カタログをしゅとくできません。Minecraftへのせつぞくをかくにんして、もういちどじっこうしてください。',
         'gui.aria.mcremoteConnectionMenu': 'McRemote せつぞくさきメニュー',
         'gui.menuBar.mcremoteConnection': 'せつぞくさき',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
@@ -241,9 +264,11 @@ const mcremoteMessages = {
         'gui.mcremote.blockPicker.empty':
             'つかえるカタログのブロックがありません。うえのらんにじゆうににゅうりょくできます。',
         'gui.mcremote.blockPicker.minecraftDefaultValue': 'Minecraft のデフォルト（{value}）',
+        'gui.mcremote.blockPicker.noMatches': 'さがしているブロックがみつかりません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたはへんすうがせつぞくされています。ピッカーはとりはずしません。りょうほうのにゅうりょくをもじにもどしてからつかってください。',
-        'gui.mcremote.blockPicker.search': 'ブロックをさがす',
+        'gui.mcremote.blockPicker.resultCount': '{count}けん',
+        'gui.mcremote.blockPicker.search': 'ブロックID・なまえでさがす',
         'gui.mcremote.blockPicker.stateHeading': 'ブロックのじょうたい',
         'gui.mcremote.blockPicker.statusCurrent': 'しゅとくずみ — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':
@@ -306,6 +331,10 @@ const mcremoteMessages = {
         'mcremote.getBlocks':
             'x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] までのブロックじょうほうを [LIST] にいれる',
         'mcremote.getHeight': 'x :[X]  z :[Z] のじめんのたかさ',
+        'mcremote.catalogToList': 'カタログの [KIND] を [LIST] にいれる',
+        'mcremote.catalogKind.block': 'ブロックID',
+        'mcremote.catalogKind.entity': 'エンティティID',
+        'mcremote.catalogKind.particle': 'パーティクルID',
         'mcremote.getHeightBelow': 'x :[X]  z :[Z] の y :[MAX_Y] いかのじめんのたかさ',
         'mcremote.blockInfoId': '[BLOCK_INFO] のブロックID',
         'mcremote.blockInfoState': '[BLOCK_INFO] のじょうたい',
@@ -337,6 +366,21 @@ const mcremoteMessages = {
         'mcremote.particleVisibility.near': 'ちかくだけひょうじ',
         'mcremote.spawnEntity':
             'エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] にだして ハンドルを [VARIABLE] にいれる',
+        'mcremote.getNearbyEntities':
+            'x :[X]  y :[Y]  z :[Z] のはんけい [RADIUS] いないのエンティティをさいだい [MAX_ENTITIES] けん [LIST] にいれる',
+        'mcremote.entityInfo': 'エンティティじょうほう [ENTITY_INFO] の [PROPERTY]',
+        'mcremote.getEntityPose': 'エンティティ [HANDLE] のしせい',
+        'mcremote.entityPoseInfo': 'エンティティのしせい [POSE] の [PROPERTY]',
+        'mcremote.setEntityPose':
+            'エンティティ [HANDLE] を [DIMENSION] x :[X]  y :[Y]  z :[Z] よこのむき:[YAW] たてのむき:[PITCH] へうごかす',
+        'mcremote.removeEntity': 'エンティティ [HANDLE] をとりのぞく',
+        'mcremote.particleSpec': '[RECEIVER] にひょうじするパーティクル [PARTICLE]',
+        'mcremote.dustParticleSpec': '[RECEIVER] にひょうじするダスト あか [RED] みどり [GREEN] あお [BLUE] おおきさ [SIZE]',
+        'mcremote.blockParticleSpec': '[RECEIVER] にひょうじするブロックのパーティクル [BLOCK] じょうたい [STATE]',
+        'mcremote.entityProperty.handle': 'ハンドル',
+        'mcremote.entityProperty.type': 'しゅるい',
+        'mcremote.particleReceiver.world': 'ちかくのプレイヤー',
+        'mcremote.particleReceiver.self': 'せつぞくしたプレイヤーだけ',
         'mcremote.playerDirection': 'プレイヤーのむき [AXIS]',
         'mcremote.setPlayerDirection': 'プレイヤーのむきを x[X]  y[Y]  z[Z] にする',
         'mcremote.entityDirection': 'エンティティ [HANDLE] のむき [AXIS]',

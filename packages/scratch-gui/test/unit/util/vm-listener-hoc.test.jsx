@@ -136,6 +136,7 @@ describe('VMListenerHOC', () => {
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'capacity_exhausted'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'height_not_found'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_output_list'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'catalog_unavailable'});
 
         const actions = store.getActions();
         expect(actions[0].alertId).toEqual('mcremoteNotConnected');
@@ -146,6 +147,7 @@ describe('VMListenerHOC', () => {
         expect(actions[5].alertId).toEqual('mcremoteBuildDeliveryFailed');
         expect(actions[6].alertId).toEqual('mcremoteGroundNotFound');
         expect(actions[7].alertId).toEqual('mcremoteOperationFailed');
+        expect(actions[8].alertId).toEqual('mcremoteCatalogUnavailable');
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
     });

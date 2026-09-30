@@ -228,7 +228,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -251,7 +252,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -274,7 +276,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -297,7 +300,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -320,7 +324,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -343,7 +348,8 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
@@ -366,13 +372,38 @@ const alerts = [
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
             'mcremoteGroundNotFound',
-            'mcremoteOperationFailed'
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
         ],
         content: (
             <FormattedMessage
                 defaultMessage="The Minecraft operation failed. Check the McRemote error."
                 description="Guidance after a McRemote operation fails for a reason without a specialized message"
                 id="gui.alerts.mcremoteOperationFailed"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 5
+    },
+    {
+        alertId: 'mcremoteCatalogUnavailable',
+        alertType: AlertTypes.STANDARD,
+        clearList: [
+            'mcremoteNotConnected',
+            'mcremoteConnectionDisabled',
+            'mcremoteInvalidBuildMode',
+            'mcremoteInvalidTraceDelay',
+            'mcremoteBuildDeliveryFailed',
+            'mcremoteGroundNotFound',
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
+        ],
+        content: (
+            <FormattedMessage
+                defaultMessage="The catalog is unavailable. Check your Minecraft connection and try again."
+                description="Guidance when McRemote cannot copy IDs from the current connection catalog"
+                id="gui.alerts.mcremoteCatalogUnavailable"
             />
         ),
         closeButton: true,

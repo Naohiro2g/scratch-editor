@@ -263,7 +263,8 @@ const vmListenerHOC = function (WrappedComponent) {
                 invalid_trace_delay: 'mcremoteInvalidTraceDelay',
                 backpressure: 'mcremoteBuildDeliveryFailed',
                 capacity_exhausted: 'mcremoteBuildDeliveryFailed',
-                height_not_found: 'mcremoteGroundNotFound'
+                height_not_found: 'mcremoteGroundNotFound',
+                catalog_unavailable: 'mcremoteCatalogUnavailable'
             };
             const alertId = error && alertByReason[error.reason] ?
                 alertByReason[error.reason] : 'mcremoteOperationFailed';

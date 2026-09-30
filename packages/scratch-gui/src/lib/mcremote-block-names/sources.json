@@ -1,0 +1,42 @@
+{
+  "1.21.11": {
+    "versionMetadata": {
+      "url": "https://piston-meta.mojang.com/v1/packages/4f6bd9388f12e9d7adc2ded64acba66212d60521/1.21.11.json",
+      "sha1": "4f6bd9388f12e9d7adc2ded64acba66212d60521"
+    },
+    "assetIndex": {
+      "url": "https://piston-meta.mojang.com/v1/packages/4043c34fdd5d06b2ac1f6f46c5b91a4ac16e3452/29.json",
+      "sha1": "4043c34fdd5d06b2ac1f6f46c5b91a4ac16e3452"
+    },
+    "en": {
+      "url": "https://piston-data.mojang.com/v1/objects/ba2df812c2d12e0219c489c4cd9a5e1f0760f5bd/client.jar",
+      "sha1": "ba2df812c2d12e0219c489c4cd9a5e1f0760f5bd",
+      "path": "assets/minecraft/lang/en_us.json",
+      "entrySha256": "32342169118ffaef743a3cbd2a3b956f8f35abdaa7bc7653af038f35a9e0655c"
+    },
+    "ja": {
+      "url": "https://resources.download.minecraft.net/10/10e2c3156bea5c00200d0b1761cb58b3e27ec7bf",
+      "sha1": "10e2c3156bea5c00200d0b1761cb58b3e27ec7bf"
+    }
+  },
+  "26.2": {
+    "versionMetadata": {
+      "url": "https://piston-meta.mojang.com/v1/packages/c7868781b30aaf24be0dac894c94a34e5d6df10d/26.2.json",
+      "sha1": "c7868781b30aaf24be0dac894c94a34e5d6df10d"
+    },
+    "assetIndex": {
+      "url": "https://piston-meta.mojang.com/v1/packages/9a622c23d8ff76c4c44787c2e171c56feed1f786/32.json",
+      "sha1": "9a622c23d8ff76c4c44787c2e171c56feed1f786"
+    },
+    "en": {
+      "url": "https://piston-data.mojang.com/v1/objects/2dc72797acbc1b63fc16a11c4ac393605f453754/client.jar",
+      "sha1": "2dc72797acbc1b63fc16a11c4ac393605f453754",
+      "path": "assets/minecraft/lang/en_us.json",
+      "entrySha256": "61fdc6d81e2a78377669047ee70189ec806ca3f5718a4c5e2bda8139cccb3063"
+    },
+    "ja": {
+      "url": "https://resources.download.minecraft.net/10/10e2c3156bea5c00200d0b1761cb58b3e27ec7bf",
+      "sha1": "10e2c3156bea5c00200d0b1761cb58b3e27ec7bf"
+    }
+  }
+}

@@ -76,17 +76,44 @@
     overflow-y: auto;
 }
 
+.result-count {
+    font-size: 0.8rem;
+    margin-top: 0.4rem;
+}
+
 .block-button,
 .selected-block {
     background: $ui-white;
     border: 0;
+    border-bottom: 1px solid $ui-black-transparent;
     color: $text-primary;
     cursor: pointer;
     display: block;
-    font-family: monospace;
     padding: 0.45rem 0.6rem;
     text-align: left;
     width: 100%;
+}
+
+.block-button:last-child,
+.selected-block:last-child {
+    border-bottom: 0;
+}
+
+.block-label,
+.english-name {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.block-id {
+    font-family: monospace;
+}
+
+.english-name {
+    font-size: 0.75rem;
+    margin-top: 0.2rem;
+    opacity: 0.7;
+    text-align: right;
 }
 
 .selected-block {
