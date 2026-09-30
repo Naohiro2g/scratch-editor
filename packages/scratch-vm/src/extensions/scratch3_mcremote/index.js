@@ -1118,6 +1118,52 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'playSound',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.playSound',
+                        default: 'play sound [SOUND] at x :[X]  y :[Y]  z :[Z] options [OPTIONS]',
+                        description: 'Play a registered sound at an origin-relative position'
+                    }),
+                    arguments: {
+                        SOUND: {type: ArgumentType.STRING, defaultValue: 'entity.experience_orb.pickup'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        OPTIONS: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'playBlockSound',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.playBlockSound',
+                        default: 'play [KIND] sound of block at x :[X]  y :[Y]  z :[Z] options [OPTIONS]',
+                        description: 'Play the sound group of a block at integer coordinates'
+                    }),
+                    arguments: {
+                        KIND: {type: ArgumentType.STRING, menu: 'soundKinds', defaultValue: 'place'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        OPTIONS: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'soundOptions',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.soundOptions',
+                        default: 'sound options volume [VOLUME] pitch or note [HEIGHT] receiver [RECEIVER]',
+                        description: 'Build optional sound settings; a number is pitch and N0 through N24 is note'
+                    }),
+                    arguments: {
+                        VOLUME: {type: ArgumentType.STRING, defaultValue: ''},
+                        HEIGHT: {type: ArgumentType.STRING, defaultValue: ''},
+                        RECEIVER: {type: ArgumentType.STRING, menu: 'soundReceivers', defaultValue: 'world'}
+                    }
+                },
+                {
                     opcode: 'strikeLightning',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -1436,6 +1482,18 @@ class Scratch3McRemoteBlocks {
                             description: 'Send particles only to the paired player'
                         }),
                         value: 'self'}
+                    ]
+                },
+                soundKinds: {
+                    acceptReporters: false,
+                    items: ['place', 'hit', 'break', 'step', 'fall'].map(kind =>
+                        menuItem(`mcremote.soundKind.${kind}`, kind, kind))
+                },
+                soundReceivers: {
+                    acceptReporters: false,
+                    items: [
+                        menuItem('mcremote.soundReceiver.world', 'nearby players', 'world'),
+                        menuItem('mcremote.soundReceiver.self', 'paired player only', 'self')
                     ]
                 },
                 directionAxes: {
@@ -3453,6 +3511,79 @@ class Scratch3McRemoteBlocks {
             error.reason = 'invalid_response';
             return this._actionableCommandError(method, error);
         }, error => this._actionableCommandError(method, error));
+    }
+
+    soundOptions (args) {
+        const options = {};
+        const volumeText = Cast.toString(args.VOLUME).trim();
+        const heightText = Cast.toString(args.HEIGHT).trim();
+        const receiver = Cast.toString(args.RECEIVER);
+        if (volumeText !== '') {
+            const volume = Number(volumeText);
+            if (!Number.isFinite(volume) || volume < 0 || volume > 1) return makeErrorText('invalid_params');
+            options.volume = volume;
+        }
+        if (heightText !== '') {
+            if (/^N(?:[0-9]|1[0-9]|2[0-4])$/.test(heightText)) {
+                options.note = Number(heightText.slice(1));
+            } else {
+                const pitch = Number(heightText);
+                if (!Number.isFinite(pitch) || pitch < 0.5 || pitch > 2) return makeErrorText('invalid_params');
+                options.pitch = pitch;
+            }
+        }
+        if (receiver !== 'world' && receiver !== 'self') return makeErrorText('invalid_params');
+        if (receiver === 'self') options.receiver = receiver;
+        return JSON.stringify(options);
+    }
+
+    _soundCommand (method, args, sound) {
+        const position = [args.X, args.Y, args.Z].map(Cast.toNumber);
+        const optionsText = typeof args.OPTIONS === 'undefined' ? '' : Cast.toString(args.OPTIONS).trim();
+        let options;
+        try {
+            if (position.some(value => !Number.isFinite(value)) ||
+                (method === 'world.playBlockSound' && position.some(value => !Number.isInteger(value)))) {
+                throw new Error('Invalid sound position');
+            }
+            if (optionsText !== '') {
+                options = JSON.parse(optionsText);
+                if (!options || typeof options !== 'object' || Array.isArray(options) ||
+                    Object.keys(options).some(key => !['volume', 'pitch', 'note', 'receiver'].includes(key)) ||
+                    (typeof options.volume !== 'undefined' &&
+                        (typeof options.volume !== 'number' || !Number.isFinite(options.volume) ||
+                            options.volume < 0 || options.volume > 1)) ||
+                    (typeof options.pitch !== 'undefined' &&
+                        (typeof options.pitch !== 'number' || !Number.isFinite(options.pitch) ||
+                            options.pitch < 0.5 || options.pitch > 2)) ||
+                    (typeof options.note !== 'undefined' &&
+                        (!Number.isInteger(options.note) || options.note < 0 || options.note > 24)) ||
+                    (typeof options.pitch !== 'undefined' && typeof options.note !== 'undefined') ||
+                    (typeof options.receiver !== 'undefined' &&
+                        !['world', 'self'].includes(options.receiver))) {
+                    throw new Error('Invalid sound options');
+                }
+            }
+        } catch (error) {
+            error.reason = 'invalid_params';
+            return this._actionableCommandError(method, error);
+        }
+        const params = [...position, sound];
+        if (typeof options !== 'undefined') params.push(options);
+        return this._request(method, params).then(result => {
+            if (result === null) return;
+            const error = new Error('Invalid sound result');
+            error.reason = 'invalid_response';
+            return this._actionableCommandError(method, error);
+        }, error => this._actionableCommandError(method, error));
+    }
+
+    playSound (args) {
+        return this._soundCommand('world.playSound', args, Cast.toString(args.SOUND));
+    }
+
+    playBlockSound (args) {
+        return this._soundCommand('world.playBlockSound', args, Cast.toString(args.KIND));
     }
 
     /**

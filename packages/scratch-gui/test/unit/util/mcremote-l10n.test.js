@@ -66,6 +66,8 @@ describe('McRemote Japanese localization', () => {
             'mcremote.updateSignLine',
             'mcremote.spawnParticle',
             'mcremote.spawnEntity',
+            'mcremote.playSound',
+            'mcremote.playBlockSound',
             'mcremote.strikeLightning',
             'mcremote.setPlayerPos',
             'mcremote.setPlayerPose',

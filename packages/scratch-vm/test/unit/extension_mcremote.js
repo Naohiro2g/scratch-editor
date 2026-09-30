@@ -2859,6 +2859,75 @@ test('B8 particle constructors send structured data and preserve explicit force'
     t.equal(socket.sent.length, sent, 'constructor errors are not sent as particle IDs');
 });
 
+test('B8 sound blocks expose both methods and the numeric-or-note height input', t => {
+    const info = new McRemote({}).getInfo();
+    const blocks = Object.fromEntries(info.blocks
+        .filter(block => typeof block !== 'string')
+        .map(block => [block.opcode, block]));
+    t.equal(blocks.playSound.blockType, 'command');
+    t.equal(blocks.playBlockSound.blockType, 'command');
+    t.equal(blocks.soundOptions.blockType, 'reporter');
+    t.same(info.menus.soundKinds.items.map(item => item.value), ['place', 'hit', 'break', 'step', 'fall']);
+    t.same(info.menus.soundReceivers.items.map(item => item.value), ['world', 'self']);
+    const sound = new McRemote({});
+    t.equal(sound.soundOptions({VOLUME: '', HEIGHT: '', RECEIVER: 'world'}), '{}');
+    t.same(JSON.parse(sound.soundOptions({VOLUME: '0', HEIGHT: '0.5', RECEIVER: 'self'})),
+        {volume: 0, pitch: 0.5, receiver: 'self'});
+    t.same(JSON.parse(sound.soundOptions({VOLUME: '1', HEIGHT: 'N24', RECEIVER: 'world'})),
+        {volume: 1, note: 24});
+    for (const height of ['N25', 'N01', '0.49', '2.01', 'nope']) {
+        t.equal(sound.soundOptions({VOLUME: '', HEIGHT: height, RECEIVER: 'world'}),
+            '⟦mcr-error:invalid_params⟧');
+    }
+    t.equal(sound.soundOptions({VOLUME: '1.01', HEIGHT: '', RECEIVER: 'world'}),
+        '⟦mcr-error:invalid_params⟧');
+    t.end();
+});
+
+test('B8 sound commands use fixture params and surface server and local errors', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    for (const id of ['B8-S01', 'B8-S03', 'B8-S06', 'B8-S08']) {
+        const soundCase = b8Fixture.sound.cases.find(item => item.id === id);
+        const [x, y, z, sound, options] = soundCase.params;
+        const args = {X: x, Y: y, Z: z, OPTIONS: options ? JSON.stringify(options) : ''};
+        args[soundCase.method === 'world.playSound' ? 'SOUND' : 'KIND'] = sound;
+        const completion = blocks[soundCase.method === 'world.playSound' ? 'playSound' : 'playBlockSound'](args);
+        const request = socket.lastSent();
+        t.equal(request.method, soundCase.method);
+        t.same(request.params, soundCase.params);
+        t.type(request.id, 'number');
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+        await completion;
+    }
+    const sent = socket.sent.length;
+    await blocks.playSound({
+        X: 0, Y: 0, Z: 0, SOUND: 'entity.cow.ambient', OPTIONS: '{"note":24,"pitch":1}'
+    });
+    await blocks.playSound({
+        X: 0,
+        Y: 0,
+        Z: 0,
+        SOUND: 'entity.cow.ambient',
+        OPTIONS: '⟦mcr-error:invalid_params⟧'
+    });
+    await blocks.playBlockSound({X: 1.5, Y: 2, Z: 3, KIND: 'place', OPTIONS: ''});
+    t.equal(socket.sent.length, sent, 'invalid local inputs are not sent');
+    t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'invalid_params');
+
+    const missing = b8Fixture.sound.cases.find(item => item.id === 'B8-S20');
+    const completion = blocks.playBlockSound({X: 1, Y: 2, Z: 3, KIND: 'place', OPTIONS: ''});
+    const request = socket.lastSent();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: request.id,
+        error: {code: missing.code, message: missing.reason, data: {reason: missing.reason}}
+    });
+    await completion;
+    t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'no_block');
+    t.end();
+});
+
 test('B8 entity commands remain acknowledged in FAST and report invalid results and remote errors', async t => {
     const runtime = {emit: () => {}, emitted: []};
     runtime.emit = (event, payload) => runtime.emitted.push({event, payload});
