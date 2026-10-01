@@ -32,7 +32,9 @@ describe('McRemote Japanese localization', () => {
             'mcremote.buildMode.trace': 'TRACE（過程）',
             'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
             'gui.alerts.mcremoteBuildDeliveryFailed':
-                'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。'
+                'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。',
+            'gui.alerts.mcremoteServerBackpressure':
+                'McRemoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。'
         });
     });
 

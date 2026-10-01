@@ -227,6 +227,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -251,6 +252,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -275,6 +277,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -299,6 +302,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -323,6 +327,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -339,6 +344,31 @@ const alerts = [
         maxDisplaySecs: 8
     },
     {
+        alertId: 'mcremoteServerBackpressure',
+        alertType: AlertTypes.STANDARD,
+        clearList: [
+            'mcremoteNotConnected',
+            'mcremoteConnectionDisabled',
+            'mcremoteInvalidBuildMode',
+            'mcremoteInvalidTraceDelay',
+            'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
+            'mcremoteGroundNotFound',
+            'mcremoteOperationFailed',
+            'mcremoteCatalogUnavailable'
+        ],
+        content: (
+            <FormattedMessage
+                defaultMessage="McRemote server is busy and did not accept the command. Wait a moment and try again."
+                description="Guidance when the server rejects a command without closing the connection"
+                id="gui.alerts.mcremoteServerBackpressure"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 8
+    },
+    {
         alertId: 'mcremoteGroundNotFound',
         alertType: AlertTypes.STANDARD,
         clearList: [
@@ -347,6 +377,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -371,6 +402,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'
@@ -395,6 +427,7 @@ const alerts = [
             'mcremoteInvalidBuildMode',
             'mcremoteInvalidTraceDelay',
             'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
             'mcremoteGroundNotFound',
             'mcremoteOperationFailed',
             'mcremoteCatalogUnavailable'

@@ -1994,11 +1994,13 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _errorInfo (error) {
-        return {
+        const summary = {
             message: error && error.message ? error.message : 'McRemote error',
             code: error && error.code,
             reason: error && error.reason
         };
+        if (error && error.origin === 'server') summary.origin = 'server';
+        return summary;
     }
 
     /**
@@ -2405,6 +2407,7 @@ class Scratch3McRemoteBlocks {
             const error = new Error(msg.error.message || 'McRemote error');
             error.code = msg.error.code;
             error.data = msg.error.data;
+            error.origin = 'server';
             if (msg.error.data) error.reason = msg.error.data.reason;
             if (this._isAuthError(error)) this._clearSessionToken();
             if (pending.method === 'hello' && !this._isAuthError(error)) {
@@ -2901,7 +2904,8 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _actionableCommandError (method, error) {
-        const isDeliveryFailure = error.reason === 'backpressure' || error.reason === 'capacity_exhausted';
+        const isDeliveryFailure = (error.reason === 'backpressure' && error.origin !== 'server') ||
+            error.reason === 'capacity_exhausted';
         if (isDeliveryFailure && this._buildDeliveryNoticeShown) return Promise.resolve();
         if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
         log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);

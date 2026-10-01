@@ -2464,6 +2464,28 @@ test('full lightning is an id-bearing request with null success and actionable f
     t.end();
 });
 
+test('server backpressure leaves lightning connected and allows a later explicit retry', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const first = blocks.strikeLightning({X: 1, Y: 2, Z: 3});
+    const request = socket.lastSent();
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: request.id,
+        error: {code: -32000, message: 'backpressure', data: {reason: 'backpressure'}}
+    });
+    await first;
+    t.equal(socket.readyState, FakeWebSocket.OPEN);
+    t.match(actionableErrors(runtime).slice(-1)[0], {reason: 'backpressure', origin: 'server'});
+    t.notOk(blocks._buildDeliveryNoticeShown, 'server rejection is not a stopped outbound transport');
+
+    const second = blocks.strikeLightning({X: 1, Y: 2, Z: 3});
+    socket.fireMessage({jsonrpc: '2.0', id: socket.lastSent().id, result: null});
+    await second;
+    t.equal(socket.readyState, FakeWebSocket.OPEN);
+    t.end();
+});
+
 test('setPlayerPos is an acknowledged request with an explicit dimension', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const result = blocks.setPlayerPos({DIMENSION: 'the_nether', X: 10, Y: 20, Z: 30});

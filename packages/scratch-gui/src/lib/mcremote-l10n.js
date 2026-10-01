@@ -47,6 +47,8 @@ const mcremoteMessages = {
         'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
             'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。',
+        'gui.alerts.mcremoteServerBackpressure':
+            'McRemoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。',
         'gui.alerts.mcremoteGroundNotFound': '地面が見つかりません。',
         'gui.alerts.mcremoteOperationFailed': 'Minecraftの操作に失敗しました。McRemoteエラーを確認してください。',
         'gui.alerts.mcremoteCatalogUnavailable':
@@ -255,6 +257,8 @@ const mcremoteMessages = {
         'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEのまちじかんは0びょうから2びょうのすうじにしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
             'ブロックせっちのそうしんがこみあったため、McRemoteとのせつぞくをとめました。もういちどせつぞくしてください。',
+        'gui.alerts.mcremoteServerBackpressure':
+            'McRemoteサーバーがこんでいて、このそうさをうけつけませんでした。すこしまって、もういちどためしてください。',
         'gui.alerts.mcremoteGroundNotFound': 'じめんがみつかりません。',
         'gui.alerts.mcremoteOperationFailed':
             'Minecraftのそうさにしっぱいしました。McRemoteエラーをかくにんしてください。',

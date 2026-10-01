@@ -266,8 +266,9 @@ const vmListenerHOC = function (WrappedComponent) {
                 height_not_found: 'mcremoteGroundNotFound',
                 catalog_unavailable: 'mcremoteCatalogUnavailable'
             };
-            const alertId = error && alertByReason[error.reason] ?
-                alertByReason[error.reason] : 'mcremoteOperationFailed';
+            const alertId = error && error.reason === 'backpressure' && error.origin === 'server' ?
+                'mcremoteServerBackpressure' :
+                error && alertByReason[error.reason] ? alertByReason[error.reason] : 'mcremoteOperationFailed';
             showAlertWithTimeout(dispatch, alertId);
         },
         onExtensionDataLoading: loading => {

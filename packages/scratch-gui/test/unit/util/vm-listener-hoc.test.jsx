@@ -133,6 +133,7 @@ describe('VMListenerHOC', () => {
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_build_mode'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_trace_delay'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'backpressure'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'backpressure', origin: 'server'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'capacity_exhausted'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'height_not_found'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_output_list'});
@@ -144,10 +145,11 @@ describe('VMListenerHOC', () => {
         expect(actions[2].alertId).toEqual('mcremoteInvalidBuildMode');
         expect(actions[3].alertId).toEqual('mcremoteInvalidTraceDelay');
         expect(actions[4].alertId).toEqual('mcremoteBuildDeliveryFailed');
-        expect(actions[5].alertId).toEqual('mcremoteBuildDeliveryFailed');
-        expect(actions[6].alertId).toEqual('mcremoteGroundNotFound');
-        expect(actions[7].alertId).toEqual('mcremoteOperationFailed');
-        expect(actions[8].alertId).toEqual('mcremoteCatalogUnavailable');
+        expect(actions[5].alertId).toEqual('mcremoteServerBackpressure');
+        expect(actions[6].alertId).toEqual('mcremoteBuildDeliveryFailed');
+        expect(actions[7].alertId).toEqual('mcremoteGroundNotFound');
+        expect(actions[8].alertId).toEqual('mcremoteOperationFailed');
+        expect(actions[9].alertId).toEqual('mcremoteCatalogUnavailable');
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
     });
