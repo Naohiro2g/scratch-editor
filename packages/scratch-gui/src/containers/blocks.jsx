@@ -5,6 +5,7 @@ import makeToolboxXML from '../lib/make-toolbox-xml';
 import PropTypes from 'prop-types';
 import React from 'react';
 import VMScratchBlocks from '../lib/blocks';
+import allowNativeBlocklyInputEditingShortcut from '../lib/blockly-input-editing-shortcuts';
 import VM from '@scratch/scratch-vm';
 
 import analytics from '../lib/analytics';
@@ -128,6 +129,7 @@ class Blocks extends React.Component {
             }
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
+        document.addEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.workspace.registerToolboxCategoryCallback(
             'VARIABLE',
             this.ScratchBlocks.ScratchVariables.getVariablesCategory
@@ -246,6 +248,7 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+        document.removeEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.detachVM();
         // Hide any open field editor and move Blockly focus to the workspace
         // root before disposing. Without this, BlockSvg.dispose() detects the
