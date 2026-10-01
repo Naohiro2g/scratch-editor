@@ -40,9 +40,7 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザ保存',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description':
-            'Scratch のブロックから Minecraft を操作します。雷はダメージ、火災、避雷針や銅の反応、イベント、' +
-            'エンティティの変化を起こすことがあります。',
+        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft の操作が無効です。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「接続する」ブロックを実行してください。',
         'gui.alerts.mcremoteInvalidBuildMode': '建築モードは DEBUG、TRACE、FAST から選んでください。',
@@ -250,9 +248,7 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザほぞん',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description':
-            'Scratch のブロックから Minecraft をそうさします。かみなりはダメージ、ひ、ひらいしんやどうのはんのう、' +
-            'イベント、エンティティのへんかをおこすことがあります。',
+        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft をそうさします。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft をそうさできません。',
         'gui.alerts.mcremoteNotConnected': 'まず McRemote の「せつぞくする」ブロックをうごかしてください。',
         'gui.alerts.mcremoteInvalidBuildMode': 'けんちくモードは DEBUG、TRACE、FAST からえらんでください。',

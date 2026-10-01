@@ -380,10 +380,10 @@ p {
 }
 
 .stream-layout {
-  display: grid;
+  display: flex;
   min-height: 0;
   flex: 1;
-  grid-template-columns: minmax(12rem, 14.5rem) minmax(0, 1fr);
+  flex-direction: column;
   gap: 0.75rem;
 }
 
@@ -410,11 +410,23 @@ p {
 }
 
 .handshake-panel {
-  overflow-y: auto;
+  flex: 0 0 auto;
 }
 
-.handshake-panel .details-grid {
-  grid-template-columns: 1fr;
+.handshake-summary {
+  color: #cbd5dc;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.handshake-summary:focus-visible {
+  outline: 2px solid #62e4bd;
+  outline-offset: 2px;
+}
+
+.handshake-panel[open] .details-grid {
+  margin-top: 1rem;
 }
 
 .detail {
@@ -502,6 +514,7 @@ p {
 .frames-panel {
   display: flex;
   overflow: hidden;
+  flex: 1;
   flex-direction: column;
 }
 
@@ -535,6 +548,13 @@ th {
   color: #71818c;
 }
 
+.frame-time {
+  width: 6.5rem;
+  color: #9fb0bc;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .direction {
   min-width: 3.25rem;
   font-weight: 750;
@@ -564,14 +584,6 @@ th {
 @media (max-width: 760px) {
   .stream {
     min-height: 0;
-  }
-
-  .stream-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .handshake-panel {
-    overflow: visible;
   }
 
   .frames-panel {

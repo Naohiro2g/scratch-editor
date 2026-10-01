@@ -8,8 +8,7 @@ describe('McRemote Japanese localization', () => {
     test('covers the extension, connection, blocks, picker, and WireScope mini', () => {
         expect(mcremoteMessages.ja).toMatchObject({
             'gui.extension.mcremote.description':
-                'Scratch のブロックから Minecraft を操作します。雷はダメージ、火災、避雷針や銅の反応、イベント、' +
-                'エンティティの変化を起こすことがあります。',
+                'Scratch のブロックから Minecraft を操作します。',
             'gui.menuBar.mcremoteConnection': '接続先',
             'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
             'gui.mcremote.blockPicker.statusNotAcquired':
@@ -83,8 +82,7 @@ describe('McRemote Japanese localization', () => {
     test('provides kanji-free translations for the Japanese Hiragana locale', () => {
         expect(mcremoteMessages['ja-Hira']).toMatchObject({
             'gui.extension.mcremote.description':
-                'Scratch のブロックから Minecraft をそうさします。かみなりはダメージ、ひ、ひらいしんやどうのはんのう、' +
-                'イベント、エンティティのへんかをおこすことがあります。',
+                'Scratch のブロックから Minecraft をそうさします。',
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',

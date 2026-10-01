@@ -9,18 +9,14 @@
 > 公開文書の[言語方針](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md)もご覧ください。
 > See the [language policy](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/LANGUAGE_POLICY.md) for public documentation.
 
-## マイクラリモコン版を開く / Open the Minecraft Remote edition
+## マイクラリモコン版を使う
 
-- [公式サイト](https://mc-remote.com/)：マイクラリモコンでマインクラフトに接続して使うエディターへの入口
-- [ショーケース](https://naohiro2g.github.io/scratch-editor/)：画面とブロックの見本。マイクラリモコンの接続は無効
+- マインクラフトに接続して使う： [公式サイト](https://mc-remote.com/)からエディターを開いてください。
+- 画面とブロックだけを見る： [ショーケース](https://naohiro2g.github.io/scratch-editor/)を開いてください。マインクラフトには接続しません。
 
-The [project website](https://mc-remote.com/) leads to the connected editor. The
-[showcase](https://naohiro2g.github.io/scratch-editor/) previews the interface and blocks with the Minecraft Remote connection disabled.
+[マイクラリモコン版の案内](README_mc-remote.md)に、接続の手順と作品の保存方法をまとめています。
 
-ソースコードを手元で動かすには、Node.js（[`.nvmrc`](.nvmrc) の版）を用意して次を実行します。新規に複製した場合は、各パッケージの成果物を作るため `npm run build` が必要です。
-
-To run the source locally, install the Node.js version in [`.nvmrc`](.nvmrc) and use the commands below. A fresh clone
-needs `npm run build` to create the workspace packages' build outputs.
+自分のPCで開発用画面を動かす場合は、Node.js（必要なバージョンは [`.nvmrc`](.nvmrc) に記載）を用意し、ターミナルで次を上から順に実行してください。`git clone` はこのリポジトリのソースコードをPCに複製し、`npm ci` は動作に必要なライブラリを入れます。`npm run build` は、エディターを構成する各パッケージ（画面を作るGUI、ブロックを実行するVMなど）を初回の起動に必要な形にします。
 
 ```sh
 git clone https://github.com/Naohiro2g/scratch-editor.git
@@ -30,9 +26,11 @@ npm run build
 npm start
 ```
 
-ブラウザで <http://localhost:8601/> を開きます。これは開発用画面です。既定ではマイクラリモコンの接続が無効なので、実際に遊ぶ場合は公式サイトのエディターを使ってください。
+ブラウザで <http://localhost:8601/> を開きます。次回からは `scratch-editor` フォルダーで `npm start` を実行すれば開けます。この開発用画面は、既定ではマインクラフトに接続しません。
 
-Open <http://localhost:8601/> in a browser. The local development editor has the Minecraft Remote connection disabled by default. Use the editor linked from the project website to play. The original Scratch Foundation README continues below.
+**以下は上流の Scratch エディターの README です。**
+
+---
 
 If you'd like to use Scratch, please visit the [Scratch website](https://scratch.mit.edu/). You can build your own
 Scratch project by pressing "Create" on that website or by visiting <https://scratch.mit.edu/projects/editor/>.

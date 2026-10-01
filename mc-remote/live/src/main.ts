@@ -11,6 +11,7 @@ import {
   type FilterState,
   type MethodGroup,
 } from './frame-filter'
+import { formatFrameTime } from './frame-time'
 import { resolveLocale, translate, type Locale, type MessageKey } from './l10n'
 import type { ObserverFrame, ObserverHello, ObserverSnapshot, ObserverStream } from './observer'
 import type { ObserverHistoryWindow, ObserverSessionEndReason } from './session'
@@ -323,21 +324,21 @@ let mountedStreamId: string | null = null
 let lastTargetId: string | null = null
 
 interface StreamHelloState {
-  readonly section: HTMLElement
+  readonly section: HTMLDetailsElement
   readonly heading: HTMLElement
   readonly list: HTMLDListElement
 }
 
 const buildStreamHello = (): StreamHelloState => {
-  const section = make('section', 'panel handshake-panel')
-  const heading = make('h2')
+  const section = make('details', 'panel handshake-panel')
+  const heading = make('summary', 'handshake-summary')
   const list = make('dl', 'details-grid')
   section.append(heading, list)
   return { section, heading, list }
 }
 
 const updateStreamHello = (state: StreamHelloState, hello: ObserverHello): void => {
-  state.heading.textContent = t('handshake')
+  state.heading.textContent = `${t('handshake')} · ${hello.mc_version} · ${hello.protocol}`
   const items = [
     detail(t('fieldProtocol'), hello.protocol),
     detail(t('fieldMinecraft'), hello.mc_version),
@@ -412,7 +413,7 @@ const buildStreamFrames = (): StreamFramesState => {
   const tableElement = make('table')
   const head = make('thead')
   const headRow = make('tr')
-  headRow.append(make('th'), make('th'), make('th'), make('th'))
+  headRow.append(make('th'), make('th'), make('th'), make('th'), make('th'))
   head.append(headRow)
   const tbody = make('tbody')
   tableElement.append(head, tbody)
@@ -495,7 +496,7 @@ const updateStreamFrames = (state: StreamFramesState, allFrames: readonly Observ
   state.lastKnownFrames = allFrames
 
   state.headingTitle.textContent = t('wireFrames')
-  const headers = ['#', t('columnDirection'), t('columnMethod'), t('columnPayload')]
+  const headers = ['#', t('columnTime'), t('columnDirection'), t('columnMethod'), t('columnPayload')]
   headers.forEach((label, index) => {
     state.headRow.children[index].textContent = label
   })
@@ -530,8 +531,16 @@ const updateStreamFrames = (state: StreamFramesState, allFrames: readonly Observ
 
   const rows = frames.map((frame) => {
     const row = make('tr')
+    const frameTime = formatFrameTime(frame.observed_at)
+    const timeElement = make('time', '', frameTime.clock)
+    timeElement.title = frameTime.detail
+    timeElement.setAttribute('aria-label', frameTime.detail)
+    if (frameTime.iso) timeElement.dateTime = frameTime.iso
+    const timeCell = make('td', 'frame-time')
+    timeCell.append(timeElement)
     row.append(
       make('td', 'sequence', String(frame.sequence)),
+      timeCell,
       make('td', `direction direction-${frame.direction}`, t(directionMessageKey(frame))),
       make('td', 'method', frame.method),
       make('td', 'payload', valueText(frame.payload)),

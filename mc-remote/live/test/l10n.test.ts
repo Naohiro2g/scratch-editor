@@ -22,6 +22,8 @@ describe('WireScope localization', () => {
     expect(translate('ja', 'fieldWorldConstants')).toBe('世界定数')
     expect(translate('ja', 'fieldDimension')).toBe('初期次元')
     expect(translate('ja', 'fieldOrigin')).toBe('初期原点')
+    expect(translate('ja', 'columnTime')).toBe('時刻')
+    expect(translate('en', 'columnTime')).toBe('Time')
     expect(translate('ja', 'historyWindowTruncated', { count: 12 })).toContain('12 件')
     expect(translate('ja', 'statusDirectNavigation')).toBe(
       'ScratchやPythonなど、接続中の観測元からWireScopeを開いてください。',

@@ -82,7 +82,7 @@ The `@scratch/` packages are published to npm. They are consumed both internally
 
 ## Documentation entry points
 
-- `README.md` preserves the upstream README after a short bilingual fork introduction and local-start guide.
+- `README.md` preserves the upstream README after a bilingual fork note and Japanese local-start guide.
 - `README_mc-remote.md` guides people who want to try, revisit, or develop the McRemote edition.
 - `mc-remote/README.md` maps the McRemote code in this repository; package READMEs cover each component.
 - `Release.md` covers the upstream npm release process and distinguishes McRemote GitHub releases.

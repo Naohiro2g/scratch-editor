@@ -429,8 +429,7 @@ export default [
         description: (
             <FormattedMessage
                 defaultMessage={
-                    'Control Minecraft from Scratch blocks. Full lightning can cause damage, fire, ' +
-                    'lightning rod and copper reactions, events, and entity changes.'
+                    'Control Minecraft from Scratch blocks.'
                 }
                 description="Description for the 'McRemote' extension"
                 id="gui.extension.mcremote.description"
