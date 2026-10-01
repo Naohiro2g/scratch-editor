@@ -1927,8 +1927,11 @@ class Scratch3McRemoteBlocks {
             method: method || (message && message.method) || '',
             payload: this._sanitizeWireValue(message)
         });
-        if (this._frameLog.length > FRAME_LOG_LIMIT) {
-            const trimmed = this._frameLog.length - FRAME_LOG_LIMIT;
+        const pollInFlight = [...this._pending.values()].some(entry => entry.method === 'events.poll');
+        const reservePollSend = pollInFlight && !(direction === 'receive' && method === 'events.poll');
+        const limit = FRAME_LOG_LIMIT + Number(reservePollSend);
+        if (this._frameLog.length > limit) {
+            const trimmed = this._frameLog.length - limit;
             this._frameLog.splice(0, trimmed);
             this._droppedFrameCount += trimmed;
         }
@@ -2339,6 +2342,11 @@ class Scratch3McRemoteBlocks {
             pending.reject(error);
         }
         this._pending.clear();
+        if (this._frameLog.length > FRAME_LOG_LIMIT) {
+            const trimmed = this._frameLog.length - FRAME_LOG_LIMIT;
+            this._frameLog.splice(0, trimmed);
+            this._droppedFrameCount += trimmed;
+        }
     }
 
     /**
@@ -2370,7 +2378,27 @@ class Scratch3McRemoteBlocks {
             return;
         }
         const pending = this._pending.get(msg.id);
-        this._appendFrame('receive', msg, pending && pending.method);
+        let emptyPoll = false;
+        if (pending && pending.method === 'events.poll' && !msg.error) {
+            try {
+                const parsed = validateEventPollResult(msg.result, pending.params[0], this._eventStatus);
+                emptyPoll = parsed.events.length === 0 && parsed.lossDelta === 0 &&
+                    parsed.status.cursor === pending.params[0] &&
+                    parsed.status.latestSequence === this._eventStatus.latestSequence;
+            } catch {
+                // Preserve invalid responses so the observer can show why polling stopped.
+            }
+        }
+        if (emptyPoll) {
+            const sentIndex = this._frameLog.findIndex(frame => frame.direction === 'send' &&
+                frame.method === 'events.poll' && frame.id === msg.id);
+            if (sentIndex >= 0) {
+                this._frameLog.splice(sentIndex, 1);
+                this._emitObservation();
+            }
+        } else {
+            this._appendFrame('receive', msg, pending && pending.method);
+        }
         if (!pending) return;
         this._pending.delete(msg.id);
         if (msg.error) {
@@ -2640,7 +2668,7 @@ class Scratch3McRemoteBlocks {
             rejectResponse = reject;
         });
         const message = {jsonrpc: '2.0', id, method, params};
-        this._pending.set(id, {resolve: resolveResponse, reject: rejectResponse, method});
+        this._pending.set(id, {resolve: resolveResponse, reject: rejectResponse, method, params});
 
         let release;
         try {

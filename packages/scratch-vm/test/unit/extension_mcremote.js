@@ -587,6 +587,40 @@ test('droppedFrames resets to 0 at the same connection-reset boundary as the fra
     t.end();
 });
 
+test('empty events.poll exchanges do not evict useful WireScope history', async t => {
+    const {blocks, socket} = await newConnectedBlocks(newEventRuntime());
+    blocks._scheduleEventPoll = () => {};
+    t.equal(socket.lastSent().method, 'events.poll');
+    for (let i = 0; i < 100; i++) {
+        blocks._appendFrame('send', {id: 1000 + i, method: 'world.setBlock'});
+    }
+    const usefulSequences = blocks._frameLog.filter(frame => frame.method === 'world.setBlock')
+        .map(frame => frame.sequence);
+    t.equal(usefulSequences.length, 100);
+    const droppedBeforeReply = blocks._droppedFrameCount;
+
+    for (let i = 0; i < 50; i++) {
+        socket.fireMessage({
+            jsonrpc: '2.0',
+            id: socket.lastSent().id,
+            result: {
+                events: [],
+                through_sequence: 0,
+                latest_sequence: 0,
+                filtered_out: 0,
+                overflow_dropped_total: 0,
+                capacity_dropped_total: 0,
+                explicitly_discarded_total: 0
+            }
+        });
+        await nextTurn();
+        if (i < 49) blocks._pollEvents(blocks._eventPollGeneration);
+    }
+    t.same(blocks._frameLog.map(frame => frame.sequence), usefulSequences);
+    t.equal(blocks._droppedFrameCount, droppedBeforeReply, '50 empty replies do not trim more history');
+    t.end();
+});
+
 test('McRemote observation normalizes top-level y_sea into world constants', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
@@ -1786,6 +1820,8 @@ test('one connection poller dispatches mixed b6 events with per-thread context a
 
     socket.fireMessage({jsonrpc: '2.0', id: firstPoll.id, result: eventFixture.poll_result});
     await waitFor(() => runtime.startedEventThreads.length === 3);
+    t.equal(blocks._frameLog.filter(frame => frame.id === firstPoll.id).length, 2,
+        'a poll that delivers events remains visible in WireScope');
     t.same(runtime.startedHats, [
         'mcremote_whenPickaxePoke',
         'mcremote_whenChatPosted',
@@ -1819,6 +1855,8 @@ test('one connection poller dispatches mixed b6 events with per-thread context a
         }
     });
     await waitFor(() => blocks.eventStatus({PROPERTY: 'capacity'}) === 1);
+    t.equal(blocks._frameLog.filter(frame => frame.id === secondPoll.id).length, 2,
+        'an empty poll with changed loss counters remains visible in WireScope');
     t.equal(blocks.eventStatus({PROPERTY: 'cursor'}), 4);
     t.equal(blocks.eventStatus({PROPERTY: 'total_loss'}), 1);
     t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'event_loss');
