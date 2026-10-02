@@ -475,7 +475,7 @@ class Scratch3McRemoteBlocks {
             id: 'mcremote',
             name: formatMessage({
                 id: 'mcremote.categoryName',
-                default: 'McRemote',
+                default: 'mc-remote',
                 description: 'Label for the McRemote extension category'
             }),
             blocks: [
@@ -878,7 +878,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.BOOLEAN,
                     text: formatMessage({
                         id: 'mcremote.isMcRemoteError',
-                        default: '[VALUE] is a McRemote error',
+                        default: '[VALUE] is a mc-remote error',
                         description: 'Check the exact reserved McRemote ErrorText grammar'
                     }),
                     arguments: {

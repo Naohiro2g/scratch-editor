@@ -234,7 +234,7 @@ const alerts = [
         ],
         content: (
             <FormattedMessage
-                defaultMessage="Run the McRemote connect block first."
+                defaultMessage="Run the mc-remote connect block first."
                 description="Guidance after a Minecraft command runs without a connection"
                 id="gui.alerts.mcremoteNotConnected"
             />
@@ -334,7 +334,7 @@ const alerts = [
         ],
         content: (
             <FormattedMessage
-                defaultMessage="Block placement delivery was overloaded, so McRemote disconnected. Connect again."
+                defaultMessage="Block placement delivery was overloaded, so mc-remote disconnected. Connect again."
                 description="Guidance after McRemote closes an overloaded block placement transport"
                 id="gui.alerts.mcremoteBuildDeliveryFailed"
             />
@@ -359,7 +359,7 @@ const alerts = [
         ],
         content: (
             <FormattedMessage
-                defaultMessage="McRemote server is busy and did not accept the command. Wait a moment and try again."
+                defaultMessage="mc-remote server is busy and did not accept the command. Wait a moment and try again."
                 description="Guidance when the server rejects a command without closing the connection"
                 id="gui.alerts.mcremoteServerBackpressure"
             />
@@ -409,7 +409,7 @@ const alerts = [
         ],
         content: (
             <FormattedMessage
-                defaultMessage="The Minecraft operation failed. Check the McRemote error."
+                defaultMessage="The Minecraft operation failed. Check the mc-remote error."
                 description="Guidance after a McRemote operation fails for a reason without a specialized message"
                 id="gui.alerts.mcremoteOperationFailed"
             />

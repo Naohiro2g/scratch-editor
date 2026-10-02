@@ -109,7 +109,7 @@ describe('MenuBar Component', () => {
         const {container} = renderWithIntl(component);
         const settingsButton = container.querySelector('button[aria-label="Settings menu"]');
         fireEvent.click(settingsButton);
-        const button = container.querySelector('button[aria-label="McRemote connection menu"]');
+        const button = container.querySelector('button[aria-label="mc-remote connection menu"]');
 
         expect(button).toBeNull();
         expect(localStorage.getItem('mcremote.connectionTarget.v1')).toBeNull();

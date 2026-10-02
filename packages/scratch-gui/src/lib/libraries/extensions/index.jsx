@@ -50,6 +50,7 @@ import faceSensingIconURL from './faceSensing/faceSensing.png';
 import faceSensingInsetIconURL from './faceSensing/faceSensing-small.svg';
 
 import mcremoteIconURL from './mcremote/mcremote.svg';
+import mcremoteInsetIconURL from './mcremote/mcremote-small.svg';
 
 export default [
     {
@@ -418,18 +419,20 @@ export default [
     {
         name: (
             <FormattedMessage
-                defaultMessage="McRemote"
+                defaultMessage="mc-remote / マイクラリモコン"
                 description="Name for the 'McRemote' extension"
                 id="gui.extension.mcremote.name"
             />
         ),
         extensionId: 'mcremote',
+        collaborator: 'code2create.club',
         iconURL: mcremoteIconURL,
-        insetIconURL: mcremoteIconURL,
+        insetIconURL: mcremoteInsetIconURL,
         description: (
             <FormattedMessage
                 defaultMessage={
-                    'Control Minecraft from Scratch blocks.'
+                    'Connect with the Minecraft world in both directions to automate building, ' +
+                    'play music, and sense events.'
                 }
                 description="Description for the 'McRemote' extension"
                 id="gui.extension.mcremote.description"

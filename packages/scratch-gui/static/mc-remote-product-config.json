@@ -12,7 +12,7 @@
     },
     {
       "heading": "WireScope（ワイヤースコープ）ライブ画面",
-      "body": "Scratchと Minecraftの通信を観察できます。観察を始めるには、マインクラフトと接続後にMcRemoteパネルの『WireScopeを開く』を使います。"
+      "body": "Scratchと Minecraftの通信を観察できます。観察を始めるには、マインクラフトと接続後にmc-remoteパネルの『WireScopeを開く』を使います。"
     },
     {
       "heading": "マイクラリモコンScratchクライアント {version}",

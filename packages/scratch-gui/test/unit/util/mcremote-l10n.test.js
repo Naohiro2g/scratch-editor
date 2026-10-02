@@ -8,7 +8,7 @@ describe('McRemote Japanese localization', () => {
     test('covers the extension, connection, blocks, picker, and WireScope mini', () => {
         expect(mcremoteMessages.ja).toMatchObject({
             'gui.extension.mcremote.description':
-                'Scratch のブロックから Minecraft を操作します。',
+                'Minecraft世界と双方向でつながり、自動建築や自動演奏をしたり、イベントを感知する。',
             'gui.menuBar.mcremoteConnection': '接続先',
             'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
             'gui.mcremote.blockPicker.statusNotAcquired':
@@ -32,9 +32,9 @@ describe('McRemote Japanese localization', () => {
             'mcremote.buildMode.trace': 'TRACE（過程）',
             'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
             'gui.alerts.mcremoteBuildDeliveryFailed':
-                'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。',
+                'ブロック設置の送信が混み合ったため、mc-remoteとの接続を停止しました。もう一度接続してください。',
             'gui.alerts.mcremoteServerBackpressure':
-                'McRemoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。'
+                'mc-remoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。'
         });
     });
 
@@ -84,7 +84,7 @@ describe('McRemote Japanese localization', () => {
     test('provides kanji-free translations for the Japanese Hiragana locale', () => {
         expect(mcremoteMessages['ja-Hira']).toMatchObject({
             'gui.extension.mcremote.description':
-                'Scratch のブロックから Minecraft をそうさします。',
+                'まいんくらふとのせかいと、そうほうこうでつながり、じどうけんちくや、じどうえんそうをしたり、イベントをかんじとる。',
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',

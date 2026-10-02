@@ -10,7 +10,7 @@ import styles from './notice-overlay.css';
 
 // The footer version and any `{version}` token in a configured notice always use the client build
 // identity. Reading it from scratch-vm keeps the label independent of deployment configuration.
-const RELEASE_LABEL = `McRemote Scratch ${MCREMOTE_CLIENT_VERSION}`;
+const RELEASE_LABEL = `mc-remote Scratch ${MCREMOTE_CLIENT_VERSION}`;
 const VERSION_TOKEN = '{version}';
 const substituteVersion = text => (typeof text === 'string' ? text.split(VERSION_TOKEN).join(RELEASE_LABEL) : text);
 

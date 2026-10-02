@@ -23,7 +23,7 @@ import check from './check.svg';
 
 const connectionMenuAriaMessage = defineMessage({
     id: 'gui.aria.mcremoteConnectionMenu',
-    defaultMessage: 'McRemote connection menu',
+    defaultMessage: 'mc-remote connection menu',
     description: 'Accessibility label for the McRemote connection target menu'
 });
 

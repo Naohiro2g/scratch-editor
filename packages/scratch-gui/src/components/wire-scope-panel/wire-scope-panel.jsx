@@ -116,7 +116,7 @@ const messages = defineMessages({
     },
     actionProtocolMismatch: {
         id: 'gui.mcremote.wireScope.actionProtocolMismatch',
-        defaultMessage: 'Use matching Scratch and McRemote server versions.',
+        defaultMessage: 'Use matching Scratch and mc-remote server versions.',
         description: 'Action shown when Scratch and the McRemote server use incompatible protocols'
     },
     actionPairAgain: {

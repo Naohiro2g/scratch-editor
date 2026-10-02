@@ -20,7 +20,7 @@
  * Routine when adding a McRemote block: add the block's message id and its
  * Japanese and Japanese Hiragana text below, keeping the `[PLACEHOLDER]` tokens
  * identical to the block's `default:` text in scratch-vm. Ids whose translation
- * equals the English brand name (e.g. the `McRemote` category) are intentionally
+ * equals the English brand name (e.g. the `mc-remote` category) are intentionally
  * omitted and fall back to English.
  */
 const mcremoteMessages = {
@@ -40,20 +40,21 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザ保存',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft を操作します。',
+        'gui.extension.mcremote.description':
+            'Minecraft世界と双方向でつながり、自動建築や自動演奏をしたり、イベントを感知する。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft の操作が無効です。',
-        'gui.alerts.mcremoteNotConnected': 'まず McRemote の「接続する」ブロックを実行してください。',
+        'gui.alerts.mcremoteNotConnected': 'まず mc-remote の「接続する」ブロックを実行してください。',
         'gui.alerts.mcremoteInvalidBuildMode': '建築モードは DEBUG、TRACE、FAST から選んでください。',
         'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
-            'ブロック設置の送信が混み合ったため、McRemoteとの接続を停止しました。もう一度接続してください。',
+            'ブロック設置の送信が混み合ったため、mc-remoteとの接続を停止しました。もう一度接続してください。',
         'gui.alerts.mcremoteServerBackpressure':
-            'McRemoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。',
+            'mc-remoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。',
         'gui.alerts.mcremoteGroundNotFound': '地面が見つかりません。',
-        'gui.alerts.mcremoteOperationFailed': 'Minecraftの操作に失敗しました。McRemoteエラーを確認してください。',
+        'gui.alerts.mcremoteOperationFailed': 'Minecraftの操作に失敗しました。mc-remoteエラーを確認してください。',
         'gui.alerts.mcremoteCatalogUnavailable':
             'カタログを取得できません。Minecraftへの接続を確認して、もう一度実行してください。',
-        'gui.aria.mcremoteConnectionMenu': 'McRemote 接続先メニュー',
+        'gui.aria.mcremoteConnectionMenu': 'mc-remote 接続先メニュー',
         'gui.menuBar.mcremoteConnection': '接続先',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
         'gui.mcremote.blockPicker.catalogStatus': 'カタログ状態',
@@ -82,7 +83,7 @@ const mcremoteMessages = {
         'gui.mcremote.wireScope.actionConnect': 'まず「接続する」ブロックを実行してください。',
         'gui.mcremote.wireScope.actionConnectionDisabled': 'このショーケースページでは Minecraft の操作が無効です。',
         'gui.mcremote.wireScope.actionPairAgain': '「接続する」ブロックを実行し、もう一度ペアリングしてください。',
-        'gui.mcremote.wireScope.actionProtocolMismatch': 'Scratch と McRemote サーバーのバージョンを揃えてください。',
+        'gui.mcremote.wireScope.actionProtocolMismatch': 'Scratch と mc-remote サーバーのバージョンを揃えてください。',
         'gui.mcremote.wireScope.actionRequired': '次にすること',
         'gui.mcremote.wireScope.actionRetry': '接続を確認して、もう一度試してください。',
         'gui.mcremote.wireScope.configuredTarget': '設定先',
@@ -154,7 +155,7 @@ const mcremoteMessages = {
         'mcremote.signDecoration.obfuscated': 'ランダム',
         'mcremote.signDecoration.strikethrough': '取り消し線',
         'mcremote.signDecoration.underlined': '下線',
-        'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
+        'mcremote.isMcRemoteError': '[VALUE] はmc-remoteエラー',
         'mcremote.spawnParticle':
             'パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ ' +
             'x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する',
@@ -251,21 +252,22 @@ const mcremoteMessages = {
         'gui.spriteSelectorItem.contextMenuSaveToBrowser': 'ブラウザほぞん',
         'gui.mcremote.notice.version': 'バージョン {version}',
         'gui.mcremote.notice.homepageLink': 'ホームページ',
-        'gui.extension.mcremote.description': 'Scratch のブロックから Minecraft をそうさします。',
+        'gui.extension.mcremote.description':
+            'まいんくらふとのせかいと、そうほうこうでつながり、じどうけんちくや、じどうえんそうをしたり、イベントをかんじとる。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは Minecraft をそうさできません。',
-        'gui.alerts.mcremoteNotConnected': 'まず McRemote の「せつぞくする」ブロックをうごかしてください。',
+        'gui.alerts.mcremoteNotConnected': 'まず mc-remote の「せつぞくする」ブロックをうごかしてください。',
         'gui.alerts.mcremoteInvalidBuildMode': 'けんちくモードは DEBUG、TRACE、FAST からえらんでください。',
         'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEのまちじかんは0びょうから2びょうのすうじにしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
-            'ブロックせっちのそうしんがこみあったため、McRemoteとのせつぞくをとめました。もういちどせつぞくしてください。',
+            'ブロックせっちのそうしんがこみあったため、mc-remoteとのせつぞくをとめました。もういちどせつぞくしてください。',
         'gui.alerts.mcremoteServerBackpressure':
-            'McRemoteサーバーがこんでいて、このそうさをうけつけませんでした。すこしまって、もういちどためしてください。',
+            'mc-remoteサーバーがこんでいて、このそうさをうけつけませんでした。すこしまって、もういちどためしてください。',
         'gui.alerts.mcremoteGroundNotFound': 'じめんがみつかりません。',
         'gui.alerts.mcremoteOperationFailed':
-            'Minecraftのそうさにしっぱいしました。McRemoteエラーをかくにんしてください。',
+            'Minecraftのそうさにしっぱいしました。mc-remoteエラーをかくにんしてください。',
         'gui.alerts.mcremoteCatalogUnavailable':
             'カタログをしゅとくできません。Minecraftへのせつぞくをかくにんして、もういちどじっこうしてください。',
-        'gui.aria.mcremoteConnectionMenu': 'McRemote せつぞくさきメニュー',
+        'gui.aria.mcremoteConnectionMenu': 'mc-remote せつぞくさきメニュー',
         'gui.menuBar.mcremoteConnection': 'せつぞくさき',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
         'gui.mcremote.blockPicker.catalogStatus': 'カタログじょうたい',
@@ -297,7 +299,7 @@ const mcremoteMessages = {
         'gui.mcremote.wireScope.actionPairAgain':
             '「せつぞくする」ブロックをうごかし、もういちどペアリングしてください。',
         'gui.mcremote.wireScope.actionProtocolMismatch':
-            'Scratch と McRemote サーバーのバージョンをそろえてください。',
+            'Scratch と mc-remote サーバーのバージョンをそろえてください。',
         'gui.mcremote.wireScope.actionRequired': 'つぎにすること',
         'gui.mcremote.wireScope.actionRetry': 'せつぞくをかくにんして、もういちどためしてください。',
         'gui.mcremote.wireScope.configuredTarget': 'せっていしたせつぞくさき',
@@ -370,7 +372,7 @@ const mcremoteMessages = {
         'mcremote.signDecoration.obfuscated': 'ランダム',
         'mcremote.signDecoration.strikethrough': 'とりけしせん',
         'mcremote.signDecoration.underlined': 'かせん',
-        'mcremote.isMcRemoteError': '[VALUE] はMcRemoteエラー',
+        'mcremote.isMcRemoteError': '[VALUE] はmc-remoteエラー',
         'mcremote.spawnParticle':
             'パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ ' +
             'x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] はやさ:[SPEED] かず:[COUNT] ひょうじ:[FORCE] でだす',
