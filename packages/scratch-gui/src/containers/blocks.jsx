@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import VMScratchBlocks from '../lib/blocks';
 import allowNativeBlocklyInputEditingShortcut from '../lib/blockly-input-editing-shortcuts';
+import configureWorkspaceZoom from '../lib/configure-workspace-zoom';
 import VM from '@scratch/scratch-vm';
 
 import analytics from '../lib/analytics';
@@ -129,6 +130,7 @@ class Blocks extends React.Component {
             }
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
+        configureWorkspaceZoom(this.workspace);
         document.addEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.workspace.registerToolboxCategoryCallback(
             'VARIABLE',
