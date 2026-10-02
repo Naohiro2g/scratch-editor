@@ -61,7 +61,9 @@ describe('McRemoteBlockPicker', () => {
         fireEvent.click(screen.getByRole('button', {name: 'oak_log Oak Log'}));
         expect(screen.getByLabelText('Block ID')).toHaveValue('oak_log');
         expect(screen.getByLabelText('State')).toHaveValue('');
-        expect(screen.getByRole('option', {name: 'Minecraft default (y)'})).toBeInTheDocument();
+        expect(Array.from(screen.getByLabelText('axis').options, option => option.text)).toEqual([
+            'x', 'y (default)', 'z'
+        ]);
         fireEvent.change(screen.getByLabelText('axis'), {target: {value: '2'}});
         expect(screen.getByLabelText('State')).toHaveValue('axis=z');
         fireEvent.change(screen.getByLabelText('axis'), {target: {value: ''}});
@@ -70,6 +72,51 @@ describe('McRemoteBlockPicker', () => {
 
         fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
         expect(onApply).toHaveBeenCalledWith('oak_log', 'axis=z');
+    });
+
+    test('omits default values on opening and when selecting them without duplicate options', () => {
+        const onApply = jest.fn();
+        renderPicker(
+            <McRemoteBlockPicker
+                canApply
+                catalogState={catalogState}
+                initialBlockId="repeater"
+                initialStateText="powered=false,facing=east"
+                onApply={onApply}
+                onCancel={jest.fn()}
+            />
+        );
+
+        expect(screen.getByLabelText('State')).toHaveValue('facing=east');
+        const powered = screen.getByLabelText('powered');
+        expect(Array.from(powered.options, option => option.text)).toEqual(['false (default)', 'true']);
+        expect(powered).toHaveValue('');
+        fireEvent.change(powered, {target: {value: '1'}});
+        expect(screen.getByLabelText('State')).toHaveValue('facing=east,powered=true');
+        fireEvent.change(powered, {target: {value: ''}});
+        expect(screen.getByLabelText('State')).toHaveValue('facing=east');
+        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        expect(onApply).toHaveBeenCalledWith('repeater', 'facing=east');
+    });
+
+    test('omits a default typed into the packed state while keeping other explicit values', () => {
+        const onApply = jest.fn();
+        renderPicker(
+            <McRemoteBlockPicker
+                canApply
+                catalogState={catalogState}
+                initialBlockId="repeater"
+                initialStateText=""
+                onApply={onApply}
+                onCancel={jest.fn()}
+            />
+        );
+
+        fireEvent.change(screen.getByLabelText('State'), {target: {value: 'facing=north,powered=true'}});
+        expect(screen.getByLabelText('State')).toHaveValue('powered=true');
+        expect(screen.getByLabelText('facing')).toHaveValue('');
+        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        expect(onApply).toHaveBeenCalledWith('repeater', 'powered=true');
     });
 
     test.each(['ja', 'ja-Hira'])('shows Japanese and English names in %s and applies only the ID', locale => {
@@ -94,6 +141,10 @@ describe('McRemoteBlockPicker', () => {
         expect(screen.getByLabelText('ブロックID')).toHaveValue('gold_block');
         fireEvent.click(screen.getByRole('button', {name: mcremoteMessages[locale]['gui.mcremote.blockPicker.apply']}));
         expect(onApply).toHaveBeenCalledWith('gold_block', '');
+        fireEvent.click(screen.getByRole('button', {name: /^repeater /}));
+        expect(Array.from(screen.getByLabelText('powered').options, option => option.text)).toEqual([
+            'false（デフォルト）', 'true'
+        ]);
     });
 
     test('counts block choices rather than the lines used to show their names', () => {

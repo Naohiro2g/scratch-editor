@@ -28,11 +28,15 @@ const messages = defineMessages({
         id: 'gui.mcremote.blockPicker.search'
     },
     minecraftDefaultValue: {
-        defaultMessage: 'Minecraft default ({value})',
-        description: 'Option to omit a state property, including its Minecraft default value',
+        defaultMessage: '{value} (default)',
+        description: 'State value marked as the default and omitted from the packed state',
         id: 'gui.mcremote.blockPicker.minecraftDefaultValue'
     }
 });
+
+const omitDefaultStates = (states, entry) => Object.fromEntries(
+    Object.entries(states).filter(([property, value]) => value !== entry.default_state[property])
+);
 
 const McRemoteBlockPicker = ({
     catalogState,
@@ -49,15 +53,15 @@ const McRemoteBlockPicker = ({
         catalogState.catalog.block :
         {};
     const initialSelection = findCatalogSelection(initialBlockId, initialStateText, blockCatalog);
+    const initialStates = initialSelection ?
+        omitDefaultStates(initialSelection.selectedStates, blockCatalog[initialSelection.id]) : {};
     const [blockIdDraft, setBlockIdDraft] = useState(initialBlockId);
     const [stateDraft, setStateDraft] = useState(
-        initialSelection ? buildStateText(initialSelection.selectedStates) : initialStateText
+        initialSelection ? buildStateText(initialStates) : initialStateText
     );
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState(initialSelection ? initialSelection.id : null);
-    const [selectedStates, setSelectedStates] = useState(
-        initialSelection ? initialSelection.selectedStates : {}
-    );
+    const [selectedStates, setSelectedStates] = useState(initialStates);
     const blockIds = useMemo(() => Object.keys(blockCatalog).sort(), [blockCatalog]);
     const visibleBlockIds = useMemo(() =>
         searchBlockIds(blockIds, catalogState.mcVersion, search),
@@ -92,12 +96,14 @@ const McRemoteBlockPicker = ({
     const handleStateDraftChange = useCallback(event => {
         const value = event.target.value;
         const selection = findCatalogSelection(blockIdDraft, value, blockCatalog);
-        setStateDraft(value);
         if (selection) {
+            const states = omitDefaultStates(selection.selectedStates, blockCatalog[selection.id]);
+            setStateDraft(buildStateText(states));
             setSelectedId(selection.id);
-            setSelectedStates(selection.selectedStates);
+            setSelectedStates(states);
             return;
         }
+        setStateDraft(value);
         const currentId = catalogBlockId(blockIdDraft.trim());
         setSelectedId(blockCatalog[currentId] ? currentId : null);
         setSelectedStates({});
@@ -111,7 +117,8 @@ const McRemoteBlockPicker = ({
     }, [selectState]);
     const handleApply = useCallback(() => {
         const selection = findCatalogSelection(blockIdDraft, stateDraft, blockCatalog);
-        onApply(blockIdDraft, selection ? buildStateText(selection.selectedStates) : stateDraft);
+        onApply(blockIdDraft, selection ?
+            buildStateText(omitDefaultStates(selection.selectedStates, blockCatalog[selection.id])) : stateDraft);
     }, [blockCatalog, blockIdDraft, onApply, stateDraft]);
 
     let status;
@@ -154,12 +161,6 @@ const McRemoteBlockPicker = ({
             onRequestClose={onCancel}
         >
             <Box className={styles.body}>
-                <div
-                    className={classNames(styles.status, {[styles.warning]: !hasCurrentCatalog})}
-                    role={hasCurrentCatalog ? 'status' : 'alert'}
-                >
-                    {status}
-                </div>
                 {canApply ? null : (
                     <div className={styles.warning}>
                         <FormattedMessage
@@ -170,18 +171,35 @@ const McRemoteBlockPicker = ({
                         />
                     </div>
                 )}
-                <label className={styles.outputLabel}>
-                    <FormattedMessage
-                        defaultMessage="Block ID"
-                        description="Label for the editable McRemote block ID"
-                        id="gui.mcremote.blockPicker.blockId"
-                    />
-                    <input
-                        className={styles.outputInput}
-                        value={blockIdDraft}
-                        onChange={handleBlockIdDraftChange}
-                    />
-                </label>
+                <div className={styles.idAndStatus}>
+                    <label className={styles.outputLabel}>
+                        <FormattedMessage
+                            defaultMessage="Block ID"
+                            description="Label for the editable McRemote block ID"
+                            id="gui.mcremote.blockPicker.blockId"
+                        />
+                        <input
+                            className={styles.outputInput}
+                            value={blockIdDraft}
+                            onChange={handleBlockIdDraftChange}
+                        />
+                    </label>
+                    <section className={styles.catalogColumn}>
+                        <span className={styles.outputLabel}>
+                            <FormattedMessage
+                                defaultMessage="Catalog status"
+                                description="Heading for the catalog status beside the block ID"
+                                id="gui.mcremote.blockPicker.catalogStatus"
+                            />
+                        </span>
+                        <div
+                            className={classNames(styles.status, {[styles.warning]: !hasCurrentCatalog})}
+                            role={hasCurrentCatalog ? 'status' : 'alert'}
+                        >
+                            {status}
+                        </div>
+                    </section>
+                </div>
                 <label className={styles.outputLabel}>
                     <FormattedMessage
                         defaultMessage="State"
@@ -189,7 +207,7 @@ const McRemoteBlockPicker = ({
                         id="gui.mcremote.blockPicker.stateText"
                     />
                     <input
-                        className={styles.outputInput}
+                        className={classNames(styles.outputInput, styles.stateOutput)}
                         value={stateDraft}
                         onChange={handleStateDraftChange}
                     />
@@ -268,7 +286,7 @@ const McRemoteBlockPicker = ({
                         </h3>
                         <p className={styles.defaultExplanation}>
                             <FormattedMessage
-                                defaultMessage={'Properties left as ‘Minecraft default’ are omitted. ' +
+                                defaultMessage={'Default values are omitted from the state. ' +
                                     'Placing the block replaces all block data; ' +
                                     'it does not merge with the existing state.'}
                                 description="Explanation of omitted state in the McRemote block picker"
@@ -293,19 +311,20 @@ const McRemoteBlockPicker = ({
                                             value={selectedIndex}
                                             onChange={handleStateChange}
                                         >
-                                            <option value="">
-                                                {intl.formatMessage(messages.minecraftDefaultValue, {
-                                                    value: stateValueText(selectedEntry.default_state[property])
-                                                })}
-                                            </option>
-                                            {selectedEntry.states[property].map((value, index) => (
-                                                <option
-                                                    key={`${typeof value}:${stateValueText(value)}`}
-                                                    value={index}
-                                                >
-                                                    {stateValueText(value)}
-                                                </option>
-                                            ))}
+                                            {selectedEntry.states[property].map((value, index) => {
+                                                const isDefault = value === selectedEntry.default_state[property];
+                                                return (
+                                                    <option
+                                                        key={`${typeof value}:${stateValueText(value)}`}
+                                                        value={isDefault ? '' : index}
+                                                    >
+                                                        {isDefault ?
+                                                            intl.formatMessage(messages.minecraftDefaultValue, {
+                                                                value: stateValueText(value)
+                                                            }) : stateValueText(value)}
+                                                    </option>
+                                                );
+                                            })}
                                         </select>
                                     </label>
                                 );

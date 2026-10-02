@@ -56,13 +56,14 @@ const mcremoteMessages = {
         'gui.aria.mcremoteConnectionMenu': 'McRemote 接続先メニュー',
         'gui.menuBar.mcremoteConnection': '接続先',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
+        'gui.mcremote.blockPicker.catalogStatus': 'カタログ状態',
         'gui.mcremote.blockPicker.stateText': '状態',
         'gui.mcremote.blockPicker.cancel': 'キャンセル',
         'gui.mcremote.blockPicker.defaultExplanation':
-            '「Minecraft のデフォルト」のプロパティは省略します。ブロック設置時はブロックデータ全体を置き換え、既存の状態とはマージしません。',
+            'デフォルト値は状態欄から省略します。ブロック設置時はブロックデータ全体を置き換え、既存の状態とはマージしません。',
         'gui.mcremote.blockPicker.empty':
             '利用できるカタログのブロックがありません。上の欄へ自由に入力できます。',
-        'gui.mcremote.blockPicker.minecraftDefaultValue': 'Minecraft のデフォルト（{value}）',
+        'gui.mcremote.blockPicker.minecraftDefaultValue': '{value}（デフォルト）',
         'gui.mcremote.blockPicker.noMatches': '検索に一致するブロックがありません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたは変数が接続されています。picker は取り外しません。両方の入力を文字列へ戻してから適用してください。',
@@ -267,13 +268,14 @@ const mcremoteMessages = {
         'gui.aria.mcremoteConnectionMenu': 'McRemote せつぞくさきメニュー',
         'gui.menuBar.mcremoteConnection': 'せつぞくさき',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
+        'gui.mcremote.blockPicker.catalogStatus': 'カタログじょうたい',
         'gui.mcremote.blockPicker.stateText': 'じょうたい',
         'gui.mcremote.blockPicker.cancel': 'キャンセル',
         'gui.mcremote.blockPicker.defaultExplanation':
-            '「Minecraft のデフォルト」のプロパティはしょうりゃくします。ブロックをおくときはブロックデータぜんたいをおきかえ、いまのじょうたいとはまぜません。',
+            'デフォルトのあたいはじょうたいのらんからしょうりゃくします。ブロックをおくときはブロックデータぜんたいをおきかえ、いまのじょうたいとはまぜません。',
         'gui.mcremote.blockPicker.empty':
             'つかえるカタログのブロックがありません。うえのらんにじゆうににゅうりょくできます。',
-        'gui.mcremote.blockPicker.minecraftDefaultValue': 'Minecraft のデフォルト（{value}）',
+        'gui.mcremote.blockPicker.minecraftDefaultValue': '{value}（デフォルト）',
         'gui.mcremote.blockPicker.noMatches': 'さがしているブロックがみつかりません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたはへんすうがせつぞくされています。ピッカーはとりはずしません。りょうほうのにゅうりょくをもじにもどしてからつかってください。',
