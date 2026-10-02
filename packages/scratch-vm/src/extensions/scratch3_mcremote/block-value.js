@@ -155,7 +155,7 @@ const parseBlockInfoText = value => {
     const propagatedReason = errorTextReason(value);
     if (propagatedReason) return {errorText: value};
     if (typeof value !== 'string') throw blockValueError('invalid_block_info');
-    const match = /^([a-z0-9_.-]+:[a-z0-9_./-]+)(?:\[([^\]]+)\])?$/.exec(value);
+    const match = /^((?:[a-z0-9_.-]+:)?[a-z0-9_./-]+)(?:\[([^\]]+)\])?$/.exec(value);
     if (!match) throw blockValueError('invalid_block_info');
     const properties = {};
     let previous = null;
@@ -170,7 +170,7 @@ const parseBlockInfoText = value => {
             previous = stateMatch[1];
         }
     }
-    return {blockId: match[1], properties, stateText: match[2] || ''};
+    return {blockId: canonicalBlockId(match[1]), properties, stateText: match[2] || ''};
 };
 
 const accessBlockInfo = (value, accessor) => {

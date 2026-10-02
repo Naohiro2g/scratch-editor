@@ -8,6 +8,7 @@ const {
     formatBlockInfoText,
     isErrorText,
     makeErrorText,
+    parseBlockInfoText,
     parseStateText,
     remoteErrorText
 } = require('../../src/extensions/scratch3_mcremote/block-value');
@@ -85,11 +86,35 @@ test('BlockInfoText accessors are pure and preserve ErrorText', t => {
 });
 
 test('BlockInfoText rejects malformed or non-canonical general strings', t => {
-    t.equal(blockInfoId('oak_log[axis=z]'), makeErrorText('invalid_block_info'));
+    for (const value of ['', ':stone', 'minecraft:', 'minecraft:minecraft:stone', 'Stone', ' stone', 'stone ',
+        'oak_log[]', 'oak_log[axis=z,axis=x]']) {
+        t.equal(blockInfoId(value), makeErrorText('invalid_block_info'), value);
+        t.equal(blockInfoState(value), makeErrorText('invalid_block_info'), value);
+        t.equal(blockInfoStateProperty(value, 'axis'), makeErrorText('invalid_block_info'), value);
+        t.equal(blockInfoHasStateProperty(value, 'axis'), false, value);
+    }
     t.equal(
         blockInfoState('minecraft:repeater[powered=true,delay=3]'),
         makeErrorText('invalid_block_info')
     );
+    t.end();
+});
+
+test('BlockInfoText accessors accept a missing minecraft namespace and preserve other namespaces', t => {
+    t.equal(blockInfoId('stone'), 'minecraft:stone');
+    t.equal(blockInfoState('stone'), '');
+    t.equal(blockInfoHasStateProperty('stone', 'axis'), false);
+    for (const [input, id] of [['oak_log[axis=z]', 'minecraft:oak_log'],
+        ['minecraft:oak_log[axis=z]', 'minecraft:oak_log'], ['examplemod:oak_log[axis=z]', 'examplemod:oak_log']]) {
+        t.same(parseBlockInfoText(input), {blockId: id, properties: {axis: 'z'}, stateText: 'axis=z'});
+        t.equal(blockInfoId(input), id);
+        t.equal(blockInfoState(input), 'axis=z');
+        t.equal(blockInfoStateProperty(input, 'axis'), 'z');
+        t.equal(blockInfoHasStateProperty(input, 'axis'), true);
+        t.equal(blockInfoStateProperty(input, 'missing'), makeErrorText('unknown_state_property'));
+    }
+    t.throws(() => formatBlockInfoText({block_id: 'oak_log', state: {axis: 'z'}}),
+        {reason: 'invalid_block_info'}, 'wire responses still require fully qualified IDs');
     t.end();
 });
 

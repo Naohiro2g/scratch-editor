@@ -2074,6 +2074,11 @@ test('block information accessors are pure and never send another request', t =>
         t.equal(blocks.blockInfoState({BLOCK_INFO: info}), 'delay=3,facing=east,locked=false,powered=true');
         t.equal(blocks.blockInfoStateProperty({BLOCK_INFO: info, PROPERTY: 'facing'}), 'east');
         t.equal(blocks.blockInfoHasStateProperty({BLOCK_INFO: info, PROPERTY: 'powered'}), true);
+        const shortInfo = 'repeater[delay=3,facing=east,locked=false,powered=true]';
+        t.equal(blocks.blockInfoId({BLOCK_INFO: shortInfo}), 'minecraft:repeater');
+        t.equal(blocks.blockInfoState({BLOCK_INFO: shortInfo}), 'delay=3,facing=east,locked=false,powered=true');
+        t.equal(blocks.blockInfoStateProperty({BLOCK_INFO: shortInfo, PROPERTY: 'facing'}), 'east');
+        t.equal(blocks.blockInfoHasStateProperty({BLOCK_INFO: shortInfo, PROPERTY: 'powered'}), true);
         t.equal(blocks.isMcRemoteError({VALUE: info}), false);
         t.equal(blocks.isMcRemoteError({VALUE: '⟦mcr-error:unknown_block⟧'}), true);
         t.equal(socket.sent.length, before);
