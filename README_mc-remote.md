@@ -30,6 +30,8 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 貢献する方も学習者です。最初から通信仕様を全部読むより、**画面のブロックがどこで命令になり、どこへ届くか**を追うと、変更する場所を見つけやすくなります。[このリポジトリのコード地図](mc-remote/README.md)に、Scratch 本体への変更、中継、通信の型、ワイヤースコープの位置をまとめました。
 
+通信APIの命令名・引数・戻り値は[API一覧](https://mc-remote.com/api/)で確認できます。公開版と更新内容は[GitHub Releases](https://github.com/Naohiro2g/scratch-editor/releases)にあります。
+
 ソースコードを手元で動かす手順は[ルート README](README.md)にあります。各部品の詳しい実行・検証方法は、それぞれの README を参照してください。
 
 - [中継（Bridge）](mc-remote/bridge/README.md)
