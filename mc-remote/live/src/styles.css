@@ -549,16 +549,20 @@ th {
 }
 
 .frame-time {
-  width: 6.5rem;
+  width: 1%;
+  padding-inline: 0.4rem;
   color: #9fb0bc;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 .direction {
-  min-width: 3.25rem;
+  width: 1%;
+  min-width: 3.8rem;
+  padding-inline: 0.4rem;
   font-weight: 750;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
   text-transform: uppercase;
 }
 
