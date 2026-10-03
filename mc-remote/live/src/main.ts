@@ -538,10 +538,19 @@ const updateStreamFrames = (state: StreamFramesState, allFrames: readonly Observ
     if (frameTime.iso) timeElement.dateTime = frameTime.iso
     const timeCell = make('td', 'frame-time')
     timeCell.append(timeElement)
+    const directionCell = make('td', `direction direction-${frame.direction}`)
+    const directionKey = directionMessageKey(frame)
+    const directionLabel = t(directionKey)
+    if (directionKey === 'directionSentUnconfirmed') {
+      const [sent, separator, unconfirmed] = directionLabel.split(/([·・])/u)
+      directionCell.append(sent, separator, document.createElement('wbr'), unconfirmed)
+    } else {
+      directionCell.textContent = directionLabel
+    }
     row.append(
       make('td', 'sequence', String(frame.sequence)),
       timeCell,
-      make('td', `direction direction-${frame.direction}`, t(directionMessageKey(frame))),
+      directionCell,
       make('td', 'method', frame.method),
       make('td', 'payload', valueText(frame.payload)),
     )
