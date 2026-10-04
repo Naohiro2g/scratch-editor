@@ -57,6 +57,7 @@ Scratch エディターはマイクラリモコンのクライアントで、Bri
 | [`mc-remote/protocol/`](protocol/) | 通信の型・定数と共通の検証例（fixture） | [README](protocol/README.md) |
 | [`mc-remote/bridge/`](bridge/) | ブラウザと McRemote プラグインの間の通信を中継する Bridge | [README](bridge/README.md) |
 | [`mc-remote/live/`](live/) | 通信を読み取り専用で観察する WireScope | [README](live/README.md) |
+| [`mc-remote/block-reference/`](block-reference/) | Scratchブロック一覧ページの試作と生成元 | [README](block-reference/README.md) |
 
 `protocol` は通信契約をコードと検証例へ写す場所です。Scratch 拡張はビルド時に仮想マシンへ組み込まれるため、このパッケージを直接読み込みません。Bridge も命令の内容を解釈せず、中継に徹します。
 

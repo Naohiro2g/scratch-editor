@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="mc-remoteでMinecraftを操作するScratchブロックの一覧。画像、入力項目、選択肢、使い方を確認できます。">
+    <title>Scratchブロック一覧（ドラフト）</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="page.js" defer></script>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="https://mc-remote.com/">mc-remote <span>マイクラリモコン</span></a>
+        <nav aria-label="関連ページ">
+            <a href="https://mc-remote.com/api/">通信API一覧 <span aria-hidden="true">↗</span></a>
+            <a href="https://github.com/Naohiro2g/scratch-editor/blob/develop/README_mc-remote.md">使い始める <span aria-hidden="true">↗</span></a>
+        </nav>
+    </header>
+    <main>
+        <div class="intro">
+            <p class="eyebrow">mc-remote / マイクラリモコン <span>公開版 b8</span></p>
+            <h1>Scratchブロック一覧（ドラフト）</h1>
+            <p class="lead">Minecraftを、ブロックで動かす。</p>
+            <p>ブロックを置く、音を鳴らす、イベントで動かす。<br class="desktop-break">{{BLOCK_COUNT}}個のブロックを、画像と入力項目から探せます。</p>
+            <div class="intro-links"><a href="#examples">組み合わせ方を見る <span aria-hidden="true">↓</span></a><span>Scratch {{RELEASE}}</span></div>
+        </div>
+        <div class="reference-layout">
+            <aside class="sidebar" aria-label="ブロックの分類">
+                <p class="sidebar-title">やりたいことから探す</p>
+                <div class="category-buttons">
+                    <button type="button" data-category="all" aria-pressed="true"><span>すべてのブロック</span><span class="category-count">{{BLOCK_COUNT}}</span></button>
+                    <!-- CATEGORY_NAVIGATION -->
+                </div>
+                <p class="sidebar-note">画像は実際のエディターから生成しています。長いブロックは横にスクロールして見られます。</p>
+            </aside>
+            <div class="reference-body">
+                <div class="search-panel">
+                    <label for="search">ブロックを探す</label>
+                    <div class="search-row"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="名前・説明・API名で検索" autocomplete="off"><button id="clear-search" type="button">クリア</button></div>
+                    <div class="filter-row"><label for="block-kind">形</label><select id="block-kind"><option value="all">すべての形</option><option value="command">命令</option><option value="reporter">値を返す</option><option value="Boolean">条件</option><option value="hat">イベント</option></select><p id="result-count" role="status" aria-live="polite">{{BLOCK_COUNT}} / {{BLOCK_COUNT}} ブロック</p></div>
+                </div>
+                <p id="empty-results" class="empty-results" hidden>一致するブロックがありません。検索語や分類を変えてみてください。</p>
+                <div id="blocks"><!-- BLOCK_SECTIONS --></div>
+                <section id="examples" class="examples" aria-labelledby="examples-title">
+                    <p class="eyebrow">ブロックを組み合わせる</p>
+                    <h2 id="examples-title">「設定」も「情報」も、ブロックで渡せます。</h2>
+                    <article class="example-card">
+                        <h3>音量や音階を選んで鳴らす</h3>
+                        <p>「音の設定」を、音を鳴らすブロックの「設定」に差し込みます。この例は音量0.5、音階N12です。</p>
+                        <div class="block-image" tabindex="0" aria-label="音の設定を差し込んだブロックの画像"><img src="images/sound-example.svg" alt="音 block.note_block.harp を x:0 y:63 z:0 で鳴らす。設定は音量0.5、高さN12、再生先は近くのプレイヤー。" loading="lazy"></div>
+                        <p class="example-links"><a href="#playSound">音を鳴らす</a><a href="#soundOptions">音の設定</a></p>
+                    </article>
+                    <article class="example-card">
+                        <h3>取得した情報から、ブロックIDを読む</h3>
+                        <p>「ブロック情報」を「のブロックID」に差し込みます。取得した情報を変数に保存してから、IDや状態を取り出すこともできます。</p>
+                        <div class="block-image" tabindex="0" aria-label="取得したブロック情報からIDを読むブロックの画像"><img src="images/block-info-example.svg" alt="x:0 y:63 z:0 のブロック情報のブロックID" loading="lazy"></div>
+                        <p class="example-links"><a href="#getBlock">ブロック情報を取得する</a><a href="#blockInfoId">ブロックIDを読む</a><a href="#blockInfoState">状態を読む</a></p>
+                    </article>
+                    <p class="example-note">パーティクルの設定など、長くなる組み合わせは変数に入れて使うと、スクリプトを短くできます。</p>
+                </section>
+                <div class="reading-notes">
+                    <h2>この一覧の読み方</h2>
+                    <p>「最初の値」は、パレットから取り出した直後に入力されている値です。実行時に省略した場合の既定値とは区別しています。</p>
+                    <p>「返す値」は正常に取得できたときの内容です。エラーを表す文字列が返った場合は「取得した値がエラーか調べる」で確認できます。命令の失敗は、エディターのお知らせとWireScopeで確認します。</p>
+                    <p>座標の基準や詳しい通信仕様は、各ブロックの「通信API」リンクから確認できます。</p>
+                </div>
+                <footer>
+                    <p>mc-remote / マイクラリモコン · Scratch {{RELEASE}}</p>
+                    <details><summary>一覧の生成元</summary><p>ブロックの画像・名前・入力項目・選択肢は、エディターの実装から生成しています。説明文はこのリポジトリで補っています。</p><p><a href="https://github.com/Naohiro2g/scratch-editor/tree/{{SOURCE_COMMIT}}">対象のソースコード</a> · <a href="blocks.json">一覧データ（JSON）</a></p></details>
+                </footer>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

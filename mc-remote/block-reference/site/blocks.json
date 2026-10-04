@@ -1,0 +1,3165 @@
+{
+  "release": "2320.0.0b8",
+  "sourceRef": "v2320.0.0b8",
+  "sourceCommit": "691576f60b7f0824e1753bd6823901d01fbe2422",
+  "locale": "ja",
+  "categories": {
+    "connection": "接続・ペアリング",
+    "build": "建築の設定",
+    "block": "ブロック・地面",
+    "catalog": "カタログ",
+    "sign": "看板",
+    "player": "プレイヤー",
+    "entity": "エンティティ",
+    "particle": "パーティクル",
+    "sound": "音",
+    "lightning": "雷",
+    "chat": "チャット",
+    "event": "イベント"
+  },
+  "blocks": [
+    {
+      "opcode": "connect",
+      "text": "接続する",
+      "blockType": "command",
+      "category": "connection",
+      "title": "Minecraftに接続する",
+      "description": "エディターで選んだ接続先につなぎます。初めての接続では、Minecraft内でペアリングを行います。",
+      "methods": [
+        "hello",
+        "auth.pairBegin",
+        "auth.pairPoll"
+      ],
+      "related": [
+        {
+          "opcode": "pairCommand",
+          "title": "ペアリングコマンドを読む"
+        },
+        {
+          "opcode": "whenPaired",
+          "title": "ペアリングできたら実行する"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 96,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "pairCode",
+      "text": "ペアコード",
+      "blockType": "reporter",
+      "category": "connection",
+      "title": "ペアコードを読む",
+      "description": "現在のペアリングに使うコードを返します。",
+      "result": "ペアコードの文字列",
+      "related": [
+        {
+          "opcode": "connect",
+          "title": "Minecraftに接続する"
+        },
+        {
+          "opcode": "pairCommand",
+          "title": "ペアリングコマンドを読む"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 124,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "pairCommand",
+      "text": "ペアリングコマンド",
+      "blockType": "reporter",
+      "category": "connection",
+      "title": "ペアリングコマンドを読む",
+      "description": "Minecraftのチャットへ入力するペアリングコマンドを返します。",
+      "result": "/mcremote pair で始まる文字列",
+      "related": [
+        {
+          "opcode": "connect",
+          "title": "Minecraftに接続する"
+        },
+        {
+          "opcode": "whenPaired",
+          "title": "ペアリングできたら実行する"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 188,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "whenPaired",
+      "text": "ペアリングできたとき",
+      "blockType": "hat",
+      "category": "connection",
+      "title": "ペアリングできたら実行する",
+      "description": "ペアリングが完了したとき、下につないだスクリプトを実行します。",
+      "related": [
+        {
+          "opcode": "connect",
+          "title": "Minecraftに接続する"
+        },
+        {
+          "opcode": "pairCommand",
+          "title": "ペアリングコマンドを読む"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 192,
+      "imageHeight": 89
+    },
+    {
+      "opcode": "setDimension",
+      "text": "建築する次元を [DIMENSION] にする",
+      "blockType": "command",
+      "category": "build",
+      "title": "建築する次元を選ぶ",
+      "description": "ブロックの設置や取得などに使う次元を選びます。",
+      "methods": [
+        "connection.setBuildContext"
+      ],
+      "related": [
+        {
+          "opcode": "setBuildOrigin",
+          "title": "建築原点を決める"
+        },
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        }
+      ],
+      "imageWidth": 380,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setBuildOrigin",
+      "text": "建築原点 (x, y, z) を[X],  0,  [Z]にする",
+      "blockType": "command",
+      "category": "build",
+      "title": "建築原点を決める",
+      "description": "建築の座標の基準を決めます。このブロックでは原点のy座標は0です。",
+      "methods": [
+        "connection.setBuildContext"
+      ],
+      "related": [
+        {
+          "opcode": "setDimension",
+          "title": "建築する次元を選ぶ"
+        },
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 200,
+          "defaultLabel": 200
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 200,
+          "defaultLabel": 200
+        }
+      ],
+      "imageWidth": 369,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setBuildMode",
+      "text": "建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）",
+      "blockType": "command",
+      "category": "build",
+      "title": "建築モードを選ぶ",
+      "description": "DEBUGで確認し、TRACEで設置の過程を見せ、FASTで高速に設置します。TRACEの待ち時間は0〜2秒です。",
+      "methods": [
+        "connection.flush"
+      ],
+      "related": [
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        },
+        {
+          "opcode": "flushBuildCommands",
+          "title": "送った設置が終わるまで待つ"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "MODE",
+          "label": "建築モード",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "DEBUG",
+          "defaultLabel": "DEBUG（確認）",
+          "options": [
+            {
+              "text": "DEBUG（確認）",
+              "value": "DEBUG"
+            },
+            {
+              "text": "TRACE（過程）",
+              "value": "TRACE"
+            },
+            {
+              "text": "FAST（高速）",
+              "value": "FAST"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "TRACE_DELAY",
+          "label": "TRACEの待ち時間（秒）",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0.25,
+          "defaultLabel": 0.25
+        }
+      ],
+      "imageWidth": 609,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "flushBuildCommands",
+      "text": "送ったブロック設置が終わるまで待つ",
+      "blockType": "command",
+      "category": "build",
+      "title": "送った設置が終わるまで待つ",
+      "description": "すでに送ったブロック設置の処理が終わるまで待ちます。FASTで設置した後の確認にも使えます。",
+      "methods": [
+        "connection.flush"
+      ],
+      "related": [
+        {
+          "opcode": "setBuildMode",
+          "title": "建築モードを選ぶ"
+        },
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 304,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "postToChat",
+      "text": "チャットに [MSG] と言う",
+      "blockType": "command",
+      "category": "chat",
+      "title": "チャットに投稿する",
+      "description": "Minecraftのチャットへメッセージを送ります。文字列や変数を入力できます。",
+      "methods": [
+        "chat.post"
+      ],
+      "related": [
+        {
+          "opcode": "whenChatPosted",
+          "title": "チャット投稿で実行する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "MSG",
+          "label": "メッセージ",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "Hello, Minecraft!",
+          "defaultLabel": "Hello, Minecraft!"
+        }
+      ],
+      "imageWidth": 314,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setBlock",
+      "text": "x :[X]  y :[Y]  z :[Z] に ブロックID [BLOCK] 状態 [STATE] を置く",
+      "blockType": "command",
+      "category": "block",
+      "title": "ブロックを1個置く",
+      "description": "指定した座標にブロックを置きます。右端のボタンでブロックIDと状態を選べます。",
+      "notes": [
+        "状態を空欄にすると、そのブロックのデフォルト値を使います。",
+        "状態は axis=y のように書きます。既存の状態全体を置き換えます。"
+      ],
+      "methods": [
+        "world.setBlock"
+      ],
+      "related": [
+        {
+          "opcode": "setBlocks",
+          "title": "範囲にブロックを置く"
+        },
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "BLOCK",
+          "label": "ブロックID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "stone",
+          "defaultLabel": "stone"
+        },
+        {
+          "name": "STATE",
+          "label": "ブロックの状態",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 594,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setBlocks",
+      "text": "x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] まで ブロックID [BLOCK] 状態 [STATE] を置く",
+      "blockType": "command",
+      "category": "block",
+      "title": "範囲にブロックを置く",
+      "description": "2点で囲まれた範囲に、同じブロックと状態を設定します。",
+      "methods": [
+        "world.setBlocks"
+      ],
+      "related": [
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        },
+        {
+          "opcode": "getBlocks",
+          "title": "範囲のブロック情報をリストへ入れる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X1",
+          "label": "始点のx座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y1",
+          "label": "始点のy座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z1",
+          "label": "始点のz座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "X2",
+          "label": "終点のx座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y2",
+          "label": "終点のy座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z2",
+          "label": "終点のz座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "BLOCK",
+          "label": "ブロックID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "stone",
+          "defaultLabel": "stone"
+        },
+        {
+          "name": "STATE",
+          "label": "ブロックの状態",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 847,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "getBlock",
+      "text": "x :[X]  y :[Y]  z :[Z] のブロック情報",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "ブロック情報を取得する",
+      "description": "指定した座標のブロックIDと状態をまとめて取得します。",
+      "result": "ブロック情報の文字列",
+      "methods": [
+        "world.getBlock"
+      ],
+      "related": [
+        {
+          "opcode": "blockInfoId",
+          "title": "ブロック情報からIDを読む"
+        },
+        {
+          "opcode": "blockInfoState",
+          "title": "ブロック情報から状態を読む"
+        },
+        {
+          "opcode": "isMcRemoteError",
+          "title": "取得した値がエラーか調べる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 353,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "getBlocks",
+      "text": "x :[X1]  y :[Y1]  z :[Z1] から x :[X2]  y :[Y2]  z :[Z2] までのブロック情報を [LIST] に入れる",
+      "blockType": "command",
+      "category": "block",
+      "title": "範囲のブロック情報をリストへ入れる",
+      "description": "2点で囲まれた範囲のブロック情報を取得して、指定したScratchリストへ入れます。",
+      "methods": [
+        "world.getBlocks"
+      ],
+      "related": [
+        {
+          "opcode": "blockInfoId",
+          "title": "ブロック情報からIDを読む"
+        },
+        {
+          "opcode": "blockInfoState",
+          "title": "ブロック情報から状態を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X1",
+          "label": "始点のx座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y1",
+          "label": "始点のy座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z1",
+          "label": "始点のz座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "X2",
+          "label": "終点のx座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y2",
+          "label": "終点のy座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z2",
+          "label": "終点のz座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "LIST",
+          "label": "保存先のリスト",
+          "type": "list",
+          "typeLabel": "リスト",
+          "defaultValue": "block list",
+          "defaultLabel": "block list"
+        }
+      ],
+      "imageWidth": 823,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "catalogToList",
+      "text": "カタログの [KIND] を [LIST] に入れる",
+      "blockType": "command",
+      "category": "catalog",
+      "title": "カタログのIDをリストへ入れる",
+      "description": "取得済みカタログのブロックID・エンティティID・パーティクルIDを、選んだScratchリストへ入れます。",
+      "notes": [
+        "リストの中身を置き換えます。IDは名前空間付きで、文字列順に並びます。"
+      ],
+      "related": [
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        },
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "particleSpec",
+          "title": "パーティクルの表示先を選ぶ"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "KIND",
+          "label": "種類",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "block",
+          "defaultLabel": "ブロックID",
+          "options": [
+            {
+              "text": "ブロックID",
+              "value": "block"
+            },
+            {
+              "text": "エンティティID",
+              "value": "entity"
+            },
+            {
+              "text": "パーティクルID",
+              "value": "particle"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LIST",
+          "label": "保存先のリスト",
+          "type": "list",
+          "typeLabel": "リスト",
+          "defaultValue": "catalog list",
+          "defaultLabel": "catalog list"
+        }
+      ],
+      "imageWidth": 452,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "getHeight",
+      "text": "x :[X]  z :[Z] の地面の高さ",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "地面の高さを調べる",
+      "description": "指定したx・z座標で、地面の高さを取得します。",
+      "result": "地面のy座標",
+      "methods": [
+        "world.getHeight"
+      ],
+      "related": [
+        {
+          "opcode": "getHeightBelow",
+          "title": "指定した高さ以下の地面を調べる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 270,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "getHeightBelow",
+      "text": "x :[X]  z :[Z] の y :[MAX_Y] 以下の地面の高さ",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "指定した高さ以下の地面を調べる",
+      "description": "y座標の上限を指定して、その高さ以下の地面を探します。",
+      "result": "地面のy座標",
+      "methods": [
+        "world.getHeight"
+      ],
+      "related": [
+        {
+          "opcode": "getHeight",
+          "title": "地面の高さを調べる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "MAX_Y",
+          "label": "調べる高さの上限",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 390,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "blockInfoId",
+      "text": "[BLOCK_INFO] のブロックID",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "ブロック情報からIDを読む",
+      "description": "取得したブロック情報から、ブロックIDを取り出します。",
+      "result": "名前空間付きのブロックID",
+      "related": [
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        },
+        {
+          "opcode": "blockInfoState",
+          "title": "ブロック情報から状態を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "BLOCK_INFO",
+          "label": "ブロック情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:stone",
+          "defaultLabel": "minecraft:stone"
+        }
+      ],
+      "imageWidth": 268,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "blockInfoState",
+      "text": "[BLOCK_INFO] の状態",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "ブロック情報から状態を読む",
+      "description": "取得したブロック情報から、状態をまとめて取り出します。",
+      "result": "axis=y のような状態の文字列",
+      "related": [
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        },
+        {
+          "opcode": "blockInfoStateProperty",
+          "title": "状態の項目を1つ読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "BLOCK_INFO",
+          "label": "ブロック情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:oak_log[axis=y]",
+          "defaultLabel": "minecraft:oak_log[axis=y]"
+        }
+      ],
+      "imageWidth": 291,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "blockInfoStateProperty",
+      "text": "[BLOCK_INFO] の状態 [PROPERTY]",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "状態の項目を1つ読む",
+      "description": "ブロック情報から、axisやfacingなど、指定した状態の項目を取り出します。",
+      "result": "指定した項目の値",
+      "related": [
+        {
+          "opcode": "blockInfoHasStateProperty",
+          "title": "状態の項目があるか調べる"
+        },
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "BLOCK_INFO",
+          "label": "ブロック情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:oak_log[axis=y]",
+          "defaultLabel": "minecraft:oak_log[axis=y]"
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "axis",
+          "defaultLabel": "axis"
+        }
+      ],
+      "imageWidth": 342,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "blockInfoHasStateProperty",
+      "text": "[BLOCK_INFO] に状態 [PROPERTY] がある",
+      "blockType": "Boolean",
+      "category": "block",
+      "title": "状態の項目があるか調べる",
+      "description": "ブロック情報に、指定した状態の項目があるかを調べます。",
+      "result": "はい・いいえ（真偽値）",
+      "related": [
+        {
+          "opcode": "blockInfoStateProperty",
+          "title": "状態の項目を1つ読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "BLOCK_INFO",
+          "label": "ブロック情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:oak_log[axis=y]",
+          "defaultLabel": "minecraft:oak_log[axis=y]"
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "axis",
+          "defaultLabel": "axis"
+        }
+      ],
+      "imageWidth": 430,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "getSign",
+      "text": "看板 x :[X]  y :[Y]  z :[Z] の情報",
+      "blockType": "reporter",
+      "category": "sign",
+      "title": "看板情報を取得する",
+      "description": "看板の両面の文字や装飾などをまとめて取得します。",
+      "result": "看板情報の文字列",
+      "methods": [
+        "world.getSign"
+      ],
+      "related": [
+        {
+          "opcode": "signLineText",
+          "title": "看板情報から文字を読む"
+        },
+        {
+          "opcode": "signLineColor",
+          "title": "看板情報から文字色を読む"
+        },
+        {
+          "opcode": "signIsWaxed",
+          "title": "看板がワックス済みか調べる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 326,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "setSign",
+      "text": "看板 x :[X]  y :[Y]  z :[Z] の[FACE]を [LINE0] [LINE1] [LINE2] [LINE3] にする",
+      "blockType": "command",
+      "category": "sign",
+      "title": "看板の4行を書く",
+      "description": "看板の正面または背面の4行を、まとめて書き換えます。",
+      "methods": [
+        "world.setSign"
+      ],
+      "related": [
+        {
+          "opcode": "updateSignLine",
+          "title": "看板の1行を書き換える"
+        },
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "FACE",
+          "label": "看板の面",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "front",
+          "defaultLabel": "正面",
+          "options": [
+            {
+              "text": "正面",
+              "value": "front"
+            },
+            {
+              "text": "背面",
+              "value": "back"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LINE0",
+          "label": "1行目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "LINE1",
+          "label": "2行目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "LINE2",
+          "label": "3行目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "LINE3",
+          "label": "4行目",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 634,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "updateSignLine",
+      "text": "看板 x :[X]  y :[Y]  z :[Z] の[FACE] [LINE]を [TEXT] にする",
+      "blockType": "command",
+      "category": "sign",
+      "title": "看板の1行を書き換える",
+      "description": "看板の面と行を選び、その行の文字を書き換えます。",
+      "methods": [
+        "world.updateSignLine"
+      ],
+      "related": [
+        {
+          "opcode": "setSign",
+          "title": "看板の4行を書く"
+        },
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "FACE",
+          "label": "看板の面",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "front",
+          "defaultLabel": "正面",
+          "options": [
+            {
+              "text": "正面",
+              "value": "front"
+            },
+            {
+              "text": "背面",
+              "value": "back"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LINE",
+          "label": "行",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "0",
+          "defaultLabel": "1行目",
+          "options": [
+            {
+              "text": "1行目",
+              "value": "0"
+            },
+            {
+              "text": "2行目",
+              "value": "1"
+            },
+            {
+              "text": "3行目",
+              "value": "2"
+            },
+            {
+              "text": "4行目",
+              "value": "3"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "TEXT",
+          "label": "文字",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 575,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "signLineText",
+      "text": "[SIGN_INFO] の[FACE] [LINE]の文字",
+      "blockType": "reporter",
+      "category": "sign",
+      "title": "看板情報から文字を読む",
+      "description": "取得した看板情報から、面と行を選んで文字を取り出します。",
+      "result": "その行の文字列",
+      "related": [
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "SIGN_INFO",
+          "label": "看板情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "FACE",
+          "label": "看板の面",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "front",
+          "defaultLabel": "正面",
+          "options": [
+            {
+              "text": "正面",
+              "value": "front"
+            },
+            {
+              "text": "背面",
+              "value": "back"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LINE",
+          "label": "行",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "0",
+          "defaultLabel": "1行目",
+          "options": [
+            {
+              "text": "1行目",
+              "value": "0"
+            },
+            {
+              "text": "2行目",
+              "value": "1"
+            },
+            {
+              "text": "3行目",
+              "value": "2"
+            },
+            {
+              "text": "4行目",
+              "value": "3"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 313,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "signLineColor",
+      "text": "[SIGN_INFO] の[FACE] [LINE]の色",
+      "blockType": "reporter",
+      "category": "sign",
+      "title": "看板情報から文字色を読む",
+      "description": "取得した看板情報から、指定した面・行の文字色を取り出します。",
+      "result": "色を表す文字列",
+      "related": [
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "SIGN_INFO",
+          "label": "看板情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "FACE",
+          "label": "看板の面",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "front",
+          "defaultLabel": "正面",
+          "options": [
+            {
+              "text": "正面",
+              "value": "front"
+            },
+            {
+              "text": "背面",
+              "value": "back"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LINE",
+          "label": "行",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "0",
+          "defaultLabel": "1行目",
+          "options": [
+            {
+              "text": "1行目",
+              "value": "0"
+            },
+            {
+              "text": "2行目",
+              "value": "1"
+            },
+            {
+              "text": "3行目",
+              "value": "2"
+            },
+            {
+              "text": "4行目",
+              "value": "3"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 297,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "signLineHasDecoration",
+      "text": "[SIGN_INFO] の[FACE] [LINE]に[DECORATION]がある",
+      "blockType": "Boolean",
+      "category": "sign",
+      "title": "看板の文字の装飾を調べる",
+      "description": "取得した看板情報から、太字などの装飾があるかを調べます。",
+      "result": "はい・いいえ（真偽値）",
+      "related": [
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "SIGN_INFO",
+          "label": "看板情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "FACE",
+          "label": "看板の面",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "front",
+          "defaultLabel": "正面",
+          "options": [
+            {
+              "text": "正面",
+              "value": "front"
+            },
+            {
+              "text": "背面",
+              "value": "back"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LINE",
+          "label": "行",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "0",
+          "defaultLabel": "1行目",
+          "options": [
+            {
+              "text": "1行目",
+              "value": "0"
+            },
+            {
+              "text": "2行目",
+              "value": "1"
+            },
+            {
+              "text": "3行目",
+              "value": "2"
+            },
+            {
+              "text": "4行目",
+              "value": "3"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "DECORATION",
+          "label": "文字の装飾",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "bold",
+          "defaultLabel": "太字",
+          "options": [
+            {
+              "text": "太字",
+              "value": "bold"
+            },
+            {
+              "text": "斜体",
+              "value": "italic"
+            },
+            {
+              "text": "ランダム",
+              "value": "obfuscated"
+            },
+            {
+              "text": "取り消し線",
+              "value": "strikethrough"
+            },
+            {
+              "text": "下線",
+              "value": "underlined"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 437,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "signIsWaxed",
+      "text": "[SIGN_INFO] はロウ引きされている",
+      "blockType": "Boolean",
+      "category": "sign",
+      "title": "看板がワックス済みか調べる",
+      "description": "取得した看板情報から、看板がワックスで保護されているかを調べます。",
+      "result": "はい・いいえ（真偽値）",
+      "related": [
+        {
+          "opcode": "getSign",
+          "title": "看板情報を取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "SIGN_INFO",
+          "label": "看板情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 264,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "isMcRemoteError",
+      "text": "[VALUE] はmc-remoteエラー",
+      "blockType": "Boolean",
+      "category": "connection",
+      "title": "取得した値がエラーか調べる",
+      "description": "値がmc-remoteのエラーを表す文字列かどうかを調べます。「もし」と組み合わせて使えます。",
+      "result": "はい・いいえ（真偽値）",
+      "related": [
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "VALUE",
+          "label": "調べる値",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "⟦mcr-error:unknown_block⟧",
+          "defaultLabel": "⟦mcr-error:unknown_block⟧"
+        }
+      ],
+      "imageWidth": 421,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "spawnParticle",
+      "text": "パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する",
+      "blockType": "command",
+      "category": "particle",
+      "title": "パーティクルを表示する",
+      "description": "座標・ずれ・速さ・個数を指定してパーティクルを表示します。IDの代わりに、表示先や色などを組み立てた設定も入力できます。",
+      "methods": [
+        "world.spawnParticle"
+      ],
+      "related": [
+        {
+          "opcode": "particleSpec",
+          "title": "パーティクルの表示先を選ぶ"
+        },
+        {
+          "opcode": "dustParticleSpec",
+          "title": "ダストの色と大きさを決める"
+        },
+        {
+          "opcode": "blockParticleSpec",
+          "title": "ブロックのパーティクルを決める"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "PARTICLE",
+          "label": "パーティクルID・設定",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:flame",
+          "defaultLabel": "minecraft:flame"
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "OFFSET_X",
+          "label": "x方向のずれ",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "OFFSET_Y",
+          "label": "y方向のずれ",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "OFFSET_Z",
+          "label": "z方向のずれ",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "SPEED",
+          "label": "速さ",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "COUNT",
+          "label": "個数",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 1,
+          "defaultLabel": 1
+        },
+        {
+          "name": "FORCE",
+          "label": "表示範囲",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "true",
+          "defaultLabel": "遠くにも表示",
+          "options": [
+            {
+              "text": "遠くにも表示",
+              "value": "true"
+            },
+            {
+              "text": "近くだけ表示",
+              "value": "false"
+            }
+          ],
+          "acceptReporters": true
+        }
+      ],
+      "imageWidth": 1173,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "spawnEntity",
+      "text": "エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] に生成し ハンドルを [VARIABLE] に入れる",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティを生成する",
+      "description": "エンティティを生成し、後から操作するためのハンドルをScratch変数へ入れます。",
+      "notes": [
+        "保存先には通常の変数を使います。生成したハンドルを位置の変更や削除のブロックへ渡します。"
+      ],
+      "methods": [
+        "world.spawnEntity"
+      ],
+      "related": [
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        },
+        {
+          "opcode": "removeEntity",
+          "title": "エンティティを削除する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "ENTITY",
+          "label": "エンティティID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:allay",
+          "defaultLabel": "minecraft:allay"
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "VARIABLE",
+          "label": "保存先の変数",
+          "type": "variable",
+          "typeLabel": "変数",
+          "defaultValue": "entity handle",
+          "defaultLabel": "entity handle"
+        }
+      ],
+      "imageWidth": 846,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "getNearbyEntities",
+      "text": "x :[X]  y :[Y]  z :[Z] の半径 [RADIUS] 以内のエンティティを最大 [MAX_ENTITIES] 件 [LIST] に入れる",
+      "blockType": "command",
+      "category": "entity",
+      "title": "近くのエンティティをリストへ入れる",
+      "description": "指定した中心と半径でエンティティを探し、情報をScratchリストへ入れます。プレイヤーは含みません。",
+      "notes": [
+        "半径は0〜64、最大件数は1〜64です。サーバー設定で上限がさらに小さい場合があります。"
+      ],
+      "methods": [
+        "world.getNearbyEntities"
+      ],
+      "related": [
+        {
+          "opcode": "entityInfo",
+          "title": "エンティティ情報の項目を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "RADIUS",
+          "label": "半径",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 10,
+          "defaultLabel": 10
+        },
+        {
+          "name": "MAX_ENTITIES",
+          "label": "最大件数",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 16,
+          "defaultLabel": 16
+        },
+        {
+          "name": "LIST",
+          "label": "保存先のリスト",
+          "type": "list",
+          "typeLabel": "リスト",
+          "defaultValue": "entity list",
+          "defaultLabel": "entity list"
+        }
+      ],
+      "imageWidth": 795,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "entityInfo",
+      "text": "エンティティ情報 [ENTITY_INFO] の [PROPERTY]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティ情報の項目を読む",
+      "description": "近くのエンティティのリストから取り出した情報を渡し、ハンドル・種類・座標を読みます。",
+      "result": "選んだ項目の文字列または数値",
+      "related": [
+        {
+          "opcode": "getNearbyEntities",
+          "title": "近くのエンティティをリストへ入れる"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "ENTITY_INFO",
+          "label": "エンティティ情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "handle",
+          "defaultLabel": "ハンドル",
+          "options": [
+            {
+              "text": "ハンドル",
+              "value": "handle"
+            },
+            {
+              "text": "種類",
+              "value": "type"
+            },
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 348,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "getEntityPose",
+      "text": "エンティティ [HANDLE] の姿勢",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティの位置と向きを取得する",
+      "description": "ハンドルで指定したエンティティの位置・次元・向きをまとめて取得します。",
+      "result": "位置と向きの情報の文字列",
+      "methods": [
+        "entity.getPose"
+      ],
+      "related": [
+        {
+          "opcode": "entityPoseInfo",
+          "title": "位置と向きの情報の項目を読む"
+        },
+        {
+          "opcode": "setEntityPose",
+          "title": "エンティティの位置と向きを変える"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        }
+      ],
+      "imageWidth": 298,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "entityPoseInfo",
+      "text": "エンティティの姿勢 [POSE] の [PROPERTY]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "位置と向きの情報の項目を読む",
+      "description": "取得したエンティティの位置と向きの情報から、次元・座標・角度を取り出します。",
+      "result": "選んだ項目の文字列または数値",
+      "related": [
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "POSE",
+          "label": "位置・向きの情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x座標",
+          "options": [
+            {
+              "text": "次元",
+              "value": "dimension"
+            },
+            {
+              "text": "x座標",
+              "value": "x"
+            },
+            {
+              "text": "y座標",
+              "value": "y"
+            },
+            {
+              "text": "z座標",
+              "value": "z"
+            },
+            {
+              "text": "水平方向",
+              "value": "yaw"
+            },
+            {
+              "text": "上下方向",
+              "value": "pitch"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 340,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "setEntityPose",
+      "text": "エンティティ [HANDLE] を [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティの位置と向きを変える",
+      "description": "ハンドルで指定したエンティティを移動し、水平方向と上下方向の角度を設定します。",
+      "methods": [
+        "entity.setPose"
+      ],
+      "related": [
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "YAW",
+          "label": "水平方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "PITCH",
+          "label": "上下方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 976,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "removeEntity",
+      "text": "エンティティ [HANDLE] を取り除く",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティを削除する",
+      "description": "ハンドルで指定したエンティティを削除します。",
+      "methods": [
+        "entity.remove"
+      ],
+      "related": [
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "getNearbyEntities",
+          "title": "近くのエンティティをリストへ入れる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        }
+      ],
+      "imageWidth": 322,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "particleSpec",
+      "text": "[RECEIVER] に表示するパーティクル [PARTICLE]",
+      "blockType": "reporter",
+      "category": "particle",
+      "title": "パーティクルの表示先を選ぶ",
+      "description": "パーティクルIDと表示先を組み合わせた設定を作ります。この値を「パーティクルを表示する」へ渡します。",
+      "result": "パーティクルの設定の文字列",
+      "related": [
+        {
+          "opcode": "spawnParticle",
+          "title": "パーティクルを表示する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "RECEIVER",
+          "label": "表示先・再生先",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "world",
+          "defaultLabel": "近くのプレイヤー",
+          "options": [
+            {
+              "text": "近くのプレイヤー",
+              "value": "world"
+            },
+            {
+              "text": "接続したプレイヤーだけ",
+              "value": "self"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "PARTICLE",
+          "label": "パーティクルID・設定",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:flame",
+          "defaultLabel": "minecraft:flame"
+        }
+      ],
+      "imageWidth": 520,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "dustParticleSpec",
+      "text": "[RECEIVER] に表示するダスト 赤 [RED] 緑 [GREEN] 青 [BLUE] 大きさ [SIZE]",
+      "blockType": "reporter",
+      "category": "particle",
+      "title": "ダストの色と大きさを決める",
+      "description": "ダストの表示先・RGBの色・大きさを組み合わせた設定を作ります。",
+      "notes": [
+        "赤・緑・青はそれぞれ0〜255の整数、大きさは0.01〜4です。"
+      ],
+      "result": "ダストの設定の文字列",
+      "related": [
+        {
+          "opcode": "spawnParticle",
+          "title": "パーティクルを表示する"
+        },
+        {
+          "opcode": "particleSpec",
+          "title": "パーティクルの表示先を選ぶ"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "RECEIVER",
+          "label": "表示先・再生先",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "world",
+          "defaultLabel": "近くのプレイヤー",
+          "options": [
+            {
+              "text": "近くのプレイヤー",
+              "value": "world"
+            },
+            {
+              "text": "接続したプレイヤーだけ",
+              "value": "self"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "RED",
+          "label": "赤",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 255,
+          "defaultLabel": 255
+        },
+        {
+          "name": "GREEN",
+          "label": "緑",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "BLUE",
+          "label": "青",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "SIZE",
+          "label": "大きさ",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 1,
+          "defaultLabel": 1
+        }
+      ],
+      "imageWidth": 658,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "blockParticleSpec",
+      "text": "[RECEIVER] に表示するブロックのパーティクル [BLOCK] 状態 [STATE]",
+      "blockType": "reporter",
+      "category": "particle",
+      "title": "ブロックのパーティクルを決める",
+      "description": "ブロックIDと状態を使い、そのブロックの見た目のパーティクル設定を作ります。",
+      "result": "ブロックのパーティクル設定の文字列",
+      "related": [
+        {
+          "opcode": "spawnParticle",
+          "title": "パーティクルを表示する"
+        },
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "RECEIVER",
+          "label": "表示先・再生先",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "world",
+          "defaultLabel": "近くのプレイヤー",
+          "options": [
+            {
+              "text": "近くのプレイヤー",
+              "value": "world"
+            },
+            {
+              "text": "接続したプレイヤーだけ",
+              "value": "self"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "BLOCK",
+          "label": "ブロックID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:stone",
+          "defaultLabel": "minecraft:stone"
+        },
+        {
+          "name": "STATE",
+          "label": "ブロックの状態",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 688,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "playerDirection",
+      "text": "プレイヤーの向き [AXIS]",
+      "blockType": "reporter",
+      "category": "player",
+      "title": "プレイヤーの向きを読む",
+      "description": "接続したプレイヤーの向きを、方向ベクトルのx・y・z成分として取得します。",
+      "result": "選んだ成分の数値",
+      "methods": [
+        "player.getDirection"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerDirection",
+          "title": "プレイヤーの向きを変える"
+        },
+        {
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "AXIS",
+          "label": "向きの成分",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x",
+          "options": [
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 220,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "setPlayerDirection",
+      "text": "プレイヤーの向きを x[X]  y[Y]  z[Z] にする",
+      "blockType": "command",
+      "category": "player",
+      "title": "プレイヤーの向きを変える",
+      "description": "x・y・zの方向ベクトルで、接続したプレイヤーの向きを設定します。",
+      "methods": [
+        "player.setDirection"
+      ],
+      "related": [
+        {
+          "opcode": "playerDirection",
+          "title": "プレイヤーの向きを読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 421,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "entityDirection",
+      "text": "エンティティ [HANDLE] の向き [AXIS]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティの向きを読む",
+      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルの成分として取得します。",
+      "result": "選んだ成分の数値",
+      "methods": [
+        "entity.getDirection"
+      ],
+      "related": [
+        {
+          "opcode": "setEntityDirection",
+          "title": "エンティティの向きを変える"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "AXIS",
+          "label": "向きの成分",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x",
+          "options": [
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 350,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "setEntityDirection",
+      "text": "エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティの向きを変える",
+      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルで設定します。",
+      "methods": [
+        "entity.setDirection"
+      ],
+      "related": [
+        {
+          "opcode": "entityDirection",
+          "title": "エンティティの向きを読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 551,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "playSound",
+      "text": "音 [SOUND] を x :[X]  y :[Y]  z :[Z] で鳴らす 設定 [OPTIONS]",
+      "blockType": "command",
+      "category": "sound",
+      "title": "IDを指定して音を鳴らす",
+      "description": "サウンドIDを指定し、建築原点からの座標で音を鳴らします。音量・高さ・再生先は「音の設定」で選べます。",
+      "notes": [
+        "サウンドIDの例：block.glass.break、block.note_block.harp。",
+        "設定は空欄でも使えます。"
+      ],
+      "methods": [
+        "world.playSound"
+      ],
+      "related": [
+        {
+          "opcode": "soundOptions",
+          "title": "音量・高さ・再生先を決める"
+        },
+        {
+          "opcode": "playBlockSound",
+          "title": "置かれているブロックの音を鳴らす"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "SOUND",
+          "label": "サウンドID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "entity.experience_orb.pickup",
+          "defaultLabel": "entity.experience_orb.pickup"
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "OPTIONS",
+          "label": "音の設定",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 675,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "playBlockSound",
+      "text": "x :[X]  y :[Y]  z :[Z] のブロックの [KIND] 音を鳴らす 設定 [OPTIONS]",
+      "blockType": "command",
+      "category": "sound",
+      "title": "置かれているブロックの音を鳴らす",
+      "description": "指定した場所のブロックから、設置・たたく・破壊・足音・着地の音を選んで鳴らします。ブロック自体は変更しません。",
+      "notes": [
+        "座標は整数です。音源はそのブロックの中心になります。"
+      ],
+      "methods": [
+        "world.playBlockSound"
+      ],
+      "related": [
+        {
+          "opcode": "soundOptions",
+          "title": "音量・高さ・再生先を決める"
+        },
+        {
+          "opcode": "playSound",
+          "title": "IDを指定して音を鳴らす"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "KIND",
+          "label": "種類",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "place",
+          "defaultLabel": "設置",
+          "options": [
+            {
+              "text": "設置",
+              "value": "place"
+            },
+            {
+              "text": "たたく",
+              "value": "hit"
+            },
+            {
+              "text": "破壊",
+              "value": "break"
+            },
+            {
+              "text": "足音",
+              "value": "step"
+            },
+            {
+              "text": "着地",
+              "value": "fall"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "OPTIONS",
+          "label": "音の設定",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        }
+      ],
+      "imageWidth": 593,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "soundOptions",
+      "text": "音の設定 音量 [VOLUME] 高さ [HEIGHT] 再生先 [RECEIVER]",
+      "blockType": "reporter",
+      "category": "sound",
+      "title": "音量・高さ・再生先を決める",
+      "description": "音を鳴らすブロックの「設定」に差し込む値を作ります。",
+      "notes": [
+        "音量は0〜1。高さは数値なら0.5〜2の倍率、N0〜N24なら音階です。",
+        "音量・高さを空欄にすると既定値を使います。Nと変数を「と」でつなげて音階を変えることもできます。"
+      ],
+      "result": "音の設定の文字列",
+      "related": [
+        {
+          "opcode": "playSound",
+          "title": "IDを指定して音を鳴らす"
+        },
+        {
+          "opcode": "playBlockSound",
+          "title": "置かれているブロックの音を鳴らす"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "VOLUME",
+          "label": "音量",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "HEIGHT",
+          "label": "音の高さ",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "RECEIVER",
+          "label": "表示先・再生先",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "world",
+          "defaultLabel": "近くのプレイヤー",
+          "options": [
+            {
+              "text": "近くのプレイヤー",
+              "value": "world"
+            },
+            {
+              "text": "接続したプレイヤーだけ",
+              "value": "self"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 505,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "strikeLightning",
+      "text": "雷を x :[X]  y :[Y]  z :[Z] に落とす",
+      "blockType": "command",
+      "category": "lightning",
+      "title": "雷を落とす",
+      "description": "指定した座標に雷を落とします。",
+      "notes": [
+        "雷はダメージ・着火・ブロックやエンティティの変化を起こす場合があります。"
+      ],
+      "methods": [
+        "world.strikeLightning"
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 334,
+      "imageHeight": 72,
+      "related": []
+    },
+    {
+      "opcode": "whenPickaxePoke",
+      "text": "ツルハシでブロックがつつかれたとき",
+      "blockType": "hat",
+      "category": "event",
+      "title": "ツルハシでつついたら実行する",
+      "description": "ツルハシでブロックをつつくイベントを受信したとき、下のスクリプトを実行します。",
+      "methods": [
+        "events.poll"
+      ],
+      "related": [
+        {
+          "opcode": "eventValue",
+          "title": "このイベントの情報を読む"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 304,
+      "imageHeight": 89
+    },
+    {
+      "opcode": "whenChatPosted",
+      "text": "チャットが投稿されたとき",
+      "blockType": "hat",
+      "category": "event",
+      "title": "チャット投稿で実行する",
+      "description": "チャット投稿のイベントを受信したとき、下のスクリプトを実行します。",
+      "methods": [
+        "events.poll"
+      ],
+      "related": [
+        {
+          "opcode": "eventValue",
+          "title": "このイベントの情報を読む"
+        },
+        {
+          "opcode": "postToChat",
+          "title": "チャットに投稿する"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 224,
+      "imageHeight": 89
+    },
+    {
+      "opcode": "whenProjectileHit",
+      "text": "飛び道具が当たったとき",
+      "blockType": "hat",
+      "category": "event",
+      "title": "飛び道具が当たったら実行する",
+      "description": "飛び道具が当たるイベントを受信したとき、下のスクリプトを実行します。",
+      "methods": [
+        "events.poll"
+      ],
+      "related": [
+        {
+          "opcode": "eventValue",
+          "title": "このイベントの情報を読む"
+        }
+      ],
+      "arguments": [],
+      "imageWidth": 208,
+      "imageHeight": 89
+    },
+    {
+      "opcode": "eventValue",
+      "text": "このMinecraftイベントの [PROPERTY]",
+      "blockType": "reporter",
+      "category": "event",
+      "title": "このイベントの情報を読む",
+      "description": "実行中のMinecraftイベントから、座標・メッセージ・対象などの情報を取り出します。イベントブロックの下で使います。",
+      "result": "選んだ項目の値",
+      "related": [
+        {
+          "opcode": "whenPickaxePoke",
+          "title": "ツルハシでつついたら実行する"
+        },
+        {
+          "opcode": "whenChatPosted",
+          "title": "チャット投稿で実行する"
+        },
+        {
+          "opcode": "whenProjectileHit",
+          "title": "飛び道具が当たったら実行する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "sequence",
+          "defaultLabel": "通し番号",
+          "options": [
+            {
+              "text": "通し番号",
+              "value": "sequence"
+            },
+            {
+              "text": "イベントの種類",
+              "value": "type"
+            },
+            {
+              "text": "次元",
+              "value": "dimension"
+            },
+            {
+              "text": "x座標",
+              "value": "x"
+            },
+            {
+              "text": "y座標",
+              "value": "y"
+            },
+            {
+              "text": "z座標",
+              "value": "z"
+            },
+            {
+              "text": "原点x",
+              "value": "origin_x"
+            },
+            {
+              "text": "原点y",
+              "value": "origin_y"
+            },
+            {
+              "text": "原点z",
+              "value": "origin_z"
+            },
+            {
+              "text": "面",
+              "value": "face"
+            },
+            {
+              "text": "手",
+              "value": "hand"
+            },
+            {
+              "text": "アイテム",
+              "value": "item"
+            },
+            {
+              "text": "メッセージ",
+              "value": "message"
+            },
+            {
+              "text": "ブロック情報",
+              "value": "block"
+            },
+            {
+              "text": "飛び道具",
+              "value": "projectile"
+            },
+            {
+              "text": "対象の種類",
+              "value": "target_kind"
+            },
+            {
+              "text": "対象のx座標",
+              "value": "target_x"
+            },
+            {
+              "text": "対象のy座標",
+              "value": "target_y"
+            },
+            {
+              "text": "対象のz座標",
+              "value": "target_z"
+            },
+            {
+              "text": "対象の面",
+              "value": "target_face"
+            },
+            {
+              "text": "対象のブロック情報",
+              "value": "target_block"
+            },
+            {
+              "text": "対象のエンティティハンドル",
+              "value": "target_handle"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 330,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "eventStatus",
+      "text": "イベント受信の [PROPERTY]",
+      "blockType": "reporter",
+      "category": "event",
+      "title": "イベントの受信状況を読む",
+      "description": "イベント受信のカーソルや欠落数などを読みます。",
+      "result": "選んだ受信状況の数値",
+      "related": [
+        {
+          "opcode": "eventValue",
+          "title": "このイベントの情報を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "cursor",
+          "defaultLabel": "カーソル",
+          "options": [
+            {
+              "text": "カーソル",
+              "value": "cursor"
+            },
+            {
+              "text": "最新の通し番号",
+              "value": "latest"
+            },
+            {
+              "text": "保持範囲外の欠落数",
+              "value": "overflow"
+            },
+            {
+              "text": "容量超過の欠落数",
+              "value": "capacity"
+            },
+            {
+              "text": "明示破棄数",
+              "value": "discarded"
+            },
+            {
+              "text": "欠落合計",
+              "value": "total_loss"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 264,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "playerAttribute",
+      "text": "プレイヤーの [PROPERTY]",
+      "blockType": "reporter",
+      "category": "player",
+      "title": "プレイヤーの位置や角度を読む",
+      "description": "接続したプレイヤーの次元・座標・水平方向・上下方向を取得します。",
+      "notes": [
+        "取得に失敗した場合は空文字を返します。"
+      ],
+      "result": "選んだ項目の文字列または数値",
+      "methods": [
+        "player.getPos",
+        "player.getPose"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerXYZ",
+          "title": "今いる次元でプレイヤーを移動する"
+        },
+        {
+          "opcode": "setPlayerPose",
+          "title": "プレイヤーの位置と角度を変える"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "dimension",
+          "defaultLabel": "次元",
+          "options": [
+            {
+              "text": "次元",
+              "value": "dimension"
+            },
+            {
+              "text": "x座標",
+              "value": "x"
+            },
+            {
+              "text": "y座標",
+              "value": "y"
+            },
+            {
+              "text": "z座標",
+              "value": "z"
+            },
+            {
+              "text": "水平方向",
+              "value": "yaw"
+            },
+            {
+              "text": "上下方向",
+              "value": "pitch"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 216,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "setPlayerPos",
+      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "次元を選んでプレイヤーを移動する",
+      "description": "次元と座標を指定して、接続したプレイヤーを移動します。",
+      "methods": [
+        "player.setPos"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerXYZ",
+          "title": "今いる次元でプレイヤーを移動する"
+        },
+        {
+          "opcode": "setPlayerPose",
+          "title": "プレイヤーの位置と角度を変える"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 597,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setPlayerPose",
+      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "プレイヤーの位置と角度を変える",
+      "description": "次元・座標・水平方向・上下方向を指定して、接続したプレイヤーを移動します。",
+      "methods": [
+        "player.setPose"
+      ],
+      "related": [
+        {
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
+        },
+        {
+          "opcode": "setPlayerPos",
+          "title": "次元を選んでプレイヤーを移動する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "YAW",
+          "label": "水平方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "PITCH",
+          "label": "上下方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 846,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setPlayerXYZ",
+      "text": "プレイヤーを x :[X]  y :[Y]  z :[Z] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "今いる次元でプレイヤーを移動する",
+      "description": "プレイヤーが今いる次元で、指定した座標へ移動します。",
+      "methods": [
+        "player.getPos",
+        "player.setPos"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerPos",
+          "title": "次元を選んでプレイヤーを移動する"
+        },
+        {
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 414,
+      "imageHeight": 72
+    }
+  ]
+}
