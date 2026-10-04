@@ -66,16 +66,7 @@ export type EventClass = (typeof EVENT_CLASSES)[number]
 
 const KNOWN_EVENT_TYPES: ReadonlySet<string> = new Set(['pickaxe_poke', 'chat_posted', 'projectile_hit'])
 
-/**
- * Event classes reachable in real observer-validated data. `other` is
- * unreachable: observer.ts's `parseEvent()` throws on any event `type` it
- * does not recognize rather than classifying it as `other` — it rejects the
- * whole snapshot instead. The UI does not render a switch for a class that
- * cannot currently occur.
- */
-export const OBSERVABLE_EVENT_CLASSES: readonly EventClass[] = EVENT_CLASSES.filter(
-  (eventClass) => eventClass !== 'other',
-)
+export const OBSERVABLE_EVENT_CLASSES: readonly EventClass[] = EVENT_CLASSES
 
 /**
  * Classify an `events.poll` RESPONSE payload into the set of event classes

@@ -14,6 +14,7 @@ const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/cat
 const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
 const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
 const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
+const eventCompatibilityFixture = require('../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json');
 const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
 const directionLightningFixturePath = path.resolve(
     __dirname,
@@ -1907,6 +1908,32 @@ test('build context updates only from a valid setter result and guards event dis
     t.equal(runtime.startedEventThreads.length, 0, 'an event captured under the old context is ignored');
     blocks._dispatchEvent(Object.assign({}, eventFixture.poll_result.events[0], dimensionFixture.custom_build_context));
     t.equal(runtime.startedEventThreads.length, 1, 'the matching dimension and origin start the hat');
+});
+
+test('unknown-only events advance the poller cursor and a later known event still starts its hat', async t => {
+    const runtime = newEventRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    blocks._delay = () => Promise.resolve();
+    const poll = socket.lastSent();
+    const unknownOnly = eventCompatibilityFixture.event_batches.cases.find(item => item.id === 'B9-E02');
+    socket.fireMessage({jsonrpc: '2.0', id: poll.id, result: unknownOnly.result});
+    await waitFor(() => socket.lastSent().id !== poll.id);
+    const nextPoll = socket.lastSent();
+    t.same(nextPoll.params, [1], 'cursor advances past the unknown event');
+    t.equal(runtime.startedEventThreads.length, 0, 'unknown events do not start hats');
+    t.equal(blocks.eventStatus({PROPERTY: 'cursor'}), 1);
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: nextPoll.id,
+        result: Object.assign({}, unknownOnly.result, {
+            events: [eventFixture.poll_result.events[1]],
+            through_sequence: 2,
+            latest_sequence: 2
+        })
+    });
+    await waitFor(() => runtime.startedEventThreads.length === 1);
+    t.same(runtime.startedHats, ['mcremote_whenChatPosted']);
+    t.end();
 });
 
 test('a malformed event result stops only the poller without advancing its cursor', async t => {

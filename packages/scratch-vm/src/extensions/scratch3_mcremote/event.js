@@ -1,6 +1,8 @@
 const {formatBlockInfoText} = require('./block-value');
 const {dimensionKey} = require('./dimension');
 
+const KNOWN_EVENT_TYPES = new Set(['pickaxe_poke', 'chat_posted', 'projectile_hit']);
+
 const POLL_RESULT_FIELDS = [
     'events',
     'through_sequence',
@@ -156,7 +158,7 @@ const eventDto = (value, index) => {
             target: projectileTarget(value.target, `${context}.target`)
         });
     }
-    throw invalidEventResponse(`${context}.type is not a b6 event`);
+    return commonEvent(value, Object.keys(value), context);
 };
 
 const deepFreeze = value => {
@@ -209,7 +211,7 @@ const validateEventPollResult = (value, afterSequence, previousStatus) => {
         explicitlyDiscardedTotal: 0
     };
     return deepFreeze({
-        events,
+        events: events.filter(event => KNOWN_EVENT_TYPES.has(event.type)),
         cursor: throughSequence,
         status,
         lossDelta: (overflowDroppedTotal - previousStatus.overflowDroppedTotal) +

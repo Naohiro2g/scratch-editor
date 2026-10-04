@@ -18,6 +18,7 @@ export interface BlockValue {
 
 /** `chat.post` — send a chat message. b1 uses an acknowledged request. */
 export type ChatPostParams = readonly [message: string]
+export type ChatPostResult = null
 
 /** A fully-qualified Minecraft dimension identity (`namespace:path`). */
 export type DimensionKey = string

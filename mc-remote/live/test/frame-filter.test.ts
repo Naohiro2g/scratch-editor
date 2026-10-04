@@ -110,9 +110,9 @@ describe('OBSERVABLE_METHOD_GROUPS / OBSERVABLE_EVENT_CLASSES', () => {
     expect(OBSERVABLE_METHOD_GROUPS.length).toBeLessThan(ALL_METHOD_GROUPS.length)
   })
 
-  it('excludes the other event class, which parseEvent() can never classify into', () => {
-    expect(OBSERVABLE_EVENT_CLASSES).not.toContain('other')
-    expect(OBSERVABLE_EVENT_CLASSES).toEqual(EVENT_CLASSES.filter((eventClass) => eventClass !== 'other'))
+  it('includes the other event class for compatible unknown event types', () => {
+    expect(OBSERVABLE_EVENT_CLASSES).toContain('other')
+    expect(OBSERVABLE_EVENT_CLASSES).toEqual(EVENT_CLASSES)
   })
 })
 

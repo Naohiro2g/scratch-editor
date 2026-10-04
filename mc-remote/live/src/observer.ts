@@ -550,7 +550,7 @@ const parseEvent = (value: unknown, index: number): Record<string, unknown> => {
       target: parseProjectileTarget(event.target, `${context}.target`),
     }
   }
-  throw new Error(`${context}.type is not observable`)
+  return parseEventCommon(event, Object.keys(event), context)
 }
 
 const parseEventsPollResult = (value: unknown): Record<string, unknown> => {
@@ -801,6 +801,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
     }
   }
   if (
+    method === 'chat.post' ||
     method === 'world.setBlock' ||
     method === 'world.setBlocks' ||
     method === 'connection.flush' ||
@@ -845,8 +846,7 @@ const parseResult = (method: ObservedMethod, value: unknown): unknown => {
     if (value !== null) throw new Error('frame.payload.result must be null')
     return null
   }
-  if (method === 'events.poll') return parseEventsPollResult(value)
-  return jsonScalar(value, 'frame.payload.result')
+  return parseEventsPollResult(value)
 }
 
 const parsePayload = (method: ObservedMethod, value: unknown): ObserverPayload => {

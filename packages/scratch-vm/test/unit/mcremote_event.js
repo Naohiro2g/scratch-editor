@@ -1,11 +1,25 @@
 const test = require('tap').test;
 const fixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
+const compatibilityFixture = require('../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json');
 const {
     eventStatusValue,
     eventValue,
     initialEventStatus,
     validateEventPollResult
 } = require('../../src/extensions/scratch3_mcremote/event');
+
+test('compatible unknown events preserve cursor, order and loss accounting from the shared fixture', t => {
+    for (const item of compatibilityFixture.event_batches.cases) {
+        const parse = () => validateEventPollResult(item.result, item.after_sequence, item.previous_status);
+        if (item.accept) t.same(parse(), item.expected_client, item.id);
+        else t.throws(parse, item.id);
+    }
+    for (const item of compatibilityFixture.event_batches.stateful_rejections) {
+        t.throws(() => validateEventPollResult(item.result, item.after_sequence, item.previous_status),
+            {reason: 'invalid_event_response'}, item.id);
+    }
+    t.end();
+});
 
 test('event poll results validate the exact b6 fixture and advance through_sequence', t => {
     const parsed = validateEventPollResult(fixture.poll_result, 0, initialEventStatus());
