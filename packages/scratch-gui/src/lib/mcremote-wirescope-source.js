@@ -304,7 +304,7 @@ const allowParams = function (method, value) {
 
 const allowEvent = function (value) {
     if (!isObject(value) || !Number.isInteger(value.sequence) || value.sequence < 1 ||
-        !canonicalResourceId(value.dimension)) return null;
+        typeof value.type !== 'string' || value.type.length === 0 || !canonicalResourceId(value.dimension)) return null;
     const origin = numberTuple(value.origin);
     if (!origin || !origin.every(Number.isInteger)) return null;
     const common = {sequence: value.sequence, type: value.type, dimension: value.dimension, origin};
@@ -346,7 +346,7 @@ const allowEvent = function (value) {
         }
         return Object.assign(common, {projectile: value.projectile, pos, target});
     }
-    return null;
+    return common;
 };
 
 const allowEventsPollResult = function (value) {
@@ -459,7 +459,7 @@ const allowFramePayload = function (frame) {
         const result = allowBuildContext(payload.result);
         return result ? {result} : null;
     }
-    if (frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
+    if (frame.method === 'chat.post' || frame.method === 'world.setBlock' || frame.method === 'world.setBlocks' ||
         frame.method === 'connection.flush' || frame.method === 'world.playSound' ||
         frame.method === 'world.playBlockSound' || frame.method === 'entity.remove') {
         return payload.result === null ? {result: null} : null;

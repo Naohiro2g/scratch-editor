@@ -7,6 +7,7 @@ import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/di
 import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
 import b7Fixture from '../../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json';
 import soundFixture from '../../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json';
+import compatibilityFixture from '../../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json';
 
 // spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
 // (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;
@@ -281,6 +282,42 @@ describe('McRemote WireScope source adapter', () => {
             method: 'events.poll',
             payload: {result: eventsFixture.poll_result}
         }]);
+    });
+
+    test('projects opaque event summaries and rejects malformed shared compatibility cases', () => {
+        for (const item of compatibilityFixture.event_batches.cases) {
+            const observation = connectedObservation();
+            observation.hello.protocol = '23.3.0';
+            observation.frameLog = [{
+                sequence: 1,
+                timestamp: 1000,
+                streamId: 'default',
+                direction: 'receive',
+                id: 1,
+                method: 'events.poll',
+                payload: {result: item.result}
+            }];
+            const frames = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames;
+            if (item.accept) expect(frames[0].payload).toEqual({result: item.expected_observer});
+            else expect(frames).toEqual([]);
+        }
+    });
+
+    test('projects only null chat.post success results from the shared fixture', () => {
+        for (const item of compatibilityFixture.chat_post.cases) {
+            const observation = connectedObservation();
+            observation.frameLog = [{
+                sequence: 1,
+                timestamp: 1000,
+                streamId: 'default',
+                direction: 'receive',
+                id: 1,
+                method: 'chat.post',
+                payload: {result: item.result}
+            }];
+            const frames = toWireScopeSnapshot(observation, 'target-01', 2000).streams[0].frames;
+            expect(frames).toHaveLength(item.accept ? 1 : 0);
+        }
     });
 
     test('does not project pairing or disconnected observations', () => {
