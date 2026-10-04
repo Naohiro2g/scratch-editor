@@ -18,6 +18,8 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 [ショーケース](https://naohiro2g.github.io/scratch-editor/)では画面とブロックを見られますが、マイクラリモコンの接続は無効です。
 
+ブロックの画像・入力項目・選択肢は[Scratchブロック一覧（ドラフト）](mc-remote/block-reference/site/index.html)にまとめています。現在は手元で開くページです。[表示する手順](mc-remote/block-reference/README.md#表示する)を参照してください。
+
 ## 2. 使い続ける・別の方法から移る
 
 以前使ったことがある方も、公開中のエディターと接続先は[公式サイト](https://mc-remote.com/)から確認してください。接続時に新しいペアリングコマンドが出たら、ゲーム内のチャットで入力します。
