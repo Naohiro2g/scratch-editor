@@ -1,4 +1,4 @@
-jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}), {virtual: true});
+jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}));
 
 const runtimeValue = overrides => ({
     schema_version: 1,
