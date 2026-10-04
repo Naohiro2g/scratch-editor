@@ -1,5 +1,5 @@
 const test = require('tap').test;
-const fixture = require('../../../../mc-remote/protocol/test/fixtures/block-value-v22.json');
+const fixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/block-value-v22.json');
 const {
     blockInfoHasStateProperty,
     blockInfoId,

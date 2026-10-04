@@ -30,7 +30,6 @@ runs:
       with:
         path: |
           node_modules
-          mc-remote/*/node_modules
           packages/*/node_modules
           packages/*/src/generated
           packages/scratch-gui/static/microbit
@@ -44,8 +43,10 @@ runs:
       with:
         path: |
           node_modules
-          mc-remote/*/node_modules
           packages/*/node_modules
           packages/*/src/generated
           packages/scratch-gui/static/microbit
         key: ${{ runner.os }}-npm-${{ hashFiles('.nvmrc', 'package-lock.json', '.github/actions/install-dependencies/action.yml') }}
+    - name: Acquire verified McRemote consumer fixtures
+      shell: bash
+      run: npm run tooling:fixtures

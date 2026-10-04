@@ -54,7 +54,7 @@ Use these defaults unless the user asks otherwise:
 2. Do not preserve backward compatibility when it isn't required. When all callers are internal to a package,
    rename or restructure freely. The `@scratch/` packages are published to npm and consumed externally, so treat
    their public exports as a contract and preserve compatibility unless explicitly told otherwise. The
-   `@mc-remote/` packages in this fork are private.
+   Common `@mc-remote/` packages are private and owned by `Naohiro2g/minecraft-remote-tooling`.
 3. Write comments that explain the current code, not its history. Do not reference prior implementations,
    intermediate states, or what the code "used to do." If an approach seems counterintuitive, explain why it is
    correct now — not why it changed.
@@ -78,13 +78,13 @@ Use these defaults unless the user asks otherwise:
 assembled by migrating previously separate repositories into a single repo.
 
 The `@scratch/` packages are published to npm. They are consumed both internally (e.g., `scratch-www` loads
-`scratch-gui`) and by third parties. The `@mc-remote/` packages are private additions in this fork.
+`scratch-gui`) and by third parties. The common McRemote packages are owned by `Naohiro2g/minecraft-remote-tooling`; this fork consumes their fixtures and artifacts.
 
 ## Documentation entry points
 
 - `README.md` preserves the upstream README after a bilingual fork note and Japanese local-start guide.
 - `README_mc-remote.md` guides people who want to try, revisit, or develop the McRemote edition.
-- `mc-remote/README.md` maps the McRemote code in this repository; package READMEs cover each component.
+- `mc-remote/README.md` maps the McRemote code in this repository; common tooling package READMEs cover Protocol, Bridge and WireScope.
 - `mc-remote/block-reference/README.md` covers the static Scratch block reference prototype and its image/page generator.
 - `Release.md` covers the upstream npm release process and distinguishes McRemote GitHub releases.
 - `SETUP_ja.md`, if present locally, is an ignored historical note. Do not use it as the current setup or deployment authority.
@@ -95,6 +95,7 @@ Run workspace-wide commands from the repo root:
 
 ```sh
 npm run build    # Build all packages (production)
+npm run tooling:fixtures # Acquire McRemote consumer test inputs
 npm test         # Test all packages
 npm run clean    # Clean all packages
 ```
@@ -123,22 +124,23 @@ packages/
 ├── scratch-svg-renderer/   SVG asset processor
 ├── task-herder/            Async task scheduler with rate limiting
 └── scratch-media-lib-scripts/  Build scripts for media library assets
-mc-remote/                  McRemote fork add-ons (@mc-remote/* scope, all private)
-├── protocol/               @mc-remote/protocol  Wire contract (types + constants), dependency-free leaf
-├── bridge/                 @mc-remote/bridge    Thin wss⇄TCP proxy to a Minecraft Sandbox; payload-transparent
-└── live/                   @mc-remote/live      Read-only observer UI and shared observer schema (brand "WireScope")
+mc-remote/                  Scratch-specific McRemote documentation and consumer lock
+├── tooling-lock.json        Fixed common tooling commit, fixture identities and artifact digests
+├── tooling/                 Ignored, verified fixture/artifact acquisition cache
+└── block-reference/         Static Scratch block reference draft
 scripts/                    Monorepo-level utility scripts
 ```
 
-The `mc-remote/` packages are the fork's additions for driving Minecraft from Scratch blocks; they are not part
-of upstream `scratch-editor`. `live/` owns the independent WireScope web app, observer schema, and lifecycle
-fixture. The scratch-vm McRemote extension does **not** import `@mc-remote/protocol`; it is baked into scratch-vm
-at build time and keeps the wire constants inline. The bridge also avoids protocol imports so that it stays a
-payload-transparent transport proxy.
+Protocol, common WireScope app/schema/fixtures, and Bridge live in
+`Naohiro2g/minecraft-remote-tooling`, under `packages/protocol`, `packages/live` and `packages/bridge`.
+Scratch keeps its VM extension, GUI observation feed and launcher. The VM keeps wire constants inline and does
+not import `@mc-remote/protocol` at runtime. Tests consume fixtures acquired with `npm run tooling:fixtures`.
+Do not edit the ignored acquisition cache; change the owner source and explicitly update `tooling-lock.json`.
 
-McRemote OCI images are built by the `mc-remote-images.yml` workflow, which runs when a McRemote release is
-published. Scratch packages the prebuilt `scratch-gui/build` directory with `Dockerfile.mc-remote`; Bridge
-packages its prebuilt `dist` and lock-installed runtime dependency.
+`npm run tooling:artifacts` acquires the fixed WireScope ZIP/manifest and Bridge OCI archive. It requires
+GitHub CLI authentication, `unzip` and `tar`. The McRemote release workflow builds Scratch OCI, copies the pinned
+Bridge OCI preserving its digest, and collects the WireScope pair. The candidate workflow only uploads Actions
+artifacts; neither workflow is permission to publish a tag or release.
 
 ## Packages at a glance
 
@@ -150,9 +152,6 @@ packages its prebuilt `dist` and lock-installed runtime dependency.
 | `scratch-svg-renderer` | JavaScript | webpack | Tap |
 | `task-herder` | TypeScript | Vite | Vitest |
 | `scratch-media-lib-scripts` | JavaScript | — | Jest |
-| `@mc-remote/protocol` | TypeScript | Vite (lib) | Vitest |
-| `@mc-remote/bridge` | TypeScript | Vite (Node bundle) | Vitest |
-| `@mc-remote/live` | TypeScript | Vite (web app + lib) | Vitest |
 
 `task-herder` represents the target stack for new packages (TypeScript + Vite + Vitest). The other packages
 reflect the legacy stack and are being migrated incrementally.

@@ -139,5 +139,8 @@ CLAUDE.md
 # McRemote evidence handoff material generated in this dev repo.
 handoff-materials/
 
+# Verified consumer inputs from minecraft-remote-tooling.
+mc-remote/tooling/
+
 # Local Obsidian workspace settings.
 .obsidian/

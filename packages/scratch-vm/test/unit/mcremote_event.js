@@ -1,6 +1,8 @@
 const test = require('tap').test;
-const fixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
-const compatibilityFixture = require('../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json');
+const fixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/events-v23.json');
+const compatibilityFixture = require(
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/chat-event-compat-v23.2.json'
+);
 const {
     eventStatusValue,
     eventValue,

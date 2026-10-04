@@ -26,18 +26,18 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 作品はブラウザ内に保存できます。ブラウザ内の保存は、そのブラウザとサイトに結び付いています。別の端末やサイトでも残したい作品は、Scratch の作品ファイル（`.sb3`）としても保存してください。
 
-[Python 版](https://github.com/Naohiro2g/minecraft-remote-api)を使ったことがある方には、Scratch は同じマイクラリモコンをブロックで操作する別の入口です。通信を観察したい場合は、エディターから[ワイヤースコープ](mc-remote/live/README.md)を開けます。
+[Python 版](https://github.com/Naohiro2g/minecraft-remote-api)を使ったことがある方には、Scratch は同じマイクラリモコンをブロックで操作する別の入口です。通信を観察したい場合は、エディターから[ワイヤースコープ](https://github.com/Naohiro2g/minecraft-remote-tooling/blob/main/packages/live/README.md)を開けます。
 
 ## 3. コードを読み、開発する
 
-貢献する方も学習者です。最初から通信仕様を全部読むより、**画面のブロックがどこで命令になり、どこへ届くか**を追うと、変更する場所を見つけやすくなります。[このリポジトリのコード地図](mc-remote/README.md)に、Scratch 本体への変更、中継、通信の型、ワイヤースコープの位置をまとめました。
+貢献する方も学習者です。最初から通信仕様を全部読むより、**画面のブロックがどこで命令になり、どこへ届くか**を追うと、変更する場所を見つけやすくなります。[このリポジトリのコード地図](mc-remote/README.md)に、Scratch 本体への変更と、共通ツールへのつながりをまとめました。
 
 通信APIの命令名・引数・戻り値は[API一覧](https://mc-remote.com/api/)で確認できます。公開版と更新内容は[GitHub Releases](https://github.com/Naohiro2g/scratch-editor/releases)にあります。
 
-ソースコードを手元で動かす手順は[ルート README](README.md)にあります。各部品の詳しい実行・検証方法は、それぞれの README を参照してください。
+ソースコードを手元で動かす手順は[ルート README](README.md)にあります。Scratchのテストで使うfixtureは、最初に `npm run tooling:fixtures` で取得します。中継や観察画面を調べる場合は、共通ツール側の README を参照してください。
 
-- [中継（Bridge）](mc-remote/bridge/README.md)
-- [通信の型と共通の検証例（protocol／fixture）](mc-remote/protocol/README.md)
-- [通信を観察する画面（WireScope）](mc-remote/live/README.md)
+- [中継（Bridge）](https://github.com/Naohiro2g/minecraft-remote-tooling/blob/main/packages/bridge/README.md)
+- [通信の型と共通の検証例（protocol／fixture）](https://github.com/Naohiro2g/minecraft-remote-tooling/blob/main/packages/protocol/README.md)
+- [通信を観察する画面（WireScope）](https://github.com/Naohiro2g/minecraft-remote-tooling/blob/main/packages/live/README.md)
 
 このリポジトリは上流の Scratch エディターを引き継いでいます。変更を提案する際は、[開発者向けの案内](AGENTS.md)と[上流との関係](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-upstream-design_ja.md)を確認してください。マイクラリモコン全体の設計と通信の正本は[knowledge リポジトリ](https://github.com/Naohiro2g/mc-remote-knowledge)にあります。

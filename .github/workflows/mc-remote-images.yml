@@ -11,6 +11,7 @@ on:
         type: string
 
 permissions:
+  actions: read # to collect the pinned common tooling artifact
   contents: write # to attach the image identity record to the release
   packages: write
 
@@ -108,23 +109,14 @@ jobs:
           test -f packages/scratch-gui/build/index.html
           test -f packages/scratch-gui/build/mc-remote-product-config.json
           test -f packages/scratch-gui/build/mc-remote-runtime-config.json
-          test -f mc-remote/bridge/dist/main.js
-          test -f mc-remote/bridge/node_modules/ws/package.json
           test "$(jq -r .schema_version packages/scratch-gui/build/mc-remote-product-config.json)" = "1"
           test "$(jq -r .schema_version packages/scratch-gui/build/mc-remote-runtime-config.json)" = "1"
           test "$(jq -r .connection_enabled packages/scratch-gui/build/mc-remote-runtime-config.json)" = "false"
 
-      # The WireScope browser app has no OCI image and no persistent artifact
-      # location of its own; a collector otherwise has to rebuild it from source
-      # by hand to get bytes matching a given release. Building and attaching it
-      # here, at the exact release commit, gives it the same one-release-page
-      # collection story as everything else in this workflow.
-      - name: Build WireScope artifact
-        run: |
-          npm run build:artifact --workspace=@mc-remote/live -- \
-            --source-commit "${{ steps.release.outputs.commit }}"
-          test -f mc-remote/live/dist/artifacts/wirescope-app.zip
-          test -f mc-remote/live/dist/artifacts/wirescope-app.manifest.json
+      - name: Acquire pinned WireScope and Bridge artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run tooling:artifacts
 
       # The contract directory is plain source with no build step, so a candidate
       # consumer keeps reading it straight from the commit via `git archive` or the
@@ -153,9 +145,8 @@ jobs:
       # The path sets come from the workspace dependency graph in package.json:
       # scratch-gui depends on scratch-paint/render/storage/svg-renderer/vm, and
       # scratch-vm pulls render/storage/svg-renderer, so a change anywhere in that set
-      # can reach the Scratch bundle. mc-remote/bridge and mc-remote/live declare no
-      # workspace dependencies at all. package-lock.json and .nvmrc pin what `npm ci`
-      # installs and which Node builds it, so both count for every image.
+      # can reach the Scratch bundle. package-lock.json and .nvmrc pin its inputs.
+      # Bridge is already built by the common owner and pinned in tooling-lock.json.
       - name: Decide which images need a rebuild
         id: rebuild
         env:
@@ -186,7 +177,6 @@ jobs:
             packages/scratch-gui packages/scratch-vm packages/scratch-render \
             packages/scratch-svg-renderer packages/scratch-storage packages/scratch-paint \
             package-lock.json .nvmrc
-          decide bridge mc-remote/bridge package-lock.json .nvmrc
 
       - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
@@ -217,33 +207,34 @@ jobs:
             SOURCE_REVISION=${{ steps.release.outputs.commit }}
             RELEASE_VERSION=${{ steps.release.outputs.tag }}
 
-      - name: Build and push Bridge image
+      - name: Publish pinned Bridge image
         id: bridge
-        if: steps.rebuild.outputs.bridge == 'true'
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: mc-remote/bridge
-          file: mc-remote/bridge/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          provenance: mode=max
-          sbom: true
-          tags: |
-            ghcr.io/naohiro2g/mc-remote-bridge:sha-${{ steps.release.outputs.commit }}
-            ghcr.io/naohiro2g/mc-remote-bridge:${{ steps.release.outputs.tag }}
-          build-args: |
-            SOURCE_REVISION=${{ steps.release.outputs.commit }}
-            RELEASE_VERSION=${{ steps.release.outputs.tag }}
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y skopeo
+          printf '%s' "$REGISTRY_TOKEN" | skopeo login --username "$REGISTRY_USER" --password-stdin ghcr.io
+          SOURCE="$(jq -r .source.commit mc-remote/tooling-lock.json)"
+          EXPECTED="$(jq -r .artifacts.bridge_digest mc-remote/tooling-lock.json)"
+          for tag in "sha-$SOURCE" "$RELEASE_TAG"; do
+            skopeo copy --all --preserve-digests --digestfile bridge-digest.txt \
+              oci-archive:mc-remote/tooling/artifacts/bridge.oci.tar \
+              "docker://ghcr.io/naohiro2g/mc-remote-bridge:$tag"
+            test "$(cat bridge-digest.txt)" = "$EXPECTED"
+          done
+          echo "digest=$EXPECTED" >> "$GITHUB_OUTPUT"
 
       # A reused image is not rebuilt; the baseline digest is given this release's tag
       # as well, so a collector can pull any release's images by that release's tag and
       # not only by digest. This is registry metadata, not a build.
       - name: Tag reused images for this release
-        if: steps.rebuild.outputs.scratch != 'true' || steps.rebuild.outputs.bridge != 'true'
+        if: steps.rebuild.outputs.scratch != 'true'
         env:
           TAG: ${{ steps.release.outputs.tag }}
           REBUILT_SCRATCH: ${{ steps.rebuild.outputs.scratch }}
-          REBUILT_BRIDGE: ${{ steps.rebuild.outputs.bridge }}
         run: |
           retag() {
             role="$1"
@@ -256,9 +247,6 @@ jobs:
           }
           if [ "$REBUILT_SCRATCH" != "true" ]; then
             retag scratch ghcr.io/naohiro2g/mc-remote-scratch
-          fi
-          if [ "$REBUILT_BRIDGE" != "true" ]; then
-            retag bridge ghcr.io/naohiro2g/mc-remote-bridge
           fi
 
       # One manifest, one collection step (DECISIONS 2026-09-06-02/03/04): a collector
@@ -275,8 +263,8 @@ jobs:
           SCRATCH_DIGEST: ${{ steps.scratch.outputs.digest }}
           BRIDGE_DIGEST: ${{ steps.bridge.outputs.digest }}
         run: |
-          wirescope_zip_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.zip | cut -d' ' -f1)"
-          wirescope_manifest_sha256="$(sha256sum mc-remote/live/dist/artifacts/wirescope-app.manifest.json | cut -d' ' -f1)"
+          wirescope_zip_sha256="$(sha256sum mc-remote/tooling/artifacts/wirescope-app.zip | cut -d' ' -f1)"
+          wirescope_manifest_sha256="$(sha256sum mc-remote/tooling/artifacts/wirescope-app.manifest.json | cut -d' ' -f1)"
           contracts_sha256="$(sha256sum contracts.tar.gz | cut -d' ' -f1)"
           # A skipped build leaves its digest output empty; that role carries the
           # baseline digest forward instead.
@@ -285,7 +273,7 @@ jobs:
               '.artifacts[] | select(.role == $role) | .digest' baseline/manifest.json
           }
           scratch_digest="${SCRATCH_DIGEST:-$(baseline_digest scratch)}"
-          bridge_digest="${BRIDGE_DIGEST:-$(baseline_digest bridge)}"
+          bridge_digest="$BRIDGE_DIGEST"
           test -n "$scratch_digest" && test "$scratch_digest" != "null"
           test -n "$bridge_digest" && test "$bridge_digest" != "null"
           jq -n \
@@ -324,7 +312,7 @@ jobs:
           gh release upload "${{ steps.release.outputs.tag }}" \
             manifest.json \
             contracts.tar.gz \
-            mc-remote/live/dist/artifacts/wirescope-app.zip \
-            mc-remote/live/dist/artifacts/wirescope-app.manifest.json \
+            mc-remote/tooling/artifacts/wirescope-app.zip \
+            mc-remote/tooling/artifacts/wirescope-app.manifest.json \
             --repo "${{ github.repository }}" \
             --clobber

@@ -96,6 +96,7 @@ const GLOBAL_PATHS = [
     '.nvmrc',
     'package.json',
     'package-lock.json',
+    'mc-remote/tooling-lock.json',
     'scripts/**',
 ];
 

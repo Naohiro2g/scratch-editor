@@ -3,7 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
-const entityParticleFixture = require('../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json');
+const entityParticleFixture = require(
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.json'
+);
 const {remoteErrorText} = require('../../src/extensions/scratch3_mcremote/block-value');
 const {
     DISPLAY_ALIAS_WORDS,
@@ -11,18 +13,22 @@ const {
 } = require('../../src/extensions/scratch3_mcremote/display-alias');
 const Runtime = require('../../src/engine/runtime');
 const {canonicalStringify} = require('../../src/extensions/scratch3_mcremote/catalog');
-const displayAliasFixture = require('../../../../mc-remote/live/test/fixtures/display-alias-v1.json');
-const oneShotTransportFixture = require('../../../../mc-remote/bridge/test/fixtures/one-shot-transport-v1.json');
-const eventFixture = require('../../../../mc-remote/protocol/test/fixtures/events-v23.json');
-const eventCompatibilityFixture = require('../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json');
-const dimensionFixture = require('../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json');
+const displayAliasFixture = require('../../../../mc-remote/tooling/fixtures/live/test/fixtures/display-alias-v1.json');
+const oneShotTransportFixture = require(
+    '../../../../mc-remote/tooling/fixtures/bridge/test/fixtures/one-shot-transport-v1.json'
+);
+const eventFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/events-v23.json');
+const eventCompatibilityFixture = require(
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/chat-event-compat-v23.2.json'
+);
+const dimensionFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/dimensions-v22.json');
 const directionLightningFixturePath = path.resolve(
     __dirname,
-    '../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json'
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/direction-lightning-v23.1.json'
 );
 const directionLightningFixture = require(directionLightningFixturePath);
-const b8Fixture = require('../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json');
-const spawnFixture = require('../../../../mc-remote/protocol/test/fixtures/spawn-v22.json');
+const b8Fixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.json');
+const spawnFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/spawn-v22.json');
 
 // Read from the extension itself so this harness tracks the current protocol
 // automatically on the next major bump instead of a hardcoded regex going stale.

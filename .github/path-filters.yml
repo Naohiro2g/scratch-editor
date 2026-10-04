@@ -9,6 +9,7 @@ global: &global
   - ".nvmrc"
   - "package.json"
   - "package-lock.json"
+  - "mc-remote/tooling-lock.json"
   - "scripts/**"
 
 any-workspace:

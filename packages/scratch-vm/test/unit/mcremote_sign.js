@@ -9,7 +9,7 @@ const {
     signLineHasDecoration,
     signLineText
 } = require('../../src/extensions/scratch3_mcremote/sign');
-const signFixture = require('../../../../mc-remote/protocol/test/fixtures/sign-v23.json');
+const signFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/sign-v23.json');
 
 const line = (text, color, decorations) => ({text, color, decorations});
 
@@ -106,7 +106,7 @@ test('sign line accessors return an ErrorText for an invalid face or out-of-rang
     t.end();
 });
 
-test('FACES and DECORATIONS match the shared protocol fixture (mc-remote/protocol/test/fixtures/sign-v23.json)', t => {
+test('FACES and DECORATIONS match the shared protocol fixture (shared sign-v23.json fixture)', t => {
     t.same(FACES, Object.keys(signFixture.get_sign['B6-S03'].result).filter(key => key !== 'waxed'));
     t.same(DECORATIONS, signFixture.decorations.canonical_order);
     t.same(DECORATIONS.slice().sort(), DECORATIONS, 'sign.js decoration order is already alphabetical');

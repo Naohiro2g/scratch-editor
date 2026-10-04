@@ -1,0 +1,107 @@
+{
+  "schema": "mcremote.tooling-lock",
+  "schema_version": 1,
+  "source": {
+    "repository": "Naohiro2g/minecraft-remote-tooling",
+    "commit": "dc1ab834183e29f2eb03059b07e99d2b463776ee"
+  },
+  "fixtures": [
+    {
+      "path": "packages/bridge/test/fixtures/one-shot-transport-v1.json",
+      "bytes": 517,
+      "sha256": "018d8fc8201dc8bf5689c53549df7be62b78c7e1d07e553f60c869a9ebcf7ec5"
+    },
+    {
+      "path": "packages/live/test/fixtures/display-alias-v1.json",
+      "bytes": 322,
+      "sha256": "85c8159a8b74788c0cf978078094d23a3cdae83c0be5e9aa9552bb820c8389ca"
+    },
+    {
+      "path": "packages/live/test/fixtures/observer-session-lifecycle.ndjson",
+      "bytes": 2691,
+      "sha256": "4fb06188a97025248cf5deea3ff9e50578d08136f079428d9bbac86ca920680b"
+    },
+    {
+      "path": "packages/live/test/fixtures/scratch-main-lifecycle.json",
+      "bytes": 5100,
+      "sha256": "3fe467c4e91fcbc2ccdee56a298d46b1b9dd7a1b4c2dfd0e9504ac2e6f609e2d"
+    },
+    {
+      "path": "packages/live/test/fixtures/station-attach-v1.json",
+      "bytes": 2437,
+      "sha256": "b50ce8e0cb8a6bb06f75d9bdad59b83006c92683bd73ced84a18223dde21fa81"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/block-value-v22.json",
+      "bytes": 3217,
+      "sha256": "e8e108d59c40751d67a432543d75cb4bf9146ef9781721012085c80545b854f3"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/chat-event-compat-v23.2.json",
+      "bytes": 32382,
+      "sha256": "670b0a86df1956c0e44c6986a0a2598caab32c7328804f9c703190e62e9dd727"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/dimensions-v22.json",
+      "bytes": 766,
+      "sha256": "44993cce8d42fc8db15822788a2b6707971b5438edfb4eb77d774aad437c0628"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/direction-lightning-v23.1.json",
+      "bytes": 20367,
+      "sha256": "586d24bf40136eec31f1827f23ef5b317f15100a17a635d7fe9f165e0af40dce"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/entity-particle-v23.2.json",
+      "bytes": 36481,
+      "sha256": "ca636b4a2685ea67f24d8e7931e3d30a84e7cec872bb5c5d2eadd178cdac39f2"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/events-v23.json",
+      "bytes": 2112,
+      "sha256": "31760d267f3c2641042fbe8595fda9c259134a1c05423271a99cb74da1efa9aa"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/sign-v23.json",
+      "bytes": 5043,
+      "sha256": "7ffb63c264602cba56117eefff1f9604b955df04c5cc655e877772b8ff7cd30e"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/spawn-v22.json",
+      "bytes": 682,
+      "sha256": "1120e6c8d41b05b65c916fa96f496b02884123ec7ef59b0a226eea48bebf3abd"
+    }
+  ],
+  "rollback": {
+    "scratch_commit": "691576f60b7f0824e1753bd6823901d01fbe2422",
+    "scratch_tag": "v2320.0.0b8"
+  },
+  "artifacts": {
+    "github_run_id": 37220882228,
+    "github_artifact_id": 11310203564,
+    "github_artifact_digest": "sha256:f68527816c0e5e9a6457612d2efc3770fcdb647c7ff452853a7edd4a0d38c307",
+    "bridge_digest": "sha256:5828304c9bb1d60df8672f9189f503790050e09358bd375f39e4d59d190eb84f",
+    "files": [
+      {
+        "file": "wirescope-app.zip",
+        "bytes": 83854,
+        "sha256": "da3da0b6cf4d05265bc0c11abaa4913208c7cfc3600b0c3e78c93a356fc431ad"
+      },
+      {
+        "file": "wirescope-app.manifest.json",
+        "bytes": 2339,
+        "sha256": "c654f7d1f0be2773d6737e889279b2587317088717f162b082c82be9cff910d7"
+      },
+      {
+        "file": "bridge.oci.tar",
+        "bytes": 114628096,
+        "sha256": "b6a6feec07e8d7ae9805a81e8dc370e6220e91af145ef3117ce5ed12e703b100"
+      },
+      {
+        "file": "candidate-manifest.json",
+        "bytes": 972,
+        "sha256": "e18f3a07afee3586259845bc6ff5755ea6d6974990929c97f3ff52e9e115a77d"
+      }
+    ]
+  }
+}

@@ -5,6 +5,9 @@
 > GitHub リリースは別系列で、タグ `v<mc-remote-version>` から表示名
 > `mc-remote Scratch <mc-remote-version>` を導出します。公開時に起動する
 > [`mc-remote-images.yml`](.github/workflows/mc-remote-images.yml) が表示名を設定します。
+> このworkflowはScratch OCIをビルドし、[`tooling-lock.json`](mc-remote/tooling-lock.json)で固定した
+> 共通ツールのBridge OCIとWireScope生成物を収集します。
+> [`candidate workflow`](.github/workflows/mc-remote-candidate.yml)はActions artifactだけを生成します。
 
 _For maintainers of this monorepo._
 

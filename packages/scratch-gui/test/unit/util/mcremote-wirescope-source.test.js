@@ -2,12 +2,12 @@ import {
     createWireScopeSource,
     toWireScopeSnapshot
 } from '../../../src/lib/mcremote-wirescope-source';
-import eventsFixture from '../../../../../mc-remote/protocol/test/fixtures/events-v23.json';
-import dimensionFixture from '../../../../../mc-remote/protocol/test/fixtures/dimensions-v22.json';
-import spawnFixture from '../../../../../mc-remote/protocol/test/fixtures/spawn-v22.json';
-import b7Fixture from '../../../../../mc-remote/protocol/test/fixtures/direction-lightning-v23.1.json';
-import soundFixture from '../../../../../mc-remote/protocol/test/fixtures/entity-particle-v23.2.json';
-import compatibilityFixture from '../../../../../mc-remote/protocol/test/fixtures/chat-event-compat-v23.2.json';
+import eventsFixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/events-v23.json';
+import dimensionFixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/dimensions-v22.json';
+import spawnFixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/spawn-v22.json';
+import b7Fixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/direction-lightning-v23.1.json';
+import soundFixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.json';
+import compatibilityFixture from '../../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/chat-event-compat-v23.2.json';
 
 // spawn-v22.json's spawn_entity.result predates the protocol 23 mcr_eh_ handle prefix
 // (DECISIONS 2026-08-26-08) and is kept as-is since it is a protocol-22-labeled fixture;

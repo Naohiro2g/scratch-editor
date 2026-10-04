@@ -7,6 +7,8 @@
 
 作成日: 2026-08-06
 
+共通app・schema・owner fixtureは[共通ツールリポジトリ](https://github.com/Naohiro2g/minecraft-remote-tooling/tree/main/packages/live)にあります。Scratch側には観測feedとlauncherを残します。以下の段階記述は作成時の計画です。
+
 基準 source: `develop@7cd936435520875729372bbbf28dd2f7266adb96`
 
 搬送時 knowledge 参照 commit: `371a7823ac057945571e0f2dff625f29348bd97b`
