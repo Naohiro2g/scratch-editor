@@ -1,4 +1,4 @@
-name: Inspect McRemote release OCI
+name: Inspect published McRemote OCI
 
 on:
   workflow_dispatch:
@@ -6,31 +6,67 @@ on:
 permissions:
   contents: read
   actions: read
+  packages: read
 
 jobs:
   compare:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - name: Acquire exact frozen and rebuilt archives
+      - name: Acquire exact frozen archive and published release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p comparison
           gh api repos/Naohiro2g/scratch-editor/actions/artifacts/11314795242/zip > frozen.zip
-          gh api repos/Naohiro2g/scratch-editor/actions/artifacts/11327285872/zip > rebuilt.zip
-          printf '%s  %s\n' \
-            27ade4f9b3d6a1e4b0cf814ef346b75613df8e8d446c82793b345665be9c4d7c frozen.zip \
-            846a09c29f1c19b6fee793c80863ced6950bed0c33b4207c318b8b05eec1ce1b rebuilt.zip \
-            | sha256sum --check
-      - name: Compare platform layers and config differences
+          printf '%s  %s\n' 27ade4f9b3d6a1e4b0cf814ef346b75613df8e8d446c82793b345665be9c4d7c frozen.zip | sha256sum --check
+          gh api repos/Naohiro2g/scratch-editor/releases/tags/v2320.0.0b9 > comparison/release.json
+          test "$(gh api repos/Naohiro2g/scratch-editor/commits/v2320.0.0b9 --jq .sha)" = 7fbbf034488760d8fc7e034bf23f3e08e6e1807d
+          gh release download v2320.0.0b9 --repo Naohiro2g/scratch-editor --dir comparison/assets
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          folder=pathlib.Path('comparison/assets')
+          manifest=json.loads((folder/'manifest.json').read_text())
+          assert manifest['source_commit']=='7fbbf034488760d8fc7e034bf23f3e08e6e1807d'
+          assert manifest['release_tag']=='v2320.0.0b9'
+          expected={
+            'wirescope':(83854,'da3da0b6cf4d05265bc0c11abaa4913208c7cfc3600b0c3e78c93a356fc431ad'),
+            'wirescope-manifest':(2339,'c654f7d1f0be2773d6737e889279b2587317088717f162b082c82be9cff910d7'),
+            'contracts':(1908,'48948ba47d55409f02a8ff8e0d44021b07859e11ffa5ca0f8598e6ef06082390')}
+          assert set(a['role'] for a in manifest['artifacts'])==set(expected)|{'scratch','bridge'}
+          for a in manifest['artifacts']:
+            if a['role'] in expected:
+              data=(folder/a['file']).read_bytes()
+              assert (len(data),hashlib.sha256(data).hexdigest())==expected[a['role']]
+              assert a['sha256']==expected[a['role']][1]
+            elif a['role']=='bridge':
+              assert a['digest']=='sha256:5828304c9bb1d60df8672f9189f503790050e09358bd375f39e4d59d190eb84f'
+            else:
+              assert a['locator']=='ghcr.io/naohiro2g/mc-remote-scratch'
+              pathlib.Path('published-digest.txt').write_text(a['digest'])
+          PY
+      - name: Fetch published OCI without registry mutations
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: |
+          sudo apt-get update > /tmp/apt-update.log
+          sudo apt-get install -y skopeo > /tmp/apt-install.log
+          DIGEST="$(cat published-digest.txt)"
+          skopeo copy --all --preserve-digests --src-creds "$REGISTRY_USER:$REGISTRY_TOKEN" \
+            "docker://ghcr.io/naohiro2g/mc-remote-scratch@$DIGEST" oci-archive:published.oci.tar
+          skopeo inspect --raw --creds "$REGISTRY_USER:$REGISTRY_TOKEN" docker://ghcr.io/naohiro2g/mc-remote-scratch:v2320.0.0b9 > comparison/scratch-index.json
+          skopeo inspect --raw --creds "$REGISTRY_USER:$REGISTRY_TOKEN" docker://ghcr.io/naohiro2g/mc-remote-bridge:v2320.0.0b9 > comparison/bridge-index.json
+          printf '%s  %s\n' "${DIGEST#sha256:}" comparison/scratch-index.json \
+            5828304c9bb1d60df8672f9189f503790050e09358bd375f39e4d59d190eb84f comparison/bridge-index.json | sha256sum --check
+      - name: Compare runtime layers and config within approved packaging scope
         id: compare
         continue-on-error: true
-        run: python3 scripts/compare-scratch-release-oci.py frozen.zip rebuilt.zip comparison/scratch-oci-comparison.json
+        run: python3 scripts/compare-published-scratch-oci.py frozen.zip published.oci.tar "$(cat published-digest.txt)" comparison/published-oci-comparison.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
-          name: scratch-release-oci-comparison
+          name: scratch-published-oci-comparison
           path: comparison/
           retention-days: 90
           if-no-files-found: error
