@@ -7,71 +7,33 @@ permissions:
   contents: read
   actions: read
 
-concurrency:
-  group: mc-remote-candidate-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
-  candidate:
+  compare:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-        with:
-          ref: 7fbbf034488760d8fc7e034bf23f3e08e6e1807d
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - uses: ./.github/actions/install-dependencies
-      - name: Verify tooling consumer
+      - name: Acquire exact frozen and rebuilt archives
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs
-          npm run tooling:artifacts
-      - name: Verify Bridge OCI digest preservation
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y skopeo
-          EXPECTED="$(jq -r .artifacts.bridge_digest mc-remote/tooling-lock.json)"
-          skopeo copy --all --preserve-digests --digestfile bridge-digest.txt \
-            oci-archive:mc-remote/tooling/artifacts/bridge.oci.tar \
-            "oci:$RUNNER_TEMP/bridge-check:bridge"
-          test "$(cat bridge-digest.txt)" = "$EXPECTED"
-      - run: npm run build
-      - name: Collect candidate files
-        run: |
-          test -f packages/scratch-gui/build/index.html
-          mkdir -p candidate
-          tar --sort=name --mtime='UTC 1980-01-01' --owner=0 --group=0 --numeric-owner \
-            --mode='a+rX,u+w,go-w' \
-            -cf - -C packages/scratch-gui build | gzip -n > candidate/scratch-gui.tar.gz
-          tar --sort=name --mtime='UTC 1980-01-01' --owner=0 --group=0 --numeric-owner \
-            --mode='a+rX,u+w,go-w' \
-            -cf - -C packages/scratch-gui contracts | gzip -n > candidate/contracts.tar.gz
-          cp mc-remote/tooling/artifacts/wirescope-app.zip candidate/
-          cp mc-remote/tooling/artifacts/wirescope-app.manifest.json candidate/
-          cp mc-remote/tooling/artifacts/bridge.oci.tar candidate/
-      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-      - name: Build Scratch OCI archive
-        id: scratch
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
-        with:
-          context: packages/scratch-gui
-          file: packages/scratch-gui/Dockerfile.mc-remote
-          platforms: linux/amd64,linux/arm64
-          push: false
-          provenance: mode=max
-          sbom: true
-          outputs: type=oci,dest=candidate/scratch.oci.tar
-          build-args: |
-            SOURCE_REVISION=7fbbf034488760d8fc7e034bf23f3e08e6e1807d
-            RELEASE_VERSION=v2320.0.0b9
-      - name: Record candidate identity
-        run: node scripts/build-mcremote-candidate-manifest.mjs "7fbbf034488760d8fc7e034bf23f3e08e6e1807d" "${{ steps.scratch.outputs.digest }}"
+          mkdir -p comparison
+          gh api repos/Naohiro2g/scratch-editor/actions/artifacts/11314795242/zip > frozen.zip
+          gh api repos/Naohiro2g/scratch-editor/actions/artifacts/11327285872/zip > rebuilt.zip
+          printf '%s  %s\n' \
+            27ade4f9b3d6a1e4b0cf814ef346b75613df8e8d446c82793b345665be9c4d7c frozen.zip \
+            846a09c29f1c19b6fee793c80863ced6950bed0c33b4207c318b8b05eec1ce1b rebuilt.zip \
+            | sha256sum --check
+      - name: Compare platform layers and config differences
+        id: compare
+        continue-on-error: true
+        run: python3 scripts/compare-scratch-release-oci.py frozen.zip rebuilt.zip comparison/scratch-oci-comparison.json
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
         with:
-          name: scratch-release-preflight-7fbbf034488760d8fc7e034bf23f3e08e6e1807d
-          path: candidate/
+          name: scratch-release-oci-comparison
+          path: comparison/
           retention-days: 90
           if-no-files-found: error
+      - name: Enforce comparison result
+        if: steps.compare.outcome != 'success'
+        run: exit 1
