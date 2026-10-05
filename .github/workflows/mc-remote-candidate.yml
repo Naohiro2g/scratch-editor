@@ -1,4 +1,4 @@
-name: Build McRemote candidate
+name: Inspect McRemote release OCI
 
 on:
   workflow_dispatch:
@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+        with:
+          ref: 7fbbf034488760d8fc7e034bf23f3e08e6e1807d
       - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
         with:
           node-version-file: .nvmrc
@@ -59,15 +61,17 @@ jobs:
           file: packages/scratch-gui/Dockerfile.mc-remote
           platforms: linux/amd64,linux/arm64
           push: false
+          provenance: mode=max
+          sbom: true
           outputs: type=oci,dest=candidate/scratch.oci.tar
           build-args: |
-            SOURCE_REVISION=${{ github.sha }}
-            RELEASE_VERSION=2320.0.0b9
+            SOURCE_REVISION=7fbbf034488760d8fc7e034bf23f3e08e6e1807d
+            RELEASE_VERSION=v2320.0.0b9
       - name: Record candidate identity
-        run: node scripts/build-mcremote-candidate-manifest.mjs "${{ github.sha }}" "${{ steps.scratch.outputs.digest }}"
+        run: node scripts/build-mcremote-candidate-manifest.mjs "7fbbf034488760d8fc7e034bf23f3e08e6e1807d" "${{ steps.scratch.outputs.digest }}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: scratch-candidate-${{ github.sha }}
+          name: scratch-release-preflight-7fbbf034488760d8fc7e034bf23f3e08e6e1807d
           path: candidate/
           retention-days: 90
           if-no-files-found: error
