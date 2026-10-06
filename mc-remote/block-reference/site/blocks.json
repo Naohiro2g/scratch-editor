@@ -1,7 +1,7 @@
 {
-  "release": "2320.0.0b8",
-  "sourceRef": "v2320.0.0b8",
-  "sourceCommit": "691576f60b7f0824e1753bd6823901d01fbe2422",
+  "release": "2320.0.0b9",
+  "sourceRef": "v2320.0.0b9",
+  "sourceCommit": "7fbbf034488760d8fc7e034bf23f3e08e6e1807d",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",

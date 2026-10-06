@@ -1,5 +1,5 @@
 const searchInput = document.getElementById('search');
-const kindInput = document.getElementById('block-kind');
+const kindInputs = [...document.querySelectorAll('input[name="block-kind"]')];
 const categoryButtons = [...document.querySelectorAll('[data-category]')];
 const sections = [...document.querySelectorAll('[data-section]')];
 const cards = [...document.querySelectorAll('.block-card')];
@@ -10,6 +10,7 @@ const normalize = text => text.normalize('NFKC').toLocaleLowerCase('ja');
 const searchText = new Map(cards.map(card => [card, normalize(card.dataset.search)]));
 
 const updateFilters = function () {
+    const kinds = new Set(kindInputs.filter(input => input.checked).map(input => input.value));
     const terms = normalize(searchInput.value).trim()
         .split(/\s+/)
         .filter(Boolean);
@@ -18,7 +19,7 @@ const updateFilters = function () {
         let sectionCount = 0;
         for (const card of section.querySelectorAll('.block-card')) {
             const visible = (category === 'all' || category === section.dataset.section) &&
-                (kindInput.value === 'all' || kindInput.value === card.dataset.kind) &&
+                kinds.has(card.dataset.kind) &&
                 terms.every(term => searchText.get(card).includes(term));
             card.hidden = !visible;
             if (visible) sectionCount++;
@@ -38,13 +39,13 @@ const revealLinkedBlock = function (hash = location.hash) {
     if (!target || !target.classList.contains('block-card')) return;
     category = 'all';
     searchInput.value = '';
-    kindInput.value = 'all';
+    for (const input of kindInputs) input.checked = true;
     updateFilters();
     target.scrollIntoView({block: 'start'});
 };
 
 searchInput.addEventListener('input', updateFilters);
-kindInput.addEventListener('change', updateFilters);
+for (const input of kindInputs) input.addEventListener('change', updateFilters);
 document.getElementById('clear-search').addEventListener('click', () => {
     searchInput.value = '';
     updateFilters();

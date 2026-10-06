@@ -57,7 +57,9 @@ const renderBlock = block => {
     return `<article id="${escapeHtml(block.opcode)}" class="block-card" data-search="${escapeHtml(search)}" ` +
         `data-kind="${escapeHtml(block.blockType)}"><div class="card-heading"><h3>${escapeHtml(block.title)}</h3>` +
         `<div><span class="kind kind-${escapeHtml(block.blockType)}">${typeNames[block.blockType]}</span>` +
-        `<a class="permalink" href="#${escapeHtml(block.opcode)}" aria-label="${escapeHtml(block.title)}へのリンク">#</a>` +
+        `<a class="permalink" href="#${escapeHtml(block.opcode)}" ` +
+        `aria-label="ブロック「${escapeHtml(block.title)}」へのリンク" ` +
+        `title="このブロックへのリンク（右クリックでアドレスをコピー）">リンク</a>` +
         `</div></div><div class="block-image" tabindex="0" aria-label="ブロック画像。長い画像は横にスクロールできます">` +
         `<img src="images/${escapeHtml(block.opcode)}.svg" alt="${escapeHtml(block.text)}" ` +
         `width="${block.imageWidth}" height="${block.imageHeight}" loading="lazy"></div>` +
@@ -98,7 +100,7 @@ const main = async function () {
     if (!options['--editor-url']) {
         throw new Error('--editor-url is required; serve the selected release editor first.');
     }
-    const sourceRef = options['--source-ref'] || 'v2320.0.0b8';
+    const sourceRef = options['--source-ref'] || 'v2320.0.0b9';
     const sourceCommit = execFileSync('git', ['rev-parse', `${sourceRef}^{commit}`],
         {cwd: root, encoding: 'utf8'}).trim();
     const sourcePaths = ['packages/scratch-vm/src', 'packages/scratch-gui/src/lib/mcremote-l10n.js',

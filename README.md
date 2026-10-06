@@ -13,7 +13,7 @@
 
 - マインクラフトに接続して使う： [公式サイト](https://mc-remote.com/)からエディターを開いてください。
 - 画面とブロックだけを見る： [ショーケース](https://naohiro2g.github.io/scratch-editor/)を開いてください。マインクラフトには接続しません。
-- ブロックの画像と入力項目を見る： [Scratchブロック一覧（ドラフト）](mc-remote/block-reference/site/index.html)を手元で開けます。[表示する手順](mc-remote/block-reference/README.md#表示する)を参照してください。
+- ブロックの画像と入力項目を見る： [Scratchブロック一覧](https://mc-remote.com/api/scratch/)を開いてください。手元で表示・生成する方法は[一覧ページの案内](mc-remote/block-reference/README.md)にあります。
 
 自分のPCで開発用画面を動かす場合は、Node.js（必要なバージョンは [`.nvmrc`](.nvmrc) に記載）を用意し、ターミナルで次を上から順に実行してください。`git clone` はこのリポジトリのソースコードをPCに複製し、`npm ci` は動作に必要なライブラリを入れます。`npm run build` は、エディターを構成する各パッケージ（画面を作るGUI、ブロックを実行するVMなど）を初回の起動に必要な形にします。
 

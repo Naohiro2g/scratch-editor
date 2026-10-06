@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="mc-remoteでMinecraftを操作するScratchブロックの一覧。画像、入力項目、選択肢、使い方を確認できます。">
-    <title>Scratchブロック一覧（ドラフト）</title>
+    <title>mc-remote / マイクラリモコン Scratchブロック一覧</title>
     <link rel="stylesheet" href="style.css">
     <script src="page.js" defer></script>
 </head>
@@ -18,11 +18,11 @@
     </header>
     <main>
         <div class="intro">
-            <p class="eyebrow">mc-remote / マイクラリモコン <span>公開版 b8</span></p>
-            <h1>Scratchブロック一覧（ドラフト）</h1>
-            <p class="lead">Minecraftを、ブロックで動かす。</p>
-            <p>ブロックを置く、音を鳴らす、イベントで動かす。<br class="desktop-break">{{BLOCK_COUNT}}個のブロックを、画像と入力項目から探せます。</p>
-            <div class="intro-links"><a href="#examples">組み合わせ方を見る <span aria-hidden="true">↓</span></a><span>Scratch {{RELEASE}}</span></div>
+            <h1>mc-remote / マイクラリモコン Scratchブロック一覧</h1>
+            <p class="release"><a class="release-link" href="https://github.com/Naohiro2g/scratch-editor/releases/tag/v{{RELEASE}}">mc-remote Scratch {{RELEASE}}</a></p>
+            <p class="lead">マイクラのブロックを、Scratchのブロックであやつる。</p>
+            <p class="intro-description">ブロックを置く、モブをスポーンする、音を鳴らす、イベントで動かす。<br>{{BLOCK_COUNT}}個のScratchブロックを、画像と入力項目から探せます。</p>
+            <div class="intro-links"><a href="#examples">組み合わせ方を見る <span aria-hidden="true">↓</span></a></div>
         </div>
         <div class="reference-layout">
             <aside class="sidebar" aria-label="ブロックの分類">
@@ -37,7 +37,16 @@
                 <div class="search-panel">
                     <label for="search">ブロックを探す</label>
                     <div class="search-row"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="名前・説明・API名で検索" autocomplete="off"><button id="clear-search" type="button">クリア</button></div>
-                    <div class="filter-row"><label for="block-kind">形</label><select id="block-kind"><option value="all">すべての形</option><option value="command">命令</option><option value="reporter">値を返す</option><option value="Boolean">条件</option><option value="hat">イベント</option></select><p id="result-count" role="status" aria-live="polite">{{BLOCK_COUNT}} / {{BLOCK_COUNT}} ブロック</p></div>
+                    <div class="filter-row">
+                        <fieldset class="kind-filters">
+                            <legend>カテゴリー（複数選択可）</legend>
+                            <label class="kind-filter kind-command"><input type="checkbox" name="block-kind" value="command" checked><span class="kind">命令</span></label>
+                            <label class="kind-filter kind-reporter"><input type="checkbox" name="block-kind" value="reporter" checked><span class="kind">値を返す</span></label>
+                            <label class="kind-filter kind-hat"><input type="checkbox" name="block-kind" value="hat" checked><span class="kind">イベント</span></label>
+                            <label class="kind-filter kind-Boolean"><input type="checkbox" name="block-kind" value="Boolean" checked><span class="kind">条件</span></label>
+                        </fieldset>
+                        <p id="result-count" role="status" aria-live="polite">{{BLOCK_COUNT}} / {{BLOCK_COUNT}} ブロック</p>
+                    </div>
                 </div>
                 <p id="empty-results" class="empty-results" hidden>一致するブロックがありません。検索語や分類を変えてみてください。</p>
                 <div id="blocks"><!-- BLOCK_SECTIONS --></div>
@@ -60,6 +69,7 @@
                 </section>
                 <div class="reading-notes">
                     <h2>この一覧の読み方</h2>
+                    <p>各ブロックの「リンク」を開くと、そのブロックへ直接移動するURLになります。リンクを右クリックしてアドレスをコピーするか、開いた後のURLを共有してください。</p>
                     <p>「最初の値」は、パレットから取り出した直後に入力されている値です。実行時に省略した場合の既定値とは区別しています。</p>
                     <p>「返す値」は正常に取得できたときの内容です。エラーを表す文字列が返った場合は「取得した値がエラーか調べる」で確認できます。命令の失敗は、エディターのお知らせとWireScopeで確認します。</p>
                     <p>座標の基準や詳しい通信仕様は、各ブロックの「通信API」リンクから確認できます。</p>

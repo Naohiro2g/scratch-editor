@@ -86,7 +86,7 @@ npm run tooling:artifacts
 
 [公開workflow](../.github/workflows/mc-remote-images.yml)は、この固定済み生成物を収集します。Scratch OCIはScratchからビルドし、Bridge OCIはdigestを保持してコピーします。WireScopeのZIPとmanifest、Scratch設定契約、リリースmanifestを同じReleaseへまとめます。[candidate workflow](../.github/workflows/mc-remote-candidate.yml)は、Release・registry公開をせずActions artifactへ出します。
 
-[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。rollbackは公開b8のtag `v2320.0.0b8` と、その公開setを使います。
+[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b9](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b9)です。rollbackは直前の公開b8のtag `v2320.0.0b8` と、その公開setを使います。
 
 ## 3. 貢献者が調べ始める場所
 
