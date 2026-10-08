@@ -1,0 +1,22 @@
+{
+  "package": "blockly",
+  "version": "12.4.1",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Neil Fraser"
+  },
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/google/blockly.git"
+  },
+  "published_git_head": "39c4b589eac103ffe1a7184c287a90e624980a31",
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "google/blockly",
+      "commit": "39c4b589eac103ffe1a7184c287a90e624980a31",
+      "path": "LICENSE"
+    }
+  ]
+}

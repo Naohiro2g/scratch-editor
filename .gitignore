@@ -141,6 +141,12 @@ handoff-materials/
 
 # Verified consumer inputs from minecraft-remote-tooling.
 mc-remote/tooling/
+mc-remote/release-manifest/
+
+# Scratch Local runtime downloads and candidate distributions.
+mc-remote/local-inputs/
+/candidate/
+__pycache__/
 
 # Local Obsidian workspace settings.
 .obsidian/

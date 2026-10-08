@@ -127,7 +127,11 @@ packages/
 mc-remote/                  Scratch-specific McRemote documentation and consumer lock
 ├── tooling-lock.json        Fixed common tooling commit, fixture identities and artifact digests
 ├── tooling/                 Ignored, verified fixture/artifact acquisition cache
-└── block-reference/         Static Scratch block reference draft
+├── block-reference/         Static Scratch block reference
+├── local/                   Scratch Local launcher, guides and boundary tests
+├── local-runtime-lock.json   Pinned official Node runtime archives
+├── release-manifest-lock.json  Fixed release metadata schema and shared fixture identities
+└── release-manifest/         Ignored, verified release metadata contract cache
 scripts/                    Monorepo-level utility scripts
 ```
 
@@ -137,10 +141,25 @@ Scratch keeps its VM extension, GUI observation feed and launcher. The VM keeps 
 not import `@mc-remote/protocol` at runtime. Tests consume fixtures acquired with `npm run tooling:fixtures`.
 Do not edit the ignored acquisition cache; change the owner source and explicitly update `tooling-lock.json`.
 
+Public Release metadata is a separate contract pinned by `mc-remote/release-manifest-lock.json`.
+Run `npm run tooling:release-manifest` to acquire its v1/v2 schemas, shared fixture and reference checks,
+then `npm run release-manifest:test` and `npm run release-manifest:lint`. The owner is the common tooling
+repository's root `schemas/`. Public manifests use v2 with bytes for every https-file; candidate manifests
+keep their own schema and kind `file`. Baseline manifests are validated in full before OCI selection.
+
 `npm run tooling:artifacts` acquires the fixed WireScope ZIP/manifest and Bridge OCI archive. It requires
 GitHub CLI authentication, `unzip` and `tar`. The McRemote release workflow builds Scratch OCI, copies the pinned
 Bridge OCI preserving its digest, and collects the WireScope pair. The candidate workflow only uploads Actions
 artifacts; neither workflow is permission to publish a tag or release.
+
+`mc-remote/local/` contains the Scratch Local launcher, setup page, ZIP user guide and tests.
+`mc-remote/local-runtime-lock.json` pins official Node archives for Windows x64, macOS arm64 and Linux x64.
+`npm run local:build -- --os <os> --arch <arch> --commit <HEAD>` uses Python 3 to package the built GUI,
+the unchanged JavaScript app extracted from the pinned Bridge OCI, the Node runtime and licenses/source.
+Runtime downloads in `mc-remote/local-inputs/` and outputs in `candidate/` are ignored. `npm run local:test`
+runs Node boundary tests and Python archive tests. Release workflows collect the explicitly frozen candidate
+ZIPs without rebuilding them; see `mc-remote/local/README.md` for the artifact ID/digest inputs. These local
+artifacts and tests do not authorize publishing or replace the required three-OS validation.
 
 ## Packages at a glance
 

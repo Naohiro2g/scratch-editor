@@ -1,0 +1,20 @@
+{
+  "package": "linebreak",
+  "version": "0.3.0",
+  "license": "MIT",
+  "author": "Devon Govett <devongovett@gmail.com>",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devongovett/linebreaker.git"
+  },
+  "published_git_head": "33faa05d16082ef47873fbf5ca8bbb15782d668d",
+  "license_basis": "official-project-license",
+  "body_sources": [
+    {
+      "repository": "devongovett/linebreaker",
+      "commit": "dc9603e8e58ce0e6d431cc5087ffb98132cc6a07",
+      "path": "LICENSE"
+    }
+  ]
+}

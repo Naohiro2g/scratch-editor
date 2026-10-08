@@ -16,6 +16,15 @@ const setup = t => {
     const files = ['scratch-gui.tar.gz', 'scratch.oci.tar', 'bridge.oci.tar',
         'wirescope-app.zip', 'wirescope-app.manifest.json', 'contracts.tar.gz'];
     for (const file of files) writeFileSync(join(directory, 'candidate', file), `${file}\n`);
+    for (const [os, arch] of [['windows', 'x64'], ['macos', 'arm64'], ['linux', 'x64']]) {
+        const file = `mc-remote-scratch-local-2320.0.0b10-${os}-${arch}.zip`;
+        const bytes = Buffer.from(file);
+        writeFileSync(join(directory, 'candidate', file), bytes);
+        writeFileSync(join(directory, 'candidate', file.replace(/\.zip$/, '.artifact.json')), JSON.stringify({
+            role: 'scratch-local', kind: 'file', os, arch, file, bytes: bytes.length,
+            sha256: createHash('sha256').update(bytes).digest('hex'), source_commit: 'a'.repeat(40), working_tree_dirty: false
+        }));
+    }
     const pinnedFiles = files.slice(2, 5).map(file => {
         const bytes = readFileSync(join(directory, 'candidate', file));
         return {file, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')};
@@ -33,7 +42,8 @@ test('candidate records its own source and preserves pinned tooling identities',
     const manifest = JSON.parse(readFileSync(join(cwd, 'candidate/candidate-manifest.json')));
     assert.equal(manifest.source.commit, 'a'.repeat(40));
     assert.equal(manifest.tooling.commit, 'b'.repeat(40));
-    assert.equal(manifest.artifacts.length, 6);
+    assert.equal(manifest.artifacts.length, 9);
+    assert.equal(manifest.version, '2320.0.0b10');
     assert.equal(manifest.artifacts.find(item => item.role === 'bridge').digest, `sha256:${'c'.repeat(64)}`);
     assert.equal(manifest.artifacts.find(item => item.role === 'scratch').digest, `sha256:${'d'.repeat(64)}`);
 });

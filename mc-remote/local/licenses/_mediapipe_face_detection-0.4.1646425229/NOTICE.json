@@ -1,0 +1,17 @@
+{
+  "package": "@mediapipe/face_detection",
+  "version": "0.4.1646425229",
+  "license": "Apache-2.0",
+  "author": "mhays@google.com",
+  "contributors": null,
+  "repository": null,
+  "published_git_head": null,
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "google/mediapipe",
+      "commit": "e6c19885c6d3c6f410c730952aeed2852790d306",
+      "path": "LICENSE"
+    }
+  ]
+}

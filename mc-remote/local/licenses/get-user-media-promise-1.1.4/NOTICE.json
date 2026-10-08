@@ -1,0 +1,20 @@
+{
+  "package": "get-user-media-promise",
+  "version": "1.1.4",
+  "license": "Apache-2.0",
+  "author": "Nathan Friedly - http://nfriedly.com",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfriedly/get-user-media-promise.git"
+  },
+  "published_git_head": "ae919548d6c62838bc9173ae67b5b4daa67b1492",
+  "license_basis": "declared-license-standard-text",
+  "body_sources": [
+    {
+      "repository": "spdx/license-list-data",
+      "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+      "path": "text/Apache-2.0.txt"
+    }
+  ]
+}

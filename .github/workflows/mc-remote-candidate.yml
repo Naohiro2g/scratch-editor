@@ -25,7 +25,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs
+          npm run tooling:release-manifest
+          npm run release-manifest:test
+          npm run release-manifest:lint
+          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs mc-remote/local/launcher.test.mjs
+          python3 scripts/build-mcremote-local.test.py
+          npm run local:lint
           npm run tooling:artifacts
       - name: Verify Bridge OCI digest preservation
         run: |
@@ -37,6 +42,12 @@ jobs:
             "oci:$RUNNER_TEMP/bridge-check:bridge"
           test "$(cat bridge-digest.txt)" = "$EXPECTED"
       - run: npm run build
+      - name: Build Scratch Local ZIPs
+        run: |
+          python3 scripts/build-mcremote-local.py --os windows --arch x64 --commit "${{ github.sha }}"
+          python3 scripts/build-mcremote-local.py --os macos --arch arm64 --commit "${{ github.sha }}"
+          python3 scripts/build-mcremote-local.py --os linux --arch x64 --commit "${{ github.sha }}"
+          node scripts/test-mcremote-local.mjs candidate/mc-remote-scratch-local-2320.0.0b10-linux-x64.zip
       - name: Collect candidate files
         run: |
           test -f packages/scratch-gui/build/index.html
@@ -62,7 +73,7 @@ jobs:
           outputs: type=oci,dest=candidate/scratch.oci.tar
           build-args: |
             SOURCE_REVISION=${{ github.sha }}
-            RELEASE_VERSION=2320.0.0b9
+            RELEASE_VERSION=2320.0.0b10
       - name: Record candidate identity
         run: node scripts/build-mcremote-candidate-manifest.mjs "${{ github.sha }}" "${{ steps.scratch.outputs.digest }}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

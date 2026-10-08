@@ -1,0 +1,17 @@
+{
+  "package": "format-message-interpret",
+  "version": "6.2.4",
+  "license": "MIT",
+  "author": "Andy VanWagoner <andy@vanwago.net>",
+  "contributors": null,
+  "repository": "format-message/format-message",
+  "published_git_head": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "format-message/format-message",
+      "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+      "path": "LICENSE-MIT"
+    }
+  ]
+}

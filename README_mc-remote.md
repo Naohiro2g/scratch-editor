@@ -18,6 +18,8 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 [ショーケース](https://naohiro2g.github.io/scratch-editor/)では画面とブロックを見られますが、マイクラリモコンの接続は無効です。
 
+自分のPCやLAN内のワールドで使う[Scratch Local版](mc-remote/local/README.md)をb10向けに準備しています。現在は実装・OS検証の段階です。
+
 公開b9のブロックの画像・入力項目・選択肢は[Scratchブロック一覧](https://mc-remote.com/api/scratch/)にまとめています。各ブロックの「リンク」から、そのブロックを指すURLを共有できます。手元で表示・生成する方法は[一覧ページの案内](mc-remote/block-reference/README.md)にあります。
 
 ## 2. 使い続ける・別の方法から移る

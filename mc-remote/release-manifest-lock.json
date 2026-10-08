@@ -1,0 +1,45 @@
+{
+  "schema": "mcremote.release-manifest-lock",
+  "schema_version": 1,
+  "source": {
+    "repository": "Naohiro2g/minecraft-remote-tooling",
+    "commit": "5f567f14adaa24603e9dee3c0ec9909d428b7c4b"
+  },
+  "knowledge_contract": {
+    "commit": "6a7020d5199a6aa957c5ce43904916f2166a6b95",
+    "path": "00-hub/release-gate-notes_ja.md",
+    "decision": "2026-10-07-09"
+  },
+  "files": [
+    {
+      "path": "schemas/release-manifest-v2.schema.json",
+      "bytes": 5654,
+      "sha256": "537684f063c5604ccb1e99a69fed51a16a73ef6e88c71ee85a410ab6f5ff5b4c"
+    },
+    {
+      "path": "schemas/fixtures/release-manifest-v2.json",
+      "bytes": 163704,
+      "sha256": "c60f9d8d5542dbdaa9c7c78492a2b65257c0f9ccee9968c5519ebbba44dd2b70"
+    },
+    {
+      "path": "schemas/fixtures/release-manifest-v1.schema.json",
+      "bytes": 2254,
+      "sha256": "686682be9299524d73962348f76056787c4e1fd0c9123a0af0f0da2e264453b7"
+    },
+    {
+      "path": "schemas/release-manifest-checks.mjs",
+      "bytes": 4891,
+      "sha256": "8a24517c8204f4f0bdef0e927e52faf8e6bd4a37468818b257ce99fc245bc225"
+    },
+    {
+      "path": "schemas/fixtures/STACK-LICENSE",
+      "bytes": 1088,
+      "sha256": "56b29b417d90ab02f8f212845885b17a2bcccab647b6a7ff9f43605faafe7689"
+    },
+    {
+      "path": "schemas/README.md",
+      "bytes": 5233,
+      "sha256": "4bdc074c9346a2a8a8e7950556fbf0c029472c74a9b20b9c5f42684f01c9807e"
+    }
+  ]
+}

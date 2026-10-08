@@ -9,6 +9,14 @@ on:
         description: Existing GitHub release tag to build images for
         required: true
         type: string
+      local_candidate_artifact_id:
+        description: Frozen Scratch candidate Actions artifact ID (ZIPs tested on all three OS)
+        required: true
+        type: string
+      local_candidate_artifact_digest:
+        description: Frozen Scratch candidate Actions artifact digest (sha256:...)
+        required: true
+        type: string
 
 permissions:
   actions: read # to collect the pinned common tooling artifact
@@ -58,6 +66,29 @@ jobs:
           ref: ${{ steps.release.outputs.commit }}
           fetch-depth: 0 # the baseline commit must be diffable against this one
 
+      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
+        with:
+          cache: npm
+          node-version-file: .nvmrc
+
+      - name: Set mc-remote Scratch release title
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          node --test scripts/mcremote-scratch-release-title.test.mjs
+          TITLE="$(node scripts/mcremote-scratch-release-title.mjs "$TAG")"
+          gh release edit "$TAG" --repo "${{ github.repository }}" --title "$TITLE"
+
+      - uses: ./.github/actions/install-dependencies
+
+      - name: Verify pinned release manifest contract
+        run: |
+          npm run tooling:release-manifest
+          npm run release-manifest:test
+          npm run release-manifest:lint
+
       # The newest earlier release that carries a manifest is the baseline this run
       # compares against. Absent one (the first manifest-bearing release), every
       # artifact is built. This runs after checkout because checkout cleans the
@@ -77,28 +108,13 @@ jobs:
             if gh release download "$candidate" --repo "${{ github.repository }}" \
                 --pattern manifest.json --dir baseline 2>/dev/null; then
               echo "tag=$candidate" >> "$GITHUB_OUTPUT"
-              echo "commit=$(jq -r .source_commit baseline/manifest.json)" >> "$GITHUB_OUTPUT"
+              BASELINE_COMMIT="$(node scripts/release-manifest-contract.mjs --baseline baseline/manifest.json)"
+              echo "commit=$BASELINE_COMMIT" >> "$GITHUB_OUTPUT"
               echo "baseline release: $candidate"
               exit 0
             fi
           done
           echo "no baseline release with a manifest; building every artifact"
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
-        with:
-          cache: npm
-          node-version-file: .nvmrc
-
-      - name: Set mc-remote Scratch release title
-        if: github.event_name == 'release'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          node --test scripts/mcremote-scratch-release-title.test.mjs
-          TITLE="$(node scripts/mcremote-scratch-release-title.mjs "$TAG")"
-          gh release edit "$TAG" --repo "${{ github.repository }}" --title "$TITLE"
-
-      - uses: ./.github/actions/install-dependencies
 
       # Workspace packages consume each other's compiled dist in this declared order.
       - name: Build workspace packages
@@ -117,6 +133,19 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run tooling:artifacts
+
+      # Promote the tested ZIP bytes; rebuilding them here would invalidate OS evidence.
+      - name: Collect frozen Scratch Local ZIPs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_COMMIT: ${{ steps.release.outputs.commit }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          CANDIDATE_ID: ${{ inputs.local_candidate_artifact_id || vars.SCRATCH_LOCAL_CANDIDATE_ARTIFACT_ID }}
+          CANDIDATE_DIGEST: ${{ inputs.local_candidate_artifact_digest || vars.SCRATCH_LOCAL_CANDIDATE_ARTIFACT_DIGEST }}
+        run: |
+          test -n "$CANDIDATE_ID"
+          test -n "$CANDIDATE_DIGEST"
+          node scripts/acquire-mcremote-local.mjs "$SOURCE_COMMIT" "${RELEASE_TAG#v}" "$CANDIDATE_ID" "$CANDIDATE_DIGEST"
 
       # The contract directory is plain source with no build step, so a candidate
       # consumer keeps reading it straight from the commit via `git archive` or the
@@ -239,8 +268,7 @@ jobs:
           retag() {
             role="$1"
             locator="$2"
-            digest="$(jq -r --arg role "$role" \
-              '.artifacts[] | select(.role == $role) | .digest' baseline/manifest.json)"
+            digest="$(node scripts/release-manifest-contract.mjs --digest baseline/manifest.json "$role")"
             test -n "$digest"
             test "$digest" != "null"
             docker buildx imagetools create --tag "${locator}:${TAG}" "${locator}@${digest}"
@@ -253,7 +281,7 @@ jobs:
       # reads this single file off the release instead of cross-referencing GHCR, the
       # release notes, and rebuilt-from-source bytes to work out what belongs to this
       # release. `kind` is always explicit (oci: locator+digest; https-file: file+
-      # sha256) -- no implicit default, so an unrecognized shape fails closed instead
+      # sha256+bytes) -- no implicit default, so an unrecognized shape fails closed instead
       # of being silently misread. scratch/bridge stay OCI; only the shape is shared.
       # schema/schema_version let a future shape change fail closed the same way.
       - name: Build release manifest
@@ -262,44 +290,7 @@ jobs:
           RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
           SCRATCH_DIGEST: ${{ steps.scratch.outputs.digest }}
           BRIDGE_DIGEST: ${{ steps.bridge.outputs.digest }}
-        run: |
-          wirescope_zip_sha256="$(sha256sum mc-remote/tooling/artifacts/wirescope-app.zip | cut -d' ' -f1)"
-          wirescope_manifest_sha256="$(sha256sum mc-remote/tooling/artifacts/wirescope-app.manifest.json | cut -d' ' -f1)"
-          contracts_sha256="$(sha256sum contracts.tar.gz | cut -d' ' -f1)"
-          # A skipped build leaves its digest output empty; that role carries the
-          # baseline digest forward instead.
-          baseline_digest() {
-            jq -r --arg role "$1" \
-              '.artifacts[] | select(.role == $role) | .digest' baseline/manifest.json
-          }
-          scratch_digest="${SCRATCH_DIGEST:-$(baseline_digest scratch)}"
-          bridge_digest="$BRIDGE_DIGEST"
-          test -n "$scratch_digest" && test "$scratch_digest" != "null"
-          test -n "$bridge_digest" && test "$bridge_digest" != "null"
-          jq -n \
-            --arg release_tag "$RELEASE_TAG" \
-            --arg source_commit "$RELEASE_COMMIT" \
-            --arg scratch_locator "ghcr.io/naohiro2g/mc-remote-scratch" \
-            --arg scratch_digest "$scratch_digest" \
-            --arg bridge_locator "ghcr.io/naohiro2g/mc-remote-bridge" \
-            --arg bridge_digest "$bridge_digest" \
-            --arg wirescope_sha256 "$wirescope_zip_sha256" \
-            --arg wirescope_manifest_sha256 "$wirescope_manifest_sha256" \
-            --arg contracts_sha256 "$contracts_sha256" \
-            '{
-              schema: "mc-remote.release-manifest",
-              schema_version: 1,
-              release_tag: $release_tag,
-              source_commit: $source_commit,
-              artifacts: [
-                {role: "scratch", kind: "oci", locator: $scratch_locator, digest: $scratch_digest},
-                {role: "bridge", kind: "oci", locator: $bridge_locator, digest: $bridge_digest},
-                {role: "wirescope", kind: "https-file", file: "wirescope-app.zip", sha256: $wirescope_sha256},
-                {role: "wirescope-manifest", kind: "https-file", file: "wirescope-app.manifest.json", sha256: $wirescope_manifest_sha256},
-                {role: "contracts", kind: "https-file", file: "contracts.tar.gz", sha256: $contracts_sha256}
-              ]
-            }' \
-            > manifest.json
+        run: node scripts/build-mcremote-release-manifest.mjs
 
       # Release assets, not workflow-run artifacts: workflow-run artifacts expire
       # (90 days) and aren't reachable from the release page. The release is meant to
@@ -314,5 +305,6 @@ jobs:
             contracts.tar.gz \
             mc-remote/tooling/artifacts/wirescope-app.zip \
             mc-remote/tooling/artifacts/wirescope-app.manifest.json \
+            candidate/mc-remote-scratch-local-*.zip \
             --repo "${{ github.repository }}" \
             --clobber

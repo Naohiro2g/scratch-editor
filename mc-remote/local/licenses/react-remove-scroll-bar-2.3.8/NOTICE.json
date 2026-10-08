@@ -1,0 +1,17 @@
+{
+  "package": "react-remove-scroll-bar",
+  "version": "2.3.8",
+  "license": "MIT",
+  "author": "Anton Korzunov <thekashey@gmail.com>",
+  "contributors": null,
+  "repository": "https://github.com/theKashey/react-remove-scroll-bar",
+  "published_git_head": "b3b1287aad81def2e2ae707274b74531b61ddbaf",
+  "license_basis": "official-project-license",
+  "body_sources": [
+    {
+      "repository": "theKashey/react-remove-scroll-bar",
+      "commit": "8ca9ba5ea52de03308fe8ced94f7b159a44d28ff",
+      "path": "LICENSE"
+    }
+  ]
+}

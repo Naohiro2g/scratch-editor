@@ -1,0 +1,20 @@
+{
+  "package": "@tensorflow-models/face-detection",
+  "version": "1.0.3",
+  "license": "Apache-2.0",
+  "author": null,
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs-models.git"
+  },
+  "published_git_head": "540391a0833c0329cd7d59c4ca299db04faed6b0",
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "tensorflow/tfjs-models",
+      "commit": "540391a0833c0329cd7d59c4ca299db04faed6b0",
+      "path": "LICENSE"
+    }
+  ]
+}

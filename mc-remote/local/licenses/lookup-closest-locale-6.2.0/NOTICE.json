@@ -1,0 +1,17 @@
+{
+  "package": "lookup-closest-locale",
+  "version": "6.2.0",
+  "license": "MIT",
+  "author": "Andy VanWagoner <andy@vanwago.net>",
+  "contributors": null,
+  "repository": "format-message/format-message",
+  "published_git_head": null,
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "format-message/format-message",
+      "commit": "ef02f024d2f3c5c0f0cd21a618f78c7d12d03fb3",
+      "path": "LICENSE-MIT"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "package": "unicode-trie",
+  "version": "0.3.1",
+  "license": "MIT",
+  "author": "Devon Govett <devongovett@gmail.com>",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/devongovett/unicode-trie.git"
+  },
+  "published_git_head": "0e19655c9c291c133e577bcacd2c25b7c82455f7",
+  "license_basis": "official-project-license",
+  "body_sources": [
+    {
+      "repository": "devongovett/unicode-trie",
+      "commit": "b0f97b95700c59ea742bfad532b30393b1bd6ea3",
+      "path": "LICENSE"
+    }
+  ]
+}

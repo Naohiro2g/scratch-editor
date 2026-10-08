@@ -1,0 +1,20 @@
+{
+  "package": "omggif",
+  "version": "1.0.10",
+  "license": "MIT",
+  "author": "Dean McNamee <dean@gmail.com>",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deanm/omggif"
+  },
+  "published_git_head": "334a0c0b6aa2eb5e63fae64ba7911ee647655ab2",
+  "license_basis": "published-license-in-readme",
+  "body_sources": [
+    {
+      "repository": "deanm/omggif",
+      "commit": "334a0c0b6aa2eb5e63fae64ba7911ee647655ab2",
+      "path": "README"
+    }
+  ]
+}

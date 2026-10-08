@@ -1,0 +1,20 @@
+{
+  "package": "get-float-time-domain-data",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "nao yonamine <mohayonao@gmail.com>",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mohayonao/get-float-time-domain-data.git"
+  },
+  "published_git_head": "0aad05326e8e0ce3cd550f1ccd5996af945031ba",
+  "license_basis": "declared-license-standard-text",
+  "body_sources": [
+    {
+      "repository": "spdx/license-list-data",
+      "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+      "path": "text/MIT.txt"
+    }
+  ]
+}

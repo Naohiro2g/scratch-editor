@@ -1,0 +1,20 @@
+{
+  "package": "is-in-browser",
+  "version": "1.1.3",
+  "license": "MIT",
+  "author": "Jared Anderson",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tuxsudo/is-in-browser.git"
+  },
+  "published_git_head": "653d0586c8d40db93262536ec60a4d2d50f3d78d",
+  "license_basis": "official-project-license",
+  "body_sources": [
+    {
+      "repository": "tuxsudo/is-in-browser",
+      "commit": "aa6cbcaaeb65dc5321415e79700482e3eccafcf0",
+      "path": "LICENSE"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "package": "redux-throttle",
+  "version": "0.1.1",
+  "license": "MIT",
+  "author": "Mathieu Dutour",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mathieudutour/redux-throttle.git"
+  },
+  "published_git_head": "e6499b2336e901b179b90f42df31e69e9f3eafa5",
+  "license_basis": "official-project-license",
+  "body_sources": [
+    {
+      "repository": "mathieudutour/redux-throttle",
+      "commit": "33109c8f6278feb0cb50b30ad19f72cdf1ffb3f3",
+      "path": "LICENSE"
+    }
+  ]
+}

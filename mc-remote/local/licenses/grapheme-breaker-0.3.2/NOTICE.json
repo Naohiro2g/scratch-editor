@@ -1,0 +1,20 @@
+{
+  "package": "grapheme-breaker",
+  "version": "0.3.2",
+  "license": "MIT",
+  "author": "Devon Govett <devongovett@gmail.com>",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/devongovett/grapheme-breaker"
+  },
+  "published_git_head": "5aeb64c01fef20c6338302b42189e7898fe8e4d3",
+  "license_basis": "declared-license-standard-text",
+  "body_sources": [
+    {
+      "repository": "spdx/license-list-data",
+      "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+      "path": "text/MIT.txt"
+    }
+  ]
+}

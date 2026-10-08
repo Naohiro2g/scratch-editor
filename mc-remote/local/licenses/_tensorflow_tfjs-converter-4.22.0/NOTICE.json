@@ -1,0 +1,21 @@
+{
+  "package": "@tensorflow/tfjs-converter",
+  "version": "4.22.0",
+  "license": "Apache-2.0",
+  "author": null,
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tensorflow/tfjs.git",
+    "directory": "tfjs-converter"
+  },
+  "published_git_head": "5f8c90682cb59baff9b948028371dbbc85119243",
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "tensorflow/tfjs",
+      "commit": "5f8c90682cb59baff9b948028371dbbc85119243",
+      "path": "LICENSE"
+    }
+  ]
+}

@@ -1,0 +1,771 @@
+{
+  "schema": "mc-remote.scratch-local-license-supplements",
+  "schema_version": 1,
+  "entries": [
+    {
+      "name": "@mediapipe/face_detection",
+      "version": "0.4.1646425229",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/_mediapipe_face_detection-0.4.1646425229/LICENSE-1.txt",
+          "bytes": 11357,
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "source": {
+            "repository": "google/mediapipe",
+            "commit": "e6c19885c6d3c6f410c730952aeed2852790d306",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/_mediapipe_face_detection-0.4.1646425229/NOTICE.json",
+          "bytes": 411,
+          "sha256": "7cf9dd89709e9326500c81cffdb144e481a14623c3e2d42d235050979d792597",
+          "source": {
+            "npm_package": "@mediapipe/face_detection",
+            "version": "0.4.1646425229",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "@tensorflow-models/face-detection",
+      "version": "1.0.3",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/_tensorflow-models_face-detection-1.0.3/LICENSE-1.txt",
+          "bytes": 11357,
+          "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+          "source": {
+            "repository": "tensorflow/tfjs-models",
+            "commit": "540391a0833c0329cd7d59c4ca299db04faed6b0",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/_tensorflow-models_face-detection-1.0.3/NOTICE.json",
+          "bytes": 519,
+          "sha256": "ada643231f33fbd2ba43b8271800cdf090451b322372b5dd58fa04d50f0aac55",
+          "source": {
+            "npm_package": "@tensorflow-models/face-detection",
+            "version": "1.0.3",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "@tensorflow/tfjs-converter",
+      "version": "4.22.0",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/_tensorflow_tfjs-converter-4.22.0/LICENSE-1.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": {
+            "repository": "tensorflow/tfjs",
+            "commit": "5f8c90682cb59baff9b948028371dbbc85119243",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/_tensorflow_tfjs-converter-4.22.0/NOTICE.json",
+          "bytes": 534,
+          "sha256": "ccc1e197581017d989c9724c5b377888d3c1e70ca265fafb69589720f6cf094d",
+          "source": {
+            "npm_package": "@tensorflow/tfjs-converter",
+            "version": "4.22.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "@tensorflow/tfjs-core",
+      "version": "4.22.0",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/_tensorflow_tfjs-core-4.22.0/LICENSE-1.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": {
+            "repository": "tensorflow/tfjs",
+            "commit": "5f8c90682cb59baff9b948028371dbbc85119243",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/_tensorflow_tfjs-core-4.22.0/NOTICE.json",
+          "bytes": 524,
+          "sha256": "d84569ac842eee3524814afaae922193cd9cb35b2a246ec6ca9dab53369d5228",
+          "source": {
+            "npm_package": "@tensorflow/tfjs-core",
+            "version": "4.22.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "audio-context",
+      "version": "1.0.3",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/audio-context-1.0.3/LICENSE-1.txt",
+          "bytes": 1081,
+          "sha256": "8ec8b2a15204242a632a163c7c8d9f92d1e94f91e62522a834fb31d41b680899",
+          "source": {
+            "repository": "audiojs/audio-context",
+            "commit": "f788a12598b416c1c5cadbab2cc4610701e3e073",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/audio-context-1.0.3/NOTICE.json",
+          "bytes": 601,
+          "sha256": "137186b31d632cb1247e462c46bddf40e3d09a4a1e387cc3eb3f686b6b7c9629",
+          "source": {
+            "npm_package": "audio-context",
+            "version": "1.0.3",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "blockly",
+      "version": "12.4.1",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/blockly-12.4.1/LICENSE-1.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": {
+            "repository": "google/blockly",
+            "commit": "39c4b589eac103ffe1a7184c287a90e624980a31",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/blockly-12.4.1/NOTICE.json",
+          "bytes": 509,
+          "sha256": "0d5a0cc246e4b7f6dab0f1c99d217eee9465a6eb35b0d5770767c4c6ba353c68",
+          "source": {
+            "npm_package": "blockly",
+            "version": "12.4.1",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "format-message",
+      "version": "6.2.4",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/format-message-6.2.4/LICENSE-1.txt",
+          "bytes": 1059,
+          "sha256": "60a3946f201f9fa04ad5b02f24c5d92f07ccfdee3948900723c70ca23e4055fd",
+          "source": {
+            "repository": "format-message/format-message",
+            "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+            "path": "LICENSE-MIT"
+          }
+        },
+        {
+          "path": "licenses/format-message-6.2.4/NOTICE.json",
+          "bytes": 484,
+          "sha256": "c0ea1e1f239f4f756de3571a0561c959f003c394636a0ba0dee63d02ad19d4ea",
+          "source": {
+            "npm_package": "format-message",
+            "version": "6.2.4",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "format-message-formats",
+      "version": "6.2.4",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/format-message-formats-6.2.4/LICENSE-1.txt",
+          "bytes": 1059,
+          "sha256": "60a3946f201f9fa04ad5b02f24c5d92f07ccfdee3948900723c70ca23e4055fd",
+          "source": {
+            "repository": "format-message/format-message",
+            "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+            "path": "LICENSE-MIT"
+          }
+        },
+        {
+          "path": "licenses/format-message-formats-6.2.4/NOTICE.json",
+          "bytes": 492,
+          "sha256": "d5a8860ab4f0c43346a2ab67d6be18ab9c62740662410168d1b7dca779c08262",
+          "source": {
+            "npm_package": "format-message-formats",
+            "version": "6.2.4",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "format-message-interpret",
+      "version": "6.2.4",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/format-message-interpret-6.2.4/LICENSE-1.txt",
+          "bytes": 1059,
+          "sha256": "60a3946f201f9fa04ad5b02f24c5d92f07ccfdee3948900723c70ca23e4055fd",
+          "source": {
+            "repository": "format-message/format-message",
+            "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+            "path": "LICENSE-MIT"
+          }
+        },
+        {
+          "path": "licenses/format-message-interpret-6.2.4/NOTICE.json",
+          "bytes": 494,
+          "sha256": "b54325ec6c8af7fcbf360181546fa1f4caf18a6e81821d026b48bcc91d9ab3c8",
+          "source": {
+            "npm_package": "format-message-interpret",
+            "version": "6.2.4",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "format-message-parse",
+      "version": "6.2.4",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/format-message-parse-6.2.4/LICENSE-1.txt",
+          "bytes": 1059,
+          "sha256": "60a3946f201f9fa04ad5b02f24c5d92f07ccfdee3948900723c70ca23e4055fd",
+          "source": {
+            "repository": "format-message/format-message",
+            "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+            "path": "LICENSE-MIT"
+          }
+        },
+        {
+          "path": "licenses/format-message-parse-6.2.4/NOTICE.json",
+          "bytes": 490,
+          "sha256": "6ab53a0ccda495e8264d86157663424aed7b08c1ed69f61cf65b9809855ff303",
+          "source": {
+            "npm_package": "format-message-parse",
+            "version": "6.2.4",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get-float-time-domain-data",
+      "version": "0.1.0",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/get-float-time-domain-data-0.1.0/LICENSE-1.txt",
+          "bytes": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/MIT.txt"
+          }
+        },
+        {
+          "path": "licenses/get-float-time-domain-data-0.1.0/NOTICE.json",
+          "bytes": 570,
+          "sha256": "79a7f0713c6d9549ab8dee38228b3b71496e61c159960dad3c28f56907ab3e15",
+          "source": {
+            "npm_package": "get-float-time-domain-data",
+            "version": "0.1.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "get-user-media-promise",
+      "version": "1.1.4",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/get-user-media-promise-1.1.4/LICENSE-1.txt",
+          "bytes": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/Apache-2.0.txt"
+          }
+        },
+        {
+          "path": "licenses/get-user-media-promise-1.1.4/NOTICE.json",
+          "bytes": 581,
+          "sha256": "1c9c108814ea263988127f98d773ae9565a6ffd23317e57c3a70903b3a2b45ba",
+          "source": {
+            "npm_package": "get-user-media-promise",
+            "version": "1.1.4",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "grapheme-breaker",
+      "version": "0.3.2",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/grapheme-breaker-0.3.2/LICENSE-1.txt",
+          "bytes": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/MIT.txt"
+          }
+        },
+        {
+          "path": "licenses/grapheme-breaker-0.3.2/NOTICE.json",
+          "bytes": 548,
+          "sha256": "57731abf8ce364df9cc54d5e63819456d49ef242d634e4abf576478fd1385c6f",
+          "source": {
+            "npm_package": "grapheme-breaker",
+            "version": "0.3.2",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "is-in-browser",
+      "version": "1.1.3",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/is-in-browser-1.1.3/LICENSE-1.txt",
+          "bytes": 1076,
+          "sha256": "fe78d30fe8703b6a43f60b8cb87d534d71b07ff28fecdb5d3b3a481340d7988e",
+          "source": {
+            "repository": "tuxsudo/is-in-browser",
+            "commit": "aa6cbcaaeb65dc5321415e79700482e3eccafcf0",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/is-in-browser-1.1.3/NOTICE.json",
+          "bytes": 514,
+          "sha256": "ced8be4ec100d9ff238c44cc263e04a30ca01491ae6bc7301cd6afc601a31d01",
+          "source": {
+            "npm_package": "is-in-browser",
+            "version": "1.1.3",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "keymirror",
+      "version": "0.1.1",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/keymirror-0.1.1/LICENSE-1.txt",
+          "bytes": 10280,
+          "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/Apache-2.0.txt"
+          }
+        },
+        {
+          "path": "licenses/keymirror-0.1.1/NOTICE.json",
+          "bytes": 650,
+          "sha256": "284d75aafd660e80886f0651b836d7969ef25a9b1448da529d9b7ee9b29b0dbb",
+          "source": {
+            "npm_package": "keymirror",
+            "version": "0.1.1",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        },
+        {
+          "path": "licenses/keymirror-0.1.1/COPYRIGHT.txt",
+          "bytes": 603,
+          "sha256": "38efba4364d42d6c878e8d1041e72008d0a62b1d0ccac7313f9a7d75bdf6caa4",
+          "source": {
+            "npm_package": "keymirror",
+            "version": "0.1.1",
+            "path": "index.js (license header)",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "linebreak",
+      "version": "0.3.0",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/linebreak-0.3.0/LICENSE-1.txt",
+          "bytes": 1077,
+          "sha256": "cf22b8198f0886a8d4626121579114f23141070e1fceab02ab3c1c361e163440",
+          "source": {
+            "repository": "devongovett/linebreaker",
+            "commit": "dc9603e8e58ce0e6d431cc5087ffb98132cc6a07",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/linebreak-0.3.0/NOTICE.json",
+          "bytes": 532,
+          "sha256": "e70c7446c8c033e67e905522369137cb14c8776a949e581ed7b8720460a762a2",
+          "source": {
+            "npm_package": "linebreak",
+            "version": "0.3.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "lookup-closest-locale",
+      "version": "6.2.0",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/lookup-closest-locale-6.2.0/LICENSE-1.txt",
+          "bytes": 1059,
+          "sha256": "60a3946f201f9fa04ad5b02f24c5d92f07ccfdee3948900723c70ca23e4055fd",
+          "source": {
+            "repository": "format-message/format-message",
+            "commit": "ef02f024d2f3c5c0f0cd21a618f78c7d12d03fb3",
+            "path": "LICENSE-MIT"
+          }
+        },
+        {
+          "path": "licenses/lookup-closest-locale-6.2.0/NOTICE.json",
+          "bytes": 453,
+          "sha256": "1daba7448fa647189162e8b967b97175cc136308766a8716c8b68bfd2075cc98",
+          "source": {
+            "npm_package": "lookup-closest-locale",
+            "version": "6.2.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "microee",
+      "version": "0.0.6",
+      "license_basis": "legacy-bsd-unconfirmed",
+      "review_open": true,
+      "files": [
+        {
+          "path": "licenses/microee-0.0.6/LICENSE-1.txt",
+          "bytes": 1460,
+          "sha256": "5a93d5831e1297ab10fe643e1a631e83be392896da14ee2951285a79012df69d",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/BSD-3-Clause.txt"
+          }
+        },
+        {
+          "path": "licenses/microee-0.0.6/NOTICE.json",
+          "bytes": 751,
+          "sha256": "8262e9c1a08d99d0d0d5edee42f5abc28e796d49ed74f4478e00eaaafd8a1ce0",
+          "source": {
+            "npm_package": "microee",
+            "version": "0.0.6",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "omggif",
+      "version": "1.0.10",
+      "license_basis": "published-license-in-readme",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/omggif-1.0.10/LICENSE-1.txt",
+          "bytes": 1172,
+          "sha256": "fc7d762e0ebf8720d0a03cf00058aaa3a198347e9651be2f50a25e3b3ec13985",
+          "source": {
+            "repository": "deanm/omggif",
+            "commit": "334a0c0b6aa2eb5e63fae64ba7911ee647655ab2",
+            "path": "README"
+          }
+        },
+        {
+          "path": "licenses/omggif-1.0.10/NOTICE.json",
+          "bytes": 499,
+          "sha256": "3ef587546e9e6fbc1d288e0fcebc3ab99a6138d9c274d5a1c443f8886b907eb0",
+          "source": {
+            "npm_package": "omggif",
+            "version": "1.0.10",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "react-popover",
+      "version": "0.5.10",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/react-popover-0.5.10/LICENSE-1.txt",
+          "bytes": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/MIT.txt"
+          }
+        },
+        {
+          "path": "licenses/react-popover-0.5.10/NOTICE.json",
+          "bytes": 568,
+          "sha256": "c29ce85b7e276912b2b4749ade30732cc4a467802548cb454bacc8a8532ba785",
+          "source": {
+            "npm_package": "react-popover",
+            "version": "0.5.10",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/react-remove-scroll-bar-2.3.8/LICENSE-1.txt",
+          "bytes": 1093,
+          "sha256": "a79aae0c0f21990d9d963bb3c5a79cdcea9a46f8523ba55c58d7fe776b6ebc84",
+          "source": {
+            "repository": "theKashey/react-remove-scroll-bar",
+            "commit": "8ca9ba5ea52de03308fe8ced94f7b159a44d28ff",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/react-remove-scroll-bar-2.3.8/NOTICE.json",
+          "bytes": 526,
+          "sha256": "44a3ae776c9275fffac06421ed8a80e9ddb5527bcfcf009514e86852a1a29196",
+          "source": {
+            "npm_package": "react-remove-scroll-bar",
+            "version": "2.3.8",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "redux-throttle",
+      "version": "0.1.1",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/redux-throttle-0.1.1/LICENSE-1.txt",
+          "bytes": 1071,
+          "sha256": "ea278b3f006775c9556e79f32d867bfaf1b3f6326c7c23286d86ebb599d8b154",
+          "source": {
+            "repository": "mathieudutour/redux-throttle",
+            "commit": "33109c8f6278feb0cb50b30ad19f72cdf1ffb3f3",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/redux-throttle-0.1.1/NOTICE.json",
+          "bytes": 525,
+          "sha256": "ad29299397f30225203bb88d6209dab8ae1d6195b0162b5aa1868ad202a4fc0d",
+          "source": {
+            "npm_package": "redux-throttle",
+            "version": "0.1.1",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "seedrandom",
+      "version": "3.0.5",
+      "license_basis": "published-license-in-readme",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/seedrandom-3.0.5/LICENSE-1.txt",
+          "bytes": 11854,
+          "sha256": "4f42a296eee4f5ae3a8dadba94c2b0b5fb57662b96b8749f4d5288d4629b6240",
+          "source": {
+            "repository": "davidbau/seedrandom",
+            "commit": "4460ad325a0a15273a211e509f03ae0beb99511a",
+            "path": "README.md"
+          }
+        },
+        {
+          "path": "licenses/seedrandom-3.0.5/NOTICE.json",
+          "bytes": 501,
+          "sha256": "5d99ddd21efc356971673f48f6834f0d36b7d6ba8b13c8c8fc1194d98d048793",
+          "source": {
+            "npm_package": "seedrandom",
+            "version": "3.0.5",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "to-style",
+      "version": "1.3.3",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/to-style-1.3.3/LICENSE-1.txt",
+          "bytes": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/MIT.txt"
+          }
+        },
+        {
+          "path": "licenses/to-style-1.3.3/NOTICE.json",
+          "bytes": 509,
+          "sha256": "5e474c2b260f25f3d3cf5d5ef5902eafd3a0c95004513ae3e344dd058f564245",
+          "source": {
+            "npm_package": "to-style",
+            "version": "1.3.3",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "unicode-trie",
+      "version": "0.3.1",
+      "license_basis": "official-project-license",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/unicode-trie-0.3.1/LICENSE-1.txt",
+          "bytes": 1040,
+          "sha256": "43439dbd4f43837aadab215cdbe5a422cc6323a50c4ea84d8d6bbc3671666a1d",
+          "source": {
+            "repository": "devongovett/unicode-trie",
+            "commit": "b0f97b95700c59ea742bfad532b30393b1bd6ea3",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/unicode-trie-0.3.1/NOTICE.json",
+          "bytes": 535,
+          "sha256": "3dd198008075c5cd8b0459b2390cb50c5fe3952585cadb725880bc4eee82a00d",
+          "source": {
+            "npm_package": "unicode-trie",
+            "version": "0.3.1",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "wav-encoder",
+      "version": "1.3.0",
+      "license_basis": "declared-license-standard-text",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/wav-encoder-1.3.0/LICENSE-1.txt",
+          "bytes": 1078,
+          "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5",
+          "source": {
+            "repository": "spdx/license-list-data",
+            "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+            "path": "text/MIT.txt"
+          }
+        },
+        {
+          "path": "licenses/wav-encoder-1.3.0/NOTICE.json",
+          "bytes": 540,
+          "sha256": "fba9dc10a3beb4c539367822df53b7e0ab84aceabba8e79911fdccb84cf12aec",
+          "source": {
+            "npm_package": "wav-encoder",
+            "version": "1.3.0",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    }
+  ]
+}

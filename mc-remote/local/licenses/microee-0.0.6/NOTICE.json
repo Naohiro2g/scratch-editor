@@ -1,0 +1,22 @@
+{
+  "package": "microee",
+  "version": "0.0.6",
+  "license": "BSD",
+  "author": {
+    "name": "Mikito Takada",
+    "email": "mixu@mixu.net",
+    "url": "http://mixu.net/"
+  },
+  "contributors": null,
+  "repository": "git://github.com/mixu/microee",
+  "published_git_head": null,
+  "license_basis": "legacy-bsd-unconfirmed",
+  "body_sources": [
+    {
+      "repository": "spdx/license-list-data",
+      "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+      "path": "text/BSD-3-Clause.txt"
+    }
+  ],
+  "open_issue": "Publisher declares BSD but the clause count and full original body could not be identified. The standard BSD-3-Clause text is reference material; this does not ratify a license change or close the distribution license review."
+}

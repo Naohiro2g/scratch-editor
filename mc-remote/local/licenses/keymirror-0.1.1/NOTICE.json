@@ -1,0 +1,25 @@
+{
+  "package": "keymirror",
+  "version": "0.1.1",
+  "license": [
+    {
+      "type": "Apache-2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ],
+  "author": "Samuel Reed <sam@tixelated.com> (http://strml.net/)",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/STRML/keyMirror"
+  },
+  "published_git_head": "2dafae96f33088e3030804f1113543c3c6c130b7",
+  "license_basis": "declared-license-standard-text",
+  "body_sources": [
+    {
+      "repository": "spdx/license-list-data",
+      "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+      "path": "text/Apache-2.0.txt"
+    }
+  ]
+}

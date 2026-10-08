@@ -1,0 +1,3595 @@
+{
+  "schema": "mc-remote.scratch-local-license-review",
+  "schema_version": 1,
+  "gap_entries": 132,
+  "runtime_gap_entries": 26,
+  "build_only_gap_entries": 106,
+  "entries": [
+    {
+      "name": "@alcalzone/ansi-tokenize",
+      "version": "0.1.3",
+      "location": "node_modules/@alcalzone/ansi-tokenize",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@jsonjoy.com/json-pointer",
+      "version": "1.0.2",
+      "location": "node_modules/@jsonjoy.com/json-pointer",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@mediapipe/face_detection",
+      "version": "0.4.1646425229",
+      "location": "node_modules/@mediapipe/face_detection",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "CopyWebpackPlugin: chunks/mediapipe/face_detection"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "google/mediapipe",
+          "commit": "e6c19885c6d3c6f410c730952aeed2852790d306",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "@mediapipe/face_detection",
+          "version": "0.4.1646425229",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/_mediapipe_face_detection-0.4.1646425229/LICENSE-1.txt",
+        "licenses/supplemental/_mediapipe_face_detection-0.4.1646425229/NOTICE.json"
+      ]
+    },
+    {
+      "name": "@napi-rs/wasm-runtime",
+      "version": "1.1.1",
+      "location": "node_modules/@napi-rs/wasm-runtime",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@nicolo-ribaudo/chokidar-2",
+      "version": "2.1.8-no-fsevents.3",
+      "location": "node_modules/@nicolo-ribaudo/chokidar-2",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@npmcli/agent",
+      "version": "4.0.0",
+      "location": "node_modules/@npmcli/agent",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@pkgr/core",
+      "version": "0.2.9",
+      "location": "node_modules/@pkgr/core",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@pnpm/config.env-replace",
+      "version": "1.1.0",
+      "location": "node_modules/@pnpm/config.env-replace",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@pnpm/network.ca-file",
+      "version": "1.0.2",
+      "location": "node_modules/@pnpm/network.ca-file",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-rc.11",
+      "location": "node_modules/@rolldown/binding-linux-x64-gnu",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.0.0-rc.11",
+      "location": "node_modules/@rolldown/binding-linux-x64-musl",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@npmcli/agent",
+      "version": "4.0.0",
+      "location": "node_modules/@semantic-release/npm/node_modules/npm/node_modules/@npmcli/agent",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@sigstore/verify",
+      "version": "3.1.0",
+      "location": "node_modules/@semantic-release/npm/node_modules/npm/node_modules/@sigstore/verify",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "location": "node_modules/@semantic-release/npm/node_modules/npm/node_modules/spdx-exceptions",
+      "declared_license": "CC-BY-3.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-license-ids",
+      "version": "3.0.23",
+      "location": "node_modules/@semantic-release/npm/node_modules/npm/node_modules/spdx-license-ids",
+      "declared_license": "CC0-1.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@sigstore/verify",
+      "version": "3.1.0",
+      "location": "node_modules/@sigstore/verify",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tensorflow-models/face-detection",
+      "version": "1.0.3",
+      "location": "node_modules/@tensorflow-models/face-detection",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js",
+        "gui.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "tensorflow/tfjs-models",
+          "commit": "540391a0833c0329cd7d59c4ca299db04faed6b0",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "@tensorflow-models/face-detection",
+          "version": "1.0.3",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/_tensorflow-models_face-detection-1.0.3/LICENSE-1.txt",
+        "licenses/supplemental/_tensorflow-models_face-detection-1.0.3/NOTICE.json"
+      ]
+    },
+    {
+      "name": "@tensorflow/tfjs",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tensorflow/tfjs-backend-cpu",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-backend-cpu",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tensorflow/tfjs-backend-webgl",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-backend-webgl",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tensorflow/tfjs-converter",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-converter",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/data/compiled_api.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/flags.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/operations/custom_op/register.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "tensorflow/tfjs",
+          "commit": "5f8c90682cb59baff9b948028371dbbc85119243",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "@tensorflow/tfjs-converter",
+          "version": "4.22.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/_tensorflow_tfjs-converter-4.22.0/LICENSE-1.txt",
+        "licenses/supplemental/_tensorflow_tfjs-converter-4.22.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "@tensorflow/tfjs-core",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-core",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/backends/backend.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/util_base.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/environment.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "tensorflow/tfjs",
+          "commit": "5f8c90682cb59baff9b948028371dbbc85119243",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "@tensorflow/tfjs-core",
+          "version": "4.22.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/_tensorflow_tfjs-core-4.22.0/LICENSE-1.txt",
+        "licenses/supplemental/_tensorflow_tfjs-core-4.22.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "@tensorflow/tfjs-data",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-data",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tensorflow/tfjs-layers",
+      "version": "4.22.0",
+      "location": "node_modules/@tensorflow/tfjs-layers",
+      "declared_license": "Apache-2.0 AND MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@transifex/api",
+      "version": "7.1.6",
+      "location": "node_modules/@transifex/api",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@tybys/wasm-util",
+      "version": "0.10.1",
+      "location": "node_modules/@tybys/wasm-util",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@unicode/unicode-17.0.0",
+      "version": "1.6.16",
+      "location": "node_modules/@unicode/unicode-17.0.0",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@unrs/resolver-binding-linux-x64-gnu",
+      "version": "1.11.1",
+      "location": "node_modules/@unrs/resolver-binding-linux-x64-gnu",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@unrs/resolver-binding-linux-x64-musl",
+      "version": "1.11.1",
+      "location": "node_modules/@unrs/resolver-binding-linux-x64-musl",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "adm-zip",
+      "version": "0.4.11",
+      "location": "node_modules/adm-zip",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "array-ify",
+      "version": "1.0.0",
+      "location": "node_modules/array-ify",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "assert-plus",
+      "version": "1.0.0",
+      "location": "node_modules/assert-plus",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "audio-context",
+      "version": "1.0.3",
+      "location": "node_modules/audio-context",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/audio-context/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/audio-context/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/audio-context/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "audiojs/audio-context",
+          "commit": "f788a12598b416c1c5cadbab2cc4610701e3e073",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "audio-context",
+          "version": "1.0.3",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/audio-context-1.0.3/LICENSE-1.txt",
+        "licenses/supplemental/audio-context-1.0.3/NOTICE.json"
+      ]
+    },
+    {
+      "name": "babel-core",
+      "version": "7.0.0-bridge.0",
+      "location": "node_modules/babel-core",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "babel-plugin-extract-format-message",
+      "version": "6.2.4",
+      "location": "node_modules/babel-plugin-extract-format-message",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "babel-plugin-transform-format-message",
+      "version": "6.2.4",
+      "location": "node_modules/babel-plugin-transform-format-message",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "base64-loader",
+      "version": "1.0.0",
+      "location": "node_modules/base64-loader",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "blockly",
+      "version": "12.4.1",
+      "location": "node_modules/blockly",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "Blockly is embedded in scratch-blocks/dist/main.mjs"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "google/blockly",
+          "commit": "39c4b589eac103ffe1a7184c287a90e624980a31",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "blockly",
+          "version": "12.4.1",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/blockly-12.4.1/LICENSE-1.txt",
+        "licenses/supplemental/blockly-12.4.1/NOTICE.json"
+      ]
+    },
+    {
+      "name": "saxes",
+      "version": "6.0.0",
+      "location": "node_modules/blockly/node_modules/saxes",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "boolbase",
+      "version": "1.0.0",
+      "location": "node_modules/boolbase",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "browser-stdout",
+      "version": "1.3.0",
+      "location": "node_modules/browser-stdout",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "bser",
+      "version": "2.1.1",
+      "location": "node_modules/bser",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "buffer-equal",
+      "version": "0.0.1",
+      "location": "node_modules/buffer-equal",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "callsite",
+      "version": "1.0.0",
+      "location": "node_modules/callsite",
+      "declared_license": null,
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "colors",
+      "version": "0.6.2",
+      "location": "node_modules/colors",
+      "declared_license": null,
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "cookie-signature",
+      "version": "1.0.7",
+      "location": "node_modules/cookie-signature",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "cssstyle",
+      "version": "1.4.0",
+      "location": "node_modules/cssstyle",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "eastasianwidth",
+      "version": "0.2.0",
+      "location": "node_modules/eastasianwidth",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "err-code",
+      "version": "2.0.3",
+      "location": "node_modules/err-code",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "eslint-plugin-format-message",
+      "version": "6.2.4",
+      "location": "node_modules/eslint-plugin-format-message",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "location": "node_modules/esrecurse",
+      "declared_license": "BSD-2-Clause",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "fb-watchman",
+      "version": "2.0.2",
+      "location": "node_modules/fb-watchman",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "findup",
+      "version": "0.1.5",
+      "location": "node_modules/findup",
+      "declared_license": [
+        {
+          "type": "MIT",
+          "url": "http  : //www.opensource.org/licenses/MIT"
+        }
+      ],
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "commander",
+      "version": "2.1.0",
+      "location": "node_modules/findup/node_modules/commander",
+      "declared_license": null,
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "format",
+      "version": "0.2.2",
+      "location": "node_modules/format",
+      "declared_license": [
+        {
+          "type": "MIT",
+          "url": "http://sjs.mit-license.org"
+        }
+      ],
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "format-message",
+      "version": "6.2.4",
+      "location": "node_modules/format-message",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "format-message/format-message",
+          "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+          "path": "LICENSE-MIT"
+        },
+        {
+          "npm_package": "format-message",
+          "version": "6.2.4",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/format-message-6.2.4/LICENSE-1.txt",
+        "licenses/supplemental/format-message-6.2.4/NOTICE.json"
+      ]
+    },
+    {
+      "name": "format-message-cli",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-cli",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "format-message-estree-util",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-estree-util",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "format-message-formats",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-formats",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-formats/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-formats/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message-formats/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "format-message/format-message",
+          "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+          "path": "LICENSE-MIT"
+        },
+        {
+          "npm_package": "format-message-formats",
+          "version": "6.2.4",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/format-message-formats-6.2.4/LICENSE-1.txt",
+        "licenses/supplemental/format-message-formats-6.2.4/NOTICE.json"
+      ]
+    },
+    {
+      "name": "format-message-generate-id",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-generate-id",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "format-message-interpret",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-interpret",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-interpret/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-interpret/plurals.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-interpret/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "format-message/format-message",
+          "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+          "path": "LICENSE-MIT"
+        },
+        {
+          "npm_package": "format-message-interpret",
+          "version": "6.2.4",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/format-message-interpret-6.2.4/LICENSE-1.txt",
+        "licenses/supplemental/format-message-interpret-6.2.4/NOTICE.json"
+      ]
+    },
+    {
+      "name": "format-message-parse",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-parse",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-parse/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-parse/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message-parse/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "format-message/format-message",
+          "commit": "ece4dfacbec6af56e98897a3acbf0c99c64c2ed2",
+          "path": "LICENSE-MIT"
+        },
+        {
+          "npm_package": "format-message-parse",
+          "version": "6.2.4",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/format-message-parse-6.2.4/LICENSE-1.txt",
+        "licenses/supplemental/format-message-parse-6.2.4/NOTICE.json"
+      ]
+    },
+    {
+      "name": "format-message-print",
+      "version": "6.2.4",
+      "location": "node_modules/format-message-print",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "get-float-time-domain-data",
+      "version": "0.1.0",
+      "location": "node_modules/get-float-time-domain-data",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js",
+        "gui.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/MIT.txt"
+        },
+        {
+          "npm_package": "get-float-time-domain-data",
+          "version": "0.1.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/get-float-time-domain-data-0.1.0/LICENSE-1.txt",
+        "licenses/supplemental/get-float-time-domain-data-0.1.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "get-user-media-promise",
+      "version": "1.1.4",
+      "location": "node_modules/get-user-media-promise",
+      "declared_license": "Apache-2.0",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js",
+        "gui.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/Apache-2.0.txt"
+        },
+        {
+          "npm_package": "get-user-media-promise",
+          "version": "1.1.4",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/get-user-media-promise-1.1.4/LICENSE-1.txt",
+        "licenses/supplemental/get-user-media-promise-1.1.4/NOTICE.json"
+      ]
+    },
+    {
+      "name": "glob-to-regex.js",
+      "version": "1.2.0",
+      "location": "node_modules/glob-to-regex.js",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "grapheme-breaker",
+      "version": "0.3.2",
+      "location": "node_modules/grapheme-breaker",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js",
+        "gui.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/MIT.txt"
+        },
+        {
+          "npm_package": "grapheme-breaker",
+          "version": "0.3.2",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/grapheme-breaker-0.3.2/LICENSE-1.txt",
+        "licenses/supplemental/grapheme-breaker-0.3.2/NOTICE.json"
+      ]
+    },
+    {
+      "name": "growl",
+      "version": "1.10.3",
+      "location": "node_modules/growl",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "handle-thing",
+      "version": "2.0.1",
+      "location": "node_modules/handle-thing",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "hpack.js",
+      "version": "2.1.6",
+      "location": "node_modules/hpack.js",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "http-deceiver",
+      "version": "1.2.7",
+      "location": "node_modules/http-deceiver",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "location": "node_modules/imurmurhash",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "is-in-browser",
+      "version": "1.1.3",
+      "location": "node_modules/is-in-browser",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js",
+        "gui.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "tuxsudo/is-in-browser",
+          "commit": "aa6cbcaaeb65dc5321415e79700482e3eccafcf0",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "is-in-browser",
+          "version": "1.1.3",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/is-in-browser-1.1.3/LICENSE-1.txt",
+        "licenses/supplemental/is-in-browser-1.1.3/NOTICE.json"
+      ]
+    },
+    {
+      "name": "saxes",
+      "version": "6.0.0",
+      "location": "node_modules/isomorphic-dompurify/node_modules/saxes",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "java-properties",
+      "version": "1.0.2",
+      "location": "node_modules/java-properties",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "javascript-natural-sort",
+      "version": "0.7.1",
+      "location": "node_modules/javascript-natural-sort",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "agent-base",
+      "version": "6.0.2",
+      "location": "node_modules/jest-environment-jsdom/node_modules/agent-base",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "http-proxy-agent",
+      "version": "5.0.0",
+      "location": "node_modules/jest-environment-jsdom/node_modules/http-proxy-agent",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "https-proxy-agent",
+      "version": "5.0.1",
+      "location": "node_modules/jest-environment-jsdom/node_modules/https-proxy-agent",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "saxes",
+      "version": "6.0.0",
+      "location": "node_modules/jest-environment-jsdom/node_modules/saxes",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "jest-pnp-resolver",
+      "version": "1.2.3",
+      "location": "node_modules/jest-pnp-resolver",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "parse5",
+      "version": "5.1.0",
+      "location": "node_modules/jsdom/node_modules/parse5",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "jsonify",
+      "version": "0.0.1",
+      "location": "node_modules/jsonify",
+      "declared_license": "Public Domain",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "keymirror",
+      "version": "0.1.1",
+      "location": "node_modules/keymirror",
+      "declared_license": [
+        {
+          "type": "Apache-2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0"
+        }
+      ],
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/keymirror/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/keymirror/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/keymirror/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/Apache-2.0.txt"
+        },
+        {
+          "npm_package": "keymirror",
+          "version": "0.1.1",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        },
+        {
+          "npm_package": "keymirror",
+          "version": "0.1.1",
+          "path": "index.js (license header)",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/keymirror-0.1.1/LICENSE-1.txt",
+        "licenses/supplemental/keymirror-0.1.1/NOTICE.json",
+        "licenses/supplemental/keymirror-0.1.1/COPYRIGHT.txt"
+      ]
+    },
+    {
+      "name": "keyv",
+      "version": "4.5.4",
+      "location": "node_modules/keyv",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "language-subtag-registry",
+      "version": "0.3.23",
+      "location": "node_modules/language-subtag-registry",
+      "declared_license": "CC0-1.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "language-tags",
+      "version": "1.0.9",
+      "location": "node_modules/language-tags",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "linebreak",
+      "version": "0.3.0",
+      "location": "node_modules/linebreak",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/linebreak/src/linebreaker.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/linebreak/src/classes.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/linebreak/src/pairs.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "devongovett/linebreaker",
+          "commit": "dc9603e8e58ce0e6d431cc5087ffb98132cc6a07",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "linebreak",
+          "version": "0.3.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/linebreak-0.3.0/LICENSE-1.txt",
+        "licenses/supplemental/linebreak-0.3.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "lookup-closest-locale",
+      "version": "6.2.0",
+      "location": "node_modules/lookup-closest-locale",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "format-message/format-message",
+          "commit": "ef02f024d2f3c5c0f0cd21a618f78c7d12d03fb3",
+          "path": "LICENSE-MIT"
+        },
+        {
+          "npm_package": "lookup-closest-locale",
+          "version": "6.2.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/lookup-closest-locale-6.2.0/LICENSE-1.txt",
+        "licenses/supplemental/lookup-closest-locale-6.2.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "microee",
+      "version": "0.0.6",
+      "location": "node_modules/microee",
+      "declared_license": "BSD",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/microee/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/microee/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/microee/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/BSD-3-Clause.txt"
+        },
+        {
+          "npm_package": "microee",
+          "version": "0.0.6",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/microee-0.0.6/LICENSE-1.txt",
+        "licenses/supplemental/microee-0.0.6/NOTICE.json"
+      ]
+    },
+    {
+      "name": "multipipe",
+      "version": "0.3.1",
+      "location": "node_modules/multipipe",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "location": "node_modules/natural-compare",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "nerf-dart",
+      "version": "1.0.0",
+      "location": "node_modules/nerf-dart",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "tr46",
+      "version": "0.0.3",
+      "location": "node_modules/node-fetch/node_modules/tr46",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "node-options-to-argv",
+      "version": "1.0.0",
+      "location": "node_modules/node-options-to-argv",
+      "declared_license": "BlueOak-1.0.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@npmcli/agent",
+      "version": "3.0.0",
+      "location": "node_modules/npm/node_modules/@npmcli/agent",
+      "declared_license": "ISC",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@sigstore/verify",
+      "version": "2.1.1",
+      "location": "node_modules/npm/node_modules/@sigstore/verify",
+      "declared_license": "Apache-2.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "eastasianwidth",
+      "version": "0.2.0",
+      "location": "node_modules/npm/node_modules/eastasianwidth",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "err-code",
+      "version": "2.0.3",
+      "location": "node_modules/npm/node_modules/err-code",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "location": "node_modules/npm/node_modules/imurmurhash",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "location": "node_modules/npm/node_modules/spdx-exceptions",
+      "declared_license": "CC-BY-3.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-license-ids",
+      "version": "3.0.23",
+      "location": "node_modules/npm/node_modules/spdx-license-ids",
+      "declared_license": "CC0-1.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "omggif",
+      "version": "1.0.10",
+      "location": "node_modules/omggif",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/omggif/omggif.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/omggif/omggif.js",
+        "gui.js.map: webpack://GUI/../node_modules/omggif/omggif.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "deanm/omggif",
+          "commit": "334a0c0b6aa2eb5e63fae64ba7911ee647655ab2",
+          "path": "README"
+        },
+        {
+          "npm_package": "omggif",
+          "version": "1.0.10",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/omggif-1.0.10/LICENSE-1.txt",
+        "licenses/supplemental/omggif-1.0.10/NOTICE.json"
+      ]
+    },
+    {
+      "name": "pn",
+      "version": "1.1.0",
+      "location": "node_modules/pn",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "react-popover",
+      "version": "0.5.10",
+      "location": "node_modules/react-popover",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/layout.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/on-resize.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/MIT.txt"
+        },
+        {
+          "npm_package": "react-popover",
+          "version": "0.5.10",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/react-popover-0.5.10/LICENSE-1.txt",
+        "licenses/supplemental/react-popover-0.5.10/NOTICE.json"
+      ]
+    },
+    {
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "location": "node_modules/react-remove-scroll-bar",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/constants.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/utils.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/component.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "theKashey/react-remove-scroll-bar",
+          "commit": "8ca9ba5ea52de03308fe8ced94f7b159a44d28ff",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "react-remove-scroll-bar",
+          "version": "2.3.8",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/react-remove-scroll-bar-2.3.8/LICENSE-1.txt",
+        "licenses/supplemental/react-remove-scroll-bar-2.3.8/NOTICE.json"
+      ]
+    },
+    {
+      "name": "isarray",
+      "version": "1.0.0",
+      "location": "node_modules/readable-stream/node_modules/isarray",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "redux-throttle",
+      "version": "0.1.1",
+      "location": "node_modules/redux-throttle",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "mathieudutour/redux-throttle",
+          "commit": "33109c8f6278feb0cb50b30ad19f72cdf1ffb3f3",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "redux-throttle",
+          "version": "0.1.1",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/redux-throttle-0.1.1/LICENSE-1.txt",
+        "licenses/supplemental/redux-throttle-0.1.1/NOTICE.json"
+      ]
+    },
+    {
+      "name": "raw-loader",
+      "version": "0.5.1",
+      "location": "node_modules/script-loader/node_modules/raw-loader",
+      "declared_license": [
+        {
+          "type": "MIT",
+          "url": "http://www.opensource.org/licenses/mit-license.php"
+        }
+      ],
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "seedrandom",
+      "version": "3.0.5",
+      "location": "node_modules/seedrandom",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/lib/alea.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/lib/tychei.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "davidbau/seedrandom",
+          "commit": "4460ad325a0a15273a211e509f03ae0beb99511a",
+          "path": "README.md"
+        },
+        {
+          "npm_package": "seedrandom",
+          "version": "3.0.5",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/seedrandom-3.0.5/LICENSE-1.txt",
+        "licenses/supplemental/seedrandom-3.0.5/NOTICE.json"
+      ]
+    },
+    {
+      "name": "select-hose",
+      "version": "2.0.0",
+      "location": "node_modules/select-hose",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "location": "node_modules/spdx-exceptions",
+      "declared_license": "CC-BY-3.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdx-license-ids",
+      "version": "3.0.22",
+      "location": "node_modules/spdx-license-ids",
+      "declared_license": "CC0-1.0",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdy",
+      "version": "4.0.2",
+      "location": "node_modules/spdy",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "spdy-transport",
+      "version": "3.0.0",
+      "location": "node_modules/spdy-transport",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "stackback",
+      "version": "0.0.2",
+      "location": "node_modules/stackback",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "magic-string",
+      "version": "0.22.5",
+      "location": "node_modules/static-module/node_modules/magic-string",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "type-fest",
+      "version": "2.19.0",
+      "location": "node_modules/tempy/node_modules/type-fest",
+      "declared_license": "(MIT OR CC0-1.0)",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "to-style",
+      "version": "1.3.3",
+      "location": "node_modules/to-style",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/src/cssPrefix.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/src/cssUnitless.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/MIT.txt"
+        },
+        {
+          "npm_package": "to-style",
+          "version": "1.3.3",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/to-style-1.3.3/LICENSE-1.txt",
+        "licenses/supplemental/to-style-1.3.3/NOTICE.json"
+      ]
+    },
+    {
+      "name": "@esbuild/linux-x64",
+      "version": "0.28.0",
+      "location": "node_modules/tsx/node_modules/@esbuild/linux-x64",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "unicode-trie",
+      "version": "0.3.1",
+      "location": "node_modules/unicode-trie",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/unicode-trie/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/unicode-trie/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/unicode-trie/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "devongovett/unicode-trie",
+          "commit": "b0f97b95700c59ea742bfad532b30393b1bd6ea3",
+          "path": "LICENSE"
+        },
+        {
+          "npm_package": "unicode-trie",
+          "version": "0.3.1",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/unicode-trie-0.3.1/LICENSE-1.txt",
+        "licenses/supplemental/unicode-trie-0.3.1/NOTICE.json"
+      ]
+    },
+    {
+      "name": "unrs-resolver",
+      "version": "1.11.1",
+      "location": "node_modules/unrs-resolver",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "w3c-xmlserializer",
+      "version": "1.1.2",
+      "location": "node_modules/w3c-xmlserializer",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "wav-encoder",
+      "version": "1.3.0",
+      "location": "node_modules/wav-encoder",
+      "declared_license": "MIT",
+      "distribution": "runtime",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/wav-encoder/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/wav-encoder/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/wav-encoder/index.js"
+      ],
+      "root_license_missing": true,
+      "license_status": "supplemented",
+      "supplemental_sources": [
+        {
+          "repository": "spdx/license-list-data",
+          "commit": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+          "path": "text/MIT.txt"
+        },
+        {
+          "npm_package": "wav-encoder",
+          "version": "1.3.0",
+          "path": "package.json",
+          "package_lock": "package-lock.json"
+        }
+      ],
+      "files": [
+        "licenses/supplemental/wav-encoder-1.3.0/LICENSE-1.txt",
+        "licenses/supplemental/wav-encoder-1.3.0/NOTICE.json"
+      ]
+    },
+    {
+      "name": "wbuf",
+      "version": "1.7.3",
+      "location": "node_modules/wbuf",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "web-audio-test-api",
+      "version": "0.5.2",
+      "location": "node_modules/web-audio-test-api",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "yoga-layout",
+      "version": "3.2.1",
+      "location": "node_modules/yoga-layout",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "canvas",
+      "version": "3.2.3",
+      "location": "packages/scratch-paint/node_modules/canvas",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "raw-loader",
+      "version": "0.5.1",
+      "location": "packages/scratch-render/node_modules/raw-loader",
+      "declared_license": [
+        {
+          "type": "MIT",
+          "url": "http://www.opensource.org/licenses/mit-license.php"
+        }
+      ],
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "canvas",
+      "version": "3.2.3",
+      "location": "packages/scratch-svg-renderer/node_modules/canvas",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53",
+      "location": "packages/task-herder/node_modules/@rolldown/binding-linux-x64-gnu",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.0.0-beta.53",
+      "location": "packages/task-herder/node_modules/@rolldown/binding-linux-x64-musl",
+      "declared_license": "MIT",
+      "distribution": "build-only",
+      "evidence": [],
+      "root_license_missing": true,
+      "license_status": "not-distributed",
+      "supplemental_sources": [],
+      "files": []
+    }
+  ],
+  "original_gap_entries": 135,
+  "original_reconciliation": [
+    {
+      "original_index": 1,
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 2,
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53",
+      "declared_license": "MIT",
+      "current_distribution": "not-in-current-gap-set",
+      "current_status": "installation-count-reduced",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 3,
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53",
+      "declared_license": "MIT",
+      "current_distribution": "not-in-current-gap-set",
+      "current_status": "installation-count-reduced",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 4,
+      "name": "@alcalzone/ansi-tokenize",
+      "version": "0.1.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 5,
+      "name": "@jsonjoy.com/json-pointer",
+      "version": "1.0.2",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 6,
+      "name": "@mediapipe/face_detection",
+      "version": "0.4.1646425229",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "CopyWebpackPlugin: chunks/mediapipe/face_detection"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 7,
+      "name": "@napi-rs/wasm-runtime",
+      "version": "1.1.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 8,
+      "name": "@nicolo-ribaudo/chokidar-2",
+      "version": "2.1.8-no-fsevents.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 9,
+      "name": "@npmcli/agent",
+      "version": "4.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 10,
+      "name": "@pkgr/core",
+      "version": "0.2.9",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 11,
+      "name": "@pnpm/config.env-replace",
+      "version": "1.1.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 12,
+      "name": "@pnpm/network.ca-file",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 13,
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-rc.11",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 14,
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.0.0-rc.11",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 15,
+      "name": "@npmcli/agent",
+      "version": "4.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 16,
+      "name": "@sigstore/verify",
+      "version": "3.1.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 17,
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "declared_license": "CC-BY-3.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 18,
+      "name": "spdx-license-ids",
+      "version": "3.0.23",
+      "declared_license": "CC0-1.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 19,
+      "name": "@sigstore/verify",
+      "version": "3.1.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 20,
+      "name": "@tensorflow-models/face-detection",
+      "version": "1.0.3",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js",
+        "gui.js.map: webpack://GUI/../node_modules/@tensorflow-models/face-detection/dist/face-detection.esm.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 21,
+      "name": "@tensorflow/tfjs",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 22,
+      "name": "@tensorflow/tfjs-backend-cpu",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 23,
+      "name": "@tensorflow/tfjs-backend-webgl",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 24,
+      "name": "@tensorflow/tfjs-converter",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/data/compiled_api.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/flags.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-converter/dist/operations/custom_op/register.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 25,
+      "name": "@tensorflow/tfjs-core",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/backends/backend.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/util_base.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/@tensorflow/tfjs-core/dist/environment.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 26,
+      "name": "@tensorflow/tfjs-data",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 27,
+      "name": "@tensorflow/tfjs-layers",
+      "version": "4.22.0",
+      "declared_license": "Apache-2.0 AND MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 28,
+      "name": "@transifex/api",
+      "version": "7.1.6",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 29,
+      "name": "@tybys/wasm-util",
+      "version": "0.10.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 30,
+      "name": "@unicode/unicode-17.0.0",
+      "version": "1.6.16",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 31,
+      "name": "@unrs/resolver-binding-linux-x64-gnu",
+      "version": "1.11.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 32,
+      "name": "@unrs/resolver-binding-linux-x64-musl",
+      "version": "1.11.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 33,
+      "name": "adm-zip",
+      "version": "0.4.11",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 34,
+      "name": "array-ify",
+      "version": "1.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 35,
+      "name": "assert-plus",
+      "version": "1.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 36,
+      "name": "audio-context",
+      "version": "1.0.3",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/audio-context/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/audio-context/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/audio-context/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 37,
+      "name": "babel-core",
+      "version": "7.0.0-bridge.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 38,
+      "name": "babel-plugin-extract-format-message",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 39,
+      "name": "babel-plugin-transform-format-message",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 40,
+      "name": "base64-loader",
+      "version": "1.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 41,
+      "name": "blockly",
+      "version": "12.4.1",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "Blockly is embedded in scratch-blocks/dist/main.mjs"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 42,
+      "name": "saxes",
+      "version": "6.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 43,
+      "name": "boolbase",
+      "version": "1.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 44,
+      "name": "browser-stdout",
+      "version": "1.3.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 45,
+      "name": "bser",
+      "version": "2.1.1",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 46,
+      "name": "buffer-equal",
+      "version": "0.0.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 47,
+      "name": "callsite",
+      "version": "1.0.0",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 48,
+      "name": "colors",
+      "version": "0.6.2",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 49,
+      "name": "cookie-signature",
+      "version": "1.0.7",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 50,
+      "name": "cssstyle",
+      "version": "1.4.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 51,
+      "name": "eastasianwidth",
+      "version": "0.2.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 52,
+      "name": "err-code",
+      "version": "2.0.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 53,
+      "name": "eslint-plugin-format-message",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 54,
+      "name": "esrecurse",
+      "version": "4.3.0",
+      "declared_license": "BSD-2-Clause",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 55,
+      "name": "fb-watchman",
+      "version": "2.0.2",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 56,
+      "name": "findup",
+      "version": "0.1.5",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 57,
+      "name": "commander",
+      "version": "2.1.0",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 58,
+      "name": "format",
+      "version": "0.2.2",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 59,
+      "name": "format-message",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 60,
+      "name": "format-message-cli",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 61,
+      "name": "format-message-estree-util",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 62,
+      "name": "format-message-formats",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-formats/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-formats/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message-formats/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 63,
+      "name": "format-message-generate-id",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 64,
+      "name": "format-message-interpret",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-interpret/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-interpret/plurals.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-interpret/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 65,
+      "name": "format-message-parse",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/format-message-parse/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/format-message-parse/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/format-message-parse/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 66,
+      "name": "format-message-print",
+      "version": "6.2.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 67,
+      "name": "get-float-time-domain-data",
+      "version": "0.1.0",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js",
+        "gui.js.map: webpack://GUI/../node_modules/get-float-time-domain-data/lib/get-float-time-domain-data.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 68,
+      "name": "get-user-media-promise",
+      "version": "1.1.4",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js",
+        "gui.js.map: webpack://GUI/../node_modules/get-user-media-promise/lib/get-user-media-promise.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 69,
+      "name": "glob-to-regex.js",
+      "version": "1.2.0",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 70,
+      "name": "grapheme-breaker",
+      "version": "0.3.2",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js",
+        "gui.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/grapheme-breaker/src/GraphemeBreaker.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 71,
+      "name": "growl",
+      "version": "1.10.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 72,
+      "name": "handle-thing",
+      "version": "2.0.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 73,
+      "name": "hpack.js",
+      "version": "2.1.6",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 74,
+      "name": "http-deceiver",
+      "version": "1.2.7",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 75,
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 76,
+      "name": "is-in-browser",
+      "version": "1.1.3",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js",
+        "gui.js.map: webpack://GUI/../node_modules/is-in-browser/dist/module.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 77,
+      "name": "saxes",
+      "version": "6.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 78,
+      "name": "java-properties",
+      "version": "1.0.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 79,
+      "name": "javascript-natural-sort",
+      "version": "0.7.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 80,
+      "name": "agent-base",
+      "version": "6.0.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 81,
+      "name": "http-proxy-agent",
+      "version": "5.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 82,
+      "name": "https-proxy-agent",
+      "version": "5.0.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 83,
+      "name": "saxes",
+      "version": "6.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 84,
+      "name": "jest-pnp-resolver",
+      "version": "1.2.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 85,
+      "name": "parse5",
+      "version": "5.1.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 86,
+      "name": "jsonify",
+      "version": "0.0.1",
+      "declared_license": "Public Domain",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 87,
+      "name": "keymirror",
+      "version": "0.1.1",
+      "declared_license": null,
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/keymirror/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/keymirror/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/keymirror/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 88,
+      "name": "keyv",
+      "version": "4.5.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 89,
+      "name": "language-subtag-registry",
+      "version": "0.3.23",
+      "declared_license": "CC0-1.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 90,
+      "name": "language-tags",
+      "version": "1.0.9",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 91,
+      "name": "linebreak",
+      "version": "0.3.0",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/ify-loader/node_modules/linebreak/src/linebreaker.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/linebreak/src/classes.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/linebreak/src/pairs.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 92,
+      "name": "lookup-closest-locale",
+      "version": "6.2.0",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/lookup-closest-locale/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 93,
+      "name": "microee",
+      "version": "0.0.6",
+      "declared_license": "BSD",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/microee/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/microee/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/microee/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 94,
+      "name": "multipipe",
+      "version": "0.3.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 95,
+      "name": "natural-compare",
+      "version": "1.4.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 96,
+      "name": "nerf-dart",
+      "version": "1.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 97,
+      "name": "tr46",
+      "version": "0.0.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 98,
+      "name": "node-options-to-argv",
+      "version": "1.0.0",
+      "declared_license": "BlueOak-1.0.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 99,
+      "name": "@npmcli/agent",
+      "version": "3.0.0",
+      "declared_license": "ISC",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 100,
+      "name": "@sigstore/verify",
+      "version": "2.1.1",
+      "declared_license": "Apache-2.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 101,
+      "name": "eastasianwidth",
+      "version": "0.2.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 102,
+      "name": "err-code",
+      "version": "2.0.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 103,
+      "name": "imurmurhash",
+      "version": "0.1.4",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 104,
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "declared_license": "CC-BY-3.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 105,
+      "name": "spdx-license-ids",
+      "version": "3.0.23",
+      "declared_license": "CC0-1.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 106,
+      "name": "omggif",
+      "version": "1.0.10",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/omggif/omggif.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/omggif/omggif.js",
+        "gui.js.map: webpack://GUI/../node_modules/omggif/omggif.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 107,
+      "name": "pn",
+      "version": "1.1.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 108,
+      "name": "react-popover",
+      "version": "0.5.10",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/layout.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-popover/build/on-resize.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 109,
+      "name": "react-remove-scroll-bar",
+      "version": "2.3.8",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/constants.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/utils.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/react-remove-scroll-bar/dist/es2015/component.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 110,
+      "name": "isarray",
+      "version": "1.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 111,
+      "name": "redux-throttle",
+      "version": "0.1.1",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/redux-throttle/build/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 112,
+      "name": "raw-loader",
+      "version": "0.5.1",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 113,
+      "name": "seedrandom",
+      "version": "3.0.5",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/lib/alea.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/seedrandom/lib/tychei.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 114,
+      "name": "select-hose",
+      "version": "2.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 115,
+      "name": "spdx-exceptions",
+      "version": "2.5.0",
+      "declared_license": "CC-BY-3.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 116,
+      "name": "spdx-license-ids",
+      "version": "3.0.22",
+      "declared_license": "CC0-1.0",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 117,
+      "name": "spdy",
+      "version": "4.0.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 118,
+      "name": "spdy-transport",
+      "version": "3.0.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 119,
+      "name": "stackback",
+      "version": "0.0.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 120,
+      "name": "magic-string",
+      "version": "0.22.5",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 121,
+      "name": "type-fest",
+      "version": "2.19.0",
+      "declared_license": "(MIT OR CC0-1.0)",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 122,
+      "name": "to-style",
+      "version": "1.3.3",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/index.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/src/cssPrefix.js",
+        "blocksonly.js.map: webpack://GUI/../node_modules/to-style/src/cssUnitless.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 123,
+      "name": "@esbuild/linux-x64",
+      "version": "0.28.0",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 124,
+      "name": "unicode-trie",
+      "version": "0.3.1",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/unicode-trie/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/unicode-trie/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/unicode-trie/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 125,
+      "name": "unrs-resolver",
+      "version": "1.11.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 126,
+      "name": "w3c-xmlserializer",
+      "version": "1.1.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 127,
+      "name": "wav-encoder",
+      "version": "1.3.0",
+      "declared_license": "MIT",
+      "current_distribution": "runtime",
+      "current_status": "supplemented",
+      "evidence": [
+        "blocksonly.js.map: webpack://GUI/../node_modules/wav-encoder/index.js",
+        "compatibilitytesting.js.map: webpack://GUI/../node_modules/wav-encoder/index.js",
+        "gui.js.map: webpack://GUI/../node_modules/wav-encoder/index.js"
+      ],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 128,
+      "name": "wbuf",
+      "version": "1.7.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 129,
+      "name": "web-audio-test-api",
+      "version": "0.5.2",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 130,
+      "name": "yoga-layout",
+      "version": "3.2.1",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 131,
+      "name": "canvas",
+      "version": "3.2.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 132,
+      "name": "raw-loader",
+      "version": "0.5.1",
+      "declared_license": null,
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 133,
+      "name": "canvas",
+      "version": "3.2.3",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 134,
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53",
+      "declared_license": "MIT",
+      "current_distribution": "not-in-current-gap-set",
+      "current_status": "installation-count-reduced",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    },
+    {
+      "original_index": 135,
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.0.0-beta.53",
+      "declared_license": "MIT",
+      "current_distribution": "build-only",
+      "current_status": "not-distributed",
+      "evidence": [],
+      "match_basis": "name/version occurrence counts; the original snapshot did not record locations"
+    }
+  ],
+  "removed_name_versions": [
+    {
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53"
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53"
+    },
+    {
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.0.0-beta.53"
+    }
+  ],
+  "added_name_versions": [],
+  "knowledge_contract": {
+    "commit": "5e248a9cd9243c1ca654abfbed65ee2646087316",
+    "path": "00-hub/release-gate-notes_ja.md",
+    "decision": "2026-08-11-01"
+  },
+  "open_reviews": [
+    {
+      "name": "microee",
+      "version": "0.0.6",
+      "issue": "Publisher BSD clause count and full original text remain unconfirmed."
+    }
+  ]
+}

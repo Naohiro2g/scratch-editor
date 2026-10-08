@@ -60,6 +60,8 @@ Protocol、WireScope、Bridgeのソースとowner testは、[minecraft-remote-to
 | [共通ツールのbridge](https://github.com/Naohiro2g/minecraft-remote-tooling/tree/main/packages/bridge) | ブラウザとMcRemoteプラグインの間の通信を中継 |
 | [共通ツールのlive](https://github.com/Naohiro2g/minecraft-remote-tooling/tree/main/packages/live) | 共通のWireScope画面と観測schema |
 | [`tooling-lock.json`](tooling-lock.json) | このScratch sourceが使う共通ツールのcommitと生成物のidentity |
+| [`release-manifest-lock.json`](release-manifest-lock.json) | 公開成果物のv1／v2 schema、共有fixture、整合性検査を固定する別のlock |
+| [`local/`](local/README.md) | Scratch Local版の起動、配布とOS検証 |
 | [`block-reference/`](block-reference/) | Scratchブロック一覧ページの試作と生成元 |
 
 Scratch拡張は仮想マシンへ組み込まれており、protocol packageを直接importしません。Scratch固有の観測feedと起動UIも、このリポジトリに残ります。
@@ -85,6 +87,11 @@ npm run tooling:artifacts
 固定したActions artifactからWireScope ZIP・detached manifest・Bridge OCI archiveを取得し、digest、ファイルのidentity、source provenanceを検査します。取得先は `mc-remote/tooling/artifacts/` です。Linux／macOSの `gh`、`unzip`、`tar` が必要です。Actions artifactには保存期限があるため、期限切れなら共通ツール側で生成し直してlockを明示更新します。取得済みの正常なキャッシュはネットワークなしでも検査できます。
 
 [公開workflow](../.github/workflows/mc-remote-images.yml)は、この固定済み生成物を収集します。Scratch OCIはScratchからビルドし、Bridge OCIはdigestを保持してコピーします。WireScopeのZIPとmanifest、Scratch設定契約、リリースmanifestを同じReleaseへまとめます。[candidate workflow](../.github/workflows/mc-remote-candidate.yml)は、Release・registry公開をせずActions artifactへ出します。
+
+公開成果物のmetadataは、通信のfixtureやBridge／WireScopeの生成物とは別の契約です。
+`npm run tooling:release-manifest`で、専用lockの固定commitからschemaと共有fixtureを取得します。
+`npm run release-manifest:test`と`npm run release-manifest:lint`で検査できます。b10の公開manifestはv2で、
+Scratch Localの3 ZIPと既存の3ファイル全てに実byte数を記録します。baselineはv1／v2のいずれも文書全体を検査してから使います。
 
 [Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b9](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b9)です。rollbackは直前の公開b8のtag `v2320.0.0b8` と、その公開setを使います。
 

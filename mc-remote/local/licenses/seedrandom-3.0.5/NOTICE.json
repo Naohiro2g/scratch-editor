@@ -1,0 +1,20 @@
+{
+  "package": "seedrandom",
+  "version": "3.0.5",
+  "license": "MIT",
+  "author": "David Bau",
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/davidbau/seedrandom.git"
+  },
+  "published_git_head": "4460ad325a0a15273a211e509f03ae0beb99511a",
+  "license_basis": "published-license-in-readme",
+  "body_sources": [
+    {
+      "repository": "davidbau/seedrandom",
+      "commit": "4460ad325a0a15273a211e509f03ae0beb99511a",
+      "path": "README.md"
+    }
+  ]
+}

@@ -384,7 +384,7 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.2.0', t => {
     t.equal(hello.method, 'hello');
     t.equal(hello.params.protocol, b8Fixture.protocol, 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2320.0.0b9', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2320.0.0b10', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
@@ -445,7 +445,7 @@ test('connect uses the runtime-configured bridge and default sandbox without ove
         socket.url,
         'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
     );
-    t.equal(socket.lastSent().params.client.version, '2320.0.0b9');
+    t.equal(socket.lastSent().params.client.version, '2320.0.0b10');
     t.end();
 });
 
@@ -692,7 +692,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
-            t.equal(pairBegin.params.client.version, '2320.0.0b9');
+            t.equal(pairBegin.params.client.version, '2320.0.0b10');
             t.equal(latestObservation(runtime).status, 'pairing');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 2,

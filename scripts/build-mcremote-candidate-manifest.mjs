@@ -1,7 +1,9 @@
 import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync} from 'node:fs';
+import {localArtifacts} from './mcremote-local-artifacts.mjs';
 
 const [commit, scratchDigest] = process.argv.slice(2);
+const version = '2320.0.0b10';
 if (!/^[a-f0-9]{40}$/.test(commit) || !/^sha256:[a-f0-9]{64}$/.test(scratchDigest)) {
     throw new Error('candidate manifest requires an exact source commit and Scratch OCI digest');
 }
@@ -26,8 +28,8 @@ const artifacts = roles.map(([role, file, digest]) => {
 writeFileSync('candidate/candidate-manifest.json', `${JSON.stringify({
     schema: 'mc-remote.candidate-manifest',
     schema_version: 1,
-    version: '2320.0.0b9',
+    version,
     source: {repository: 'https://github.com/Naohiro2g/scratch-editor', commit},
     tooling: lock.source,
-    artifacts
+    artifacts: [...artifacts, ...localArtifacts({directory: 'candidate', version, commit})]
 }, null, 2)}\n`);
