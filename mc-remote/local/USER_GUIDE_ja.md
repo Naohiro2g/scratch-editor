@@ -1,6 +1,6 @@
 # mc-remote Scratchを自分のワールドで使う
 
-1. ZIPを展開し、フォルダーの中の`start-mc-remote`を起動します。
+1. OS用のZIPを展開し、ZIPと同じ名前のフォルダーを開きます。その直下のランチャー（Windowsは`start-mc-remote.cmd`、macOSは`start-mc-remote.command`、Linuxは`start-mc-remote.sh`）を起動します。
 2. ブラウザで開いたページに、マインクラフトサーバーの接続先を入力し「保存してScratchを開く」を押します。
 3. Scratchで「拡張機能を追加」から「mc-remote / マイクラリモコン」を選び、「接続する」ブロックを実行します。表示されたペアリングコマンドをマインクラフトのチャットで実行します。
 
@@ -26,6 +26,10 @@ Scratchを使う各PCでZIPを展開し、起動します。接続先にはサ�
 
 認証情報はScratchを開いたブラウザに保存されます。同じブラウザで次回使う場合は、ペアリング済みの接続を再利用できます。
 
+## 通信を見る
+
+接続後、Scratchの「WireScope mini」を開き、「WireScopeを開く」を押します。独立した画面に通信が表示されます。WireScopeもこのセットに含まれ、ランチャーと一緒に起動・終了します。
+
 ## 初回のOS警告
 
 - macOSで開発元を確認できない旨の警告が出た場合: いったん起動を試した後、「システム設定 → プライバシーとセキュリティ → このまま開く → 開く」で個別に許可できる場合があります。[Appleの案内](https://support.apple.com/en-us/102445)を参照してください。
@@ -36,6 +40,6 @@ Scratchを使う各PCでZIPを展開し、起動します。接続先にはサ�
 
 ## 配布物の情報
 
-このZIPはScratchとBridge、Node.js実行環境を含みます。Docker、Node.jsの別途インストール、証明書の設定は不要です。Minecraft本体、Paper、McRemoteプラグインは含みません。
+このZIPはScratch、Bridge、WireScope、Node.js実行環境を含みます。Docker、Node.jsの別途インストール、証明書の設定は不要です。Minecraft本体、Paper、McRemoteプラグインは含みません。
 
 版と入力は`identity.json`、ライセンスは`NOTICE_ja.md`と`licenses/`、対応するソースは`SOURCE_ja.md`を参照してください。

@@ -155,7 +155,10 @@ artifacts; neither workflow is permission to publish a tag or release.
 `mc-remote/local/` contains the Scratch Local launcher, setup page, ZIP user guide and tests.
 `mc-remote/local-runtime-lock.json` pins official Node archives for Windows x64, macOS arm64 and Linux x64.
 `npm run local:build -- --os <os> --arch <arch> --commit <HEAD>` uses Python 3 to package the built GUI,
-the unchanged JavaScript app extracted from the pinned Bridge OCI, the Node runtime and licenses/source.
+the unchanged JavaScript app extracted from the pinned Bridge OCI, the pinned WireScope app and detached
+manifest, the Node runtime and licenses/source. The launcher serves Scratch on loopback port 8601 and
+WireScope on a distinct loopback origin at port 8603, with Bridge on port 8602. Its runtime config supplies
+`wirescope_url`; tests verify the packaged WireScope assets and all three ports closing on exit.
 Runtime downloads in `mc-remote/local-inputs/` and outputs in `candidate/` are ignored. `npm run local:test`
 runs Node boundary tests and Python archive tests. Release workflows collect the explicitly frozen candidate
 ZIPs without rebuilding them; see `mc-remote/local/README.md` for the artifact ID/digest inputs. These local

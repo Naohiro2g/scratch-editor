@@ -60,7 +60,27 @@ const sendJson = (response, status, value) => {
     response.end(JSON.stringify(value));
 };
 
-export const createLocalServer = async ({root, webPort, bridgePort, startBridge}) => {
+const serveFile = async (request, response, root, relative) => {
+    let file;
+    try {
+        file = await realpath(resolve(root, decodeURIComponent(relative) || 'index.html'));
+        if (!file.startsWith(`${root}${sep}`) || !(await stat(file)).isFile()) {
+            return sendJson(response, 404, {error: '見つかりません。'});
+        }
+    } catch (error) {
+        if (['ENOENT', 'ENOTDIR'].includes(error.code) || error instanceof URIError) {
+            return sendJson(response, 404, {error: '見つかりません。'});
+        }
+        throw error;
+    }
+    response.writeHead(200, {'Content-Type': mime[extname(file)] || 'application/octet-stream'});
+    if (request.method === 'HEAD') return response.end();
+    createReadStream(file)
+        .on('error', error => response.destroy(error))
+        .pipe(response);
+};
+
+export const createLocalServer = async ({root, webPort, bridgePort, wireScopePort, startBridge}) => {
     let target = await readTarget(root);
     let stopBridge;
     let changing = false;
@@ -68,6 +88,7 @@ export const createLocalServer = async ({root, webPort, bridgePort, startBridge}
     let closed = false;
     let handle;
     const scratchRoot = await realpath(join(root, 'scratch'));
+    const wireScopeRoot = await realpath(join(root, 'wirescope'));
     const page = await readFile(join(dirname(fileURLToPath(import.meta.url)), 'setup.html'));
     const server = createServer((request, response) => {
         handle(request, response).catch(error => {
@@ -76,7 +97,23 @@ export const createLocalServer = async ({root, webPort, bridgePort, startBridge}
             else sendJson(response, 500, {error: '処理に失敗しました。起動画面のエラーを確認してください。'});
         });
     });
+    const wireScope = createServer((request, response) => {
+        const port = wireScope.address().port;
+        if (![`127.0.0.1:${port}`, `localhost:${port}`].includes(request.headers.host)) {
+            return sendJson(response, 403, {error: '接続元が不正です。'});
+        }
+        if (!['GET', 'HEAD'].includes(request.method)) {
+            return sendJson(response, 405, {error: '対応していない操作です。'});
+        }
+        const pathname = new URL(request.url, `http://127.0.0.1:${port}`).pathname;
+        serveFile(request, response, wireScopeRoot, pathname.slice(1)).catch(error => {
+            console.error(`Scratch Local WireScope: ${request.method} ${request.url}: ${error.message}`);
+            if (response.headersSent) response.destroy(error);
+            else sendJson(response, 500, {error: '処理に失敗しました。起動画面のエラーを確認してください。'});
+        });
+    });
     let url;
+    let wireScopeUrl;
     handle = async (request, response) => {
         const port = server.address().port;
         const origins = [`http://127.0.0.1:${port}`, `http://localhost:${port}`];
@@ -142,6 +179,7 @@ export const createLocalServer = async ({root, webPort, bridgePort, startBridge}
                 schema_version: 1,
                 connection_enabled: true,
                 bridge_url: `ws://127.0.0.1:${bridgePort}`,
+                wirescope_url: wireScopeUrl,
                 default_sandbox: target.host,
                 connection_targets: [
                     {id: 'local', label: `Minecraft — ${target.host}`, sandbox: target.host}
@@ -158,25 +196,7 @@ export const createLocalServer = async ({root, webPort, bridgePort, startBridge}
             return response.end(page);
         }
         if (!pathname.startsWith('/editor/')) return sendJson(response, 404, {error: '見つかりません。'});
-        let file;
-        try {
-            const relative = decodeURIComponent(pathname.slice('/editor/'.length)) || 'index.html';
-            file = await realpath(resolve(scratchRoot, relative));
-            if (!file.startsWith(`${scratchRoot}${sep}`)) {
-                return sendJson(response, 404, {error: '見つかりません。'});
-            }
-            if (!(await stat(file)).isFile()) return sendJson(response, 404, {error: '見つかりません。'});
-        } catch (error) {
-            if (['ENOENT', 'ENOTDIR'].includes(error.code) || error instanceof URIError) {
-                return sendJson(response, 404, {error: '見つかりません。'});
-            }
-            throw error;
-        }
-        response.writeHead(200, {'Content-Type': mime[extname(file)] || 'application/octet-stream'});
-        if (request.method === 'HEAD') return response.end();
-        createReadStream(file)
-            .on('error', error => response.destroy(error))
-            .pipe(response);
+        return serveFile(request, response, scratchRoot, pathname.slice('/editor/'.length));
     };
     server.listen(webPort, '127.0.0.1');
     await once(server, 'listening');
@@ -186,10 +206,16 @@ export const createLocalServer = async ({root, webPort, bridgePort, startBridge}
         closed = true;
         if (changeComplete) await changeComplete;
         if (stopBridge) await stopBridge();
-        server.closeAllConnections();
-        await new Promise(resolveClose => server.close(resolveClose));
+        await Promise.all([server, wireScope].map(service => {
+            if (!service.listening) return Promise.resolve();
+            service.closeAllConnections();
+            return new Promise(resolveClose => service.close(resolveClose));
+        }));
     };
     try {
+        wireScope.listen(wireScopePort, '127.0.0.1');
+        await once(wireScope, 'listening');
+        wireScopeUrl = `http://127.0.0.1:${wireScope.address().port}/`;
         stopBridge = await startBridge(target, [url, `http://localhost:${server.address().port}`]);
     } catch (error) {
         await close();
@@ -269,17 +295,22 @@ const main = async () => {
     const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
     const webPort = Number(process.env.MCREMOTE_LOCAL_WEB_PORT || 8601);
     const bridgePort = Number(process.env.MCREMOTE_LOCAL_BRIDGE_PORT || 8602);
-    for (const port of [webPort, bridgePort]) {
+    const wireScopePort = Number(process.env.MCREMOTE_LOCAL_WIRESCOPE_PORT || 8603);
+    const ports = [webPort, bridgePort, wireScopePort];
+    for (const port of ports) {
         if (!Number.isInteger(port) || port < 1 || port > 65535) {
             throw new Error('localhostのポートは1〜65535の整数を指定してください。');
         }
     }
-    if (webPort === bridgePort) throw new Error('ScratchとBridgeには別のポートを指定してください。');
+    if (new Set(ports).size !== ports.length) {
+        throw new Error('Scratch、Bridge、WireScopeには別のポートを指定してください。');
+    }
     await access(join(root, 'identity.json'));
     const server = await createLocalServer({
         root,
         webPort,
         bridgePort,
+        wireScopePort,
         startBridge: (target, origins) =>
             runBridge({
                 root,

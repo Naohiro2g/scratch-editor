@@ -15,6 +15,48 @@ spec.loader.exec_module(build)
 
 
 class LocalBuildTest(unittest.TestCase):
+    def wirescope_fixture(self, directory):
+        assets = {'index.html': b'<h1>WireScope</h1>', 'assets/app.js': b'// app',
+                  'LICENSE': b'AGPL text', 'NOTICE': b'attribution'}
+        archive = Path(directory) / 'wirescope-app.zip'
+        with zipfile.ZipFile(archive, 'w') as z:
+            for name, data in assets.items():
+                z.writestr(name, data)
+        manifest = Path(directory) / 'wirescope-app.manifest.json'
+        manifest.write_text(json.dumps({'archive': {'sha256': build.sha256(archive.read_bytes())},
+            'source': {'commit': 'a' * 40},
+            'assets': [{'path': name, 'bytes': len(data), 'sha256': build.sha256(data)}
+                       for name, data in assets.items()]}))
+        lock = {'source': {'commit': 'a' * 40}, 'artifacts': {'files': [
+            {'file': path.name, 'bytes': path.stat().st_size, 'sha256': build.sha256(path.read_bytes())}
+            for path in [archive, manifest]]}}
+        return archive, manifest, lock, assets
+
+    def test_wirescope_preserves_pinned_assets_license_and_detached_manifest(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive, manifest, lock, assets = self.wirescope_fixture(directory)
+            files = build.wirescope_files(archive, manifest, lock)
+            self.assertEqual(files['wirescope-app.zip'], archive.read_bytes())
+            self.assertEqual(files['wirescope-app.manifest.json'], manifest.read_bytes())
+            for name, data in assets.items():
+                self.assertEqual(files['wirescope/' + name], data)
+            archive.write_bytes(archive.read_bytes() + b'changed')
+            with self.assertRaisesRegex(ValueError, 'tooling-lock'):
+                build.wirescope_files(archive, manifest, lock)
+
+    def test_wirescope_rejects_wrong_asset_identity_and_paths_outside_app(self):
+        for name in ['index.html', '../settings.json']:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                archive, manifest, lock, _ = self.wirescope_fixture(directory)
+                value = json.loads(manifest.read_text())
+                value['assets'][0]['path'] = name
+                value['assets'][0]['sha256'] = '0' * 64
+                manifest.write_text(json.dumps(value))
+                lock['artifacts']['files'][1].update(
+                    bytes=manifest.stat().st_size, sha256=build.sha256(manifest.read_bytes()))
+                with self.assertRaises(ValueError):
+                    build.wirescope_files(archive, manifest, lock)
+
     def license_fixture(self, root, sources):
         (root / 'LICENSE').write_text('Scratch license')
         (root / 'TRADEMARK').write_text('Scratch trademark')

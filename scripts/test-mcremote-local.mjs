@@ -64,6 +64,7 @@ try {
     await writeFile(join(root, 'settings.json'), JSON.stringify(target));
     const webPort = await unusedPort();
     const bridgePort = await unusedPort();
+    const wireScopePort = await unusedPort();
     const url = `http://127.0.0.1:${webPort}`;
     const testBin = join(directory, 'test-bin');
     const browserMarker = join(directory, 'browser-opened.txt');
@@ -77,7 +78,8 @@ try {
             PATH: `${testBin}${delimiter}${process.env.PATH}`,
             MCREMOTE_BROWSER_TEST_MARKER: browserMarker,
             MCREMOTE_LOCAL_WEB_PORT: String(webPort),
-            MCREMOTE_LOCAL_BRIDGE_PORT: String(bridgePort)
+            MCREMOTE_LOCAL_BRIDGE_PORT: String(bridgePort),
+            MCREMOTE_LOCAL_WIRESCOPE_PORT: String(wireScopePort)
         },
         stdio: ['ignore', 'pipe', 'pipe']
     });
@@ -116,6 +118,24 @@ try {
     const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
     assert.equal(config.connection_enabled, true);
     assert.equal(config.default_sandbox, target.host);
+    assert.equal(config.wirescope_url, `http://127.0.0.1:${wireScopePort}/`);
+    assert.notEqual(new URL(config.wirescope_url).origin, new URL(url).origin);
+    const wireScopeManifest = JSON.parse(await readFile(join(root, 'wirescope-app.manifest.json')));
+    const wireScopeArchive = await readFile(join(root, 'wirescope-app.zip'));
+    assert.equal(createHash('sha256').update(wireScopeArchive)
+        .digest('hex'), bundleIdentity.tooling.wirescope_archive_sha256);
+    assert.equal(wireScopeManifest.archive.sha256, bundleIdentity.tooling.wirescope_archive_sha256);
+    for (const asset of wireScopeManifest.assets) {
+        const response = await fetch(new URL(asset.path, config.wirescope_url));
+        assert.equal(response.status, 200);
+        const data = Buffer.from(await response.arrayBuffer());
+        assert.equal(data.length, asset.bytes);
+        assert.equal(createHash('sha256').update(data)
+            .digest('hex'), asset.sha256);
+    }
+    const wireScopePage = await fetch(config.wirescope_url);
+    assert.match(await wireScopePage.text(), /WireScope/);
+    assert.equal(wireScopePage.headers.get('cross-origin-opener-policy'), null);
     socket = new WebSocket(config.bridge_url, 'mcremote.bridge.one-shot.v1', {origin: url});
     await once(socket, 'open');
     const response = once(socket, 'message');
@@ -131,14 +151,15 @@ try {
     child.kill('SIGTERM');
     await exit;
     assert.equal(child.exitCode, 0);
-    for (const port of [webPort, bridgePort]) {
+    for (const port of [webPort, bridgePort, wireScopePort]) {
         const probe = createServer();
         probe.listen(port, '127.0.0.1');
         await once(probe, 'listening');
         await new Promise(resolveClose => probe.close(resolveClose));
     }
     console.log('Scratch Local Linux ZIP: hash/source, Japanese/spaced path, bundled Node startup PASS');
-    console.log('HTTP GUI/config, fixed Bridge WS→TCP round trip, graceful exit/port release PASS');
+    console.log('HTTP GUI/config, distinct loopback WireScope/pinned assets, fixed Bridge WS→TCP PASS');
+    console.log('Graceful exit and Scratch/Bridge/WireScope port release PASS');
     console.log('Minecraft/pairing/OS download warnings are not tested by this deterministic stub.');
 } finally {
     if (socket) socket.terminate();

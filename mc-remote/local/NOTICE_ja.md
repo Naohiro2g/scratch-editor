@@ -4,6 +4,7 @@
 
 - Scratch Editorと派生component: AGPL-3.0-only。本文は`licenses/Scratch-AGPL-3.0.txt`、商標の案内は`licenses/Scratch-TRADEMARK`。
 - 固定版McRemote Bridge: AGPL-3.0-only。本文は`licenses/Bridge-AGPL-3.0.txt`。
+- 固定版WireScope: AGPL-3.0-only。本文とnoticeは`wirescope/LICENSE`と`wirescope/NOTICE`、固定sourceとassetの一覧は`wirescope-app.manifest.json`。
 - ws: MIT。本文と著作権表示は`licenses/ws-LICENSE`。
 - Node.js: MITと同梱第三者の各ライセンス。本文と第三者noticeは`licenses/Node-LICENSE`。公式配布の実行ファイルを変更せず同梱しています。
 - ランチャーと配布処理: scratch-editorのLICENSEに従います。

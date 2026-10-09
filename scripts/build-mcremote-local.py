@@ -79,6 +79,37 @@ def bridge_files(archive, pinned_digest):
         return platforms[0]
 
 
+def wirescope_files(archive, manifest, tooling):
+    files = {}
+    for path in [archive, manifest]:
+        pinned = next(item for item in tooling['artifacts']['files'] if item['file'] == path.name)
+        data = path.read_bytes()
+        if len(data) != pinned['bytes'] or sha256(data) != pinned['sha256']:
+            raise ValueError('WireScope artifact differs from tooling-lock: ' + path.name)
+        files[path.name] = data
+    identity = json.loads(files[manifest.name])
+    if identity['source']['commit'] != tooling['source']['commit'] or \
+            identity['archive']['sha256'] != sha256(files[archive.name]):
+        raise ValueError('WireScope manifest differs from tooling-lock source or archive')
+    with zipfile.ZipFile(io.BytesIO(files[archive.name])) as z:
+        assets = identity['assets']
+        names = [asset['path'] for asset in assets]
+        if sorted(names) != sorted(z.namelist()) or len(names) != len(set(names)):
+            raise ValueError('WireScope archive differs from manifest inventory')
+        if not {'index.html', 'LICENSE', 'NOTICE'}.issubset(names):
+            raise ValueError('WireScope app or license files missing')
+        for asset in assets:
+            name = asset['path']
+            path = PurePosixPath(name)
+            if path.is_absolute() or '..' in path.parts or '\\' in name:
+                raise ValueError('WireScope asset path is outside app: ' + name)
+            data = z.read(name)
+            if len(data) != asset['bytes'] or sha256(data) != asset['sha256']:
+                raise ValueError('WireScope asset identity mismatch: ' + name)
+            files['wirescope/' + name] = data
+    return files
+
+
 def write_zip(destination, name, files):
     with zipfile.ZipFile(destination, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as z:
         for path, data in sorted(files.items()):
@@ -236,6 +267,9 @@ def build(args):
         temporary.replace(runtime_archive)
     files = runtime_files(runtime_archive, entry)
     files.update(bridge_files(bridge, tooling['artifacts']['bridge_digest']))
+    artifact_root = ROOT / 'mc-remote/tooling/artifacts'
+    files.update(wirescope_files(artifact_root / 'wirescope-app.zip',
+                                artifact_root / 'wirescope-app.manifest.json', tooling))
     files.update(license_files())
     for path in sorted(gui.rglob('*')):
         if path.is_file():
@@ -254,7 +288,9 @@ def build(args):
                            'working_tree_dirty': dirty, 'archive': 'source/scratch-source.tar.gz',
                            'archive_sha256': sha256(source)},
                 'tooling': {**tooling['source'], 'bridge_digest': tooling['artifacts']['bridge_digest'],
-                            'bridge_archive_sha256': pinned['sha256']},
+                            'bridge_archive_sha256': pinned['sha256'],
+                            'wirescope_archive_sha256': sha256(files['wirescope-app.zip']),
+                            'wirescope_manifest_sha256': sha256(files['wirescope-app.manifest.json'])},
                 'runtime': {'name': 'Node.js', 'version': runtime_lock['version'], 'url': runtime_url,
                             'archive_sha256': entry['sha256']}}
     files['identity.json'] = json_bytes(identity)
@@ -262,6 +298,8 @@ def build(args):
         'Scratchとランチャー: 同梱の`source/scratch-source.tar.gz`。`npm ci`、`npm run build`で再構築します。\n\n'
         f'Bridge: https://github.com/{tooling["source"]["repository"]}/tree/{tooling["source"]["commit"]}\n\n'
         'Bridgeの入力はtooling-lock.jsonで固定したOCIの/appから、変更せず取り出しています。\n\n'
+        f'WireScope: https://github.com/{tooling["source"]["repository"]}/tree/{tooling["source"]["commit"]}/packages/live\n\n'
+        'WireScopeの入力と再構築の手順はwirescope-app.manifest.jsonに記載しています。\n\n'
         f'Node.js: https://nodejs.org/dist/v{runtime_lock["version"]}/node-v{runtime_lock["version"]}.tar.gz\n\n'
         '第三者のbuild入力はpackage-lock.json、ライセンス本文とnoticeはlicenses/と各Scratch bundleのLICENSE.txtを参照してください。\n').encode()
     if args.os == 'windows':
