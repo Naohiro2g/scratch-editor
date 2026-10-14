@@ -32,6 +32,8 @@ OS別ZIPは`mc-remote-scratch-LAN-<version>-<os>-<arch>.zip`です。内部は`m
 
 OS標準の展開でZIP名の外側フォルダーが増えても、初回は内側の`mc-remote-scratch-LAN`を`HOME/mc-remote/`へコピーします。次版は新しい`<version>`フォルダーだけを同じ場所へ追加し、旧版は残します。版ごとの`settings.json`の自動引き継ぎは未実装です。
 
+Windowsでは、ZIPを展開する前にファイルのプロパティの「許可する」にチェックしてから展開します。その後は`start-mc-remote.cmd`をダブルクリックします。ターミナルで起動する場合は、同じフォルダーをGit Bashで開いて`./start-mc-remote.cmd`を実行します。Smart App Controlをオフにする操作や管理者権限での起動は案内しません。配布物を取得する前にも分かるよう、この一手はRelease本文にも記載します（`2026-10-14-01`）。
+
 WireScopeは同じtooling lockのZIPとdetached manifestを保持し、`data/wirescope/`へ配信用の各fileを収めます。両artifactのbytes／SHA-256、source commitと各assetのidentityを照合し、内容を変更せず同梱します。`data/wirescope/LICENSE`と`data/wirescope/NOTICE`も保持します。
 
 生成済みsource mapとコピーされた素材から、配布に入るcodeとbuildだけの入力を分け、`data/licenses/review.json`へ記録します。本文不足のruntime依存は`license-overrides.json`で固定した本文・noticeを補います。取得元、commit、bytes、SHA-256を照合し、不足や破損があればZIP生成を止めます。buildだけの依存には本文未収容を明記します。ZIP内のbuild入力ライセンス本文は短い識別子のフォルダーに置き、元のnpm上の場所と保存先の対応は`data/licenses/build-inputs.json`に残します。元の135件と現在の入力の照合は[`LICENSE_REVIEW_ja.md`](LICENSE_REVIEW_ja.md)を参照してください。ライセンスの公開前確認事項はcandidateの固定だけで閉じません。

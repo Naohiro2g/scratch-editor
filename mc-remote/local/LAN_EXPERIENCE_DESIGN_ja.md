@@ -161,11 +161,13 @@ Scratchの作品は`HOME/mc-remote/clients/scratch/projects/`、スプライト�
 
 起動ファイルのダブルクリックが安定して案内できるなら、それを主経路にする。環境差のためダブルクリックを安定して案内できない場合は、最初からターミナルでの起動を示す。クリック数だけで優劣を決めず、迷わず再現できるかで判断する。ダブルクリック時にコンソールを表示するかどうかは、起動方法の選択とは別に検討する。
 
+Windowsの主経路は、展開の前にZIPのプロパティで「許可する」にチェックし、`start-mc-remote.cmd`をダブルクリックする方法とする（knowledge DECISION `2026-10-14-01`）。human ownerはSmart App Controlをオンにした実機で、チェックなしでは停止、チェック後に展開したものは通常権限で起動することを確認した。Smart App Controlをオフにした観察は試験履歴として残すが、利用者の手順にしない。
+
 Windowsのターミナル案内はGit Bashを正準とし、ダブルクリック経路と併記する。PowerShellを主手順には採らない。OSの「ターミナルで開く」がどのシェルを起動するかを曖昧にせず、Git Bashへ入る経路まで案内する。ダブルクリックだけで使う人に、端末経路を併記するためだけのGit Bash導入を要求するものではない。
 
 | OS | 主経路として評価する候補 | ターミナル経路の候補 |
 | --- | --- | --- |
-| Windows | `start-mc-remote.cmd`のダブルクリック | 展開フォルダーで「Open Git Bash here」等からGit Bashを開き、`./start-mc-remote.cmd` |
+| Windows | 展開の前にZIPのプロパティで「許可する」にチェックし、`start-mc-remote.cmd`をダブルクリック | 展開フォルダーで「Open Git Bash here」等からGit Bashを開き、`./start-mc-remote.cmd` |
 | macOS | `start-mc-remote.command`のダブルクリック | Finderからそのフォルダーをターミナルで開き、`./start-mc-remote.command` |
 | Linux | フォルダーを端末で開いて起動 | `./start-mc-remote.sh` |
 
@@ -360,8 +362,8 @@ SSOT参照commitは`f2eddd178f4c3760cfe280d2c570e266b14001b4`。設計作業の�
 
 human ownerのUbuntu試験では、設定保存とScratchを開く操作の分割で流れが改善した。保存済みtokenで直接接続したため、短縮した「ペア待ち」と自動展開中のペアリング画面は実機未確認。Scratchがいずれかのタブで開いている間は接続先を変更できないので、設定ページでその理由を強調表示する。クイックスタートのリンクは`https://mc-remote.com/#quickstart`を使う。
 
-現行ホームページの`30-広告宣伝/homepage/index.html`にある`#quickstart`は、最も簡単な入口として正しい。Scratch Localの詳しい入門説明の正本とみなすのは、knowledge側に専用のScratch入門解説ページができてからとする。その時点で、入門ページのテキストと画像を設定ページ`setup.html`および`USER_GUIDE_ja.md`から生成する`はじめに.html`へ取り込む仕組みを決める。配布ZIPはオフラインでも読める必要があるため、取り込む版とknowledge commitを固定する方向で検討する。専用ページができるまでは、各画面の用途に応じた説明を保ち、b10公開前に内容の食い違いを点検する。
+現行ホームページの`30-広告宣伝/homepage/index.html`にある`#quickstart`は、最も簡単な入口として正しい。Scratch Localの詳しい入門説明の正本とみなすのは、knowledge側に専用のScratch入門解説ページができてからとする。その時点で、入門ページのテキストと画像を設定ページ`setup.html`および`USER_GUIDE_ja.md`から生成する`はじめに.html`へ取り込む仕組みを決める。配布ZIPはオフラインでも読める必要があるため、取り込む版とknowledge commitを固定する方向で検討する。専用ページができるまでは、各画面の用途に応じた説明を保ち、b10公開前に内容の食い違いを点検する。この順序はknowledge DECISION `2026-10-14-01`とhub NOTESに着地済み。
 
-現行ホームページの`images/scratch-MC-connect.png`には旧表示「ペアリン…」が写っている。`images/scratch-stack.png`は「接続する」ブロックをプログラムのスタック内に置いている。画像を更新するときは、接続操作をプログラムへ何度も組み込む印象にしない。現在のパレットのブロックをクリックして接続する説明と、ペアリング待ちでWireScope miniにコマンドが現れる画像を分ける。現行ホームページの画像更新はb10前にできる範囲で行い、将来のScratch入門解説ページと同じ画像を使えるようにする。古いペアリング画像は今回のZIPへ追加しない。
+現行ホームページの`images/scratch-MC-connect.png`には旧表示「ペアリン…」が写っている。`images/scratch-stack.png`は「接続する」ブロックをプログラムのスタック内に置いている。画像を更新するときは、接続操作をプログラムへ何度も組み込む印象にしない。現在のパレットのブロックをクリックして接続する説明と、ペアリング待ちでWireScope miniにコマンドが現れる画像を分ける。ホームページの画像はhuman ownerが作り直す（knowledgeのb10 gate「決定（2026-10-14）」）。古いペアリング画像は今回のZIPへ追加しない。
 
 信号機形式の状態表示を実装する際には、「接続する」をパレット内の操作UIにする案も検討する。現行VMでは通常の`BlockType.COMMAND`で、パレットからドラッグできる。Scratch Blocksにはtoolboxボタンの仕組みがあるが、現行のVMは変数・リスト・手続き用の定義済みcallbackだけをサポートしているため、専用ボタン化にはVMとGUI双方の実装・テストが要る。既存の`.sb3`作品に入った接続ブロックの実行互換性も確認する。この変更は今回のb10試作に入れず、信号機表示と一緒に利用体験を設計する。
