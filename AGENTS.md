@@ -153,6 +153,10 @@ Bridge OCI preserving its digest, and collects the WireScope pair. The candidate
 artifacts; neither workflow is permission to publish a tag or release.
 
 `mc-remote/local/` contains the Scratch Local launcher, setup page, ZIP user guide and tests.
+The ZIP root keeps the start script, README, notice and source guide visible; runtime files and
+saved host/port settings live under `data/`. First launch opens setup; subsequent launches open
+setup and the editor with `?extension=mcremote`. The setup page and packaged editor use a
+same-origin BroadcastChannel to reuse an open editor and lock target changes until its tab closes.
 `mc-remote/local-runtime-lock.json` pins official Node archives for Windows x64, macOS arm64 and Linux x64.
 `npm run local:build -- --os <os> --arch <arch> --commit <HEAD>` uses Python 3 to package the built GUI,
 the unchanged JavaScript app extracted from the pinned Bridge OCI, the pinned WireScope app and detached

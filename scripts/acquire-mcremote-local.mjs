@@ -76,7 +76,7 @@ const main = () => {
         ['macos', 'arm64'],
         ['linux', 'x64']
     ]) {
-        const file = `mc-remote-scratch-local-${version}-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-${version}-${os}-${arch}.zip`;
         for (const name of [file, file.replace(/\.zip$/, '.artifact.json')]) {
             writeFileSync(join(directory, name), extract(name));
         }

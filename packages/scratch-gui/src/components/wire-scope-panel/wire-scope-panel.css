@@ -14,7 +14,7 @@
     position: relative;
     align-self: flex-end;
     z-index: $z-index-monitor;
-    flex: 0 1 15rem;
+    flex: 0 1 16.5rem;
     min-width: 0;
     max-width: 100%;
     border: 1px solid $ui-black-transparent;
@@ -165,7 +165,7 @@
     top: 100%;
     right: 0;
     z-index: $z-index-monitor;
-    width: 15rem;
+    width: 16.5rem;
     max-width: calc(100vw - 0.5rem);
     display: flex;
     flex-direction: column;

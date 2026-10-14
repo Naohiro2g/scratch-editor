@@ -26,6 +26,11 @@ const messages = defineMessages({
         id: 'gui.projectLoader.loadError',
         defaultMessage: 'The project file that was selected failed to load.',
         description: 'An error that displays when a local project file fails to load.'
+    },
+    saveError: {
+        id: 'gui.projectLoader.saveError',
+        defaultMessage: 'The current project could not be saved in this browser. The new project was not opened.',
+        description: 'An error shown when a local project cannot be saved before opening another project.'
     }
 });
 
@@ -47,9 +52,16 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 'handleFinishedLoadingUpload',
                 'handleStartSelectingFileUpload',
                 'handleChange',
+                'handleDragOver',
+                'handleDrop',
+                'handleSelectedFile',
                 'onload',
                 'removeFileObjects'
             ]);
+        }
+        componentDidMount () {
+            document.addEventListener('dragover', this.handleDragOver, true);
+            document.addEventListener('drop', this.handleDrop, true);
         }
         componentDidUpdate (prevProps) {
             if (this.props.isLoadingUpload && !prevProps.isLoadingUpload) {
@@ -57,7 +69,23 @@ const SBFileUploaderHOC = function (WrappedComponent) {
             }
         }
         componentWillUnmount () {
+            document.removeEventListener('dragover', this.handleDragOver, true);
+            document.removeEventListener('drop', this.handleDrop, true);
             this.removeFileObjects();
+        }
+        handleDragOver (event) {
+            if (this.props.isPlayerOnly || !event.dataTransfer ||
+                !Array.from(event.dataTransfer.types || []).includes('Files')) return;
+            event.preventDefault();
+        }
+        handleDrop (event) {
+            if (this.props.isPlayerOnly || !event.dataTransfer ||
+                !Array.from(event.dataTransfer.types || []).includes('Files')) return;
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            if (!files || files.length !== 1 || !/\.sb3$/i.test(files[0].name)) return;
+            event.stopPropagation();
+            this.handleSelectedFile(files[0]);
         }
         // step 1: this is where the upload process begins
         handleStartSelectingFileUpload () {
@@ -82,9 +110,12 @@ const SBFileUploaderHOC = function (WrappedComponent) {
             // simulate a click to open file chooser dialog
             this.inputElement.click();
         }
-        // step 3: user has picked a file using the file chooser dialog.
-        // We don't actually load the file here, we only decide whether to do so.
+        // step 3: a project file was selected or dropped. Save the current
+        // project before the upload state starts replacing it.
         handleChange (e) {
+            if (e.target.files && e.target.files[0]) this.handleSelectedFile(e.target.files[0]);
+        }
+        handleSelectedFile (file) {
             const {
                 intl,
                 isShowingWithoutId,
@@ -92,27 +123,34 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 projectChanged,
                 userOwnsProject
             } = this.props;
-            const thisFileInput = e.target;
-            if (thisFileInput.files) { // Don't attempt to load if no file was selected
-                this.fileToUpload = thisFileInput.files[0];
-
-                // If user owns the project, or user has changed the project,
-                // we must confirm with the user that they really intend to
-                // replace it. (If they don't own the project and haven't
-                // changed it, no need to confirm.)
-                let uploadAllowed = true;
-                if (userOwnsProject || (projectChanged && isShowingWithoutId)) {
-                    uploadAllowed = confirm( // eslint-disable-line no-alert
-                        intl.formatMessage(sharedMessages.replaceProjectWarning)
-                    );
-                }
-                if (uploadAllowed) {
-                    // cues step 4
-                    this.props.requestProjectUpload(loadingState);
-                } else {
-                    // skips ahead to step 7
-                    this.removeFileObjects();
-                }
+            if (this.fileToUpload || this.props.isLoadingUpload) return;
+            this.fileToUpload = file;
+            if (!this.fileReader) {
+                this.fileReader = new FileReader();
+                this.fileReader.onload = this.onload;
+            }
+            if (this.props.onSaveCurrentProject) {
+                this.props.onSaveCurrentProject().then(saved => {
+                    if (this.fileToUpload !== file) return;
+                    if (saved) {
+                        this.props.requestProjectUpload(loadingState);
+                    } else {
+                        alert(intl.formatMessage(messages.saveError)); // eslint-disable-line no-alert
+                        this.removeFileObjects();
+                    }
+                });
+                return;
+            }
+            let uploadAllowed = true;
+            if (userOwnsProject || (projectChanged && isShowingWithoutId)) {
+                uploadAllowed = confirm( // eslint-disable-line no-alert
+                    intl.formatMessage(sharedMessages.replaceProjectWarning)
+                );
+            }
+            if (uploadAllowed) {
+                this.props.requestProjectUpload(loadingState);
+            } else {
+                this.removeFileObjects();
             }
         }
         // step 4 is below, in mapDispatchToProps
@@ -177,6 +215,7 @@ const SBFileUploaderHOC = function (WrappedComponent) {
                 loadingState,
                 onLoadingFinished,
                 onLoadingStarted,
+                onSaveCurrentProject,
                 onSetProjectTitle,
                 projectChanged,
                 requestProjectUpload: requestProjectUploadProp,
@@ -204,9 +243,11 @@ const SBFileUploaderHOC = function (WrappedComponent) {
         intl: intlShape.isRequired,
         isLoadingUpload: PropTypes.bool,
         isShowingWithoutId: PropTypes.bool,
+        isPlayerOnly: PropTypes.bool,
         loadingState: PropTypes.oneOf(LoadingStates),
         onLoadingFinished: PropTypes.func,
         onLoadingStarted: PropTypes.func,
+        onSaveCurrentProject: PropTypes.func,
         onSetProjectTitle: PropTypes.func,
         projectChanged: PropTypes.bool,
         requestProjectUpload: PropTypes.func,

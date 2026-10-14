@@ -49,8 +49,8 @@ import gdxforConnectionSmallIconURL from './gdxfor/gdxfor-small.svg';
 import faceSensingIconURL from './faceSensing/faceSensing.png';
 import faceSensingInsetIconURL from './faceSensing/faceSensing-small.svg';
 
-import mcremoteIconURL from './mcremote/mcremote.svg';
-import mcremoteInsetIconURL from './mcremote/mcremote-small.svg';
+import mcremoteIconURL from './mcremote/mcremote.png';
+import mcremoteInsetIconURL from './mcremote/mcremote-small.png';
 
 export default [
     {

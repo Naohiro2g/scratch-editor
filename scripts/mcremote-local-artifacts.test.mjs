@@ -15,7 +15,7 @@ const setup = t => {
         ['macos', 'arm64'],
         ['linux', 'x64']
     ]) {
-        const file = `mc-remote-scratch-local-${options.version}-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-${options.version}-${os}-${arch}.zip`;
         const bytes = Buffer.from(file);
         writeFileSync(join(directory, file), bytes);
         writeFileSync(

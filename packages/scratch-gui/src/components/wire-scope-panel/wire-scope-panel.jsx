@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {defineMessages, FormattedMessage, useIntl} from 'react-intl';
 
 import {getMcRemoteConnectionTargetByRoute} from '../../lib/mcremote-connection-targets.js';
@@ -201,7 +201,14 @@ const actionMessage = function (lastError) {
 const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) => {
     const intl = useIntl();
     const [isCollapsed, setIsCollapsed] = useState(true);
+    const openedForConnect = useRef(false);
     const state = snapshot || {};
+    useEffect(() => {
+        if (!openedForConnect.current && (state.status === 'pairing' || state.status === 'connected')) {
+            openedForConnect.current = true;
+            setIsCollapsed(false);
+        }
+    }, [state.status]);
     const currentStatus = statusInfo(state.status);
     const statusText = intl.formatMessage(currentStatus.message);
     const reconnect = reconnectInfo(state.status, routeOf(connectionTarget), routeOf(state.connectionTarget));

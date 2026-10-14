@@ -2,61 +2,60 @@
 <html lang="ja">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>mc-remote Scratchを始める</title>
+<title>mc-remote Scratchの設定</title>
 <style>
 body {font: 17px/1.7 system-ui, sans-serif; color: #243439; background: #f3f8f6; margin: 0;}
 main {max-width: 640px; padding: 32px 24px; margin: auto;}
 h1 {font-size: 1.6em;}
 label {display: block; margin: 18px 0 4px;}
+fieldset {border: 0; padding: 0; margin: 18px 0;}
+legend {font-weight: 700;}
+label.choice {margin: 6px 0;}
+label.choice input {width: auto; margin-right: 8px;}
 input, button {box-sizing: border-box; font: inherit; padding: 10px; border-radius: 6px;}
 input {width: 100%; border: 1px solid #8ca9a1;}
 button {background: #007f65; color: white; border: 0; cursor: pointer; margin-top: 24px;}
+.actions {display: flex; flex-wrap: wrap; gap: 12px;}
+.actions button {margin-top: 0;}
+.guide-images {display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin: 20px 0;}
+.guide-images img {width: auto; max-width: min(100%, 314px); height: auto; border-radius: 8px;}
+button:disabled {opacity: .6; cursor: default;}
+input:read-only {background: #edf1ef;}
 a {color: #006e58;}
 #error {color: #a32424;}
+#scratch-status.editor-open {background: #fff0ed; color: #912923; border-left: 4px solid #c43d32; border-radius: 4px; padding: 10px 14px; font-weight: 700;}
+#scratch-status.opening-editor {background: #e8f2f7; color: #244f68; border-left: 4px solid #548ca9; border-radius: 4px; padding: 10px 14px;}
 </style>
 <main>
-<h1>mc-remote Scratchを始める</h1>
-<p>マインクラフトのサーバーを起動して、そのワールドに参加してください。
-サーバーの準備は<a href="https://github.com/Naohiro2g/McRemote#readme" target="_blank" rel="noopener">McRemoteのクイックスタート</a>へ。</p>
+<p id="version"></p>
+<h1>LANの中でマイクラリモコンScratchを始める</h1>
+<p>マイクラリモコンするときは、そのマイクラ世界にプレイヤーとして参加している必要があります。サーバーの準備方法については、ホームページ（<a href="https://mc-remote.com/#quickstart" target="_blank" rel="noopener">mc-remote.com</a>）のクイックスタートへ。</p>
 <form id="target">
-<label for="host">マインクラフトサーバーの接続先</label>
+<fieldset>
+<legend>マイクラサーバーは、どのPCで動いていますか？</legend>
+<label class="choice"><input type="radio" name="location" value="this" checked>このPC</label>
+<label class="choice"><input type="radio" name="location" value="lan">LAN内の別のPC</label>
+</fieldset>
+<label for="host">マイクラ／マイクラリモコンの接続先</label>
 <input id="host" name="host" required autocomplete="off" value="127.0.0.1">
-<p>このPCで動かす場合は <code>127.0.0.1</code>。別のPCで動かす場合は、そのPCのIPアドレスまたはホスト名を入力します。</p>
-<label for="port">McRemoteのポート</label>
+<p>別のPCで動かす場合は、そのPCのIPアドレスまたはホスト名を入力します。</p>
+<label for="port">マイクラリモコンのポート</label>
 <input id="port" name="port" type="number" min="1" max="65535" required value="25575">
-<p>Minecraftに参加するときのポートとは別です。通常は <code>25575</code> のまま使います。</p>
-<button type="submit">保存してScratchを開く</button>
+<p>マイクラに参加するときのポート25565とは別です。マイクラリモコンではデフォルトが25575です。</p>
+<div class="actions">
+<button id="save-target" type="submit" disabled>設定を保存する</button>
+<button id="open-scratch" type="button" disabled>改造版のScratchを開く</button>
+</div>
 </form>
 <p id="error" role="alert"></p>
-<p>Scratchで「拡張機能を追加」から「mc-remote / マイクラリモコン」を選び、「接続する」ブロックを実行します。表示されたペアリングコマンドをマインクラフトのチャットで実行してください。</p>
-<p>接続先を変えるときは、このページへ戻ってください。終了するには起動画面でCtrl+Cを押します。</p>
+<p id="scratch-status" role="status"></p>
+<div class="guide-images">
+<img src="/guide-images/extension-card.png" alt="拡張機能「mc-remote／マイクラリモコン」のパネル" width="314" height="363">
+<img src="/guide-images/connect-block.png" alt="mc-remoteの「接続する」ブロック" width="226" height="185">
+</div>
+<p>まず、拡張機能「mc-remote／マイクラリモコン」の「接続する」ブロックを実行します。WireScope miniにペアリングコマンドが表示されるので、マイクラのチャットコマンドとしてコピペして実行します。</p>
+<p>起動したときのターミナル画面は閉じてはいけません。終了するには、その画面でCtrl+Cを押します。</p>
 <p><a href="/identity.json" target="_blank">配布物の情報</a></p>
 </main>
-<script>
-const form = document.getElementById('target');
-const error = document.getElementById('error');
-const host = document.getElementById('host');
-const port = document.getElementById('port');
-fetch('/target').then(response => response.json()).then(target => {
-    host.value = target.host;
-    port.value = target.port;
-}).catch(problem => { error.textContent = `設定を読み取れません: ${problem.message}`; });
-form.addEventListener('submit', async event => {
-    event.preventDefault();
-    const button = form.querySelector('button');
-    button.disabled = true;
-    error.textContent = '';
-    try {
-        const response = await fetch('/target', {method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({host: host.value.trim(), port: Number(port.value)})});
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.error);
-        window.location.href = '/editor/';
-    } catch (problem) {
-        error.textContent = problem.message;
-    } finally {
-        button.disabled = false;
-    }
-});
-</script>
+<script type="module" src="/setup.mjs"></script>
 </html>

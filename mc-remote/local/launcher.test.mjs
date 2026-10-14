@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {test} from 'node:test';
 import {createServer, request} from 'node:http';
 import {once} from 'node:events';
-import {createLocalServer, validateTarget} from './launcher.mjs';
+import {browserCommands, createLocalServer, validateTarget} from './launcher.mjs';
 
 test('target accepts loopback/LAN hostnames and rejects URLs, lists and invalid ports', () => {
     for (const host of ['127.0.0.1', '192.168.1.2', 'minecraft.local', '::1']) {
@@ -23,13 +23,13 @@ test('target accepts loopback/LAN hostnames and rejects URLs, lists and invalid 
 const setup = async t => {
     const root = await mkdtemp(join(tmpdir(), 'scratch-local-'));
     t.after(() => rm(root, {recursive: true, force: true}));
-    await mkdir(join(root, 'scratch'));
-    await mkdir(join(root, 'wirescope/assets'), {recursive: true});
-    await writeFile(join(root, 'wirescope/index.html'), '<h1>WireScope</h1>');
-    await writeFile(join(root, 'wirescope/assets/app.js'), 'console.log("WireScope");');
-    await writeFile(join(root, 'scratch/index.html'), '<h1>Scratch</h1>');
-    await writeFile(join(root, 'scratch/worker.js'), 'self.onmessage = () => {};');
-    await writeFile(join(root, 'identity.json'), JSON.stringify({version: '2320.0.0b10'}));
+    await mkdir(join(root, 'data/scratch'), {recursive: true});
+    await mkdir(join(root, 'data/wirescope/assets'), {recursive: true});
+    await writeFile(join(root, 'data/wirescope/index.html'), '<h1>WireScope</h1>');
+    await writeFile(join(root, 'data/wirescope/assets/app.js'), 'console.log("WireScope");');
+    await writeFile(join(root, 'data/scratch/index.html'), '<h1>Scratch</h1>');
+    await writeFile(join(root, 'data/scratch/worker.js'), 'self.onmessage = () => {};');
+    await writeFile(join(root, 'data/identity.json'), JSON.stringify({version: '2320.0.0b10'}));
     const calls = [];
     const server = await createLocalServer({
         root,
@@ -59,6 +59,7 @@ test('serves editor and runtime settings on loopback and preserves pairing stora
     assert.equal(config.connection_enabled, true);
     assert.equal(r.headers.get('cache-control'), 'no-store');
     assert.equal((await fetch(`${url}/identity.json`)).status, 200);
+    assert.equal((await (await fetch(`${url}/target`)).json()).saved, false);
 });
 
 test('changing target updates both Bridge and editor and persists only host/port', async t => {
@@ -72,8 +73,53 @@ test('changing target updates both Bridge and editor and persists only host/port
     assert.equal(calls.length, 2);
     assert.deepEqual(calls.at(-1), {host: 'minecraft.local', port: 25576});
     assert.deepEqual(JSON.parse(await readFile(join(root, 'settings.json'))), calls.at(-1));
+    assert.equal((await (await fetch(`${url}/target`)).json()).saved, true);
     const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
     assert.equal(config.default_sandbox, 'minecraft.local');
+});
+
+test('first launch opens setup, and saved settings open setup followed by the editor with McRemote', async t => {
+    const {url, root, server} = await setup(t);
+    assert.deepEqual(server.openUrls, [url]);
+    await server.close();
+    await writeFile(join(root, 'settings.json'), JSON.stringify({host: 'minecraft.local', port: 25576}));
+    const restarted = await createLocalServer({
+        root,
+        webPort: 0,
+        bridgePort: 8602,
+        wireScopePort: 0,
+        startBridge: async () => async () => {}
+    });
+    t.after(() => restarted.close());
+    assert.deepEqual(restarted.openUrls, [
+        `${restarted.url}/?scratch=opening`, `${restarted.url}/editor/?extension=mcremote`
+    ]);
+    assert.equal((await (await fetch(`${restarted.url}/target`)).json()).port, 25576);
+});
+
+test('opens each URL through the OS browser handler in order', () => {
+    const urls = ['http://127.0.0.1:8601/', 'http://127.0.0.1:8601/editor/?extension=mcremote'];
+    assert.deepEqual(browserCommands('darwin', urls), [['open', urls]]);
+    assert.deepEqual(browserCommands('win32', urls), urls.map(url => [
+        'cmd.exe', ['/d', '/c', `start "" "${url}"`]
+    ]));
+    assert.deepEqual(browserCommands('linux', urls), urls.map(url => ['xdg-open', [url]]));
+});
+
+test('serves setup and editor tab helpers without exposing the application directory', async t => {
+    const {url} = await setup(t);
+    for (const name of ['setup.mjs', 'editor-tab.mjs']) {
+        const response = await fetch(`${url}/${name}`);
+        assert.equal(response.status, 200);
+        assert.match(response.headers.get('content-type'), /javascript/);
+    }
+    for (const name of ['extension-card.png', 'connect-block.png']) {
+        const response = await fetch(`${url}/guide-images/${name}`);
+        assert.equal(response.status, 200);
+        assert.match(response.headers.get('content-type'), /image\/png/);
+    }
+    assert.equal((await fetch(`${url}/launcher.mjs`)).status, 404);
+    assert.equal((await fetch(`${url}/guide-images/launcher.mjs`)).status, 404);
 });
 
 test('serves WireScope at a distinct loopback origin and exposes its URL to Scratch', async t => {

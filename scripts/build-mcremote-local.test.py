@@ -93,6 +93,29 @@ class LocalBuildTest(unittest.TestCase):
             self.assertEqual(inventory[0]['license_status'], 'not-distributed')
             self.assertEqual(inventory[0]['files'], [])
 
+    def test_license_files_use_short_archive_paths_and_keep_package_location(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.license_fixture(root, [])
+            location = ('node_modules/@semantic-release/npm/node_modules/npm/node_modules/'
+                        'minipass-pipeline/node_modules/minipass')
+            package = root / location
+            package.mkdir(parents=True)
+            (package / 'package.json').write_text('{"name":"minipass","version":"1.0.0","license":"MIT"}')
+            (package / 'LICENSE').write_text('minipass license')
+            installed = [{'location': location, 'name': 'minipass', 'version': '1.0.0'}]
+            with patch.object(build, 'ROOT', root), patch.object(build.subprocess, 'check_output',
+                    return_value=json.dumps(installed).encode()):
+                files = build.license_files()
+            entry = json.loads(files['licenses/build-inputs.json'])[0]
+            self.assertEqual(entry['location'], location)
+            self.assertEqual(len(entry['files']), 1)
+            license_path = entry['files'][0]
+            self.assertTrue(license_path.startswith('licenses/build-inputs/'))
+            self.assertNotIn('node_modules', license_path)
+            self.assertLess(len(license_path), 80)
+            self.assertEqual(files[license_path], b'minipass license')
+
     def test_supplemental_license_hash_is_checked_and_attribution_is_preserved(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -191,6 +214,36 @@ class LocalBuildTest(unittest.TestCase):
                 self.assertEqual(z.namelist(), sorted('bundle/' + name for name in files))
                 self.assertEqual(z.getinfo('bundle/start-mc-remote.sh').external_attr >> 16 & 0o777, 0o755)
                 self.assertEqual(z.read('bundle/identity.json'), b'{}')
+
+    def test_bundle_keeps_launch_and_readme_visible_and_preserves_runtime_payloads(self):
+        inputs = {'README_ja.md': b'read me', 'はじめに.html': b'<h1>start</h1>',
+                  'NOTICE_ja.md': b'notice',
+                  'runtime/bin/node': b'official binary', 'runtime/node.exe': b'official binary',
+                  'app/launcher.mjs': b'launcher', 'identity.json': b'{}', 'licenses/example': b'license'}
+        for os, suffix in [('windows', 'cmd'), ('macos', 'command'), ('linux', 'sh')]:
+            with self.subTest(os=os), tempfile.TemporaryDirectory() as directory:
+                files = build.bundle_files(inputs, os)
+                self.assertEqual({name.split('/')[0] for name in files},
+                                 {'data', 'README_ja.md', 'はじめに.html', 'NOTICE_ja.md',
+                                  'start-mc-remote.' + suffix})
+                self.assertEqual(files['data/runtime/bin/node'], b'official binary')
+                self.assertEqual(files['data/licenses/example'], b'license')
+                script = files['start-mc-remote.' + suffix].decode()
+                self.assertIn('data', script)
+                archive = Path(directory) / 'bundle.zip'
+                build.write_zip(archive, 'bundle', files)
+                with zipfile.ZipFile(archive) as z:
+                    self.assertEqual(z.getinfo('bundle/data/runtime/bin/node').external_attr >> 16 & 0o777, 0o755)
+
+    def test_start_guide_is_generated_from_the_readme(self):
+        source = '# 始める\n\n1. [案内](https://example.com)を開く。\n'
+        rendered = build.subprocess.run(
+            ['node', str(build.ROOT / 'mc-remote/local/render-guide.mjs'), '2320.0.0b10'],
+            input=source, text=True, capture_output=True, check=True
+        ).stdout
+        self.assertIn('<h1>始める</h1>', rendered)
+        self.assertIn('<a href="https://example.com">案内</a>', rendered)
+        self.assertIn('mc-remote Scratch 2320.0.0b10', rendered)
 
 
 if __name__ == '__main__':

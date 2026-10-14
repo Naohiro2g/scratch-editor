@@ -1,6 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import {screen, fireEvent} from '@testing-library/react';
+import {IntlProvider} from 'react-intl';
 
 import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
 import WireScopePanel from '../../../src/components/wire-scope-panel/wire-scope-panel';
@@ -14,19 +15,36 @@ jest.mock('../../../src/lib/mcremote-wirescope-source', () => ({
 
 describe('WireScopePanel', () => {
     const renderPanel = function (snapshot, props = {}, locale = 'ja') {
-        return renderWithIntl(
+        const messages = {
+            ...mcremoteMessages[locale],
+            'gui.mcremote.wireScope.title': 'WireScope mini'
+        };
+        const wrapped = function (nextSnapshot) {
+            return (
+                <IntlProvider
+                    locale={locale}
+                    messages={messages}
+                >
+                    <WireScopePanel
+                        snapshot={nextSnapshot}
+                        {...props}
+                    />
+                </IntlProvider>
+            );
+        };
+        const result = renderWithIntl(
             <WireScopePanel
                 snapshot={snapshot}
                 {...props}
             />,
-            {
-                locale,
-                messages: {
-                    ...mcremoteMessages[locale],
-                    'gui.mcremote.wireScope.title': 'WireScope mini'
-                }
-            }
+            {locale, messages}
         );
+        return {
+            ...result,
+            rerenderPanel (nextSnapshot) {
+                result.rerender(wrapped(nextSnapshot));
+            }
+        };
     };
 
     test('renders the mini in the Japanese Hiragana locale', () => {
@@ -43,7 +61,7 @@ describe('WireScopePanel', () => {
         fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を開く'}));
     };
 
-    test('starts compact with only the current connection status visible', () => {
+    test('opens pairing instructions automatically on the first connect attempt', () => {
         renderPanel({
             status: 'pairing',
             sourceKind: 'scratch',
@@ -52,8 +70,18 @@ describe('WireScopePanel', () => {
             pairCommand: '/mcremote pair 827-419'
         });
 
-        expect(screen.getByRole('status', {name: '状態: ペアリング待ち'})).toBeInTheDocument();
-        expect(screen.queryByText('827-419')).not.toBeInTheDocument();
+        expect(screen.getByRole('status', {name: '状態: ペア待ち'})).toBeInTheDocument();
+        expect(screen.getByText('827-419')).toBeInTheDocument();
+    });
+
+    test('stays compact until connect runs, and respects a manual close afterward', () => {
+        const {rerenderPanel} = renderPanel({status: 'disconnected'});
+        expect(screen.getByRole('button', {name: 'WireScope mini を開く'})).toBeInTheDocument();
+        rerenderPanel({status: 'connected', displayAlias: 'MOSS-ORBIT-27'});
+        expect(screen.getByRole('button', {name: 'WireScope mini を閉じる'})).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を閉じる'}));
+        rerenderPanel({status: 'pairing', pairCode: '827-419'});
+        expect(screen.getByRole('button', {name: 'WireScope mini を開く'})).toBeInTheDocument();
     });
 
     test('shows configured and actual targets when expanded', () => {
@@ -66,7 +94,6 @@ describe('WireScopePanel', () => {
         }, {
             connectionTarget: {sandboxRoute: 'sb-dev.mc-remote.com'}
         });
-        expand();
 
         expect(screen.getByText('設定先')).toBeInTheDocument();
         expect(screen.getByText('実接続先')).toBeInTheDocument();
@@ -93,8 +120,6 @@ describe('WireScopePanel', () => {
                 payload: {jsonrpc: '2.0'}
             }]
         });
-        expand();
-
         expect(screen.getByText('827-419')).toBeInTheDocument();
         expect(screen.getByText('/mcremote pair 827-419')).toBeInTheDocument();
         expect(screen.getByText('Scratch · MOSS-ORBIT-27')).toBeInTheDocument();
@@ -123,7 +148,7 @@ describe('WireScopePanel', () => {
     test('renders a status badge for each connection state', () => {
         const expectations = [
             ['disconnected', '状態: 未接続', '-'],
-            ['pairing', '状態: ペアリング待ち', '...'],
+            ['pairing', '状態: ペア待ち', '...'],
             ['connected', '状態: 接続', 'OK'],
             ['closed', '状態: 切断', 'X'],
             ['error', '状態: エラー', '!']
@@ -142,13 +167,12 @@ describe('WireScopePanel', () => {
             status: 'pairing',
             pairCode: '827-419'
         });
-        expand();
         expect(screen.getByText('827-419')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を閉じる'}));
 
         expect(screen.queryByText('827-419')).not.toBeInTheDocument();
-        expect(screen.getByRole('status', {name: '状態: ペアリング待ち'})).toBeInTheDocument();
+        expect(screen.getByRole('status', {name: '状態: ペア待ち'})).toBeInTheDocument();
     });
 
     test('flags high contrast when Color Mode is high contrast', () => {
@@ -168,7 +192,6 @@ describe('WireScopePanel', () => {
         }, {
             wireScopeUrl: 'https://live.example/wirescope'
         });
-        expand();
 
         fireEvent.click(screen.getByRole('button', {name: 'WireScope を開く'}));
 

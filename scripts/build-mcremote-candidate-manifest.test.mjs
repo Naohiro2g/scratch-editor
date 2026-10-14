@@ -17,7 +17,7 @@ const setup = t => {
         'wirescope-app.zip', 'wirescope-app.manifest.json', 'contracts.tar.gz'];
     for (const file of files) writeFileSync(join(directory, 'candidate', file), `${file}\n`);
     for (const [os, arch] of [['windows', 'x64'], ['macos', 'arm64'], ['linux', 'x64']]) {
-        const file = `mc-remote-scratch-local-2320.0.0b10-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-2320.0.0b10-${os}-${arch}.zip`;
         const bytes = Buffer.from(file);
         writeFileSync(join(directory, 'candidate', file), bytes);
         writeFileSync(join(directory, 'candidate', file.replace(/\.zip$/, '.artifact.json')), JSON.stringify({

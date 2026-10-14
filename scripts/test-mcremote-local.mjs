@@ -5,7 +5,7 @@ import {once} from 'node:events';
 import {mkdir, mkdtemp, readFile, rm, writeFile} from 'node:fs/promises';
 import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
-import {basename, delimiter, join, resolve} from 'node:path';
+import {delimiter, join, resolve} from 'node:path';
 import WebSocket from 'ws';
 
 const [input] = process.argv.slice(2);
@@ -52,8 +52,12 @@ const unusedPort = async () => {
 };
 try {
     execFileSync('unzip', ['-q', archive, '-d', directory]);
-    const root = join(directory, basename(archive, '.zip'));
-    const bundleIdentity = JSON.parse(await readFile(join(root, 'identity.json')));
+    const root = join(directory, 'mc-remote-scratch-LAN', '2320.0.0b10');
+    const dataRoot = join(root, 'data');
+    const guide = await readFile(join(root, 'はじめに.html'), 'utf8');
+    assert.match(guide, /mc-remote Scratch 2320\.0\.0b10/);
+    assert.match(guide, /mc-remote Scratchを自分のワールドで使う/);
+    const bundleIdentity = JSON.parse(await readFile(join(dataRoot, 'identity.json')));
     assert.equal(bundleIdentity.version, '2320.0.0b10');
     const source = await readFile(join(root, bundleIdentity.source.archive));
     assert.equal(createHash('sha256').update(source)
@@ -70,7 +74,7 @@ try {
     const browserMarker = join(directory, 'browser-opened.txt');
     await mkdir(testBin);
     await writeFile(join(testBin, 'xdg-open'),
-        '#!/bin/sh\nprintf "%s" "$1" > "$MCREMOTE_BROWSER_TEST_MARKER"\n', {mode: 0o755});
+        '#!/bin/sh\nprintf "%s\\n" "$1" >> "$MCREMOTE_BROWSER_TEST_MARKER"\n', {mode: 0o755});
     child = spawn(join(root, 'start-mc-remote.sh'), [], {
         cwd: root,
         env: {
@@ -104,15 +108,16 @@ try {
     await startup;
     for (let attempt = 0; attempt < 100; attempt++) {
         try {
-            assert.equal(await readFile(browserMarker, 'utf8'), url);
+            assert.equal(await readFile(browserMarker, 'utf8'),
+                `${url}/?scratch=opening\n${url}/editor/?extension=mcremote\n`);
             break;
         } catch (error) {
-            if (error.code !== 'ENOENT' || attempt === 99) throw error;
+            if (!['ENOENT', 'ERR_ASSERTION'].includes(error.code) || attempt === 99) throw error;
             await new Promise(resolveWait => setTimeout(resolveWait, 10));
         }
     }
     const page = await fetch(url);
-    assert.match(await page.text(), /保存してScratchを開く/);
+    assert.match(await page.text(), /Scratchを開く/);
     assert.equal((await fetch(`${url}/editor/`)).status, 200);
     assert.equal((await fetch(`${url}/editor/gui.js`)).status, 200);
     const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
@@ -120,8 +125,8 @@ try {
     assert.equal(config.default_sandbox, target.host);
     assert.equal(config.wirescope_url, `http://127.0.0.1:${wireScopePort}/`);
     assert.notEqual(new URL(config.wirescope_url).origin, new URL(url).origin);
-    const wireScopeManifest = JSON.parse(await readFile(join(root, 'wirescope-app.manifest.json')));
-    const wireScopeArchive = await readFile(join(root, 'wirescope-app.zip'));
+    const wireScopeManifest = JSON.parse(await readFile(join(dataRoot, 'wirescope-app.manifest.json')));
+    const wireScopeArchive = await readFile(join(dataRoot, 'wirescope-app.zip'));
     assert.equal(createHash('sha256').update(wireScopeArchive)
         .digest('hex'), bundleIdentity.tooling.wirescope_archive_sha256);
     assert.equal(wireScopeManifest.archive.sha256, bundleIdentity.tooling.wirescope_archive_sha256);

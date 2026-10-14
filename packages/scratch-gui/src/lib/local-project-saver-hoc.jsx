@@ -44,7 +44,7 @@ const LocalProjectSaverHOC = function (WrappedComponent) {
         constructor (props) {
             super(props);
             bindAll(this, [
-                'saveNow'
+                'handleSaveCurrentProject'
             ]);
             this.store = new IndexedDBProjectStore();
             this._autoSaveTimeoutId = null;
@@ -102,12 +102,12 @@ const LocalProjectSaverHOC = function (WrappedComponent) {
 
         scheduleAutoSave () {
             this.clearAutoSaveTimeout();
-            this._autoSaveTimeoutId = setTimeout(this.saveNow, AUTO_SAVE_DEBOUNCE_MS);
+            this._autoSaveTimeoutId = setTimeout(this.handleSaveCurrentProject, AUTO_SAVE_DEBOUNCE_MS);
         }
 
-        saveNow () {
+        handleSaveCurrentProject () {
             this.clearAutoSaveTimeout();
-            if (!this.store.isAvailable()) return Promise.resolve();
+            if (!this.store.isAvailable()) return Promise.resolve(false);
             const title = this.props.reduxProjectTitle;
             const wasChanged = this.props.projectChanged;
             // A failed vm.saveProjectSb3() must never reach store.put(), so a
@@ -123,11 +123,12 @@ const LocalProjectSaverHOC = function (WrappedComponent) {
                 }))
                 .then(() => {
                     if (wasChanged) this.props.onSetProjectUnchanged();
-                    return this.refreshList();
+                    return this.refreshList().then(() => true);
                 })
                 .catch(err => {
                     log.warn('Local project autosave failed', err);
                     this.props.onLocalProjectsError(err);
+                    return false;
                 });
         }
 
@@ -202,7 +203,10 @@ const LocalProjectSaverHOC = function (WrappedComponent) {
                 ...componentProps
             } = this.props;
             return (
-                <WrappedComponent {...componentProps} />
+                <WrappedComponent
+                    onSaveCurrentProject={this.handleSaveCurrentProject}
+                    {...componentProps}
+                />
             );
         }
     }

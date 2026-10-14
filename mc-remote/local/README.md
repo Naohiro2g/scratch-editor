@@ -1,6 +1,8 @@
-# Scratch Local版の配布と検証
+# Scratch LANパッケージの配布と検証
 
-b10のケータリング型簡易版です。標準のケータリング型からDocker、証明書設定、Stackのpreset／orderを除き、ScratchとBridgeを各PCのlocalhostで動かします。利用者の操作は[ZIP内の案内](USER_GUIDE_ja.md)を参照してください。現在は実装・OS検証の段階で、公開済み配布物ではありません。
+b10のScratch LANパッケージです。ScratchとBridgeを各PCのlocalhostで動かします。利用者の操作は[ZIP内の案内](USER_GUIDE_ja.md)を参照してください。現在は実装・OS検証の段階で、公開済み配布物ではありません。
+
+箱庭からLANでの制作へつなぐ目的と導入・再開の設計は、knowledgeの[Scratch LANパッケージの設計](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-lan-package-design_ja.md)を正本とします。教材まで含めた対話の記録は[ローカル設計記録](LAN_EXPERIENCE_DESIGN_ja.md)にあります。
 
 ## 配布物を作る
 
@@ -26,17 +28,21 @@ npm run local:build -- --os linux --arch x64 --commit <40桁のHEAD>
 
 Node.jsの版と公式archiveのSHA-256は[`local-runtime-lock.json`](../local-runtime-lock.json)で固定し、取得先は`mc-remote/local-inputs/`です。Bridgeは[`tooling-lock.json`](../tooling-lock.json)のOCIから`/app`のJavaScriptとwsを変更せず取り出します。x64／arm64の内容が一致し、ネイティブ依存が無いことを生成時に確認します。利用者はOCIを扱いません。
 
-最上位directoryはZIP名から`.zip`を除いた名前です。ランチャー、Scratch、Bridge、WireScope、Node.js実行ファイル、identity、notice・ライセンス本文と対応sourceを収めます。Node.jsのnpmなど、この構成に不要な実行物は同梱しません。Scratchのbuild入力のライセンスも収集します。
+OS別ZIPは`mc-remote-scratch-LAN-<version>-<os>-<arch>.zip`です。内部は`mc-remote-scratch-LAN/<version>/`で、その直下には`start-mc-remote.*`、`README_ja.md`、`はじめに.html`、`NOTICE_ja.md`を置きます。`はじめに.html`はREADMEと同じ原稿から生成します。実行に必要なファイルは`data/`へまとめ、設定保存後の`settings.json`は起動ファイルの隣にできます。ソースの所在と再構築方法はREADMEに含め、独立したSOURCE文書は置きません。Scratch、Bridge、WireScope、Node.js実行ファイル、identity、ライセンス本文と対応sourceは`data/`にあります。Node.jsのnpmなど、この構成に不要な実行物は同梱しません。Scratchのbuild入力のライセンスも収集します。
 
-WireScopeは同じtooling lockのZIPとdetached manifestを保持し、`wirescope/`へ配信用の各fileを収めます。両artifactのbytes／SHA-256、source commitと各assetのidentityを照合し、内容を変更せず同梱します。`wirescope/LICENSE`と`wirescope/NOTICE`も保持します。
+OS標準の展開でZIP名の外側フォルダーが増えても、初回は内側の`mc-remote-scratch-LAN`を`HOME/mc-remote/`へコピーします。次版は新しい`<version>`フォルダーだけを同じ場所へ追加し、旧版は残します。版ごとの`settings.json`の自動引き継ぎは未実装です。
 
-生成済みsource mapとコピーされた素材から、配布に入るcodeとbuildだけの入力を分け、`licenses/review.json`へ記録します。本文不足のruntime依存は`license-overrides.json`で固定した本文・noticeを補います。取得元、commit、bytes、SHA-256を照合し、不足や破損があればZIP生成を止めます。buildだけの依存には本文未収容を明記します。元の135件と現在の入力の照合は[`LICENSE_REVIEW_ja.md`](LICENSE_REVIEW_ja.md)を参照してください。ライセンスの公開前確認事項はcandidateの固定だけで閉じません。
+WireScopeは同じtooling lockのZIPとdetached manifestを保持し、`data/wirescope/`へ配信用の各fileを収めます。両artifactのbytes／SHA-256、source commitと各assetのidentityを照合し、内容を変更せず同梱します。`data/wirescope/LICENSE`と`data/wirescope/NOTICE`も保持します。
+
+生成済みsource mapとコピーされた素材から、配布に入るcodeとbuildだけの入力を分け、`data/licenses/review.json`へ記録します。本文不足のruntime依存は`license-overrides.json`で固定した本文・noticeを補います。取得元、commit、bytes、SHA-256を照合し、不足や破損があればZIP生成を止めます。buildだけの依存には本文未収容を明記します。ZIP内のbuild入力ライセンス本文は短い識別子のフォルダーに置き、元のnpm上の場所と保存先の対応は`data/licenses/build-inputs.json`に残します。元の135件と現在の入力の照合は[`LICENSE_REVIEW_ja.md`](LICENSE_REVIEW_ja.md)を参照してください。ライセンスの公開前確認事項はcandidateの固定だけで閉じません。
 
 ## 接続設定と終了
 
+初回は設定ページを開き、接続先を保存して別タブでScratchを開きます。設定済みならランチャーが設定ページとScratchを順に開きます。ScratchのURLは`http://127.0.0.1:8601/editor/?extension=mcremote`です。設定ページは同じoriginのBroadcastChannelで開いているScratchを把握し、ボタンの連打でタブを追加せず、接続先を再保存してBridgeを再起動することもありません。前面への切り替えはブラウザの制御に従います。
+
 localhostの設定ページは`http://127.0.0.1:8601/`、Bridgeは`ws://127.0.0.1:8602`、独立WireScopeは`http://127.0.0.1:8603/`です。すべて`127.0.0.1`だけにbindします。Scratchのruntime configへ別originの`wirescope_url`を渡し、接続後のminiから開きます。既存の開発配信とは別ポートです。
 
-接続先を保存すると、Bridgeの接続先allowlist／既定値／TCPポートと、Scratchのruntime configが揃います。設定はZIPのdirectoryにある`settings.json`へhostとportだけ保存します。認証とペアリングは従来どおりMcRemoteが扱い、ブラウザに保存するtokenをランチャーへ移しません。接続先を変えるとBridgeの接続は切れるため、Scratch側で再接続してください。
+接続先を保存すると、Bridgeの接続先allowlist／既定値／TCPポートと、Scratchのruntime configが揃います。設定は起動ファイルの隣の`settings.json`へhostとportだけ保存します。認証とペアリングは従来どおりMcRemoteが扱い、ブラウザに保存するtokenをランチャーへ移しません。接続先を変更する際はScratchのタブを閉じてから設定します。
 
 HTTPのHost確認、設定POSTのOrigin確認、JSONの境界検証、公開する静的ファイルのdirectory制限を設けています。Ctrl+CはScratch／WireScopeの配信とBridgeを終了します。使用中ポートは起動エラーとして返し、既存サービスを停止しません。開発・模擬サーバー試験では`MCREMOTE_LOCAL_WEB_PORT`／`MCREMOTE_LOCAL_BRIDGE_PORT`／`MCREMOTE_LOCAL_WIRESCOPE_PORT`で別のlocalhostポートを指定できます。
 

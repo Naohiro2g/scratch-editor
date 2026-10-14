@@ -29,7 +29,7 @@
     "clean": "npm run --workspaces clean",
     "local:build": "python3 scripts/build-mcremote-local.py",
     "local:lint": "eslint --config mc-remote/local/eslint.config.mjs mc-remote/local/*.mjs scripts/acquire-mcremote-local*.mjs scripts/mcremote-local-artifacts*.mjs scripts/test-mcremote-local.mjs",
-    "local:test": "node --test mc-remote/local/launcher.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs && python3 scripts/build-mcremote-local.test.py",
+    "local:test": "node --test mc-remote/local/*.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs && python3 scripts/build-mcremote-local.test.py",
     "prepare": "husky install",
     "refresh-gh-workflow": "ts-node scripts/update-gha-workflows.ts",
     "release-manifest:lint": "eslint --config mc-remote/local/eslint.config.mjs scripts/*release-manifest*.mjs",
@@ -57,6 +57,7 @@
     "cross-env": "7.0.3",
     "globals": "16.5.0",
     "husky": "8.0.3",
+    "markdown-it": "14.1.1",
     "npm": "10.9.9",
     "semantic-release": "25.0.9",
     "ts-node": "10.9.2"

@@ -28,7 +28,7 @@ jobs:
           npm run tooling:release-manifest
           npm run release-manifest:test
           npm run release-manifest:lint
-          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs mc-remote/local/launcher.test.mjs
+          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs mc-remote/local/launcher.test.mjs mc-remote/local/setup.test.mjs
           python3 scripts/build-mcremote-local.test.py
           npm run local:lint
           npm run tooling:artifacts
@@ -47,7 +47,7 @@ jobs:
           python3 scripts/build-mcremote-local.py --os windows --arch x64 --commit "${{ github.sha }}"
           python3 scripts/build-mcremote-local.py --os macos --arch arm64 --commit "${{ github.sha }}"
           python3 scripts/build-mcremote-local.py --os linux --arch x64 --commit "${{ github.sha }}"
-          node scripts/test-mcremote-local.mjs candidate/mc-remote-scratch-local-2320.0.0b10-linux-x64.zip
+          node scripts/test-mcremote-local.mjs candidate/mc-remote-scratch-LAN-2320.0.0b10-linux-x64.zip
       - name: Collect candidate files
         run: |
           test -f packages/scratch-gui/build/index.html

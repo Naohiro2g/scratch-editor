@@ -116,9 +116,23 @@ def write_zip(destination, name, files):
             info = zipfile.ZipInfo(name + '/' + path, date_time=(1980, 1, 1, 0, 0, 0))
             info.create_system = 3
             info.compress_type = zipfile.ZIP_DEFLATED
-            executable = path in ['start-mc-remote.sh', 'start-mc-remote.command', 'runtime/bin/node']
+            executable = path in ['start-mc-remote.sh', 'start-mc-remote.command',
+                                  'runtime/bin/node', 'data/runtime/bin/node']
             info.external_attr = (0o100755 if executable else 0o100644) << 16
             z.writestr(info, data, compresslevel=6)
+
+
+def bundle_files(files, os):
+    visible = {'README_ja.md', 'はじめに.html', 'NOTICE_ja.md'}
+    bundled = {name if name in visible else 'data/' + name: data for name, data in files.items()}
+    if os == 'windows':
+        launcher = '@echo off\r\ncd /d "%~dp0"\r\n"data\\runtime\\node.exe" "data\\app\\launcher.mjs" --open\r\nif errorlevel 1 pause\r\n'
+        suffix = 'cmd'
+    else:
+        launcher = '#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec "./data/runtime/bin/node" "./data/app/launcher.mjs" --open\n'
+        suffix = 'command' if os == 'macos' else 'sh'
+    bundled['start-mc-remote.' + suffix] = launcher.encode()
+    return bundled
 
 
 def source_archive():
@@ -189,7 +203,8 @@ def license_files():
         found = []
         for p in sorted(directory.iterdir()):
             if p.is_file() and re.match(r'^(license|licence|copying|notice)(\b|[._-])', p.name, re.I):
-                destination = 'licenses/build-inputs/' + location + '/' + p.name
+                # The inventory retains the npm location without making extracted ZIP paths as deep.
+                destination = 'licenses/build-inputs/' + sha256(location.encode())[:16] + '/' + p.name
                 files[destination] = p.read_bytes()
                 found.append(destination)
         original_files = list(found)
@@ -273,19 +288,24 @@ def build(args):
     files.update(license_files())
     for path in sorted(gui.rglob('*')):
         if path.is_file():
-            files['scratch/' + path.relative_to(gui).as_posix()] = path.read_bytes()
-    for name in ['launcher.mjs', 'setup.html']:
+            data = path.read_bytes()
+            if path.relative_to(gui).as_posix() == 'index.html':
+                data += b'\n<script type="module" src="/editor-tab.mjs"></script>\n'
+            files['scratch/' + path.relative_to(gui).as_posix()] = data
+    for name in ['launcher.mjs', 'setup.html', 'setup.mjs', 'editor-tab.mjs']:
         files['app/' + name] = (ROOT / 'mc-remote/local' / name).read_bytes()
+    for name in ['extension-card.png', 'connect-block.png']:
+        files['app/guide-images/' + name] = (ROOT / 'mc-remote/local/guide-images' / name).read_bytes()
     source = source_archive()
     files['source/scratch-source.tar.gz'] = source
     files['licenses/Bridge-AGPL-3.0.txt'] = (ROOT / 'LICENSE').read_bytes()
     files['licenses/ws-LICENSE'] = files['bridge/node_modules/ws/LICENSE']
     files['NOTICE_ja.md'] = (ROOT / 'mc-remote/local/NOTICE_ja.md').read_bytes()
-    files['README_ja.md'] = (ROOT / 'mc-remote/local/USER_GUIDE_ja.md').read_bytes()
+    guide = (ROOT / 'mc-remote/local/USER_GUIDE_ja.md').read_text()
     identity = {'schema': 'mc-remote.scratch-local', 'schema_version': 1, 'version': version,
                 'os': args.os, 'arch': args.arch,
                 'source': {'repository': 'https://github.com/Naohiro2g/scratch-editor', 'commit': head,
-                           'working_tree_dirty': dirty, 'archive': 'source/scratch-source.tar.gz',
+                           'working_tree_dirty': dirty, 'archive': 'data/source/scratch-source.tar.gz',
                            'archive_sha256': sha256(source)},
                 'tooling': {**tooling['source'], 'bridge_digest': tooling['artifacts']['bridge_digest'],
                             'bridge_archive_sha256': pinned['sha256'],
@@ -294,26 +314,26 @@ def build(args):
                 'runtime': {'name': 'Node.js', 'version': runtime_lock['version'], 'url': runtime_url,
                             'archive_sha256': entry['sha256']}}
     files['identity.json'] = json_bytes(identity)
-    files['SOURCE_ja.md'] = ('# 対応するソース\n\n'
-        'Scratchとランチャー: 同梱の`source/scratch-source.tar.gz`。`npm ci`、`npm run build`で再構築します。\n\n'
+    readme = (guide + '\n'
         f'Bridge: https://github.com/{tooling["source"]["repository"]}/tree/{tooling["source"]["commit"]}\n\n'
-        'Bridgeの入力はtooling-lock.jsonで固定したOCIの/appから、変更せず取り出しています。\n\n'
         f'WireScope: https://github.com/{tooling["source"]["repository"]}/tree/{tooling["source"]["commit"]}/packages/live\n\n'
-        'WireScopeの入力と再構築の手順はwirescope-app.manifest.jsonに記載しています。\n\n'
+        'Bridgeは固定OCIの`/app`から変更せず収容しています。WireScopeの入力と再構築の手順は'
+        '`data/wirescope-app.manifest.json`を参照してください。\n\n'
         f'Node.js: https://nodejs.org/dist/v{runtime_lock["version"]}/node-v{runtime_lock["version"]}.tar.gz\n\n'
-        '第三者のbuild入力はpackage-lock.json、ライセンス本文とnoticeはlicenses/と各Scratch bundleのLICENSE.txtを参照してください。\n').encode()
-    if args.os == 'windows':
-        launcher = '@echo off\r\ncd /d "%~dp0"\r\n"runtime\\node.exe" "app\\launcher.mjs" --open\r\nif errorlevel 1 pause\r\n'
-        suffix = 'cmd'
-    else:
-        launcher = '#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\nexec "./runtime/bin/node" "./app/launcher.mjs" --open\n'
-        suffix = 'command' if args.os == 'macos' else 'sh'
-    files['start-mc-remote.' + suffix] = launcher.encode()
-    name = f'mc-remote-scratch-local-{version}-{args.os}-{args.arch}'
+        '正確な版と入力の識別情報は`data/identity.json`、第三者依存の一覧は`data/licenses/build-inputs.json`、'
+        'ライセンス本文とnoticeは`NOTICE_ja.md`と`data/licenses/`、各Scratch bundleの`*.LICENSE.txt`を参照してください。\n'
+    )
+    files['README_ja.md'] = readme.encode()
+    files['はじめに.html'] = subprocess.run(
+        ['node', str(ROOT / 'mc-remote/local/render-guide.mjs'), version],
+        input=readme, text=True, capture_output=True, check=True
+    ).stdout.encode()
+    files = bundle_files(files, args.os)
+    name = f'mc-remote-scratch-LAN-{version}-{args.os}-{args.arch}'
     output = Path(args.output)
     output.mkdir(parents=True, exist_ok=True)
     destination = output / (name + '.zip')
-    write_zip(destination, name, files)
+    write_zip(destination, f'mc-remote-scratch-LAN/{version}', files)
     artifact = {'role': 'scratch-local', 'kind': 'file', 'file': destination.name, 'os': args.os, 'arch': args.arch,
                 'bytes': destination.stat().st_size, 'sha256': sha256(destination.read_bytes()),
                 'source_commit': head, 'working_tree_dirty': dirty}

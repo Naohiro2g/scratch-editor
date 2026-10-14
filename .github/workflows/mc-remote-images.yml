@@ -305,6 +305,6 @@ jobs:
             contracts.tar.gz \
             mc-remote/tooling/artifacts/wirescope-app.zip \
             mc-remote/tooling/artifacts/wirescope-app.manifest.json \
-            candidate/mc-remote-scratch-local-*.zip \
+            candidate/mc-remote-scratch-LAN-*.zip \
             --repo "${{ github.repository }}" \
             --clobber

@@ -12,7 +12,7 @@ export const localArtifacts = ({directory, version, commit, release = false}) =>
         ['macos', 'arm64'],
         ['linux', 'x64']
     ].map(([os, arch]) => {
-        const file = `mc-remote-scratch-local-${version}-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-${version}-${os}-${arch}.zip`;
         const identity = JSON.parse(readFileSync(join(directory, file.replace(/\.zip$/, '.artifact.json'))));
         const bytes = readFileSync(join(directory, file));
         const sha256 = createHash('sha256').update(bytes)

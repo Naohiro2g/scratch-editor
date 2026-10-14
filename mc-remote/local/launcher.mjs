@@ -11,6 +11,7 @@ const defaultTarget = {host: '127.0.0.1', port: 25575};
 const mime = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
     '.json': 'application/json',
     '.css': 'text/css',
     '.svg': 'image/svg+xml',
@@ -47,7 +48,7 @@ const readTarget = async root => {
     try {
         return validateTarget(JSON.parse(await readFile(join(root, 'settings.json'), 'utf8')));
     } catch (error) {
-        if (error.code === 'ENOENT') return {...defaultTarget};
+        if (error.code === 'ENOENT') return null;
         throw new Error(`settings.jsonを読み取れません: ${error.message}`, {cause: error});
     }
 };
@@ -81,14 +82,16 @@ const serveFile = async (request, response, root, relative) => {
 };
 
 export const createLocalServer = async ({root, webPort, bridgePort, wireScopePort, startBridge}) => {
-    let target = await readTarget(root);
+    const savedTarget = await readTarget(root);
+    let target = savedTarget || {...defaultTarget};
+    let targetSaved = Boolean(savedTarget);
     let stopBridge;
     let changing = false;
     let changeComplete;
     let closed = false;
     let handle;
-    const scratchRoot = await realpath(join(root, 'scratch'));
-    const wireScopeRoot = await realpath(join(root, 'wirescope'));
+    const scratchRoot = await realpath(join(root, 'data/scratch'));
+    const wireScopeRoot = await realpath(join(root, 'data/wirescope'));
     const page = await readFile(join(dirname(fileURLToPath(import.meta.url)), 'setup.html'));
     const server = createServer((request, response) => {
         handle(request, response).catch(error => {
@@ -156,6 +159,7 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
                 });
                 await rename(join(root, 'settings.json.tmp'), join(root, 'settings.json'));
                 target = next;
+                targetSaved = true;
                 return sendJson(response, 200, target);
             } catch (error) {
                 if (stopBridge) await stopBridge();
@@ -170,9 +174,15 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
         if (!['GET', 'HEAD'].includes(request.method)) {
             return sendJson(response, 405, {error: '対応していない操作です。'});
         }
-        if (pathname === '/target') return sendJson(response, 200, target);
+        if (pathname === '/target') return sendJson(response, 200, {...target, saved: targetSaved});
         if (pathname === '/identity.json') {
-            return sendJson(response, 200, JSON.parse(await readFile(join(root, 'identity.json'))));
+            return sendJson(response, 200, JSON.parse(await readFile(join(root, 'data/identity.json'))));
+        }
+        if (['/setup.mjs', '/editor-tab.mjs'].includes(pathname)) {
+            return serveFile(request, response, dirname(fileURLToPath(import.meta.url)), pathname.slice(1));
+        }
+        if (['/guide-images/extension-card.png', '/guide-images/connect-block.png'].includes(pathname)) {
+            return serveFile(request, response, dirname(fileURLToPath(import.meta.url)), pathname.slice(1));
         }
         if (pathname === '/editor/mc-remote-runtime-config.json') {
             return sendJson(response, 200, {
@@ -221,7 +231,17 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
         await close();
         throw error;
     }
-    return {url, close};
+    const openUrls = savedTarget ? [`${url}/?scratch=opening`, `${url}/editor/?extension=mcremote`] : [url];
+    return {url, openUrls, close};
+};
+
+export const browserCommands = (platform, urls) => {
+    if (platform === 'darwin') return [['open', urls]];
+    if (platform === 'win32') {
+        // cmd's start command opens URLs with the user's default browser.
+        return urls.map(url => ['cmd.exe', ['/d', '/c', `start "" "${url}"`]]);
+    }
+    return urls.map(url => ['xdg-open', [url]]);
 };
 
 export const runBridge = async ({root, port, target, origins, onExit}) => {
@@ -292,7 +312,7 @@ export const runBridge = async ({root, port, target, origins, onExit}) => {
 
 const main = async () => {
     let local;
-    const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+    const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
     const webPort = Number(process.env.MCREMOTE_LOCAL_WEB_PORT || 8601);
     const bridgePort = Number(process.env.MCREMOTE_LOCAL_BRIDGE_PORT || 8602);
     const wireScopePort = Number(process.env.MCREMOTE_LOCAL_WIRESCOPE_PORT || 8603);
@@ -305,7 +325,7 @@ const main = async () => {
     if (new Set(ports).size !== ports.length) {
         throw new Error('Scratch、Bridge、WireScopeには別のポートを指定してください。');
     }
-    await access(join(root, 'identity.json'));
+    await access(join(root, 'data/identity.json'));
     const server = await createLocalServer({
         root,
         webPort,
@@ -313,7 +333,7 @@ const main = async () => {
         wireScopePort,
         startBridge: (target, origins) =>
             runBridge({
-                root,
+                root: join(root, 'data'),
                 port: bridgePort,
                 target,
                 origins,
@@ -331,7 +351,9 @@ const main = async () => {
             })
     });
     local = server;
-    console.log(`mc-remote Scratch: ${server.url}\n終了するには、この画面でCtrl+Cを押してください。`);
+    console.log(`mc-remote Scratch: ${server.url}/editor/?extension=mcremote\n` +
+        `接続先の設定: ${server.url}/\n` +
+        'この画面を開いたまま使ってください。終了するにはCtrl+Cを押します。');
     for (const signal of ['SIGINT', 'SIGTERM']) {
         process.once(signal, () => {
             void server
@@ -340,18 +362,19 @@ const main = async () => {
         });
     }
     if (process.argv.includes('--open')) {
-        const command =
-            process.platform === 'win32' ?
-                'explorer.exe' :
-                process.platform === 'darwin' ?
-                    'open' :
-                    'xdg-open';
-        const browser = spawn(command, [server.url], {stdio: 'ignore'});
-        browser.on('error', error =>
-            console.warn(
-                `Scratch Local: ${command}: ${error.message}; ${server.url}をブラウザで開いてください。`
-            )
-        );
+        for (const [command, args] of browserCommands(process.platform, server.openUrls)) {
+            try {
+                const browser = spawn(command, args, {
+                    stdio: 'ignore',
+                    windowsVerbatimArguments: process.platform === 'win32'
+                });
+                await once(browser, 'spawn');
+                browser.unref();
+            } catch (error) {
+                console.warn(`Scratch Local: ${command}: ${error.message}; ` +
+                    `${server.url}/をブラウザで開いてください。`);
+            }
+        }
     }
 };
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

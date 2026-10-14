@@ -30,7 +30,7 @@ const setup = t => {
     }));
     writeFileSync(join(root, 'contracts.tar.gz'), 'synthetic contracts\n');
     for (const [os, arch] of [['windows', 'x64'], ['macos', 'arm64'], ['linux', 'x64']]) {
-        const file = `mc-remote-scratch-local-2320.0.0b10-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-2320.0.0b10-${os}-${arch}.zip`;
         const body = Buffer.from(file);
         writeFileSync(join(candidate, file), body);
         writeFileSync(join(candidate, file.replace(/\.zip$/, '.artifact.json')), JSON.stringify({
@@ -68,7 +68,7 @@ test('public v2 records the actual six file sizes and preserves OCI digests', t 
 test('release rejects changed pinned bytes, dirty native ZIPs, and Bridge digest drift', t => {
     const options = setup(t);
     assert.throws(() => buildReleaseManifest({...options, bridgeDigest: scratchDigest}), /Bridge digest/);
-    const sidecar = join(options.root, 'candidate/mc-remote-scratch-local-2320.0.0b10-windows-x64.artifact.json');
+    const sidecar = join(options.root, 'candidate/mc-remote-scratch-LAN-2320.0.0b10-windows-x64.artifact.json');
     const identity = JSON.parse(readFileSync(sidecar));
     identity.working_tree_dirty = true;
     writeFileSync(sidecar, JSON.stringify(identity));

@@ -15,7 +15,7 @@ describe('McRemote Japanese localization', () => {
                 '未取得 — Minecraft に接続するとブロックを選べます。',
             'gui.mcremote.blockPicker.statusUnavailable':
                 '利用不可 — 接続先からカタログを取得できませんでした。',
-            'gui.mcremote.wireScope.statusPairing': 'ペアリング待ち',
+            'gui.mcremote.wireScope.statusPairing': 'ペア待ち',
             'mcremote.connect': '接続する',
             'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。',
             'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
