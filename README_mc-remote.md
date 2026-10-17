@@ -18,9 +18,9 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 [ショーケース](https://naohiro2g.github.io/scratch-editor/)では画面とブロックを見られますが、マイクラリモコンの接続は無効です。
 
-自分のPCやLAN内のワールドで使う[Scratch Local版](mc-remote/local/README.md)をb10向けに準備しています。現在は実装・OS検証の段階です。
+自分のPCやLAN内のワールドで使う[Scratch Local版](mc-remote/local/README.md)は、b10として公開しています。
 
-公開b9のブロックの画像・入力項目・選択肢は[Scratchブロック一覧](https://mc-remote.com/api/scratch/)にまとめています。各ブロックの「リンク」から、そのブロックを指すURLを共有できます。手元で表示・生成する方法は[一覧ページの案内](mc-remote/block-reference/README.md)にあります。
+公開b10のブロックの画像・入力項目・選択肢は[Scratchブロック一覧](https://mc-remote.com/api/scratch/)にまとめています。b9とb10の版別ページも保持します。各ブロックの「リンク」から、そのブロックを指すURLを共有できます。手元で表示・生成する方法は[一覧ページの案内](mc-remote/block-reference/README.md)にあります。
 
 ## 2. 使い続ける・別の方法から移る
 
@@ -34,7 +34,7 @@ Scratch を知っていても、マインクラフトが初めてでも、[公�
 
 貢献する方も学習者です。最初から通信仕様を全部読むより、**画面のブロックがどこで命令になり、どこへ届くか**を追うと、変更する場所を見つけやすくなります。[このリポジトリのコード地図](mc-remote/README.md)に、Scratch 本体への変更と、共通ツールへのつながりをまとめました。
 
-通信APIの命令名・引数・戻り値は[API一覧](https://mc-remote.com/api/)で確認できます。公開版と更新内容は[GitHub Releases](https://github.com/Naohiro2g/scratch-editor/releases)にあります。
+通信APIの命令名・引数・戻り値は[protocol 23.2.0のAPI一覧](https://mc-remote.com/api/23.2.0/)で確認できます。Scratchなど各クライアントから使える機能は、使用するクライアントの版の資料で確認してください。公開版と更新内容は[GitHub Releases](https://github.com/Naohiro2g/scratch-editor/releases)にあります。
 
 ソースコードを手元で動かす手順は[ルート README](README.md)にあります。Scratchのテストで使うfixtureは、最初に `npm run tooling:fixtures` で取得します。中継や観察画面を調べる場合は、共通ツール側の README を参照してください。
 
