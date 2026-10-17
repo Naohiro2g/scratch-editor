@@ -93,7 +93,7 @@ npm run tooling:artifacts
 `npm run release-manifest:test`と`npm run release-manifest:lint`で検査できます。b10の公開manifestはv2で、
 Scratch Localの3 ZIPと既存の3ファイル全てに実byte数を記録します。baselineはv1／v2のいずれも文書全体を検査してから使います。
 
-[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b9](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b9)です。rollbackは直前の公開b8のtag `v2320.0.0b8` と、その公開setを使います。
+[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b10](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b10)です。rollbackは直前の公開b9のtag `v2320.0.0b9` と、その公開setを使います。
 
 ## 3. 貢献者が調べ始める場所
 

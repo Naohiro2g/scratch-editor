@@ -35,7 +35,7 @@ const renderArgument = argument => {
         `<td>${defaultLabel}</td><td>${options || '—'}</td></tr>`;
 };
 
-const renderBlock = block => {
+const renderBlock = (block, protocol) => {
     const search = [block.title, block.text, block.opcode, block.description, ...(block.methods || []),
         ...block.arguments.flatMap(argument => [argument.label,
             ...(argument.options || []).flatMap(option => [option.text, option.value])])].join(' ');
@@ -52,7 +52,7 @@ const renderBlock = block => {
     const methods = block.methods && block.methods.length ? `<div class="protocol"><span>通信API</span> ${
         block.methods.map(method => {
             const category = method.startsWith('auth.') ? 'auth' : protocolCategories[block.category];
-            return `<a href="https://mc-remote.com/api/#${category}"><code>${escapeHtml(method)}</code></a>`;
+            return `<a href="https://mc-remote.com/api/${escapeHtml(protocol)}/#${category}"><code>${escapeHtml(method)}</code></a>`;
         }).join(' ')}</div>` : '';
     return `<article id="${escapeHtml(block.opcode)}" class="block-card" data-search="${escapeHtml(search)}" ` +
         `data-kind="${escapeHtml(block.blockType)}"><div class="card-heading"><h3>${escapeHtml(block.title)}</h3>` +
@@ -77,12 +77,13 @@ const renderPage = (template, data) => {
     }).join('');
     const sections = categories.map(([id, name]) => `<section class="block-section" data-section="${id}" ` +
         `aria-labelledby="heading-${id}"><h2 id="heading-${id}">${escapeHtml(name)}</h2>${
-            data.blocks.filter(block => block.category === id).map(renderBlock)
+            data.blocks.filter(block => block.category === id).map(block => renderBlock(block, data.protocol))
                 .join('')}</section>`).join('');
     return template.replace('<!-- CATEGORY_NAVIGATION -->', navigation)
         .replace('<!-- BLOCK_SECTIONS -->', sections)
         .replaceAll('{{BLOCK_COUNT}}', String(data.blocks.length))
         .replaceAll('{{RELEASE}}', escapeHtml(data.release))
+        .replaceAll('{{PROTOCOL}}', escapeHtml(data.protocol))
         .replace('{{SOURCE_COMMIT}}', escapeHtml(data.sourceCommit));
 };
 
@@ -100,7 +101,7 @@ const main = async function () {
     if (!options['--editor-url']) {
         throw new Error('--editor-url is required; serve the selected release editor first.');
     }
-    const sourceRef = options['--source-ref'] || 'v2320.0.0b9';
+    const sourceRef = options['--source-ref'] || 'v2320.0.0b10';
     const sourceCommit = execFileSync('git', ['rev-parse', `${sourceRef}^{commit}`],
         {cwd: root, encoding: 'utf8'}).trim();
     const sourcePaths = ['packages/scratch-vm/src', 'packages/scratch-gui/src/lib/mcremote-l10n.js',
@@ -111,6 +112,10 @@ const main = async function () {
         `${sourceCommit}:packages/scratch-vm/src/extensions/scratch3_mcremote/client-version.js`],
     {cwd: root, encoding: 'utf8'});
     const version = /module\.exports\s*=\s*['"]([^'"]+)['"]/.exec(versionSource)[1];
+    const protocolSource = execFileSync('git', ['show',
+        `${sourceCommit}:packages/scratch-vm/src/extensions/scratch3_mcremote/index.js`],
+    {cwd: root, encoding: 'utf8'});
+    const protocol = /const PROTOCOL_VERSION = ['"]([^'"]+)['"]/.exec(protocolSource)[1];
     const content = JSON.parse(await fs.readFile(path.join(referenceDirectory, 'content.json'), 'utf8'));
     const browser = await chromium.launch({headless: true});
     let exported;
@@ -255,6 +260,7 @@ const main = async function () {
     }
     const data = {
         release: version,
+        protocol,
         sourceRef,
         sourceCommit,
         locale: 'ja',
