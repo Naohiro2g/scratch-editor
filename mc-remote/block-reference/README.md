@@ -1,6 +1,6 @@
 # Scratchブロック一覧
 
-公開b10のブロックを画像・入力項目・選択肢から探す、静的ページの試作です。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。[b9](https://mc-remote.com/api/scratch/2320.0.0b9/)と[b10](https://mc-remote.com/api/scratch/2320.0.0b10/)の版別ページも保持します。通信protocolが同じでも、Scratchのブロックや動作はreleaseごとに確認します。
+公開b10のブロックを画像・入力項目・選択肢から探す、静的ページの試作です。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。[b9](https://mc-remote.com/api/scratch/2320.0.0b9/)と[b10](https://mc-remote.com/api/scratch/2320.0.0b10/)の版別ページを保持します。`site/2321.0.0rc1/`は公開前の候補です。通信protocolが同じでも、Scratchのブロックや動作はreleaseごとに確認します。
 
 ## ブロックへ直接リンクする
 
@@ -16,7 +16,7 @@
 python3 -m http.server 8640 --bind 127.0.0.1 --directory mc-remote/block-reference/site
 ```
 
-`site/index.html`を直接ブラウザで開いても表示・検索できます。`site/2320.0.0b9/`と`site/2320.0.0b10/`が版別ページです。JavaScriptを無効にしてもブロック一覧は読めます。
+`site/index.html`を直接ブラウザで開いても表示・検索できます。`site/2320.0.0b9/`、`site/2320.0.0b10/`、`site/2321.0.0rc1/`が版別ページです。JavaScriptを無効にしてもブロック一覧は読めます。
 
 カテゴリーのチェックボックスで、命令・値を返す・イベント・条件を複数選んで絞り込めます。最初はすべて選択されています。カテゴリーはパネルの背景色とラベルでも見分けられます。
 
@@ -41,6 +41,8 @@ node scripts/build-mcremote-block-reference.cjs \
 `--editor-url`は手元で配信した対象エディターのURLに置き換えます。`--source-ref`の既定値は公開b10のtagです。作業中のVM・翻訳・ブロック描画のソースがそのrefと異なる場合は、生成を止めます。この検査だけで配信中エディターのsourceを証明するものではありません。配信物とrefの対応は配信側で確認してください。
 
 生成器は`site/`直下の現行ページを更新します。版別ページは、生成後にそのreleaseの出力を同じ名前のディレクトリへコピーします。b9のディレクトリは既存の生成結果を保存したものです。
+
+rc1候補は、rc1ソースからビルドしたエディターを配信し、`--source-ref`にそのソースcommit、`--output`に`site/2321.0.0rc1`を指定して生成します。公開ページへの取り込みはrelease後に行います。
 
 ```sh
 mkdir -p mc-remote/block-reference/site/2320.0.0b10/images
