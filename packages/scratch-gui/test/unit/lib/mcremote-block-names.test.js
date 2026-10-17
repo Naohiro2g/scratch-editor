@@ -1,9 +1,10 @@
 import {getBlockNames, searchBlockIds} from '../../../src/lib/mcremote-block-names';
 import names12111 from '../../../src/lib/mcremote-block-names/1.21.11.json';
 import names262 from '../../../src/lib/mcremote-block-names/26.2.json';
+import names263 from '../../../src/lib/mcremote-block-names/26.3.json';
 
 describe('McRemote block names', () => {
-    test.each(['1.21.11', '26.2'])('resolves Japanese and English names for Minecraft %s', version => {
+    test.each(['1.21.11', '26.2', '26.3'])('resolves Japanese and English names for Minecraft %s', version => {
         expect(getBlockNames(version, 'minecraft:gold_block')).toEqual({
             ja: '金ブロック',
             en: 'Block of Gold'
@@ -16,11 +17,17 @@ describe('McRemote block names', () => {
         expect(getBlockNames('1.21.11', 'minecraft:unknown_block')).toBeNull();
         expect(getBlockNames('1.21.11', 'minecraft:sulfur')).toBeNull();
         expect(getBlockNames('26.2', 'minecraft:sulfur')).not.toBeNull();
+        expect(getBlockNames('26.2', 'minecraft:poplar_log')).toBeNull();
+        expect(getBlockNames('26.3', 'minecraft:poplar_log')).toEqual({
+            ja: 'ポプラの原木',
+            en: 'Poplar Log'
+        });
     });
 
     test.each([
         ['1.21.11', names12111],
-        ['26.2', names262]
+        ['26.2', names262],
+        ['26.3', names263]
     ])('bundles only block IDs and their names for %s', (_version, names) => {
         expect(Object.keys(names).length).toBeGreaterThan(1000);
         for (const [id, translations] of Object.entries(names)) {

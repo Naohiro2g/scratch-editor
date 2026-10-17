@@ -6,6 +6,7 @@
 
 - `1.21.11.json`: Minecraft Java 1.21.11のブロック名1,154件。
 - `26.2.json`: Minecraft Java 26.2のブロック名1,184件。
+- `26.3.json`: Minecraft Java 26.3のブロック名1,275件。
 - `sources.json`: 生成に使った公式配信URL、元ファイルのハッシュ、英語ファイルのJAR内パス。
 
 各版のJSONは、`minecraft:gold_block`のようなIDをキーに、`en`と`ja`の短い名称を持ちます。元の言語ファイル全体、説明文、旗の模様、エンティティ名は含めません。
@@ -20,7 +21,7 @@
 
 ```sh
 cd packages/scratch-gui
-node scripts/update-mcremote-block-names.mjs 1.21.11 26.2
+node scripts/update-mcremote-block-names.mjs 1.21.11 26.2 26.3
 ```
 
 更新スクリプトはMojang公式version manifestから指定版のmetadataとasset indexを取得します。英語は公式client JAR内の`assets/minecraft/lang/en_us.json`、日本語はasset indexが指す`minecraft/lang/ja_jp.json`を使います。manifestに記載されたSHA-1を照合してから、`block.minecraft.<ID>`形式の直接の名称だけを抽出します。取得したJARと元の言語ファイルはディスクへ保存しません。

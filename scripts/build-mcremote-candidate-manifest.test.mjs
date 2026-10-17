@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {test} from 'node:test';
+import clientVersion from '../packages/scratch-vm/src/extensions/scratch3_mcremote/client-version.js';
 
 const script = fileURLToPath(new URL('./build-mcremote-candidate-manifest.mjs', import.meta.url));
 const setup = t => {
@@ -17,7 +18,7 @@ const setup = t => {
         'wirescope-app.zip', 'wirescope-app.manifest.json', 'contracts.tar.gz'];
     for (const file of files) writeFileSync(join(directory, 'candidate', file), `${file}\n`);
     for (const [os, arch] of [['windows', 'x64'], ['macos', 'arm64'], ['linux', 'x64']]) {
-        const file = `mc-remote-scratch-LAN-2320.0.0b10-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-${clientVersion}-${os}-${arch}.zip`;
         const bytes = Buffer.from(file);
         writeFileSync(join(directory, 'candidate', file), bytes);
         writeFileSync(join(directory, 'candidate', file.replace(/\.zip$/, '.artifact.json')), JSON.stringify({
@@ -43,7 +44,7 @@ test('candidate records its own source and preserves pinned tooling identities',
     assert.equal(manifest.source.commit, 'a'.repeat(40));
     assert.equal(manifest.tooling.commit, 'b'.repeat(40));
     assert.equal(manifest.artifacts.length, 9);
-    assert.equal(manifest.version, '2320.0.0b10');
+    assert.equal(manifest.version, clientVersion);
     assert.equal(manifest.artifacts.find(item => item.role === 'bridge').digest, `sha256:${'c'.repeat(64)}`);
     assert.equal(manifest.artifacts.find(item => item.role === 'scratch').digest, `sha256:${'d'.repeat(64)}`);
 });

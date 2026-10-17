@@ -4,7 +4,7 @@ const path = require('path');
 const test = require('tap').test;
 const McRemote = require('../../src/extensions/scratch3_mcremote/index.js');
 const entityParticleFixture = require(
-    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.json'
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.1.json'
 );
 const {remoteErrorText} = require('../../src/extensions/scratch3_mcremote/block-value');
 const {
@@ -19,7 +19,7 @@ const oneShotTransportFixture = require(
 );
 const eventFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/events-v23.json');
 const eventCompatibilityFixture = require(
-    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/chat-event-compat-v23.2.json'
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/chat-event-compat-v23.2.1.json'
 );
 const dimensionFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/dimensions-v22.json');
 const directionLightningFixturePath = path.resolve(
@@ -27,7 +27,7 @@ const directionLightningFixturePath = path.resolve(
     '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/direction-lightning-v23.1.json'
 );
 const directionLightningFixture = require(directionLightningFixturePath);
-const b8Fixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.json');
+const protocolFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.1.json');
 const spawnFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/spawn-v22.json');
 
 // Read from the extension itself so this harness tracks the current protocol
@@ -244,7 +244,7 @@ const newConnectedBlocks = runtime => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -300,7 +300,7 @@ test('catalog list waits for the hello acquisition and preserves the list on fai
             jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '23.2.0',
+                protocol: McRemote.PROTOCOL_VERSION,
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash,
@@ -365,7 +365,7 @@ test('catalog list rejects unavailable catalogs, invalid inputs and obsolete con
     t.equal(socket.sent.length, 1);
 });
 
-test('hello uses a JSON-RPC 2.0 request with protocol 23.2.0', t => {
+test('hello uses a JSON-RPC 2.0 request with protocol 23.2.1', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -382,9 +382,9 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.2.0', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, b8Fixture.protocol, 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, protocolFixture.protocol, 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2320.0.0b10', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2321.0.0rc1', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
@@ -445,7 +445,7 @@ test('connect uses the runtime-configured bridge and default sandbox without ove
         socket.url,
         'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
     );
-    t.equal(socket.lastSent().params.client.version, '2320.0.0b10');
+    t.equal(socket.lastSent().params.client.version, '2321.0.0rc1');
     t.end();
 });
 
@@ -523,7 +523,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -539,7 +539,7 @@ test('McRemote observation logs hello frames and redacts session tokens', t => {
         t.equal(connected.sourceKind, 'scratch');
         t.match(connected.displayAlias, /^[A-Z]+-[A-Z]+-[0-9]{6}$/);
         t.same(connected.hello, {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -640,7 +640,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '26.1.2',
             supported_mc_versions: ['1.21.11'],
             y_sea: 63,
@@ -651,7 +651,7 @@ test('McRemote observation normalizes top-level y_sea into world constants', t =
 
     return result.then(() => {
         t.same(latestObservation(runtime).hello, {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '26.1.2',
             catalogHash: null,
             supported_mc_versions: ['1.21.11'],
@@ -692,7 +692,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
-            t.equal(pairBegin.params.client.version, '2320.0.0b10');
+            t.equal(pairBegin.params.client.version, '2321.0.0rc1');
             t.equal(latestObservation(runtime).status, 'pairing');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 2,
@@ -726,7 +726,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
-                    protocol: '23.2.0',
+                    protocol: McRemote.PROTOCOL_VERSION,
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -820,6 +820,22 @@ test('hello accepts a server with a newer compatible protocol minor', t => {
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
     socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.3.99'}});
+
+    return result.then(() => {
+        t.equal(blocks._connectionStatus, 'connected');
+        t.end();
+    });
+});
+
+test('protocol 23.2.1 client accepts a 23.2.0 server', t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const result = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    t.equal(socket.lastSent().params.protocol, '23.2.1');
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.2.0'}});
 
     return result.then(() => {
         t.equal(blocks._connectionStatus, 'connected');
@@ -932,7 +948,7 @@ test('connect block resolves without exposing the hello result', t => {
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -987,7 +1003,7 @@ test('successful reconnect resets disconnected command guidance', async t => {
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             catalogHash: null
         }
     });
@@ -1012,7 +1028,7 @@ test('connect block reuses an in-flight connection instead of opening a duplicat
     socket.fireMessage({jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             catalogHash: null,
             world_constants: {y_sea: 63}
@@ -1257,7 +1273,7 @@ test('reconnect reuses the sandbox token and starts build state from defaults', 
             nextSocket.fireMessage({jsonrpc: '2.0',
                 id: 1,
                 result: {
-                    protocol: '23.2.0',
+                    protocol: McRemote.PROTOCOL_VERSION,
                     mc_version: '1.21.11',
                     supported_mc_versions: ['1.21.11'],
                     catalogHash: null,
@@ -1286,7 +1302,7 @@ test('sandbox switch uses the token scoped to the newly selected route', t =>
         nextSocket.fireMessage({jsonrpc: '2.0',
             id: 1,
             result: {
-                protocol: '23.2.0',
+                protocol: McRemote.PROTOCOL_VERSION,
                 mc_version: '1.21.11',
                 supported_mc_versions: ['1.21.11'],
                 catalogHash: null,
@@ -1878,7 +1894,7 @@ test('one connection poller dispatches mixed b6 events with per-thread context a
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash: null,
@@ -2641,7 +2657,7 @@ test('hello uses a validated hash-matched catalog cache without a network reques
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2678,7 +2694,7 @@ test('catalog cache miss fetches after hello without delaying connection', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2719,7 +2735,7 @@ test('invalid catalog is unavailable but leaves the connection usable', async t 
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2758,7 +2774,7 @@ test('disconnect hides catalog data and ignores an in-flight acquisition', async
         jsonrpc: '2.0',
         id: 1,
         result: {
-            protocol: '23.2.0',
+            protocol: McRemote.PROTOCOL_VERSION,
             mc_version: '1.21.11',
             supported_mc_versions: ['1.21.11'],
             catalogHash,
@@ -2986,7 +3002,7 @@ test('B8 sound commands use fixture params and surface server and local errors',
     const runtime = newRuntime();
     const {blocks, socket} = await newConnectedBlocks(runtime);
     for (const id of ['B8-S01', 'B8-S03', 'B8-S06', 'B8-S08']) {
-        const soundCase = b8Fixture.sound.cases.find(item => item.id === id);
+        const soundCase = protocolFixture.sound.cases.find(item => item.id === id);
         const [x, y, z, sound, options] = soundCase.params;
         const args = {X: x, Y: y, Z: z, OPTIONS: options ? JSON.stringify(options) : ''};
         args[soundCase.method === 'world.playSound' ? 'SOUND' : 'KIND'] = sound;
@@ -3013,7 +3029,7 @@ test('B8 sound commands use fixture params and surface server and local errors',
     t.equal(socket.sent.length, sent, 'invalid local inputs are not sent');
     t.equal(actionableErrors(runtime).slice(-1)[0].reason, 'invalid_params');
 
-    const missing = b8Fixture.sound.cases.find(item => item.id === 'B8-S20');
+    const missing = protocolFixture.sound.cases.find(item => item.id === 'B8-S20');
     const completion = blocks.playBlockSound({X: 1, Y: 2, Z: 3, KIND: 'place', OPTIONS: ''});
     const request = socket.lastSent();
     socket.fireMessage({

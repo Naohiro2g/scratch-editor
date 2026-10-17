@@ -3,7 +3,7 @@
   "schema_version": 1,
   "source": {
     "repository": "Naohiro2g/minecraft-remote-tooling",
-    "commit": "dc1ab834183e29f2eb03059b07e99d2b463776ee"
+    "commit": "6447f6e8cbfbeeb9d229990b5c4f6e82a5875666"
   },
   "fixtures": [
     {
@@ -42,6 +42,11 @@
       "sha256": "670b0a86df1956c0e44c6986a0a2598caab32c7328804f9c703190e62e9dd727"
     },
     {
+      "path": "packages/protocol/test/fixtures/chat-event-compat-v23.2.1.json",
+      "bytes": 32384,
+      "sha256": "eead244a7340c315cb63e1e77ede0fe9cf48162c06fedbeef36d941950d5000d"
+    },
+    {
       "path": "packages/protocol/test/fixtures/dimensions-v22.json",
       "bytes": 766,
       "sha256": "44993cce8d42fc8db15822788a2b6707971b5438edfb4eb77d774aad437c0628"
@@ -55,6 +60,11 @@
       "path": "packages/protocol/test/fixtures/entity-particle-v23.2.json",
       "bytes": 36481,
       "sha256": "ca636b4a2685ea67f24d8e7931e3d30a84e7cec872bb5c5d2eadd178cdac39f2"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/entity-particle-v23.2.1.json",
+      "bytes": 36483,
+      "sha256": "0319ff8373a96798cf5e9e421a804729fd33a0fa53e96adc12c93ed7994777ae"
     },
     {
       "path": "packages/protocol/test/fixtures/events-v23.json",
@@ -77,10 +87,10 @@
     "scratch_tag": "v2320.0.0b8"
   },
   "artifacts": {
-    "github_run_id": 37220882228,
-    "github_artifact_id": 11310203564,
-    "github_artifact_digest": "sha256:f68527816c0e5e9a6457612d2efc3770fcdb647c7ff452853a7edd4a0d38c307",
-    "bridge_digest": "sha256:5828304c9bb1d60df8672f9189f503790050e09358bd375f39e4d59d190eb84f",
+    "github_run_id": 39053886890,
+    "github_artifact_id": 12109060950,
+    "github_artifact_digest": "sha256:5b644de44ae2f9a2fb9de09d221c2930218f6c317baffee3b5c7f817309555fa",
+    "bridge_digest": "sha256:305d6e38b36e195a0e158522f32f3a8c45d39da2aeec7b7e46f785c920406acf",
     "files": [
       {
         "file": "wirescope-app.zip",
@@ -90,17 +100,17 @@
       {
         "file": "wirescope-app.manifest.json",
         "bytes": 2339,
-        "sha256": "c654f7d1f0be2773d6737e889279b2587317088717f162b082c82be9cff910d7"
+        "sha256": "3dd668a236463809a4cdc6d19375f3e6d75eea0c8089a616d2b761d3a4a05235"
       },
       {
         "file": "bridge.oci.tar",
-        "bytes": 114628096,
-        "sha256": "b6a6feec07e8d7ae9805a81e8dc370e6220e91af145ef3117ce5ed12e703b100"
+        "bytes": 114626048,
+        "sha256": "3982876466fb860dca250438d73e18e441a2a85d67d9f149f537a7a8d1a1c44c"
       },
       {
         "file": "candidate-manifest.json",
         "bytes": 972,
-        "sha256": "e18f3a07afee3586259845bc6ff5755ea6d6974990929c97f3ff52e9e115a77d"
+        "sha256": "05fafc241a73b831bfd74128610435af1472c46b056fc8be70c2851657038f3e"
       }
     ]
   }

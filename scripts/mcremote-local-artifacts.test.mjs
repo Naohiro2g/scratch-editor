@@ -6,10 +6,10 @@ import {join} from 'node:path';
 import {test} from 'node:test';
 import {localArtifacts} from './mcremote-local-artifacts.mjs';
 
-const setup = t => {
+const setup = (t, version = '2320.0.0b10') => {
     const directory = mkdtempSync(join(tmpdir(), 'scratch-local-manifest-'));
     t.after(() => rmSync(directory, {recursive: true, force: true}));
-    const options = {directory, version: '2320.0.0b10', commit: 'a'.repeat(40)};
+    const options = {directory, version, commit: 'a'.repeat(40)};
     for (const [os, arch] of [
         ['windows', 'x64'],
         ['macos', 'arm64'],
@@ -36,6 +36,12 @@ const setup = t => {
     }
     return options;
 };
+
+test('accepts the rc1 LAN artifact names', t => {
+    const artifacts = localArtifacts(setup(t, '2321.0.0rc1'));
+    assert.equal(artifacts.length, 3);
+    assert.ok(artifacts.every(item => item.file.includes('2321.0.0rc1')));
+});
 
 test('keeps candidate file kind and emits release https-file with unambiguous OS/arch', t => {
     const options = setup(t);

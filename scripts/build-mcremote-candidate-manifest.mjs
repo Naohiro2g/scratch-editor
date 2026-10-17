@@ -1,9 +1,9 @@
 import {createHash} from 'node:crypto';
 import {readFileSync, writeFileSync} from 'node:fs';
 import {localArtifacts} from './mcremote-local-artifacts.mjs';
+import version from '../packages/scratch-vm/src/extensions/scratch3_mcremote/client-version.js';
 
 const [commit, scratchDigest] = process.argv.slice(2);
-const version = '2320.0.0b10';
 if (!/^[a-f0-9]{40}$/.test(commit) || !/^sha256:[a-f0-9]{64}$/.test(scratchDigest)) {
     throw new Error('candidate manifest requires an exact source commit and Scratch OCI digest');
 }

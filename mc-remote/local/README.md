@@ -1,6 +1,6 @@
 # Scratch LANパッケージの配布と検証
 
-b10のScratch LANパッケージです。ScratchとBridgeを各PCのlocalhostで動かします。利用者の操作は[ZIP内の案内](USER_GUIDE_ja.md)を参照してください。現在は実装・OS検証の段階で、公開済み配布物ではありません。
+[Scratch LANパッケージの案内](https://mc-remote.com/lan/scratch/)から公開b10のOS別ZIPを取得できます。ScratchとBridgeを各PCのlocalhostで動かします。利用者の操作は[ZIP内の案内](USER_GUIDE_ja.md)を参照してください。rc1の候補ZIPは検証中です。
 
 箱庭からLANでの制作へつなぐ目的と導入・再開の設計は、knowledgeの[Scratch LANパッケージの設計](https://github.com/Naohiro2g/mc-remote-knowledge/blob/main/13-scratch-client/scratch-lan-package-design_ja.md)を正本とします。教材まで含めた対話の記録は[ローカル設計記録](LAN_EXPERIENCE_DESIGN_ja.md)にあります。
 

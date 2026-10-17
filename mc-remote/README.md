@@ -48,7 +48,7 @@ Scratch エディターはマイクラリモコンのクライアントで、Bri
 
 「カタログの［ブロックID／エンティティID／パーティクルID］を［リスト］に入れる」は、接続先から取得したカタログのIDを名前空間付きの文字列として、辞書順でリストへ入れます。リストは一覧全体で置き換わります。接続直後のカタログ取得が進行中なら、その完了を待ちます。取得できない場合は案内を表示し、元のリストを保持します。コピーのための追加通信はありません。
 
-ブロックピッカーは、日本語では`gold_block 金ブロック`のようにIDと名前を並べ、英語名も表示します。検索はブロックID・日本語名・英語名を対象とし、空白で区切った語をすべて含む候補を表示します。名前はMinecraft 1.21.11／26.2の[表示・検索辞書](../packages/scratch-gui/src/lib/mcremote-block-names/README_ja.md)を同梱し、利用時の追加取得はありません。選択できるブロックは接続先のカタログにあるものだけで、ブロックへ入れる値はIDと状態です。
+ブロックピッカーは、日本語では`gold_block 金ブロック`のようにIDと名前を並べ、英語名も表示します。検索はブロックID・日本語名・英語名を対象とし、空白で区切った語をすべて含む候補を表示します。名前はMinecraft 1.21.11／26.2／26.3の[表示・検索辞書](../packages/scratch-gui/src/lib/mcremote-block-names/README_ja.md)を同梱し、利用時の追加取得はありません。選択できるブロックは接続先のカタログにあるものだけで、ブロックへ入れる値はIDと状態です。
 
 ### 2.2 共通ツールとの関係
 
@@ -76,7 +76,7 @@ VM／GUIのMcRemoteテストを実行する前に、共有fixtureを取得して
 npm run tooling:fixtures
 ```
 
-このコマンドは `tooling-lock.json` の固定commitから13件のfixtureを取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
+このコマンドは `tooling-lock.json` の固定commitから15件のfixtureを取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
 
 WireScopeとBridgeの生成物が必要な場合は、GitHub CLIの認証後に実行します。
 
@@ -93,7 +93,7 @@ npm run tooling:artifacts
 `npm run release-manifest:test`と`npm run release-manifest:lint`で検査できます。b10の公開manifestはv2で、
 Scratch Localの3 ZIPと既存の3ファイル全てに実byte数を記録します。baselineはv1／v2のいずれも文書全体を検査してから使います。
 
-[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b9](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b9)です。rollbackは直前の公開b8のtag `v2320.0.0b8` と、その公開setを使います。
+[Release.md](../Release.md)は上流のnpm公開手順との境界、[knowledge](https://github.com/Naohiro2g/mc-remote-knowledge)は横断的な判断の正本です。現在の公開版は[b10](https://github.com/Naohiro2g/scratch-editor/releases/tag/v2320.0.0b10)です。rc1は候補作成中です。rollbackは直前の公開b9のtag `v2320.0.0b9` と、その公開setを使います。
 
 ## 3. 貢献者が調べ始める場所
 

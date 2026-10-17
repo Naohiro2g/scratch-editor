@@ -13,7 +13,7 @@ const bridgeDigest = `sha256:${'c'.repeat(64)}`;
 const contract = await loadContract();
 const hash = bytes => createHash('sha256').update(bytes)
     .digest('hex');
-const setup = t => {
+const setup = (t, version = '2320.0.0b10') => {
     const root = mkdtempSync(join(tmpdir(), 'scratch-release-test-'));
     t.after(() => rmSync(root, {recursive: true, force: true}));
     const artifacts = join(root, 'mc-remote/tooling/artifacts');
@@ -30,7 +30,7 @@ const setup = t => {
     }));
     writeFileSync(join(root, 'contracts.tar.gz'), 'synthetic contracts\n');
     for (const [os, arch] of [['windows', 'x64'], ['macos', 'arm64'], ['linux', 'x64']]) {
-        const file = `mc-remote-scratch-LAN-2320.0.0b10-${os}-${arch}.zip`;
+        const file = `mc-remote-scratch-LAN-${version}-${os}-${arch}.zip`;
         const body = Buffer.from(file);
         writeFileSync(join(candidate, file), body);
         writeFileSync(join(candidate, file.replace(/\.zip$/, '.artifact.json')), JSON.stringify({
@@ -45,8 +45,15 @@ const setup = t => {
             working_tree_dirty: false
         }));
     }
-    return {root, contract, releaseTag: 'v2320.0.0b10', commit, scratchDigest, bridgeDigest};
+    return {root, contract, releaseTag: `v${version}`, commit, scratchDigest, bridgeDigest};
 };
+
+test('rc1 release manifest accepts the exact versioned LAN artifacts', t => {
+    const options = setup(t, '2321.0.0rc1');
+    const manifest = buildReleaseManifest(options);
+    assert.equal(manifest.release_tag, 'v2321.0.0rc1');
+    assert.equal(manifest.artifacts.filter(item => item.role === 'scratch-local').length, 3);
+});
 
 test('public v2 records the actual six file sizes and preserves OCI digests', t => {
     const options = setup(t);

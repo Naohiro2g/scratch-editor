@@ -67,11 +67,11 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
 
 /**
  * Protocol semver advertised in the hello handshake. This is the clean
- * protocol contract version (23.2.0); the package/channel suffix is not
+ * protocol contract version (23.2.1); the package/channel suffix is not
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '23.2.0';
+const PROTOCOL_VERSION = '23.2.1';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
@@ -179,7 +179,7 @@ const directionResult = value => {
 };
 
 /**
- * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.2.0).
+ * Wire format: JSON-RPC 2.0 over a wss link to the bridge (protocol 23.2.1).
  * One WebSocket message carries either one raw JSON-RPC object or, for the
  * pre-auth pairing methods only, one Bridge transport envelope containing the
  * untouched JSON-RPC string.

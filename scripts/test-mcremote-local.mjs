@@ -7,6 +7,7 @@ import {createServer} from 'node:net';
 import {tmpdir} from 'node:os';
 import {delimiter, join, resolve} from 'node:path';
 import WebSocket from 'ws';
+import clientVersion from '../packages/scratch-vm/src/extensions/scratch3_mcremote/client-version.js';
 
 const [input] = process.argv.slice(2);
 const archive = resolve(input);
@@ -30,7 +31,7 @@ const tcp = createServer(connection => {
         if (buffer.includes('\n')) {
             const request = JSON.parse(buffer.trim());
             assert.equal(request.method, 'hello');
-            assert.equal(request.params.protocol, '23.2.0');
+            assert.equal(request.params.protocol, '23.2.1');
             connection.write(
                 `${JSON.stringify({
                     jsonrpc: '2.0',
@@ -52,13 +53,13 @@ const unusedPort = async () => {
 };
 try {
     execFileSync('unzip', ['-q', archive, '-d', directory]);
-    const root = join(directory, 'mc-remote-scratch-LAN', '2320.0.0b10');
+    const root = join(directory, 'mc-remote-scratch-LAN', clientVersion);
     const dataRoot = join(root, 'data');
     const guide = await readFile(join(root, 'はじめに.html'), 'utf8');
-    assert.match(guide, /mc-remote Scratch 2320\.0\.0b10/);
+    assert.ok(guide.includes(`mc-remote Scratch ${clientVersion}`));
     assert.match(guide, /mc-remote Scratchを自分のワールドで使う/);
     const bundleIdentity = JSON.parse(await readFile(join(dataRoot, 'identity.json')));
-    assert.equal(bundleIdentity.version, '2320.0.0b10');
+    assert.equal(bundleIdentity.version, clientVersion);
     const source = await readFile(join(root, bundleIdentity.source.archive));
     assert.equal(createHash('sha256').update(source)
         .digest('hex'), bundleIdentity.source.archive_sha256);

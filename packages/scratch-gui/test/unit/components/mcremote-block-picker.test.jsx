@@ -147,6 +147,29 @@ describe('McRemoteBlockPicker', () => {
         ]);
     });
 
+    test('shows Minecraft 26.3 Japanese names from a current server catalog', () => {
+        const serverCatalog = {
+            ...catalogState,
+            mcVersion: '26.3',
+            catalog: {block: {'minecraft:poplar_log': {states: {}, default_state: {}}}}
+        };
+        renderPicker(
+            <McRemoteBlockPicker
+                canApply
+                catalogState={serverCatalog}
+                initialBlockId=""
+                initialStateText=""
+                onApply={jest.fn()}
+                onCancel={jest.fn()}
+            />,
+            {locale: 'ja', messages: mcremoteMessages.ja}
+        );
+
+        expect(screen.getByRole('button', {name: /^poplar_log /})).toHaveTextContent('poplar_log ポプラの原木');
+        fireEvent.change(screen.getByRole('textbox', {name: /ブロックID・/}), {target: {value: 'ポプラ'}});
+        expect(screen.getByRole('button', {name: /^poplar_log /})).toBeInTheDocument();
+    });
+
     test('counts block choices rather than the lines used to show their names', () => {
         renderPicker(
             <McRemoteBlockPicker

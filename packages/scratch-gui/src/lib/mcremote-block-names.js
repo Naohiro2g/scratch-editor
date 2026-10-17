@@ -1,9 +1,11 @@
 import names12111 from './mcremote-block-names/1.21.11.json';
 import names262 from './mcremote-block-names/26.2.json';
+import names263 from './mcremote-block-names/26.3.json';
 
 const namesByVersion = new Map([
     ['1.21.11', names12111],
-    ['26.2', names262]
+    ['26.2', names262],
+    ['26.3', names263]
 ]);
 
 const getBlockNames = (mcVersion, id) => {
