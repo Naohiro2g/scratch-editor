@@ -145,7 +145,7 @@ try {
     socket = new WebSocket(config.bridge_url, 'mcremote.bridge.one-shot.v1', {origin: url});
     await once(socket, 'open');
     const response = once(socket, 'message');
-    socket.send(JSON.stringify({jsonrpc: '2.0', id: 1, method: 'hello', params: {protocol: '23.2.0'}}));
+    socket.send(JSON.stringify({jsonrpc: '2.0', id: 1, method: 'hello', params: {protocol: '23.2.1'}}));
     assert.deepEqual(JSON.parse((await response)[0]), {
         jsonrpc: '2.0',
         id: 1,
