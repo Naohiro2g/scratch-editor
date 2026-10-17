@@ -1,6 +1,6 @@
 # Scratchブロック一覧
 
-公開b9のブロックを画像・入力項目・選択肢から探す、静的ページの試作です。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。
+公開b10のブロックを画像・入力項目・選択肢から探す、静的ページの試作です。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。[b9](https://mc-remote.com/api/scratch/2320.0.0b9/)と[b10](https://mc-remote.com/api/scratch/2320.0.0b10/)の版別ページも保持します。通信protocolが同じでも、Scratchのブロックや動作はreleaseごとに確認します。
 
 ## ブロックへ直接リンクする
 
@@ -16,7 +16,7 @@
 python3 -m http.server 8640 --bind 127.0.0.1 --directory mc-remote/block-reference/site
 ```
 
-`site/index.html`を直接ブラウザで開いても表示・検索できます。JavaScriptを無効にしてもブロック一覧は読めます。
+`site/index.html`を直接ブラウザで開いても表示・検索できます。`site/2320.0.0b9/`と`site/2320.0.0b10/`が版別ページです。JavaScriptを無効にしてもブロック一覧は読めます。
 
 カテゴリーのチェックボックスで、命令・値を返す・イベント・条件を複数選んで絞り込めます。最初はすべて選択されています。カテゴリーはパネルの背景色とラベルでも見分けられます。
 
@@ -35,10 +35,18 @@ npm exec --workspace=@scratch/scratch-gui -- playwright install chromium
 ```sh
 node scripts/build-mcremote-block-reference.cjs \
   --editor-url=http://127.0.0.1:8611/ \
-  --source-ref=v2320.0.0b9
+  --source-ref=v2320.0.0b10
 ```
 
-`--editor-url`は手元で配信した対象エディターのURLに置き換えます。`--source-ref`の既定値は公開b9のtagです。作業中のVM・翻訳・ブロック描画のソースがそのrefと異なる場合は、生成を止めます。この検査だけで配信中エディターのsourceを証明するものではありません。配信物とrefの対応は配信側で確認してください。
+`--editor-url`は手元で配信した対象エディターのURLに置き換えます。`--source-ref`の既定値は公開b10のtagです。作業中のVM・翻訳・ブロック描画のソースがそのrefと異なる場合は、生成を止めます。この検査だけで配信中エディターのsourceを証明するものではありません。配信物とrefの対応は配信側で確認してください。
+
+生成器は`site/`直下の現行ページを更新します。版別ページは、生成後にそのreleaseの出力を同じ名前のディレクトリへコピーします。b9のディレクトリは既存の生成結果を保存したものです。
+
+```sh
+mkdir -p mc-remote/block-reference/site/2320.0.0b10/images
+cp -a mc-remote/block-reference/site/index.html mc-remote/block-reference/site/blocks.json mc-remote/block-reference/site/page.js mc-remote/block-reference/site/style.css mc-remote/block-reference/site/2320.0.0b10/
+cp -a mc-remote/block-reference/site/images/. mc-remote/block-reference/site/2320.0.0b10/images/
+```
 
 出力先の既定値は`site/`です。別の場所へ出力するときは`--output=/tmp/mcremote-block-reference`を追加します。
 
@@ -49,9 +57,10 @@ node scripts/build-mcremote-block-reference.cjs \
 | `content.json` | 短い説明、分類、入力名の補足、関連ブロック、通信APIの対応 |
 | `page.html`・`style.css`・`page.js` | ページの構成・見た目・検索 |
 | `../../scripts/build-mcremote-block-reference.cjs` | 対象エディターから定義と画像を取り出し、ページを生成するスクリプト |
-| `site/index.html` | 生成した一覧ページ |
-| `site/blocks.json` | 生成したブロック一覧データ。source commitを含む |
+| `site/index.html` | 現行版の一覧ページ |
+| `site/blocks.json` | 現行版の一覧データ。Scratch release、protocol、source commitを含む |
 | `site/images/` | 56ブロックと組み合わせ例2件のSVG画像 |
+| `site/<release>/` | releaseごとの一覧ページ、データ、画像 |
 
 画像は実際のScratch BlocksのSVGを使います。CSSと画像参照を埋め込み、エディターを開かずに表示できる形にしています。ブロック名・引数・初期値・選択肢はVMに登録された定義から取り出し、非表示ブロックや区切り線、入力用メニューだけのブロックは一覧に含めません。
 
@@ -59,6 +68,6 @@ node scripts/build-mcremote-block-reference.cjs \
 
 「最初の値」はパレットに入っている初期値です。通信で省略したときの既定値とは区別します。説明や関連APIの対応は自動抽出ではなく`content.json`で補っています。公開前には文章の人間レビューが必要です。
 
-ページには外部の画像・フォント・JavaScriptへの依存がありません。通信APIのリンクは[公式API一覧](https://mc-remote.com/api/)の該当分類を開きます。公式サイトでは`site/`の生成物を`/api/scratch/`へ配置します。Client API一覧全体のschemaは、この試作では確定していません。
+ページには外部の画像・フォント・JavaScriptへの依存がありません。b10の通信APIリンクは[protocol 23.2.0のAPI一覧](https://mc-remote.com/api/23.2.0/)の該当分類を開きます。公式サイトでは`site/`の生成物を`/api/scratch/`へ配置します。通信protocolの命令一覧はScratchのブロック一覧や他のクライアントAPI一覧とは別です。Client API一覧全体のschemaは、この試作では確定していません。
 
 Scratchの実装由来の画像を含むため、このリポジトリのライセンスに従って扱います。
