@@ -1,4 +1,5 @@
 import path from 'path';
+import {until} from 'selenium-webdriver';
 import SeleniumHelper from '../helpers/selenium-helper';
 
 const {
@@ -91,8 +92,8 @@ describe('Menu bar settings', () => {
         await clickText('Load from your computer');
         const input = await findByXpath('//input[@accept=".sb,.sb2,.sb3"]');
         await input.sendKeys(path.resolve(__dirname, '../fixtures/project1.sb3'));
-        await driver.switchTo().alert()
-            .accept();
+        const alert = await driver.wait(until.alertIsPresent(), 5000);
+        await alert.accept();
         await findByText('project1-sprite');
     });
 
