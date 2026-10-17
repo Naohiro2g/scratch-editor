@@ -27,7 +27,9 @@ const directionLightningFixturePath = path.resolve(
     '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/direction-lightning-v23.1.json'
 );
 const directionLightningFixture = require(directionLightningFixturePath);
-const protocolFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.1.json');
+const protocolFixture = require(
+    '../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/entity-particle-v23.2.1.json'
+);
 const spawnFixture = require('../../../../mc-remote/tooling/fixtures/protocol/test/fixtures/spawn-v22.json');
 
 // Read from the extension itself so this harness tracks the current protocol
