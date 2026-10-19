@@ -84,7 +84,7 @@
     "scratch-render-fonts": "1.0.255",
     "scratch-webpack-configuration": "3.1.2",
     "tap": "21.8.0",
-    "webpack": "5.111.1",
+    "webpack": "5.112.0",
     "webpack-cli": "5.1.4",
     "webpack-dev-server": "5.2.6"
   },
