@@ -11,6 +11,7 @@ import mergeDynamicAssets from '../lib/merge-dynamic-assets.js';
 import costumeLibraryContent from '../lib/libraries/costumes.json';
 import spriteTags from '../lib/libraries/sprite-tags';
 import LibraryComponent from '../components/library/library.jsx';
+import {GUIStoragePropType} from '../gui-config';
 
 const messages = defineMessages({
     libraryTitle: {
@@ -56,6 +57,7 @@ class CostumeLibrary extends React.PureComponent {
             <LibraryComponent
                 data={data}
                 id="costumeLibrary"
+                storage={this.props.storage}
                 tags={spriteTags}
                 title={this.props.intl.formatMessage(messages.libraryTitle)}
                 onItemSelected={this.handleItemSelected}
@@ -66,13 +68,15 @@ class CostumeLibrary extends React.PureComponent {
 };
 
 const mapStateToProps = state => ({
-    dynamicCostumes: state.scratchGui.dynamicAssets.costumes
+    dynamicCostumes: state.scratchGui.dynamicAssets.costumes,
+    storage: state.scratchGui.config.storage
 });
 
 CostumeLibrary.propTypes = {
     dynamicCostumes: PropTypes.arrayOf(costumeShape),
     intl: intlShape.isRequired,
     onRequestClose: PropTypes.func,
+    storage: GUIStoragePropType,
     vm: PropTypes.instanceOf(VM).isRequired
 };
 

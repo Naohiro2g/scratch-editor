@@ -143,6 +143,11 @@ const StageHeaderComponent = function (props) {
         }
     }, [shouldShowCallout]);
 
+    const handleThumbnailFailure = useCallback(() => {
+        onShowThumbnailError();
+        setIsUpdatingThumbnail(false);
+    }, [onShowThumbnailError]);
+
     const onUpdateThumbnail = useCallback(
         throttle(() => {
             if (!onUpdateProjectThumbnail) return;
@@ -159,12 +164,9 @@ const StageHeaderComponent = function (props) {
                         onShowThumbnailSuccess();
                         setIsUpdatingThumbnail(false);
                     },
-                    () => {
-                        onShowThumbnailError();
-                        setIsUpdatingThumbnail(false);
-                    }
+                    handleThumbnailFailure
                 );
-            });
+            }, handleThumbnailFailure);
         }, 3000),
         [
             onUpdateProjectThumbnail,
@@ -172,7 +174,7 @@ const StageHeaderComponent = function (props) {
             vm,
             onShowSettingThumbnail,
             onShowThumbnailSuccess,
-            onShowThumbnailError,
+            handleThumbnailFailure,
             onSetManualThumbnail
         ]
     );

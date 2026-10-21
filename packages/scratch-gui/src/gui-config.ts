@@ -21,6 +21,15 @@ export interface GUIStorage {
     setTranslatorFunction?(formatMessageFn: TranslatorFunction): void;
     setBackpackHost?(host: string): void;
 
+    /**
+     * Constructs the complete URL for fetching a library asset thumbnail to use as an image source.
+     * This method builds the full URL rather than just the host, since different implementations
+     * may address assets differently.
+     *
+     * If not provided, asset thumbnails default to being fetched from the legacy Scratch asset service.
+     */
+    getLibraryAssetUrl?(assetId: string, dataFormat: string): string;
+
     saveProject(
         projectId: ProjectId | null | undefined,
         vmState: string,
@@ -207,6 +216,8 @@ export const GUIStoragePropType = PropTypes.shape({
     setAssetHost: PropTypes.func,
     setTranslatorFunction: PropTypes.func,
     setBackpackHost: PropTypes.func,
+
+    getLibraryAssetUrl: PropTypes.func,
 
     saveProject: PropTypes.func.isRequired,
 

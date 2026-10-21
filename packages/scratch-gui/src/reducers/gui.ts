@@ -42,7 +42,16 @@ import throttle from 'redux-throttle';
 import decks from '../lib/libraries/decks/index.jsx';
 import {GUIConfig} from '../gui-config';
 
-const guiMiddleware = compose(applyMiddleware(throttle(300, {leading: true, trailing: true})));
+const buildGuiMiddleware = () => compose(applyMiddleware(throttle(300, {leading: true, trailing: true})));
+
+/**
+ * @deprecated This is a single shared middleware instance, so every store that uses it
+ * applies the same `redux-throttle` middleware object, which keeps its pending-action
+ * timers in its own internal state. Multiple stores sharing that state can suppress or
+ * drop each other's throttled actions. Call {@link buildGuiMiddleware} instead to get a
+ * fresh middleware instance per store.
+ */
+const guiMiddleware = buildGuiMiddleware();
 
 const buildInitialState = (config: GUIConfig) => ({
     alerts: alertsInitialState,
@@ -201,6 +210,7 @@ const guiReducer = combineReducers({
 
 export {
     guiReducer as default,
+    buildGuiMiddleware,
     buildInitialState,
     guiMiddleware,
     initEmbedded,

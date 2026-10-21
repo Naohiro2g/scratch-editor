@@ -19,8 +19,8 @@ jobs:
         package: ${{ fromJSON(inputs.packages) }}
     name: Test ${{ matrix.package }}
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
-      - uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           cache: 'npm'
           node-version-file: '.nvmrc'
@@ -53,7 +53,7 @@ jobs:
           pattern: '*-test-output'
           path: test-results
       - name: Publish test reports
-        uses: EnricoMi/publish-unit-test-result-action@34d7c956a59aed1bfebf31df77b8de55db9bbaaf # v2
+        uses: EnricoMi/publish-unit-test-result-action@7622c5bf3d112a72ab4fa3951c2aa5723d8ab92d # v2
         with:
           # Every test reporter in this repo produces JUnit XML.
           # Restricting to *.xml avoids the action trying to parse

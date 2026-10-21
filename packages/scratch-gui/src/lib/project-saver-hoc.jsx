@@ -34,6 +34,22 @@ import {
 import {GUIStoragePropType} from '../gui-config';
 import {getProjectThumbnail, storeProjectThumbnail} from './store-project-thumbnail';
 
+const boundThumbnailSavers = new WeakMap();
+
+/*
+ * Returns the storage's thumbnail saver bound to the storage, or undefined if it has none.
+ *
+ * `bind` returns a new function every call, so the result is memoized per storage instance. Binding
+ * directly in `mapStateToProps` would defeat react-redux's shallow comparison of the mapped props and
+ * re-render the wrapped tree on every dispatched action.
+ */
+const getBoundThumbnailSaver = storage => {
+    if (storage.saveProjectThumbnail && !boundThumbnailSavers.has(storage)) {
+        boundThumbnailSavers.set(storage, storage.saveProjectThumbnail.bind(storage));
+    }
+    return boundThumbnailSavers.get(storage);
+};
+
 /**
  * Higher Order Component to provide behavior for saving projects.
  * @param {React.Component} WrappedComponent the component to add project saving functionality to
@@ -435,7 +451,7 @@ const ProjectSaverHOC = function (WrappedComponent) {
             manuallySaveThumbnails: ownProps.manuallySaveThumbnails ?? false,
             onUpdateProjectThumbnail:
                 ownProps.onUpdateProjectThumbnail ??
-                storage.saveProjectThumbnail?.bind(storage),
+                getBoundThumbnailSaver(storage),
             projectChanged: state.scratchGui.projectChanged,
             reduxProjectId: state.scratchGui.projectState.projectId,
             reduxProjectTitle: state.scratchGui.projectTitle,

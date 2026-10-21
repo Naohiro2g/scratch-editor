@@ -6,6 +6,7 @@ import {LegacyBackpackStorage} from './legacy-backpack-storage';
 import CloudProvider from './cloud-provider';
 
 import saveProjectToServer from '../lib/save-project-to-server';
+import {buildLibraryAssetUrl} from './legacy-library-asset-url';
 
 export class LegacyStorage implements GUIStorage {
     private projectHost?: string;
@@ -65,6 +66,13 @@ export class LegacyStorage implements GUIStorage {
 
     setAssetHost (host: string): void {
         this.assetHost = host;
+    }
+
+    getLibraryAssetUrl (assetId: string, dataFormat: string): string {
+        // Currently defaults to the legacy library asset host.
+        // Consider changing this to use the asset host if we want to start serving library assets
+        // from the asset host instead
+        return buildLibraryAssetUrl(assetId, dataFormat);
     }
 
     setTranslatorFunction (translator: TranslatorFunction): void {

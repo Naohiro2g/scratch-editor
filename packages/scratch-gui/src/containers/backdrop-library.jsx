@@ -11,6 +11,7 @@ import mergeDynamicAssets from '../lib/merge-dynamic-assets.js';
 import backdropLibraryContent from '../lib/libraries/backdrops.json';
 import backdropTags from '../lib/libraries/backdrop-tags';
 import LibraryComponent from '../components/library/library.jsx';
+import {GUIStoragePropType} from '../gui-config';
 
 const messages = defineMessages({
     libraryTitle: {
@@ -58,6 +59,7 @@ class BackdropLibrary extends React.Component {
             <LibraryComponent
                 data={mergedAssets}
                 id="backdropLibrary"
+                storage={this.props.storage}
                 tags={backdropTags}
                 title={this.props.intl.formatMessage(messages.libraryTitle)}
                 onItemSelected={this.handleItemSelect}
@@ -68,13 +70,15 @@ class BackdropLibrary extends React.Component {
 };
 
 const mapStateToProps = state => ({
-    dynamicBackdrops: state.scratchGui.dynamicAssets.backdrops
+    dynamicBackdrops: state.scratchGui.dynamicAssets.backdrops,
+    storage: state.scratchGui.config.storage
 });
 
 BackdropLibrary.propTypes = {
     dynamicBackdrops: PropTypes.arrayOf(costumeShape),
     intl: intlShape.isRequired,
     onRequestClose: PropTypes.func,
+    storage: GUIStoragePropType,
     vm: PropTypes.instanceOf(VM).isRequired
 };
 
