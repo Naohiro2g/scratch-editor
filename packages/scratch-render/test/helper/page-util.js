@@ -12,7 +12,7 @@ window.waitForSVGSkinLoad = renderer => new Promise(resolve => {
         let numSVGSkins = 0;
         let numLoadedSVGSkins = 0;
         for (const skin of renderer._allSkins) {
-            if (skin.constructor.name !== 'SVGSkin') continue;
+            if (!skin._svgImage) continue;
             numSVGSkins++;
             if (skin._svgImage.complete) numLoadedSVGSkins++;
         }
