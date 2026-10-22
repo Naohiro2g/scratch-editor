@@ -9,7 +9,7 @@ import {loadContract} from './release-manifest-contract.mjs';
 export const buildReleaseManifest = ({
     root = process.cwd(), contract, releaseTag, commit, scratchDigest, bridgeDigest, baseline
 }) => {
-    if (!/^v\d+\.\d+\.\d+(?:b|rc)\d+$/.test(releaseTag) || !/^[a-f0-9]{40}$/.test(commit)) {
+    if (!/^v\d+\.\d+\.\d+(?:(?:b|rc)\d+)?$/.test(releaseTag) || !/^[a-f0-9]{40}$/.test(commit)) {
         throw new Error('release manifest requires an exact Scratch release tag and source commit');
     }
     if (baseline) contract.validate(baseline);

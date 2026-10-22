@@ -1,5 +1,7 @@
 # mc-remote Scratchを自分のワールドで使う
 
+最新版の案内とOS別ZIPは[Scratch LANパッケージの案内](https://mc-remote.com/lan/scratch/)をご覧ください。
+
 ZIPを展開して起動し、接続先を設定します。Scratchの「接続する」ブロックを実行してMinecraft内でペアリングしたら、「チャットに [こんにちは] と言う」ブロックで動作を確かめます。展開と起動は、下のOS別の手順に従ってください。
 
 ## OS別の展開と起動
