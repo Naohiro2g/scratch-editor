@@ -13,6 +13,7 @@ import randomizeSpritePosition from '../lib/randomize-sprite-position';
 import spriteTags from '../lib/libraries/sprite-tags';
 
 import LibraryComponent from '../components/library/library.jsx';
+import {GUIStoragePropType} from '../gui-config';
 
 const messages = defineMessages({
     libraryTitle: {
@@ -54,6 +55,7 @@ class SpriteLibrary extends React.PureComponent {
             <LibraryComponent
                 data={data}
                 id="spriteLibrary"
+                storage={this.props.storage}
                 tags={spriteTags}
                 title={this.props.intl.formatMessage(messages.libraryTitle)}
                 onItemSelected={this.handleItemSelect}
@@ -64,7 +66,8 @@ class SpriteLibrary extends React.PureComponent {
 }
 
 const mapStateToProps = state => ({
-    dynamicSprites: state.scratchGui.dynamicAssets.sprites
+    dynamicSprites: state.scratchGui.dynamicAssets.sprites,
+    storage: state.scratchGui.config.storage
 });
 
 SpriteLibrary.propTypes = {
@@ -72,6 +75,7 @@ SpriteLibrary.propTypes = {
     intl: intlShape.isRequired,
     onActivateBlocksTab: PropTypes.func.isRequired,
     onRequestClose: PropTypes.func,
+    storage: GUIStoragePropType,
     vm: PropTypes.instanceOf(VM).isRequired
 };
 

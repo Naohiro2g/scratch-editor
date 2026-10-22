@@ -10,7 +10,8 @@ const {
     loadUri,
     rightClickText,
     scope,
-    scopeForCategoryId
+    scopeForCategoryId,
+    textExists
 } = new SeleniumHelper();
 
 const uri = path.resolve(__dirname, '../../build/index.html');
@@ -79,8 +80,11 @@ describe('Menu bar settings', () => {
         await findByText('project1-sprite');
     });
 
-    test('User is warned before uploading project file over an edited project', async () => {
+    test('An edited project is saved in this browser before uploading another project', async () => {
         await loadUri(uri);
+        const savedTitle = 'Scratch Project - Before file upload';
+        const title = await findByXpath('//input[@value="Scratch Project"]');
+        await title.sendKeys(' - Before file upload');
 
         // Change the project by deleting a sprite
         await rightClickText('Sprite1', scope.spriteTile);
@@ -91,9 +95,13 @@ describe('Menu bar settings', () => {
         await clickText('Load from your computer');
         const input = await findByXpath('//input[@accept=".sb,.sb2,.sb3"]');
         await input.sendKeys(path.resolve(__dirname, '../fixtures/project1.sb3'));
-        await driver.switchTo().alert()
-            .accept();
         await findByText('project1-sprite');
+
+        await clickXpath(FILE_MENU_XPATH);
+        await clickText(savedTitle);
+        await findByXpath(`//input[@value="${savedTitle}"]`);
+        await driver.wait(async () => !(await textExists('project1-sprite', scope.spriteTile)));
+        expect(await textExists('Sprite1', scope.spriteTile)).toBe(false);
     });
 
     test('Color mode picker shows color modes', async () => {
