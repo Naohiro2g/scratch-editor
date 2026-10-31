@@ -4,7 +4,7 @@ import {join, resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
 export const localArtifacts = ({directory, version, commit, release = false}) => {
-    if (!/^\d+\.\d+\.\d+(?:b|rc)\d+$/.test(version) || !/^[a-f0-9]{40}$/.test(commit)) {
+    if (!/^\d+\.\d+\.\d+(?:(?:b|rc)\d+)?$/.test(version) || !/^[a-f0-9]{40}$/.test(commit)) {
         throw new Error('Scratch Local requires an exact version and source commit');
     }
     return [

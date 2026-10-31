@@ -43,6 +43,34 @@ test('accepts the rc1 LAN artifact names', t => {
     assert.ok(artifacts.every(item => item.file.includes('2321.0.0rc1')));
 });
 
+test('accepts stable LAN artifacts and preserves release identity checks', t => {
+    const options = setup(t, '2321.0.0');
+    const artifacts = localArtifacts({...options, release: true});
+    assert.equal(artifacts.length, 3);
+    assert.ok(artifacts.every(item => item.file.includes('2321.0.0-') && item.kind === 'https-file'));
+    assert.throws(() => localArtifacts({...options, commit: 'b'.repeat(40)}), /identity mismatch/);
+    const item = artifacts[0];
+    const sidecar = join(options.directory, item.file.replace(/\.zip$/, '.artifact.json'));
+    const identity = JSON.parse(readFileSync(sidecar));
+    writeFileSync(sidecar, JSON.stringify({...identity, working_tree_dirty: true}));
+    assert.throws(() => localArtifacts({...options, release: true}), /Cannot publish a dirty/);
+    writeFileSync(sidecar, JSON.stringify({...identity, arch: 'arm64'}));
+    assert.throws(() => localArtifacts(options), /identity mismatch/);
+    writeFileSync(sidecar, JSON.stringify({...identity, bytes: identity.bytes + 1}));
+    assert.throws(() => localArtifacts(options), /identity mismatch/);
+    writeFileSync(sidecar, JSON.stringify(identity));
+    writeFileSync(join(options.directory, item.file), 'corrupt');
+    assert.throws(() => localArtifacts(options), /identity mismatch/);
+});
+
+test('rejects malformed versions and source commits', () => {
+    for (const version of ['', '2321.0', 'v2321.0.0', '2321.0.0rc', '2321.0.0b',
+        '2321.0.0.post1', '2321.0.0/../other']) {
+        assert.throws(() => localArtifacts({version, commit: 'a'.repeat(40)}), /exact version/);
+    }
+    assert.throws(() => localArtifacts({version: '2321.0.0', commit: 'short'}), /exact version/);
+});
+
 test('keeps candidate file kind and emits release https-file with unambiguous OS/arch', t => {
     const options = setup(t);
     assert.equal(localArtifacts(options).length, 3);

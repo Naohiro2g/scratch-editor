@@ -55,6 +55,26 @@ test('rc1 release manifest accepts the exact versioned LAN artifacts', t => {
     assert.equal(manifest.artifacts.filter(item => item.role === 'scratch-local').length, 3);
 });
 
+test('stable release manifest accepts exact LAN artifacts and OCI digests', t => {
+    const options = setup(t, '2321.0.0');
+    const manifest = buildReleaseManifest(options);
+    assert.equal(manifest.release_tag, 'v2321.0.0');
+    assert.equal(manifest.source_commit, commit);
+    assert.equal(manifest.artifacts.length, 8);
+    assert.equal(contract.select(manifest, 'scratch', 'oci').digest, scratchDigest);
+    assert.equal(contract.select(manifest, 'bridge', 'oci').digest, bridgeDigest);
+    assert.ok(manifest.artifacts.filter(item => item.role === 'scratch-local')
+        .every(item => item.file.includes('2321.0.0-') && item.kind === 'https-file'));
+});
+
+test('release manifest rejects malformed tags and source commits', () => {
+    for (const releaseTag of ['', '2321.0.0', 'v2321.0', 'v2321.0.0rc', 'v2321.0.0b',
+        'v2321.0.0.post1', 'v2321.0.0/../other']) {
+        assert.throws(() => buildReleaseManifest({releaseTag, commit}), /exact Scratch release tag/);
+    }
+    assert.throws(() => buildReleaseManifest({releaseTag: 'v2321.0.0', commit: 'short'}), /exact Scratch release tag/);
+});
+
 test('public v2 records the actual six file sizes and preserves OCI digests', t => {
     const options = setup(t);
     const manifest = buildReleaseManifest(options);
