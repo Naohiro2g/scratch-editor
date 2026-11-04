@@ -22,7 +22,17 @@ export default {
     ],
     plugins: [
         '@semantic-release/commit-analyzer',
-        ['@semantic-release/release-notes-generator', { writerOpts: {commitPartial, commitsSort, finalizeContext} }],
+        [
+            '@semantic-release/release-notes-generator',
+            {
+                parserOpts: {
+                    // Only `#123` and `gh-123` at the start of a word. The defaults also match `#general` and the
+                    // `gh-` inside `high-contrast`, and turn them into broken issue links.
+                    issuePrefixes: [/#(?=\d+\b)/, /(?<![\w-])gh-(?=\d+\b)/]
+                },
+                writerOpts: {commitPartial, commitsSort, finalizeContext}
+            }
+        ],
         [
             '@semantic-release/exec',
             {
