@@ -70,7 +70,7 @@ const mcremoteMessages = {
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたは変数が接続されています。picker は取り外しません。両方の入力を文字列へ戻してから適用してください。',
         'gui.mcremote.blockPicker.resultCount': '{count}件',
-        'gui.mcremote.blockPicker.search': 'ブロックID・名前で検索',
+        'gui.mcremote.blockPicker.search': 'ブロックID・名前・カテゴリで検索',
         'gui.mcremote.blockPicker.stateHeading': 'ブロックの状態',
         'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':
@@ -284,7 +284,7 @@ const mcremoteMessages = {
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたはへんすうがせつぞくされています。ピッカーはとりはずしません。りょうほうのにゅうりょくをもじにもどしてからつかってください。',
         'gui.mcremote.blockPicker.resultCount': '{count}けん',
-        'gui.mcremote.blockPicker.search': 'ブロックID・なまえでさがす',
+        'gui.mcremote.blockPicker.search': 'ブロックID・なまえ・カテゴリでさがす',
         'gui.mcremote.blockPicker.stateHeading': 'ブロックのじょうたい',
         'gui.mcremote.blockPicker.statusCurrent': 'しゅとくずみ — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':

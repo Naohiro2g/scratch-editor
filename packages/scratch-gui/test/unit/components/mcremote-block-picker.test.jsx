@@ -191,6 +191,29 @@ describe('McRemoteBlockPicker', () => {
         expect(screen.getByText('0件')).toBeInTheDocument();
     });
 
+    test('searches creative categories and applies only the selected catalog ID', () => {
+        const onApply = jest.fn();
+        renderPicker(
+            <McRemoteBlockPicker
+                canApply
+                catalogState={catalogState}
+                initialBlockId=""
+                initialStateText=""
+                onApply={onApply}
+                onCancel={jest.fn()}
+            />,
+            {locale: 'ja', messages: mcremoteMessages.ja}
+        );
+
+        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックID・名前・カテゴリで検索'}), {
+            target: {value: '建築ブロック gold'}
+        });
+        expect(screen.getByText('1件')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', {name: /^gold_block /}));
+        fireEvent.click(screen.getByRole('button', {name: mcremoteMessages.ja['gui.mcremote.blockPicker.apply']}));
+        expect(onApply).toHaveBeenCalledWith('gold_block', '');
+    });
+
     test.each([
         '金ブロック',
         'block OF gold',
