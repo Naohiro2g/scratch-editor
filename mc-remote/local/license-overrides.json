@@ -177,6 +177,35 @@
       ]
     },
     {
+      "name": "blockly",
+      "version": "12.5.1",
+      "license_basis": "published-source",
+      "review_open": false,
+      "files": [
+        {
+          "path": "licenses/blockly-12.5.1/LICENSE-1.txt",
+          "bytes": 11358,
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "source": {
+            "repository": "RaspberryPiFoundation/blockly",
+            "commit": "6f7d50552ee658299de16c139673c2d126ac9b16",
+            "path": "LICENSE"
+          }
+        },
+        {
+          "path": "licenses/blockly-12.5.1/NOTICE.json",
+          "bytes": 539,
+          "sha256": "cea6a9ee42b70a3f6707e9580270e25abc02ef91bc59827e97e88e748cc75d5f",
+          "source": {
+            "npm_package": "blockly",
+            "version": "12.5.1",
+            "path": "package.json",
+            "package_lock": "package-lock.json"
+          }
+        }
+      ]
+    },
+    {
       "name": "format-message",
       "version": "6.2.4",
       "license_basis": "published-source",

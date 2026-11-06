@@ -23,7 +23,7 @@ const messages = defineMessages({
         id: 'gui.mcremote.blockPicker.title'
     },
     search: {
-        defaultMessage: 'Search by block ID or name',
+        defaultMessage: 'Search by block ID, name or category',
         description: 'Search field in the McRemote block picker',
         id: 'gui.mcremote.blockPicker.search'
     },

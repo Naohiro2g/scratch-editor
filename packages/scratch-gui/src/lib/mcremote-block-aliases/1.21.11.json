@@ -1,0 +1,4742 @@
+{
+  "minecraft:acacia_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:acacia_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:acacia_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:acacia_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:acacia_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:acacia_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:acacia_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:acacia_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:acacia_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:activator_rail": [
+    "Redstone Blocks",
+    "Tools & Utilities",
+    "レッドストーン系ブロック",
+    "道具と実用品"
+  ],
+  "minecraft:allium": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:amethyst_block": [
+    "Building Blocks",
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:amethyst_cluster": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:ancient_debris": [
+    "Ingredients",
+    "Natural Blocks",
+    "天然ブロック",
+    "材料"
+  ],
+  "minecraft:andesite": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:andesite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:andesite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:andesite_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:anvil": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:azalea": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:azalea_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:azure_bluet": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bamboo": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bamboo_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:bamboo_mosaic": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_mosaic_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_mosaic_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:bamboo_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:bamboo_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bamboo_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:bamboo_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:barrel": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:barrier": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:basalt": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:beacon": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:bedrock": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bee_nest": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:beehive": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:beetroots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bell": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:big_dripleaf": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:big_dripleaf_stem": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:birch_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:birch_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:birch_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:birch_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:birch_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:birch_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:birch_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:birch_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:birch_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:birch_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:black_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:black_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:black_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:black_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:black_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:black_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:black_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blackstone": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:blackstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:blackstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:blackstone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:blast_furnace": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:blue_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:blue_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:blue_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:blue_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_ice": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:blue_orchid": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:blue_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:blue_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:blue_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:blue_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:bone_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bookshelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:brain_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brain_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brain_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brain_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brewing_stand": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:brown_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:brown_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:brown_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:brown_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_mushroom": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brown_mushroom_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:brown_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:brown_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:brown_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:brown_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:bubble_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bubble_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bubble_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bubble_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:budding_amethyst": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:bush": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cactus": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cactus_flower": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cake": [
+    "Food & Drinks",
+    "食べ物と飲み物"
+  ],
+  "minecraft:calcite": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:calibrated_sculk_sensor": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:campfire": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:carrots": [
+    "Food & Drinks",
+    "食べ物と飲み物"
+  ],
+  "minecraft:cartography_table": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:carved_pumpkin": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cauldron": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:cave_vines": [
+    "Food & Drinks",
+    "Natural Blocks",
+    "天然ブロック",
+    "食べ物と飲み物"
+  ],
+  "minecraft:chain_command_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:cherry_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cherry_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cherry_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cherry_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cherry_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cherry_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cherry_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cherry_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cherry_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chest": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:chipped_anvil": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:chiseled_bookshelf": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_deepslate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_nether_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_polished_blackstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_quartz_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_red_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_resin_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_stone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_tuff": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chiseled_tuff_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:chorus_flower": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:chorus_plant": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:clay": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:closed_eyeblossom": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:coal_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:coal_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:coarse_dirt": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cobbled_deepslate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobbled_deepslate_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobbled_deepslate_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobbled_deepslate_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobblestone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobblestone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobblestone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobblestone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cobweb": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cocoa": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:command_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:comparator": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:composter": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:conduit": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:copper_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:copper_torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:copper_wall_torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:cornflower": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:cracked_deepslate_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cracked_deepslate_tiles": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cracked_nether_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cracked_polished_blackstone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cracked_stone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crafter": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:crafting_table": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:creaking_heart": [
+    "Spawn Eggs",
+    "スポーンエッグ"
+  ],
+  "minecraft:creeper_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:creeper_wall_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crimson_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_fungus": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:crimson_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crimson_hyphae": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_nylium": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:crimson_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_roots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:crimson_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crimson_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crimson_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_stem": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:crimson_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crimson_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:crying_obsidian": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_red_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_red_sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cut_sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:cyan_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:cyan_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:damaged_anvil": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dandelion": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dark_oak_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dark_oak_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dark_oak_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dark_oak_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dark_oak_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dark_oak_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_oak_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dark_oak_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dark_oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_prismarine": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_prismarine_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dark_prismarine_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:daylight_detector": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:dead_brain_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_brain_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_brain_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_brain_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_bubble_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_bubble_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_bubble_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_bubble_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_bush": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_fire_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_fire_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_fire_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_fire_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_horn_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_horn_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_horn_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_horn_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_tube_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_tube_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_tube_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dead_tube_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:decorated_pot": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:deepslate": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_coal_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_copper_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_diamond_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_emerald_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_gold_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_iron_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_lapis_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_redstone_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:deepslate_tile_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_tile_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_tile_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:deepslate_tiles": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:detector_rail": [
+    "Redstone Blocks",
+    "Tools & Utilities",
+    "レッドストーン系ブロック",
+    "道具と実用品"
+  ],
+  "minecraft:diamond_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:diamond_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:diorite": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:diorite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:diorite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:diorite_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:dirt": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dirt_path": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dispenser": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:dragon_egg": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dragon_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dragon_wall_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:dried_ghast": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dried_kelp_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dripstone_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:dropper": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:emerald_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:emerald_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:enchanting_table": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:end_portal_frame": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:end_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:end_stone": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:end_stone_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:end_stone_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:end_stone_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:end_stone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:ender_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:exposed_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:exposed_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:farmland": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fern": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fire_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fire_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fire_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fire_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:firefly_bush": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:fletching_table": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:flower_pot": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:flowering_azalea": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:flowering_azalea_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:frogspawn": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:furnace": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:gilded_blackstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:glow_lichen": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:glowstone": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:gold_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:gold_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:granite": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:granite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:granite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:granite_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:grass_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:gravel": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:gray_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:gray_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:gray_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:gray_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:gray_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:gray_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:gray_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:green_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:green_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:green_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:green_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:green_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:green_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:grindstone": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:hanging_roots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:hay_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:heavy_core": [
+    "Ingredients",
+    "材料"
+  ],
+  "minecraft:heavy_weighted_pressure_plate": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:honey_block": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:honeycomb_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:hopper": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:horn_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:horn_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:horn_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:horn_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:ice": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:infested_chiseled_stone_bricks": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_cobblestone": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_cracked_stone_bricks": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_deepslate": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_mossy_stone_bricks": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_stone": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:infested_stone_bricks": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:iron_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:iron_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:iron_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:iron_door": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:iron_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:iron_trapdoor": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:jack_o_lantern": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:jigsaw": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:jukebox": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:jungle_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:jungle_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:jungle_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:jungle_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:kelp": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:ladder": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:lapis_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:lapis_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:large_amethyst_bud": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:large_fern": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:lava_cauldron": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:leaf_litter": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:lectern": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:lever": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:light": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:light_blue_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_blue_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:light_gray_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:light_weighted_pressure_plate": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:lilac": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:lily_of_the_valley": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:lily_pad": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:lime_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:lime_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:lime_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:lime_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:lime_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lime_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:lime_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:lodestone": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:loom": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:magenta_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:magenta_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:magma_block": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mangrove_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_propagule": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mangrove_roots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mangrove_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mangrove_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:mangrove_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:medium_amethyst_bud": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:melon": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:melon_stem": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:moss_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:moss_carpet": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mossy_cobblestone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_cobblestone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_cobblestone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_cobblestone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_stone_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_stone_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_stone_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mossy_stone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mud": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mud_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mud_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mud_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:mud_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:muddy_mangrove_roots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mushroom_stem": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:mycelium": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:nether_brick_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:nether_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:nether_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:nether_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:nether_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:nether_gold_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:nether_quartz_ore": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:nether_sprouts": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:nether_wart": [
+    "Ingredients",
+    "Natural Blocks",
+    "天然ブロック",
+    "材料"
+  ],
+  "minecraft:nether_wart_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:netherite_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:netherrack": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:note_block": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_button": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_door": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oak_fence_gate": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:oak_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oak_pressure_plate": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:oak_shelf": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oak_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oak_trapdoor": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:oak_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:observer": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:obsidian": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:ochre_froglight": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:open_eyeblossom": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:orange_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:orange_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:orange_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:orange_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:orange_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:orange_tulip": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:orange_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:orange_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:oxeye_daisy": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:oxidized_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:oxidized_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:oxidized_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oxidized_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oxidized_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:oxidized_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:oxidized_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:packed_ice": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:packed_mud": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_hanging_moss": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pale_moss_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pale_moss_carpet": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pale_oak_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pale_oak_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pale_oak_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pale_oak_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pale_oak_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pale_oak_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pale_oak_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pale_oak_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pale_oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pearlescent_froglight": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:peony": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:piglin_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:piglin_wall_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:pink_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:pink_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:pink_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:pink_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_petals": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pink_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:pink_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:pink_tulip": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pink_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:pink_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:piston": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:pitcher_crop": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pitcher_plant": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:player_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:player_wall_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:podzol": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pointed_dripstone": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:polished_andesite": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_andesite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_andesite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_basalt": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_blackstone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_deepslate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_deepslate_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_deepslate_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_deepslate_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_diorite": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_diorite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_diorite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_granite": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_granite_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_granite_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_tuff": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_tuff_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_tuff_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:polished_tuff_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:poppy": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:potatoes": [
+    "Food & Drinks",
+    "食べ物と飲み物"
+  ],
+  "minecraft:powder_snow": [
+    "Tools & Utilities",
+    "道具と実用品"
+  ],
+  "minecraft:powder_snow_cauldron": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:powered_rail": [
+    "Redstone Blocks",
+    "Tools & Utilities",
+    "レッドストーン系ブロック",
+    "道具と実用品"
+  ],
+  "minecraft:prismarine": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:prismarine_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:pumpkin": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:pumpkin_stem": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:purple_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:purple_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:purple_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:purple_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:purple_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purple_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:purple_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:purpur_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:purpur_pillar": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:purpur_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:purpur_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:quartz_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:quartz_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:quartz_pillar": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:quartz_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:quartz_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:rail": [
+    "Redstone Blocks",
+    "Tools & Utilities",
+    "レッドストーン系ブロック",
+    "道具と実用品"
+  ],
+  "minecraft:raw_copper_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:raw_gold_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:raw_iron_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:red_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:red_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:red_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:red_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_mushroom": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:red_mushroom_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:red_nether_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_nether_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_nether_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_nether_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_sand": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:red_sandstone": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:red_sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_sandstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_sandstone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:red_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:red_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:red_tulip": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:red_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:red_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:redstone_block": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:redstone_lamp": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:redstone_ore": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:redstone_torch": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:redstone_wall_torch": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:redstone_wire": [
+    "Ingredients",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "材料"
+  ],
+  "minecraft:reinforced_deepslate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:repeater": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:repeating_command_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:resin_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:resin_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:resin_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:resin_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:resin_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:resin_clump": [
+    "Ingredients",
+    "材料"
+  ],
+  "minecraft:respawn_anchor": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:rooted_dirt": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:rose_bush": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sand": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sandstone": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:sandstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:sandstone_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:scaffolding": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:sculk": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sculk_catalyst": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sculk_sensor": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:sculk_shrieker": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:sculk_vein": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sea_lantern": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:sea_pickle": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:seagrass": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:short_dry_grass": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:short_grass": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:shroomlight": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:skeleton_skull": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:skeleton_wall_skull": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:slime_block": [
+    "Natural Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "天然ブロック"
+  ],
+  "minecraft:small_amethyst_bud": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:small_dripleaf": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:smithing_table": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:smoker": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:smooth_basalt": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_quartz": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_quartz_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_quartz_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_red_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_red_sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_red_sandstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_sandstone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_sandstone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_sandstone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_stone": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:smooth_stone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:sniffer_egg": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:snow": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:snow_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:soul_campfire": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:soul_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:soul_sand": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:soul_soil": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:soul_torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:soul_wall_torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spawner": [
+    "Spawn Eggs",
+    "スポーンエッグ"
+  ],
+  "minecraft:sponge": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:spore_blossom": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:spruce_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spruce_leaves": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:spruce_log": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_sapling": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:spruce_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spruce_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spruce_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:spruce_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spruce_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:spruce_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:sticky_piston": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:stone": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:stone_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stone_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stone_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stone_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stone_button": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:stone_pressure_plate": [
+    "Building Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:stone_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stone_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stonecutter": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:stripped_acacia_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_acacia_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_bamboo_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_birch_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_birch_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_cherry_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_cherry_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_crimson_hyphae": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_crimson_stem": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_dark_oak_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_dark_oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_jungle_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_jungle_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_mangrove_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_mangrove_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_oak_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_pale_oak_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_pale_oak_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_spruce_log": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_spruce_wood": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_warped_hyphae": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:stripped_warped_stem": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:structure_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:structure_void": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:sugar_cane": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:sunflower": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:suspicious_gravel": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:suspicious_sand": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:sweet_berry_bush": [
+    "Food & Drinks",
+    "Natural Blocks",
+    "天然ブロック",
+    "食べ物と飲み物"
+  ],
+  "minecraft:tall_dry_grass": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:tall_grass": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:target": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:test_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:test_instance_block": [
+    "Operator Utilities",
+    "管理者用アイテム"
+  ],
+  "minecraft:tinted_glass": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:tnt": [
+    "Combat",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "戦闘"
+  ],
+  "minecraft:torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:torchflower": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:torchflower_crop": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:trapped_chest": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:trial_spawner": [
+    "Spawn Eggs",
+    "スポーンエッグ"
+  ],
+  "minecraft:tripwire": [
+    "Ingredients",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "材料"
+  ],
+  "minecraft:tripwire_hook": [
+    "Redstone Blocks",
+    "レッドストーン系ブロック"
+  ],
+  "minecraft:tube_coral": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:tube_coral_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:tube_coral_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:tube_coral_wall_fan": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:tuff": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_brick_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_brick_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_brick_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_bricks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:tuff_wall": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:turtle_egg": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:twisting_vines": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:vault": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:verdant_froglight": [
+    "Functional Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:vine": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:wall_torch": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_button": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_fence": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_fence_gate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_fungus": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:warped_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_hyphae": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_nylium": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:warped_planks": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_pressure_plate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_roots": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:warped_shelf": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_stem": [
+    "Building Blocks",
+    "Natural Blocks",
+    "天然ブロック",
+    "建築ブロック"
+  ],
+  "minecraft:warped_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:warped_wall_hanging_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_wall_sign": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:warped_wart_block": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:water_cauldron": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_copper_block": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_copper_chest": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_exposed_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_exposed_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_lightning_rod": [
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_oxidized_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_oxidized_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:waxed_weathered_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:waxed_weathered_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_chiseled_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_copper_bars": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_copper_bulb": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_copper_chain": [
+    "Building Blocks",
+    "Functional Blocks",
+    "建築ブロック",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_copper_chest": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_copper_door": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_copper_golem_statue": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_copper_grate": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_copper_lantern": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:weathered_copper_trapdoor": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_cut_copper": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_cut_copper_slab": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_cut_copper_stairs": [
+    "Building Blocks",
+    "建築ブロック"
+  ],
+  "minecraft:weathered_lightning_rod": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:weeping_vines": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:wet_sponge": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:wheat": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:white_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:white_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:white_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:white_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:white_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:white_tulip": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:white_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:white_wool": [
+    "Colored Blocks",
+    "Redstone Blocks",
+    "レッドストーン系ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:wildflowers": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:wither_rose": [
+    "Natural Blocks",
+    "天然ブロック"
+  ],
+  "minecraft:wither_skeleton_skull": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:wither_skeleton_wall_skull": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:yellow_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_bed": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_candle": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_carpet": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_concrete": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_concrete_powder": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_glazed_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_shulker_box": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_stained_glass": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_stained_glass_pane": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_terracotta": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_wall_banner": [
+    "Colored Blocks",
+    "Functional Blocks",
+    "機能的ブロック",
+    "色付きブロック"
+  ],
+  "minecraft:yellow_wool": [
+    "Colored Blocks",
+    "色付きブロック"
+  ],
+  "minecraft:zombie_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ],
+  "minecraft:zombie_wall_head": [
+    "Functional Blocks",
+    "機能的ブロック"
+  ]
+}

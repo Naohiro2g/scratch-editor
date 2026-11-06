@@ -12,6 +12,13 @@ const configureContinuousFlyout = function (ScratchBlocks) {
 
     flyoutPrototype.getWidth = () => FLYOUT_WIDTH;
 
+    // Rendering can change the flyout bounds after the last scrollbar resize.
+    // Refresh its coordinate conversion before starting category auto-scroll.
+    flyoutPrototype.scrollTo = function (position) {
+        this.getWorkspace().scrollbar.resize();
+        return continuousFlyoutPrototype.scrollTo.call(this, Math.ceil(position));
+    };
+
     // The continuous-toolbox animation otherwise keeps writing its target
     // position after the user starts scrolling, which overrides manual input.
     flyoutPrototype.wheel_ = function (event) {
