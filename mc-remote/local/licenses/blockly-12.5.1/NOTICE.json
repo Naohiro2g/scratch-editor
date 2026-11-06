@@ -1,0 +1,22 @@
+{
+  "package": "blockly",
+  "version": "12.5.1",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Neil Fraser"
+  },
+  "contributors": null,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RaspberryPiFoundation/blockly.git"
+  },
+  "published_git_head": "6f7d50552ee658299de16c139673c2d126ac9b16",
+  "license_basis": "published-source",
+  "body_sources": [
+    {
+      "repository": "RaspberryPiFoundation/blockly",
+      "commit": "6f7d50552ee658299de16c139673c2d126ac9b16",
+      "path": "LICENSE"
+    }
+  ]
+}
