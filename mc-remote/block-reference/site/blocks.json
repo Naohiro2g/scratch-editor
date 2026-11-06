@@ -1,8 +1,8 @@
 {
-  "release": "2320.0.0b10",
-  "protocol": "23.2.0",
-  "sourceRef": "v2320.0.0b10",
-  "sourceCommit": "0809eb5e49e4b83c17a4e91b435d151b9d1b0655",
+  "release": "2321.0.0",
+  "protocol": "23.2.1",
+  "sourceRef": "d3aa547ccfdfa00e7164d89df72cfc29cde497eb",
+  "sourceCommit": "d3aa547ccfdfa00e7164d89df72cfc29cde497eb",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
