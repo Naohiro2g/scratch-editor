@@ -15,9 +15,12 @@ export const validateLock = lock => {
         lock.source.repository !== expectedRepository || !/^[0-9a-f]{40}$/.test(lock.source.commit)) {
         throw new Error('tooling lock must pin the approved repository and a full source commit');
     }
+    if (lock.fixture_source.repository !== expectedRepository || !/^[0-9a-f]{40}$/.test(lock.fixture_source.commit)) {
+        throw new Error('tooling fixture source must pin the approved repository and a full source commit');
+    }
     const paths = new Set();
     for (const entry of lock.fixtures) {
-        if (!/^packages\/(protocol|live|bridge)\/test\/fixtures\/[a-z0-9.-]+$/.test(entry.path) ||
+        if (!/^packages\/(protocol|live|bridge)\/test\/fixtures\/(?:[a-z0-9.-]+|LICENSE)$/.test(entry.path) ||
             paths.has(entry.path)) throw new Error(`invalid or duplicate tooling fixture path: ${entry.path}`);
         paths.add(entry.path);
         validateIdentity(entry);
@@ -60,9 +63,10 @@ const writeVerified = (entry, bytes, destination) => {
 };
 
 const acquireFixtures = async (lock, sourceDirectory) => {
+    const source = lock.fixture_source;
     if (sourceDirectory) {
         const head = execFileSync('git', ['rev-parse', 'HEAD'], {cwd: sourceDirectory, encoding: 'utf8'}).trim();
-        if (head !== lock.source.commit) throw new Error('fixture source checkout does not match the tooling lock');
+        if (head !== source.commit) throw new Error('fixture source checkout does not match the tooling lock');
     }
     for (const entry of lock.fixtures) {
         const destination = join(cache, 'fixtures', entry.path.slice('packages/'.length));
@@ -73,13 +77,13 @@ const acquireFixtures = async (lock, sourceDirectory) => {
         let bytes;
         if (sourceDirectory) bytes = readFileSync(join(sourceDirectory, entry.path));
         else {
-            const response = await fetch(`https://raw.githubusercontent.com/${lock.source.repository}/${lock.source.commit}/${entry.path}`);
+            const response = await fetch(`https://raw.githubusercontent.com/${source.repository}/${source.commit}/${entry.path}`);
             if (!response.ok) throw new Error(`tooling fixture download failed: ${entry.path} HTTP ${response.status}`);
             bytes = Buffer.from(await response.arrayBuffer());
         }
         writeVerified(entry, bytes, destination);
     }
-    process.stdout.write(`tooling fixtures: ${lock.fixtures.length} verified at ${lock.source.commit}\n`);
+    process.stdout.write(`tooling fixtures: ${lock.fixtures.length} verified at ${source.commit}\n`);
 };
 
 const validateArtifacts = (lock, directory) => {

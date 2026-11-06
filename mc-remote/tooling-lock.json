@@ -5,6 +5,10 @@
     "repository": "Naohiro2g/minecraft-remote-tooling",
     "commit": "6447f6e8cbfbeeb9d229990b5c4f6e82a5875666"
   },
+  "fixture_source": {
+    "repository": "Naohiro2g/minecraft-remote-tooling",
+    "commit": "21a2a9a0aed8b4d9c715da46616aad86f1174b4c"
+  },
   "fixtures": [
     {
       "path": "packages/bridge/test/fixtures/one-shot-transport-v1.json",
@@ -30,6 +34,11 @@
       "path": "packages/live/test/fixtures/station-attach-v1.json",
       "bytes": 2437,
       "sha256": "b50ce8e0cb8a6bb06f75d9bdad59b83006c92683bd73ced84a18223dde21fa81"
+    },
+    {
+      "path": "packages/protocol/test/fixtures/LICENSE",
+      "bytes": 1070,
+      "sha256": "aa329a0bafc839b95124306141db13a381de45818bf629e983c44ea55ab5a7fb"
     },
     {
       "path": "packages/protocol/test/fixtures/block-value-v22.json",

@@ -76,9 +76,11 @@ VM／GUIのMcRemoteテストを実行する前に、共有fixtureを取得して
 npm run tooling:fixtures
 ```
 
-このコマンドは `tooling-lock.json` の固定commitから15件のfixtureを取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
+このコマンドは `tooling-lock.json` の `fixture_source` に固定したcommitから15件のfixtureとProtocol fixtureの`LICENSE`を取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
 
-WireScopeとBridgeの生成物が必要な場合は、GitHub CLIの認証後に実行します。
+Protocolの共有fixtureディレクトリだけはMITです。取得したライセンス本文は `mc-remote/tooling/fixtures/protocol/test/fixtures/LICENSE` にあり、Protocol fixtureをコピーする場合は一緒に含めてください。toolingのほかの部分はAGPL-3.0-onlyのままです。
+
+WireScopeとBridgeの生成物は、同じlockの `source` と `artifacts` に固定します。fixtureの取得元とは独立しているため、fixtureのライセンス更新で生成物を差し替える必要はありません。生成物が必要な場合は、GitHub CLIの認証後に実行します。
 
 ```sh
 npm run tooling:artifacts
