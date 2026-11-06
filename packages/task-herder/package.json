@@ -1,6 +1,6 @@
 {
   "name": "@scratch/task-herder",
-  "version": "15.2.0",
+  "version": "15.3.0",
   "description": "An asynchronous task runner with configurable rate limiting / throttling and concurrency control.",
   "keywords": [
     "rate limit",
@@ -47,7 +47,7 @@
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.12",
     "eslint": "9.39.5",
-    "eslint-config-scratch": "14.1.89",
+    "eslint-config-scratch": "14.1.97",
     "prettier": "3.9.10",
     "rimraf": "6.1.2",
     "typescript": "5.9.3",

@@ -125,7 +125,7 @@ packages/
 ├── task-herder/            Async task scheduler with rate limiting
 └── scratch-media-lib-scripts/  Build scripts for media library assets
 mc-remote/                  Scratch-specific McRemote documentation and consumer lock
-├── tooling-lock.json        Fixed common tooling commit, fixture identities and artifact digests
+├── tooling-lock.json        Separate fixed fixture/artifact sources, file identities and artifact digests
 ├── tooling/                 Ignored, verified fixture/artifact acquisition cache
 ├── block-reference/         Static Scratch block reference
 ├── local/                   Scratch Local launcher, guides and boundary tests
@@ -140,6 +140,9 @@ Protocol, common WireScope app/schema/fixtures, and Bridge live in
 Scratch keeps its VM extension, GUI observation feed and launcher. The VM keeps wire constants inline and does
 not import `@mc-remote/protocol` at runtime. Tests consume fixtures acquired with `npm run tooling:fixtures`.
 Do not edit the ignored acquisition cache; change the owner source and explicitly update `tooling-lock.json`.
+The lock's `fixture_source` pins fixture acquisition independently of the artifact `source`.
+Acquisition includes the MIT `protocol/test/fixtures/LICENSE` beside the Protocol fixtures and verifies its
+bytes and SHA-256. Preserve that license when copying those fixtures; other tooling remains AGPL-3.0-only.
 
 Public Release metadata is a separate contract pinned by `mc-remote/release-manifest-lock.json`.
 Run `npm run tooling:release-manifest` to acquire its v1/v2 schemas, shared fixture and reference checks,
@@ -192,6 +195,10 @@ unless that migration is the explicit goal of the task.
 
 All packages use ESLint 9 flat config (`eslint.config.mjs`) with `eslint-config-scratch`. If a package also uses
 Prettier (currently `task-herder`), run `npm run format` in addition to lint.
+
+Browser builds target [Baseline Widely Available](https://web.dev/baseline), via the browserslist query
+`baseline widely available`. Runtime floors in `packages/scratch-gui/src/lib/supported-browser.js` should match
+the core-browser mins of that query.
 
 ### scratch-gui specifics
 
