@@ -1,8 +1,8 @@
 {
-  "release": "2321.0.0",
+  "release": "2321.1.0",
   "protocol": "23.2.1",
-  "sourceRef": "d3aa547ccfdfa00e7164d89df72cfc29cde497eb",
-  "sourceCommit": "d3aa547ccfdfa00e7164d89df72cfc29cde497eb",
+  "sourceRef": "11bce3193c524135931a5bf342a9edb1bfdfbbac",
+  "sourceCommit": "11bce3193c524135931a5bf342a9edb1bfdfbbac",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
