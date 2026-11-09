@@ -6,7 +6,7 @@ on:
 jobs:
   release-prep:
     name: Compute release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.semrel.outputs.version }}
       npm_tag: ${{ steps.semrel.outputs.npm_tag }}
@@ -114,7 +114,7 @@ jobs:
     name: Build
     needs: release-prep
     if: needs.release-prep.outputs.do_release == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       packages: ${{ steps.list-packages.outputs.packages }}
     steps:
@@ -166,7 +166,7 @@ jobs:
       - build
       - test
     if: ${{ !cancelled() && needs.build.result == 'success' && needs.test.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       NPM_TAG: ${{ needs.release-prep.outputs.npm_tag }}
       NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -248,7 +248,7 @@ jobs:
       - release-prep
       - cd
     if: ${{ !cancelled() && needs.cd.result == 'success' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write # to push the version commit and tag
     env:
