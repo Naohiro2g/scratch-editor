@@ -23,7 +23,7 @@ jobs:
           github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA'
         )
       )
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: scratchfoundation/scratch-agreements/.github/actions/cla-allowlist@0562f143b4e83f2ce9fb003cd517357f39b82dc4 # main
         id: cla-allowlist

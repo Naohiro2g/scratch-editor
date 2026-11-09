@@ -24,7 +24,7 @@ concurrency:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       any-workspace: ${{ steps.filter.outputs.any-workspace }}
       packages: ${{ steps.filter.outputs.changes }}
