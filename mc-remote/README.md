@@ -76,7 +76,7 @@ VM／GUIのMcRemoteテストを実行する前に、共有fixtureを取得して
 npm run tooling:fixtures
 ```
 
-このコマンドは `tooling-lock.json` の `fixture_source` に固定したcommitから15件のfixtureとProtocol fixtureの`LICENSE`を取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
+このコマンドは `tooling-lock.json` の `fixture_source` に固定したcommitから22件のfixture・schemaとProtocol fixtureの`LICENSE`を取得し、bytesとSHA-256を検査して `mc-remote/tooling/fixtures/` に置きます。このdirectoryはGit管理外の取得キャッシュです。F1六本は取得・整合性検査の対象で、対話の再生は未接続です。[E2の差分と接続案](../docs/polyglot-f1-e2_ja.md)を参照してください。fixtureを変更するときは共通ツール側で変更し、Scratch側で取得元を更新します。
 
 Protocolの共有fixtureディレクトリだけはMITです。取得したライセンス本文は `mc-remote/tooling/fixtures/protocol/test/fixtures/LICENSE` にあり、Protocol fixtureをコピーする場合は一緒に含めてください。toolingのほかの部分はAGPL-3.0-onlyのままです。
 

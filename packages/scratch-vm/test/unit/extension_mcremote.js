@@ -2618,6 +2618,69 @@ test('a closed socket rejects pending requests instead of hanging', t =>
     })
 );
 
+test('socket error settles every pending request locally without a server code or reason', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const requests = [blocks._request('world.getBlock', [0, 0, 0]), blocks._request('world.getBlock', [1, 0, 0])];
+    socket._emit('error');
+    t.equal(blocks._pending.size, 0, 'all response waits are cleared on error');
+    if (blocks._pending.size) socket.fireClose();
+    const results = await Promise.allSettled(requests);
+    for (const result of results) {
+        t.equal(result.status, 'rejected');
+        t.equal(result.reason.origin, 'client');
+        t.equal(result.reason.completionUnknown, true);
+        t.equal(result.reason.code, undefined);
+        t.equal(result.reason.reason, undefined);
+    }
+    t.equal(blocks._pending.size, 0);
+    t.equal(socket.sent.length, 3, 'no automatic resend');
+});
+
+test('socket error settles pending requests without waiting for a close event', async t => {
+    const {blocks, socket} = await newConnectedBlocks();
+    const request = blocks._request('world.getBlock', [0, 0, 0]);
+    socket._emit('error');
+    t.equal(blocks._pending.size, 0, 'error handler clears the response wait');
+    if (blocks._pending.size) socket.fireClose();
+    const result = await Promise.allSettled([request]);
+    t.equal(result[0].status, 'rejected');
+    t.equal(result[0].reason.origin, 'client');
+    t.equal(result[0].reason.completionUnknown, true);
+    t.equal(result[0].reason.code, undefined);
+    t.equal(result[0].reason.reason, undefined);
+});
+
+test('socket error preserves the connection failure instead of replacing it with a close failure', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const blocks = new McRemote({});
+    const connection = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket._emit('error');
+    await connection.then(() => t.fail('connection should reject'), error => {
+        t.equal(error.message, 'bridge connection error');
+        t.equal(error.completionUnknown, undefined, 'connection failure is separate from pending requests');
+    });
+});
+
+test('client protocol mismatch closes the socket while retaining the existing error observation', async t => {
+    FakeWebSocket.instances = [];
+    global.localStorage.clear();
+    const runtime = newRuntime();
+    const blocks = new McRemote(runtime);
+    const connection = blocks.connect();
+    const socket = FakeWebSocket.instances[0];
+    socket.fireOpen();
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '24.0.0'}});
+    await t.rejects(connection, {reason: 'protocol_mismatch'});
+    t.equal(socket.readyState, 3, 'incompatible connection is closed');
+    t.equal(blocks._socket, null);
+    t.equal(socket.sent.length, 1, 'no request after hello');
+    t.equal(latestObservation(runtime).status, 'error');
+    t.equal(latestObservation(runtime).lastError.reason, 'protocol_mismatch');
+});
+
 test('a closed socket emits a closed McRemote observation', t => {
     const runtime = newRuntime();
     return newConnectedBlocks(runtime).then(({socket}) => {

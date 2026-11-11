@@ -2046,6 +2046,7 @@ class Scratch3McRemoteBlocks {
                 BRIDGE_TRANSPORT_PROTOCOL
             ]);
             this._socket = socket;
+            let incompatibleError;
             socket.addEventListener('open', () => {
                 if (socket.protocol !== BRIDGE_TRANSPORT_PROTOCOL) {
                     const error = new Error('McRemote Bridge transport is incompatible');
@@ -2055,14 +2056,23 @@ class Scratch3McRemoteBlocks {
                     reject(error);
                     return;
                 }
-                this._authenticate().then(() => resolve(), reject);
+                this._authenticate().then(() => resolve(), error => {
+                    if (error.reason === 'protocol_mismatch' && error.origin !== 'server') {
+                        incompatibleError = error;
+                        socket.close(1002);
+                    }
+                    reject(error);
+                });
             });
             socket.addEventListener('message', event => this._onMessage(event));
             socket.addEventListener('error', () => {
                 const error = new Error('bridge connection error');
                 log.error('McRemote: bridge connection error');
                 this._setConnectionStatus(ConnectionStatus.ERROR, error);
+                this._rejectPending(error);
+                this._rejectOutboundQueue(error);
                 reject(error);
+                socket.close();
             });
             socket.addEventListener('close', event => {
                 const error = new Error('bridge connection closed');
@@ -2077,11 +2087,15 @@ class Scratch3McRemoteBlocks {
                 this._heightMonitorPending.clear();
                 this._heightNotFoundNoticeKeys.clear();
                 this._resetEventState();
-                this._setConnectionStatus(ConnectionStatus.CLOSED, error);
+                if (incompatibleError) {
+                    this._setConnectionStatus(ConnectionStatus.ERROR, incompatibleError);
+                } else {
+                    this._setConnectionStatus(ConnectionStatus.CLOSED, error);
+                }
                 this._resetCatalog();
                 this._rejectPending(error);
                 this._rejectOutboundQueue(error);
-                reject(error);
+                reject(incompatibleError || error);
             });
         });
         this._openPromise.then(
@@ -2334,14 +2348,17 @@ class Scratch3McRemoteBlocks {
     }
 
     /**
-     * Reject and clear every pending request, e.g. when the socket closes so
-     * that in-flight getBlock calls fail fast instead of hanging forever.
+     * Reject every response wait as a client-side completion-unknown failure.
      * @param {Error} error - the rejection reason.
      * @private
      */
     _rejectPending (error) {
+        const failure = Object.assign(new Error(error.message), error, {
+            origin: 'client',
+            completionUnknown: true
+        });
         for (const pending of this._pending.values()) {
-            pending.reject(error);
+            pending.reject(failure);
         }
         this._pending.clear();
         if (this._frameLog.length > FRAME_LOG_LIMIT) {
