@@ -69,6 +69,11 @@ Bridgeのone-shotは、pairBegin／pairPollの応答後にplugin側TCPを回収�
 応答を失ったpollの再送ではありません。続いたpollが`pair_not_found`等で拒まれたら二度目のpairingはせず失敗にします。
 新しいWSSを開けない場合も期限で終えます。
 
+通常のplugin TCPが閉じてもBridgeがWSSを保つ場合、VMはそのEOF自体を直接観測できません。新しいbackendから
+`expected_hello`が届いたら、wire §7.3でserverが閉じると規定された接続として回収します。そのerrorを受けた要求はserverの拒否を
+そのまま返し、ほかのpendingは完了不明で終えます。要求を再送せず、その次の呼び出しで新しいhelloを行います。
+この境界を実機のPaper再起動の成功と読み替えず、VM固有の回帰で確認します。
+
 ### browserの生存確認
 
 browserのWebSocket APIからTCP keepaliveやpingの間隔は設定できません。VMはclose／errorと、pendingがある間の無受信timerで

@@ -524,3 +524,30 @@ test('transport capacity timeout settles unsent requests and FAST notifications 
     }
     t.equal(socket.sent.length, 1);
 });
+
+test('expected_hello exposes a retired plugin session behind an open Bridge without replaying the request', async t => {
+    const {blocks, socket} = await connected();
+    const rejected = blocks._request('world.getBlock', [0, 0, 0]).catch(error => error);
+    const unanswered = blocks._request('world.setBlock',
+        [1, 0, 0, {block_id: 'minecraft:stone', state: {}}]).catch(error => error);
+    socket.emit('message', {data: JSON.stringify({jsonrpc: '2.0',
+        id: socket.sent[1].id,
+        error: {code: -32600, message: 'expected hello', data: {reason: 'expected_hello'}}})});
+    const error = await rejected;
+    t.match(error, {origin: 'server', reason: 'expected_hello', code: -32600});
+    t.equal(blocks._connectionStatus, 'closed', 'server-mandated close retires the logical session');
+    if (socket.readyState !== 3) socket.close();
+    t.equal((await unanswered).name, 'McRemoteCompletionUnknownError');
+    const next = blocks._request('world.getBlock', [2, 0, 0]);
+    await turns();
+    const replacement = Socket.instances[1];
+    replacement.open();
+    await turns();
+    t.equal(replacement.sent[0].method, 'hello');
+    replacement.reply(hello());
+    await turns();
+    replacement.reply({block_id: 'minecraft:stone', state: {}});
+    await next;
+    t.same(replacement.sent.map(message => message.method), ['hello', 'world.getBlock']);
+    t.equal(socket.sent.length, 3, 'no replay of the rejected getter or unanswered setter');
+});

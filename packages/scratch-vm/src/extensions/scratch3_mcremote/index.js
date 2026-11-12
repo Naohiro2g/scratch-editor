@@ -2667,6 +2667,12 @@ class Scratch3McRemoteBlocks {
                 this._setConnectionStatus(ConnectionStatus.ERROR, error);
             }
             pending.reject(error);
+            // expected_hello mandates server-side close even if Bridge retains its WebSocket.
+            if (error.reason === 'expected_hello') {
+                const socket = this._socket;
+                this._loseConnection(socket, error);
+                socket.close();
+            }
         } else {
             if (pending.method === 'build.setOrigin' || pending.method === 'build.setDimension') {
                 try {
