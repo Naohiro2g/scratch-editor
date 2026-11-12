@@ -71,7 +71,15 @@ const main = async () => {
             await new Promise(resolve => terminal.question(
                 'HUMAN_ACTION: stop and restart Paper; press Enter after it is ready.\n', resolve));
             terminal.close();
-            assert.deepEqual(await blocks._request('world.getBlock', input.position), original);
+            let afterRestart;
+            try {
+                afterRestart = await blocks._request('world.getBlock', input.position);
+            } catch (error) {
+                if (error.origin !== 'server' || error.reason !== 'expected_hello') throw error;
+                console.log('OBSERVED expected_hello; application now makes a new read-only call.');
+                afterRestart = await blocks._request('world.getBlock', input.position);
+            }
+            assert.deepEqual(afterRestart, original);
             assert.ok(connectionEvents.some(event => event.type === 'reconnected' && event.eventLoss));
             console.log('PASS reconnect/epoch/event-loss notification');
         }
