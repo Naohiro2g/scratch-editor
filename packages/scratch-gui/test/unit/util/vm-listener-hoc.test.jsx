@@ -155,7 +155,7 @@ describe('VMListenerHOC', () => {
     });
 
     test.each(['completionUnknown', 'notSent'])(
-        'local %s delivery failure selects delivery guidance without a server reason', (failure) => {
+        'local %s delivery failure selects delivery guidance without a server reason', failure => {
             jest.useFakeTimers();
             const Component = () => (<div />);
             const WrappedComponent = vmListenerHOC(Component);
