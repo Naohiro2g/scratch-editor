@@ -136,7 +136,9 @@ class FakeLocalStorage {
 
 global.localStorage = new FakeLocalStorage();
 
-const nextTurn = () => Promise.resolve().then(() => {});
+const nextTurn = async () => {
+    for (let i = 0; i < 30; i++) await Promise.resolve();
+};
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const sessionTokenKey = sandboxRoute => `mcremote.sessionToken.v1:${encodeURIComponent(sandboxRoute)}`;
 
@@ -724,7 +726,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(retryHello.method, 'hello');
             t.same(retryHello.params.auth, {token: 'mcrs_new'});
             t.equal(global.localStorage.getItem(sessionTokenKey(DEFAULT_SANDBOX_ROUTE)), 'mcrs_new');
-            t.same(runtime.startedHats, ['mcremote_whenPaired']);
+            t.same(runtime.startedHats, [], 'pairing hat waits for successful hello');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 4,
                 result: {
@@ -738,6 +740,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
         })
         .then(value => {
             t.equal(value, void 0);
+            t.same(runtime.startedHats, ['mcremote_whenPaired']);
             t.equal(latestObservation(runtime).status, 'connected');
             t.equal(latestObservation(runtime).pairCode, '');
             t.equal(JSON.stringify(latestObservation(runtime)).indexOf('mcrs_new'), -1, 'new token is never exposed');
@@ -991,11 +994,12 @@ test('disconnected commands emit connection guidance only once per disconnected 
     t.equal(latestObservation(runtime).lastError.reason, 'not_connected');
 });
 
-test('successful reconnect resets disconnected command guidance', async t => {
+test('successful reconnect resets disconnected command guidance when auto reconnect is disabled', async t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const runtime = newRuntime();
     const blocks = new McRemote(runtime);
+    blocks._connectionPolicy.autoReconnect = false;
     await blocks.postToChat({MSG: 'before connection'});
 
     const connected = blocks.connect();
@@ -1572,7 +1576,8 @@ test('a saturated outbound registration queue closes the connection without sile
             t.equal(socket.closeReason, 'backpressure');
             t.equal(blocks._connectionStatus, 'closed');
             t.equal(actionableErrors(runtime).length, 1, 'delivery guidance is emitted once per connection');
-            t.equal(actionableErrors(runtime)[0].reason, 'backpressure');
+            t.equal(actionableErrors(runtime)[0].reason, undefined, 'transport reason is not a request error');
+            t.equal(actionableErrors(runtime)[0].deliveryFailure, true);
             t.end();
         });
     });

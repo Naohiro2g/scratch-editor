@@ -5,6 +5,8 @@ const formatMessage = require('format-message');
 const log = require('../../util/log');
 const Runtime = require('../../engine/runtime');
 const CLIENT_VERSION = require('./client-version');
+const {DEFAULT_CONNECTION_POLICY, McRemoteCompletionUnknownError, McRemoteNotSentError,
+    freezeSnapshot} = require('./connection');
 const {createDisplayAlias} = require('./display-alias');
 const {buildContext, dimensionKey, dimensionRef, sameBuildContext} = require('./dimension');
 const {
@@ -234,7 +236,7 @@ const directionResult = value => {
  * @class
  */
 class Scratch3McRemoteBlocks {
-    constructor (runtime) {
+    constructor (runtime, connectionPolicy = {}) {
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}
@@ -253,6 +255,24 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._openPromise = null;
+        this._reconnectPromise = null;
+        this._connectionPolicy = Object.assign({}, DEFAULT_CONNECTION_POLICY, connectionPolicy);
+        this._connectionClock = {
+            now: () => Date.now(),
+            random: () => Math.random(),
+            setTimeout: (fn, ms) => setTimeout(fn, ms),
+            clearTimeout: timer => clearTimeout(timer)
+        };
+        this._responseTimer = null;
+        this._lastReceiveAt = 0;
+        this._hasConnected = false;
+        this._connectionEpoch = 0;
+        this._connectionAttempt = 0;
+        this._confirmedBuild = null;
+        this._lastSuccessfulHello = null;
+        this._pairingInProgress = false;
+        this._flushEpoch = null;
+        this._fastEpochs = new Set();
 
         /**
          * Pending requests awaiting a reply, keyed by JSON-RPC id.
@@ -384,6 +404,7 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._lastError = null;
+        this._transportDiagnostic = null;
         this._buildDeliveryNoticeShown = false;
 
         /**
@@ -1691,6 +1712,7 @@ class Scratch3McRemoteBlocks {
         this._helloInfo = null;
         this._buildContext = null;
         this._lastError = null;
+        this._transportDiagnostic = null;
         this._frameLog = [];
         this._frameSequence = 0;
         this._droppedFrameCount = 0;
@@ -1847,6 +1869,7 @@ class Scratch3McRemoteBlocks {
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
             lastError: this._sanitizeWireValue(this._lastError),
+            transportDiagnostic: this._sanitizeWireValue(this._transportDiagnostic),
             frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame)),
             droppedFrames: this._droppedFrameCount
         };
@@ -1969,7 +1992,7 @@ class Scratch3McRemoteBlocks {
         return lower === 'token' ||
             lower === 'session_token' ||
             lower === 'access_token' ||
-            lower === 'refresh_token';
+            lower === 'refresh_token' || lower === 'pairing_id';
     }
 
     /**
@@ -1999,7 +2022,10 @@ class Scratch3McRemoteBlocks {
             code: error && error.code,
             reason: error && error.reason
         };
-        if (error && error.origin === 'server') summary.origin = 'server';
+        if (error && error.origin) summary.origin = error.origin;
+        for (const key of ['completionUnknown', 'notSent', 'epoch', 'deliveryFailure', 'localReason']) {
+            if (error && typeof error[key] !== 'undefined') summary[key] = error[key];
+        }
         return summary;
     }
 
@@ -2023,109 +2049,272 @@ class Scratch3McRemoteBlocks {
     /**
      * Open the wss connection to the bridge and perform the hello handshake.
      * @param {string} [sandbox] - optional named sandbox to target.
+     * @param options
      * @returns {Promise} resolves once the handshake completes.
      * @private
      */
-    _open (sandbox) {
+    _open (sandbox, options = {}) {
         if (!this._runtimeConfig().connectionEnabled) {
             const error = this._connectionDisabledError();
             this._setConnectionStatus(ConnectionStatus.ERROR, error);
             return Promise.reject(error);
         }
-        if (this._socket && this._socket.readyState === WebSocket.OPEN) {
-            return Promise.resolve();
+        if (this._openPromise) return this._openPromise;
+        if (this._socket && this._socket.readyState === WebSocket.OPEN &&
+            this._connectionStatus === ConnectionStatus.CONNECTED) return Promise.resolve();
+        if (!options.reconnect) {
+            this._connectionTarget = this._resolveConnectionTarget(sandbox);
+            this._confirmedBuild = null;
         }
-        if (this._openPromise) {
-            return this._openPromise;
-        }
-        this._connectionTarget = this._resolveConnectionTarget(sandbox);
+        this._connectionAttempt++;
+        const mode = this._buildMode;
+        const traceDelay = this._traceDelaySeconds;
         this._resetObservationForConnection();
-        this._openPromise = new Promise((resolve, reject) => {
+        if (options.reconnect) {
+            this._buildMode = mode;
+            this._traceDelaySeconds = traceDelay;
+        }
+        const opening = this._dial(() => this._authenticate(options));
+        this._openPromise = opening;
+        const clear = () => {
+            if (this._openPromise === opening) this._openPromise = null;
+        };
+        opening.then(clear, clear);
+        return opening;
+    }
+
+    /**
+     * Open one browser transport. Pairing can continue across its lifetime.
+     * @param onOpen
+     * @param deadline
+     */
+    _dial (onOpen, deadline = Infinity) {
+        const attempt = this._connectionAttempt;
+        return new Promise((resolve, reject) => {
             const socket = new WebSocket(this._bridgeUrl(this._connectionTarget.sandboxRoute), [
-                BRIDGE_TRANSPORT_PROBE_PROTOCOL,
-                BRIDGE_TRANSPORT_PROTOCOL
+                BRIDGE_TRANSPORT_PROBE_PROTOCOL, BRIDGE_TRANSPORT_PROTOCOL
             ]);
             this._socket = socket;
-            let incompatibleError;
+            this._nextRequestId = 1;
+            let opened = false;
+            const timer = this._setConnectionTimer(() => {
+                const error = new Error('McRemote Bridge connection did not open');
+                error.localReason = 'connect_timeout';
+                this._loseConnection(socket, error);
+                reject(error);
+                socket.close();
+            }, Math.min(this._connectionPolicy.connectTimeoutMs, deadline - this._connectionClock.now()));
             socket.addEventListener('open', () => {
+                if (socket !== this._socket) return;
+                opened = true;
+                this._connectionClock.clearTimeout(timer);
+                this._lastReceiveAt = this._connectionClock.now();
                 if (socket.protocol !== BRIDGE_TRANSPORT_PROTOCOL) {
                     const error = new Error('McRemote Bridge transport is incompatible');
                     error.reason = 'bridge_transport_incompatible';
-                    this._setConnectionStatus(ConnectionStatus.ERROR, error);
-                    socket.close(1002, error.reason);
+                    this._loseConnection(socket, error, ConnectionStatus.ERROR);
                     reject(error);
+                    socket.close(1002, error.reason);
                     return;
                 }
-                this._authenticate().then(() => resolve(), error => {
-                    if (error.reason === 'protocol_mismatch' && error.origin !== 'server') {
-                        incompatibleError = error;
-                        socket.close(1002);
+                Promise.resolve(onOpen()).then(resolve, error => {
+                    if (attempt !== this._connectionAttempt) {
+                        reject(error);
+                        return;
+                    }
+                    const active = this._socket;
+                    if (active) {
+                        this._loseConnection(active, error, ConnectionStatus.ERROR);
+                        active.close(error.reason === 'protocol_mismatch' ? 1002 : 1000);
+                    } else {
+                        this._setConnectionStatus(ConnectionStatus.ERROR, error);
                     }
                     reject(error);
                 });
             });
-            socket.addEventListener('message', event => this._onMessage(event));
+            socket.addEventListener('message', event => {
+                if (socket === this._socket) this._onMessage(event);
+            });
             socket.addEventListener('error', () => {
+                if (socket !== this._socket) return;
                 const error = new Error('bridge connection error');
                 log.error('McRemote: bridge connection error');
-                this._setConnectionStatus(ConnectionStatus.ERROR, error);
-                this._rejectPending(error);
-                this._rejectOutboundQueue(error);
-                reject(error);
+                if (!opened || !this._pairingInProgress) reject(error);
+                this._connectionClock.clearTimeout(timer);
+                this._loseConnection(socket, error, ConnectionStatus.ERROR);
                 socket.close();
             });
             socket.addEventListener('close', event => {
+                this._connectionClock.clearTimeout(timer);
+                if (socket !== this._socket) return;
                 const error = new Error('bridge connection closed');
                 error.code = event && event.code;
                 error.reason = event && event.reason;
-                this._socket = null;
-                this._displayAlias = '';
-                this._buildContext = null;
-                this._blockInfoMonitorCache.clear();
-                this._blockInfoMonitorPending.clear();
-                this._heightMonitorCache.clear();
-                this._heightMonitorPending.clear();
-                this._heightNotFoundNoticeKeys.clear();
-                this._resetEventState();
-                if (incompatibleError) {
-                    this._setConnectionStatus(ConnectionStatus.ERROR, incompatibleError);
-                } else {
-                    this._setConnectionStatus(ConnectionStatus.CLOSED, error);
-                }
-                this._resetCatalog();
-                this._rejectPending(error);
-                this._rejectOutboundQueue(error);
-                reject(incompatibleError || error);
+                if (!opened || !this._pairingInProgress) reject(error);
+                this._loseConnection(socket, error);
             });
         });
-        this._openPromise.then(
-            () => {
-                this._openPromise = null;
-            },
-            () => {
-                this._openPromise = null;
+    }
+
+    /**
+     * Retire one transport and every operation owned by it, once.
+     * @param socket
+     * @param error
+     * @param status
+     */
+    _loseConnection (socket, error, status = ConnectionStatus.CLOSED) {
+        if (socket !== this._socket) return;
+        this._socket = null;
+        this._displayAlias = '';
+        this._buildContext = null;
+        this._playerPosCache = null;
+        this._playerPoseCache = null;
+        this._blockInfoMonitorCache.clear();
+        this._blockInfoMonitorPending.clear();
+        this._heightMonitorCache.clear();
+        this._heightMonitorPending.clear();
+        this._heightNotFoundNoticeKeys.clear();
+        this._resetEventState();
+        this._transportDiagnostic = this._errorInfo(error);
+        this._setConnectionStatus(status, error);
+        this._resetCatalog();
+        this._rejectPending(error);
+        this._rejectOutboundQueue(error);
+        this._emitConnectionEvent('disconnected', {eventLoss: true,
+            invalidated: ['entity_handles', 'event_cursor', 'catalog'],
+            diagnostic: this._errorInfo(error)});
+    }
+
+    _setConnectionTimer (fn, ms) {
+        const timer = this._connectionClock.setTimeout(fn, ms);
+        if (timer && typeof timer.unref === 'function') timer.unref();
+        return timer;
+    }
+
+    /** All pending waits share the connection's last reception clock. */
+    _armResponseTimer () {
+        this._connectionClock.clearTimeout(this._responseTimer);
+        this._responseTimer = null;
+        const waits = [...this._pending.values()].filter(pending => pending.sent);
+        if (!waits.length) return;
+        const timeout = Math.max(...waits.map(pending => pending.idleTimeoutMs));
+        const remaining = Math.max(0, this._lastReceiveAt + timeout - this._connectionClock.now());
+        const socket = this._socket;
+        this._responseTimer = this._setConnectionTimer(() => {
+            if (socket !== this._socket) return;
+            const error = new Error('McRemote connection stopped responding');
+            error.origin = 'client';
+            error.localReason = 'response_idle_timeout';
+            this._loseConnection(socket, error);
+            socket.close();
+        }, remaining);
+    }
+
+    /** Resume only new calls: requests from the retired epoch are never replayed. */
+    _ensureConnection () {
+        if (this._socket && this._socket.readyState === WebSocket.OPEN &&
+            this._connectionStatus === ConnectionStatus.CONNECTED) return null;
+        if (this._reconnectPromise) return this._reconnectPromise;
+        if (!this._hasConnected) return null;
+        if (!this._connectionPolicy.autoReconnect) {
+            const guidance = new Error('not connected to McRemote server');
+            guidance.reason = 'not_connected';
+            this._notifyDisconnectedCommand(guidance);
+            return Promise.reject(new McRemoteNotSentError('McRemote automatic reconnect is disabled',
+                this._connectionEpoch));
+        }
+        const startedAt = this._connectionClock.now();
+        let delay = this._connectionPolicy.reconnectInitialDelayMs;
+        const attempt = () => this._open(void 0, {reconnect: true}).catch(error => {
+            if (this._isAuthError(error) || error.reason === 'protocol_mismatch' ||
+                error.reason === 'bridge_transport_incompatible' || error.reason === 'connection_disabled' ||
+                error.origin === 'server') {
+                const failure = new McRemoteNotSentError('McRemote reconnect requires attention',
+                    this._connectionEpoch);
+                failure.localReason = this._isAuthError(error) ? 'pairing_required' : error.reason;
+                failure.cause = error;
+                throw failure;
             }
-        );
-        return this._openPromise;
+            const remaining = this._connectionPolicy.reconnectTimeoutMs -
+                (this._connectionClock.now() - startedAt);
+            if (remaining <= 0) {
+                throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
+                    {localReason: 'connection_failed'});
+            }
+            const waiting = Math.min(remaining, this._connectionPolicy.reconnectMaxDelayMs,
+                delay * (0.5 + this._connectionClock.random()));
+            delay = Math.min(this._connectionPolicy.reconnectMaxDelayMs, delay * 2);
+            return this._delay(waiting).then(() => {
+                if (this._connectionClock.now() - startedAt >= this._connectionPolicy.reconnectTimeoutMs) {
+                    throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
+                        {localReason: 'connection_failed'});
+                }
+                return attempt();
+            });
+        });
+        const reconnecting = attempt();
+        this._reconnectPromise = reconnecting;
+        const clear = () => {
+            if (this._reconnectPromise === reconnecting) this._reconnectPromise = null;
+        };
+        reconnecting.then(clear, clear);
+        return reconnecting;
+    }
+
+    _emitConnectionEvent (type, details = {}) {
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_CONNECTION_EVENT, freezeSnapshot(Object.assign({
+                type, epoch: this._connectionEpoch
+            }, this._sanitizeWireValue(details))));
+        }
     }
 
     /**
      * Send the hello handshake. The build context falls back to the server
      * defaults (overworld, origin 200,0,200) and auth is added through
      * auth:{token} when a token is available.
+     * @param options
      * @returns {Promise} resolves when the handshake is acknowledged.
      * @private
      */
-    _hello () {
+    _hello (options = {}) {
         const params = {
             protocol: PROTOCOL_VERSION,
             client: this._clientInfo()
         };
+        if (options.build) params.build = options.build;
+        else if (options.reconnect && this._confirmedBuild) params.build = this._confirmedBuild;
+        const previousHello = this._lastSuccessfulHello;
+        const previousEpoch = this._connectionEpoch;
         const token = this._readSessionToken();
         if (token) params.auth = {token};
+        const socket = this._socket;
         return this._request('hello', params).then(result => {
+            if (socket !== this._socket || socket.readyState !== WebSocket.OPEN) {
+                throw new McRemoteCompletionUnknownError('McRemote connection closed after hello',
+                    this._connectionEpoch);
+            }
             this._assertCompatibleProtocol(result && result.protocol);
             this._recordHelloInfo(result);
+            this._confirmedBuild = this._buildContext;
+            this._connectionEpoch++;
+            this._hasConnected = true;
+            this._lastSuccessfulHello = freezeSnapshot(this._sanitizeWireValue(result));
+            if (options.reconnect) {
+                const changed = key => JSON.stringify(previousHello && previousHello[key]) !==
+                    JSON.stringify(result[key]);
+                this._emitConnectionEvent('reconnected', {
+                    previousEpoch,
+                    previousHello,
+                    hello: this._lastSuccessfulHello,
+                    eventLoss: true,
+                    serverChanged: changed('server'),
+                    sessionChanged: changed('session'),
+                    catalogHashChanged: changed('catalogHash'),
+                    invalidated: ['entity_handles', 'event_cursor', 'catalog'],
+                    excludedEpochs: [...this._fastEpochs].filter(epoch => epoch !== this._connectionEpoch)
+                });
+            }
             if (!this._displayAlias) this._displayAlias = createDisplayAlias();
             this._setConnectionStatus(ConnectionStatus.CONNECTED);
             this._disconnectedCommandNoticeShown = false;
@@ -2186,19 +2375,37 @@ class Scratch3McRemoteBlocks {
      * Run hello first. If the server requires auth or rejects the stored token,
      * obtain a fresh session token through auth.pairBegin/auth.pairPoll and
      * retry hello with the saved token.
+     * @param options
      * @returns {Promise} resolves after an authenticated or auth-optional hello.
      * @private
      */
-    _authenticate () {
-        return this._hello().then(() => {}, error => {
-            if (!this._isAuthError(error)) {
-                this._setConnectionStatus(ConnectionStatus.ERROR, error);
-                return Promise.reject(error);
-            }
+    async _authenticate (options = {}) {
+        try {
+            return await this._hello(options).then(() => {});
+        } catch (error) {
+            if (!this._isAuthError(error)) throw error;
             this._clearSessionToken();
-            this._setConnectionStatus(ConnectionStatus.PAIRING, error);
-            return this._pair().then(() => this._hello());
-        });
+            let authError = error;
+            if (error.reason !== 'auth_required') {
+                try {
+                    return await this._hello(options).then(() => {});
+                } catch (nextError) {
+                    if (nextError.reason !== 'auth_required') throw nextError;
+                    authError = nextError;
+                }
+            }
+            if (options.reconnect) throw authError;
+            this._setConnectionStatus(ConnectionStatus.PAIRING, authError);
+            this._pairingInProgress = true;
+            try {
+                await this._pair();
+                await this._hello(options);
+                this._firePairingComplete();
+            } finally {
+                this._pairingInProgress = false;
+                this._setPairCode('');
+            }
+        }
     }
 
     /**
@@ -2214,7 +2421,7 @@ class Scratch3McRemoteBlocks {
             const pairingId = result && result.pairing_id;
             const expiresIn = Number(result && result.expires_in) || 120;
             this._setPairCode(result && result.pair_code);
-            return this._pollPair(pairingId, Date.now() + (expiresIn * 1000));
+            return this._pollPair(pairingId, this._connectionClock.now() + (expiresIn * 1000));
         });
     }
 
@@ -2225,19 +2432,40 @@ class Scratch3McRemoteBlocks {
      * @returns {Promise} resolves once the token has been saved.
      * @private
      */
-    _pollPair (pairingId, expiresAt) {
-        return this._request('auth.pairPoll', {pairing_id: pairingId}).then(result => {
-            if (result && result.status === 'ok' && result.token) {
-                this._saveSessionToken(result.token);
-                this._setPairCode('');
-                this._firePairingComplete();
-                return;
+    async _pollPair (pairingId, expiresAt) {
+        if (this._connectionClock.now() >= expiresAt) {
+            const error = new Error('pair_expired');
+            error.origin = 'client';
+            error.localReason = 'pair_expired';
+            throw error;
+        }
+        if (!this._socket || this._socket.readyState !== WebSocket.OPEN) {
+            try {
+                await this._dial(() => {}, expiresAt);
+            } catch (error) {
+                if (error.reason === 'bridge_transport_incompatible') throw error;
+                const remaining = expiresAt - this._connectionClock.now();
+                if (remaining > 0) await this._delay(Math.min(this._pairPollIntervalMs, remaining));
             }
-            if (Date.now() >= expiresAt) {
-                return Promise.reject(new Error('pair_expired'));
+            return this._pollPair(pairingId, expiresAt);
+        }
+        let result;
+        try {
+            result = await this._request('auth.pairPoll', {pairing_id: pairingId});
+        } catch (error) {
+            if (!(error instanceof McRemoteCompletionUnknownError) && !(error instanceof McRemoteNotSentError)) {
+                throw error;
             }
-            return this._delay(this._pairPollIntervalMs).then(() => this._pollPair(pairingId, expiresAt));
-        });
+            await this._delay(this._pairPollIntervalMs);
+            return this._pollPair(pairingId, expiresAt);
+        }
+        if (result && result.status === 'ok' && result.token) {
+            this._saveSessionToken(result.token);
+            this._setPairCode('');
+            return;
+        }
+        await this._delay(this._pairPollIntervalMs);
+        return this._pollPair(pairingId, expiresAt);
     }
 
     /**
@@ -2246,7 +2474,7 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _delay (ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => this._connectionClock.setTimeout(resolve, ms));
     }
 
     /**
@@ -2353,14 +2581,17 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _rejectPending (error) {
-        const failure = Object.assign(new Error(error.message), error, {
-            origin: 'client',
-            completionUnknown: true
-        });
+        const delivery = error.reason === 'backpressure' || error.reason === 'capacity_exhausted';
         for (const pending of this._pending.values()) {
+            const ErrorType = pending.sent ? McRemoteCompletionUnknownError : McRemoteNotSentError;
+            const failure = new ErrorType(error.message, this._connectionEpoch, delivery);
             pending.reject(failure);
+            this._emitConnectionEvent('request-failed', {method: pending.method,
+                completionUnknown: Boolean(failure.completionUnknown),
+                notSent: Boolean(failure.notSent)});
         }
         this._pending.clear();
+        this._armResponseTimer();
         if (this._frameLog.length > FRAME_LOG_LIMIT) {
             const trimmed = this._frameLog.length - FRAME_LOG_LIMIT;
             this._frameLog.splice(0, trimmed);
@@ -2377,7 +2608,9 @@ class Scratch3McRemoteBlocks {
      */
     _rejectOutboundQueue (error) {
         this._outboundQueueGeneration++;
-        for (const entry of this._outboundQueue) entry.reject(error);
+        const failure = new McRemoteNotSentError(error.message, this._connectionEpoch,
+            error.reason === 'backpressure' || error.reason === 'capacity_exhausted');
+        for (const entry of this._outboundQueue) entry.reject(failure);
         this._outboundQueue = [];
         this._outboundQueueBusy = false;
     }
@@ -2389,6 +2622,8 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _onMessage (event) {
+        this._lastReceiveAt = this._connectionClock.now();
+        this._armResponseTimer();
         let msg;
         try {
             msg = JSON.parse(event.data);
@@ -2420,6 +2655,7 @@ class Scratch3McRemoteBlocks {
         }
         if (!pending) return;
         this._pending.delete(msg.id);
+        this._armResponseTimer();
         if (msg.error) {
             const error = new Error(msg.error.message || 'McRemote error');
             error.code = msg.error.code;
@@ -2432,6 +2668,23 @@ class Scratch3McRemoteBlocks {
             }
             pending.reject(error);
         } else {
+            if (pending.method === 'build.setOrigin' || pending.method === 'build.setDimension') {
+                try {
+                    this._confirmedBuild = buildContext(msg.result, `${pending.method} result`);
+                    this._buildContext = this._confirmedBuild;
+                } catch (error) {
+                    pending.reject(error);
+                    return;
+                }
+            }
+            if (pending.method === 'connection.flush') {
+                this._emitConnectionEvent('flush', {
+                    previousFlushEpoch: this._flushEpoch,
+                    excludedEpochs: [...this._fastEpochs].filter(epoch => epoch !== this._connectionEpoch)
+                });
+                this._flushEpoch = this._connectionEpoch;
+                this._fastEpochs.delete(this._connectionEpoch);
+            }
             pending.resolve(msg.result);
         }
     }
@@ -2619,7 +2872,7 @@ class Scratch3McRemoteBlocks {
             socket.bufferedAmount + payloadBytes <= OUTBOUND_BUFFER_LIMIT_BYTES;
         if (hasCapacity()) return null;
 
-        const startedAt = Date.now();
+        const startedAt = this._connectionClock.now();
         const poll = () => {
             if (socket !== this._socket || socket.readyState !== WebSocket.OPEN) {
                 const error = new Error('McRemote connection closed during backpressure');
@@ -2627,7 +2880,7 @@ class Scratch3McRemoteBlocks {
                 return Promise.reject(error);
             }
             if (hasCapacity()) return Promise.resolve();
-            if (Date.now() - startedAt >= OUTBOUND_BACKPRESSURE_TIMEOUT_MS) {
+            if (this._connectionClock.now() - startedAt >= OUTBOUND_BACKPRESSURE_TIMEOUT_MS) {
                 const error = new Error('McRemote outbound transport remained full');
                 error.reason = 'backpressure';
                 socket.close(1011, error.reason);
@@ -2658,8 +2911,22 @@ class Scratch3McRemoteBlocks {
                 error.reason = 'transport_lost';
                 throw error;
             }
+            const pending = this._pending.get(message.id);
+            const hadWait = [...this._pending.values()].some(entry => entry.sent);
+            if (pending) pending.sent = true;
+            try {
+                socket.send(wirePayload);
+            } catch (error) {
+                if (pending) pending.sent = false;
+                throw error;
+            }
+            if (pending && !hadWait) this._lastReceiveAt = this._connectionClock.now();
+            if (!Object.prototype.hasOwnProperty.call(message, 'id') &&
+                (message.method === 'world.setBlock' || message.method === 'world.setBlocks')) {
+                this._fastEpochs.add(this._connectionEpoch);
+            }
+            this._armResponseTimer();
             this._appendFrame('send', message);
-            socket.send(wirePayload);
         };
         const waiting = this._waitForOutboundCapacity(socket, this._payloadByteLength(wirePayload));
         if (!waiting) {
@@ -2673,10 +2940,11 @@ class Scratch3McRemoteBlocks {
      * Start one request immediately on the current connection.
      * @param {string} method - JSON-RPC method.
      * @param {Array|object} params - request params.
+     * @param options
      * @returns {{release: ?Promise, completion: Promise}} local-send and response promises.
      * @private
      */
-    _startRequest (method, params) {
+    _startRequest (method, params, options = {}) {
         const guardError = this._sendGuardError(method);
         if (guardError) return {release: null, completion: Promise.reject(guardError)};
 
@@ -2688,25 +2956,35 @@ class Scratch3McRemoteBlocks {
             rejectResponse = reject;
         });
         const message = {jsonrpc: '2.0', id, method, params};
-        this._pending.set(id, {resolve: resolveResponse, reject: rejectResponse, method, params});
+        const pendingEntry = {resolve: resolveResponse,
+            reject: rejectResponse,
+            method,
+            params,
+            sent: false,
+            idleTimeoutMs: Math.max(this._connectionPolicy.requestIdleTimeoutMs,
+                options.requestIdleTimeoutMs || 0)};
+        this._pending.set(id, pendingEntry);
 
         let release;
         try {
             release = this._sendJsonRpc(message);
         } catch (error) {
             this._pending.delete(id);
-            rejectResponse(error);
+            this._armResponseTimer();
+            rejectResponse(new McRemoteNotSentError(error.message, this._connectionEpoch,
+                error.reason === 'backpressure' || error.reason === 'capacity_exhausted'));
             return {release: null, completion: response};
         }
         if (!release) return {release: null, completion: response};
 
         const sent = release.catch(error => {
             const pending = this._pending.get(id);
-            if (pending) {
+            if (pending === pendingEntry) {
                 this._pending.delete(id);
-                pending.reject(error);
+                pending.reject(new McRemoteNotSentError(error.message, this._connectionEpoch,
+                    error.reason === 'backpressure' || error.reason === 'capacity_exhausted'));
+                this._armResponseTimer();
             }
-            throw error;
         });
         return {
             release: sent,
@@ -2725,16 +3003,20 @@ class Scratch3McRemoteBlocks {
     _startNotification (method, params) {
         const guardError = this._sendGuardError(method);
         if (guardError) return {release: null, completion: Promise.reject(guardError)};
+        const epoch = this._connectionEpoch;
         let release;
         try {
             release = this._sendJsonRpc({jsonrpc: '2.0', method, params});
         } catch (error) {
-            return {release: null, completion: Promise.reject(error)};
+            return {release: null,
+                completion: Promise.reject(new McRemoteNotSentError(error.message,
+                    epoch, error.reason === 'backpressure' || error.reason === 'capacity_exhausted'))};
         }
-        return {
-            release,
-            completion: release || Promise.resolve()
-        };
+        const completion = release ? release.catch(error => {
+            throw new McRemoteNotSentError(error.message, epoch,
+                error.reason === 'backpressure' || error.reason === 'capacity_exhausted');
+        }) : Promise.resolve();
+        return {release, completion};
     }
 
     /**
@@ -2795,12 +3077,15 @@ class Scratch3McRemoteBlocks {
      * Send a JSON-RPC request and await its reply.
      * @param {string} method - the dot-namespaced command name.
      * @param {Array|object} params - positional args (object for hello).
+     * @param options
      * @returns {Promise} resolves with the reply result.
      * @private
      */
-    _request (method, params) {
-        if (this._isSessionSetupMethod(method)) return this._startRequest(method, params).completion;
-        return this._enqueueOutbound(() => this._startRequest(method, params));
+    _request (method, params, options = {}) {
+        if (this._isSessionSetupMethod(method)) return this._startRequest(method, params, options).completion;
+        const reconnect = this._ensureConnection();
+        const send = () => this._enqueueOutbound(() => this._startRequest(method, params, options));
+        return reconnect ? reconnect.then(send) : send();
     }
 
     _commandRequest (method, params) {
@@ -2856,8 +3141,9 @@ class Scratch3McRemoteBlocks {
 
     _setBuildContext (method, params) {
         return this._request(method, params).then(result => {
-            this._buildContext = buildContext(result, `${method} result`);
+            buildContext(result, `${method} result`);
         }, error => {
+            if (error.reason === 'invalid_params' && error.origin !== 'server') throw error;
             log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
         });
     }
@@ -2921,7 +3207,8 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _actionableCommandError (method, error) {
-        const isDeliveryFailure = (error.reason === 'backpressure' && error.origin !== 'server') ||
+        const isDeliveryFailure = error.deliveryFailure ||
+            (error.reason === 'backpressure' && error.origin !== 'server') ||
             error.reason === 'capacity_exhausted';
         if (isDeliveryFailure && this._buildDeliveryNoticeShown) return Promise.resolve();
         if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
@@ -2944,14 +3231,17 @@ class Scratch3McRemoteBlocks {
             return this._actionableCommandError('setBuildMode', error);
         }
 
-        return this._enqueueOutbound(() => {
+        const reconnect = this._ensureConnection();
+        const send = () => this._enqueueOutbound(() => {
             const flush = this._startRequest('connection.flush', []);
             const transition = flush.completion.then(() => {
                 this._buildMode = mode;
                 this._traceDelaySeconds = traceDelaySeconds;
             });
             return {release: transition, completion: transition};
-        }).then(() => {}, error => this._actionableCommandError('setBuildMode', error));
+        });
+        return (reconnect ? reconnect.then(send) : send())
+            .then(() => {}, error => this._actionableCommandError('setBuildMode', error));
     }
 
     flushBuildCommands () {
@@ -2990,7 +3280,8 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _setBlockCommand (method, params) {
-        return this._enqueueOutbound(() => {
+        const reconnect = this._ensureConnection();
+        const send = () => this._enqueueOutbound(() => {
             const mode = this._buildMode;
             const traceDelaySeconds = this._traceDelaySeconds;
             if (mode === BuildMode.FAST) return this._startNotification(method, params);
@@ -3001,8 +3292,9 @@ class Scratch3McRemoteBlocks {
                 release: request.release,
                 completion: request.completion.then(() => this._delay(traceDelaySeconds * 1000))
             };
-        }).then(() => {}, error => {
-            if (error.reason === 'backpressure' || error.reason === 'capacity_exhausted') {
+        });
+        return (reconnect ? reconnect.then(send) : send()).then(() => {}, error => {
+            if (error.deliveryFailure || error.reason === 'backpressure' || error.reason === 'capacity_exhausted') {
                 this._actionableCommandError(method, error);
             } else {
                 log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);

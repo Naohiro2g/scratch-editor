@@ -87,6 +87,7 @@ The `@scratch/` packages are published to npm. They are consumed both internally
 - `mc-remote/README.md` maps the McRemote code in this repository; common tooling package READMEs cover Protocol, Bridge and WireScope.
 - `mc-remote/block-reference/README.md` covers the static Scratch block reference prototype and its image/page generator.
 - `packages/scratch-gui/src/lib/mcremote-block-names/README_ja.md` covers the bundled block names and creative-category search data. Regenerating categories requires JDK 25; editor builds and runtime do not.
+- `docs/polyglot-f1-e2_ja.md` and `docs/polyglot-f1-browser_ja.md` cover McRemote connection policy and browser fixture replay boundaries.
 - `Release.md` covers the upstream npm release process and distinguishes McRemote GitHub releases.
 - `SETUP_ja.md`, if present locally, is an ignored historical note. Do not use it as the current setup or deployment authority.
 

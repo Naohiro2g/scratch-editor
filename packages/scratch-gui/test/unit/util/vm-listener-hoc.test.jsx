@@ -154,6 +154,30 @@ describe('VMListenerHOC', () => {
         jest.useRealTimers();
     });
 
+    test.each(['completionUnknown', 'notSent'])(
+        'local %s delivery failure selects delivery guidance without a server reason', (failure) => {
+            jest.useFakeTimers();
+            const Component = () => (<div />);
+            const WrappedComponent = vmListenerHOC(Component);
+            render(
+                <WrappedComponent
+                    store={store}
+                    vm={vm}
+                />
+            );
+
+            vm.emit('MCREMOTE_ACTIONABLE_ERROR', {
+                origin: 'client',
+                deliveryFailure: true,
+                [failure]: true
+            });
+            const actions = store.getActions();
+            jest.runOnlyPendingTimers();
+            jest.useRealTimers();
+            expect(actions[0].alertId).toEqual('mcremoteBuildDeliveryFailed');
+        }
+    );
+
     test('targetsUpdate does not dispatch if the sound recorder is visible', () => {
         const Component = () => (<div />);
         const WrappedComponent = vmListenerHOC(Component);
