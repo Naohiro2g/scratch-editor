@@ -1,124 +1,110 @@
-# Scratch：F1の固定とE2の差分
+# Scratch：応答待ちと再接続（E2）
 
-根拠はknowledge `076a127a22eaf0188c1d13822bfd55bfeee9ec38`の
-[依頼票](https://github.com/Naohiro2g/mc-remote-knowledge/blob/076a127a22eaf0188c1d13822bfd55bfeee9ec38/00-hub/polyglot-f1-e2-repin-instructions_ja.md)の共通・Scratch、
-DECISIONS `2026-11-11-01`／`2026-11-12-01`、wire §3.4／§6.2／§6.5、Protocol InventoryとScratch execution modelです。
-読取基準はdevelop `dc2840ba3c5c9d6938555ed737bc199acca2586e`です。
+根拠はknowledge `125812b47bae32120f56febc4d30058ab0fe8248`の
+[共通・Scratchの依頼](https://github.com/Naohiro2g/mc-remote-knowledge/blob/125812b47bae32120f56febc4d30058ab0fe8248/00-hub/polyglot-e2-reconnect-instructions_ja.md)、
+wire §3.4／§6.5、決定`2026-11-11-01`／`2026-11-12-01`／`2026-11-12-05`です。
 
-Scratchの特則に従い、F1の対話をtestへ接続すること、block／pairing hat／表示を変えること、③⑤の実装は案として返します。
-今回の実装はfixtureの取得元固定と整合性検査、表示を保てる内部修正に限ります。
+## 内部APIと待ち方
 
-## 取得元と検査
+VM拡張の`constructor(runtime, connectionPolicy)`の第2引数は内部の接続方針です。Scratchのblock、保存する作品、deploymentの
+runtime configへ設定項目を追加しません。省略時の値は次のとおりです。
 
-`mc-remote/tooling-lock.json`の`fixture_source.commit`を
-`21a2a9a0aed8b4d9c715da46616aad86f1174b4c`から、指定された
-`36ebe9e63e4f0afcf949eae998832f68209b8119`へ固定し直しました。
-新しいopsのmerge commitへは代用しません。Bridge／WireScopeの`source.commit`と配布物の固定は変更しません。
-既存16 entryのbytesとSHA-256は同じです。F1六本とv1 schemaを追加し、全23 entryを取得・検査します。
-取得cacheはGit管理外で、取得scriptがlockのbytesとSHA-256を検証して書きます。
-MITのLICENSEも同じ場所へ取得します。LICENSEは1,070 bytes、SHA-256
-`aa329a0bafc839b95124306141db13a381de45818bf629e983c44ea55ab5a7fb`で不変です。
-
-`mcremote_bootstrap_fixture_identity.js`はF1六本、schema、block-value、LICENSEのbytesとSHA-256をlockと比較し、
-六本のschemaとcase数も検査します。これは対話の再生ではありません。
-
-| file（`client-bootstrap-`以下） | case数 | VMでの対話再生PASS |
-| --- | ---: | ---: |
-| framing-v23.2.1.json | 7 | 0（未接続） |
-| hello-v23.2.1.json | 10 | 0（未接続） |
-| pairing-v23.2.1.json | 10 | 0（未接続） |
-| blocks-v23.2.1.json | 12 | 0（未接続） |
-| errors-v23.2.1.json | 3 | 0（未接続） |
-| close-v23.2.1.json | 6 | 0（未接続） |
-| 合計 | 48 | 0 |
-
-全caseのschema検査に成功したことを、48caseのclient実行PASSとは数えません。skipで合格とする仕組みも追加しません。
-既存10本を使うVM／GUI testは継続します。fileごとのbytesとSHA-256はlockと返却票を参照してください。
-
-## ②④⑦⑧と非互換helloの差分
-
-| 決定 | 変更前 | 差分と今回の扱い |
-| --- | --- | --- |
-| ②close時の全pending | closeで全pendingをrejectしMapをclearする。ただしWebSocketのclose code／reasonを同じErrorで渡す | 全回収は既存で合致。client側の完了不明と分かる`origin: client`／`completionUnknown: true`をpendingのErrorへ追加。code／reasonの完全分離は表示とdedupeに影響するため案に残す |
-| ②socket error | openのPromiseをrejectするが、既に接続済みのpendingは後のclose eventまで残る | error eventでpendingと送信待ちを回収し、socketを閉じるよう修正。pendingはclient側の完了不明。接続自身のdiagnosticや失敗とは別Errorへコピーし、接続開始の失敗まで完了不明と決めない |
-| ②LFの無い末尾 | ScratchはTCP framingを持たず、WebSocket messageをJSONとして読む | TCP側のLFの規則をWebSocketへ持ち込まない。Bridge／tooling側の検査と分ける |
-| ④自動再送しない | 通常requestの自動再送は無い。pair poll／event pollは別request、送信buffer待ちは同じ操作を送る前の待機 | 合致、変更無し。切断時の回帰でも余分な送信が無いことを検査 |
-| ⑦tokenなしhelloへ戻る | 認証reasonでtokenを破棄すると直ちにPAIRINGへ進む | AU-08／09と違う。認証を強制しないserverではpairing表示とhatの発火が変わるため、今回は直さず下記の案を返す |
-| ⑦一試行で一度だけpairing | `_authenticate`は一度だけpairingし、続くhelloが拒まれたら再度pairingしない | AU-10の一度だけという点は合致。token破棄はtarget単位のまま |
-| ⑧client判断のpairing期限切れ | pendingのpoll応答後だけ期限を調べ、`Error('pair_expired')`で失敗する。code／reasonは作らない | server errorを作らない点は合致。判断元と同じ意味の案内は未整備で、次pollの前にも期限を調べない。hat／表示に関わるため案に残す |
-| 2026-11-12-01 | 非互換の成功形helloは失敗にし、後続commandをguardするがsocketは開いたまま | clientがsocketを閉じるよう修正。接続Promiseの失敗と既存の`protocol_mismatch`のERROR観測を保ち、closeがそれを上書きしない |
-
-修正前のsourceで、追加したsocket error全回収・close待ち不要・非互換hello後closeの3つのunitが意図した理由で失敗し、
-修正後に通ることを確認しました。F1の入力を直接再生したものではなく、browser側の既存FakeWebSocket harnessでの回帰です。
-
-### code／reasonの分離を残す理由と案
-
-pendingへ渡すclose Errorからcode／reasonを除く試行では、既存の送信queue飽和testで配信失敗の案内が二重になりました。
-mode変更を待つflushの失敗と、まだ送れていない登録の失敗が、現在は同じ配信失敗として一度だけ表示されるためです。
-この票では表示を変えない指示があるので、code／reasonの分離を完成したとは返しません。
-
-次は、transportのdiagnosticを接続の観測に保ち、pendingのlocalな完了不明と未送信を別に扱い、表示層のdedupeもそれに合わせる案です。
-`remoteErrorText`等の既存reporterの結果と、actionable errorの表示をどう投影するかをownerが判断してから実装します。
-言語固有の失敗にserverのcode／reasonを作らないことは変更しません。
-
-## F1をtestへ接続する案
-
-接続する案を推します。ただし、直接TCPの対話をそのままVMへ入力する方式にはしません。
-
-| 層 | case数の案 | 対象 |
+| 項目 | 既定 | 理由 |
 | --- | ---: | --- |
-| VMのJSON-RPC／hello／認証／送信queueをFakeWebSocketで検査 | 41case相当 | FR-07の相関、hello10、pairing10、blocks12、errors3、closeのうちCL-03以外5 |
-| Bridge／toolingのTCP側 | 7 | FR-01〜06のbyte境界とLF、CL-03の途中の行でのEOF |
+| `requestIdleTimeoutMs` | 900,000ms（15分） | 大量建築のFIFO待ちや一時的な通信停止に長く耐える。TypeScriptの暫定値とも比較できる長さ。通常処理の速度を表す値ではない |
+| `autoReconnect` | `true` | 一度接続した後は、次の呼び出しで再接続する。初回接続は既存の接続blockで行う |
+| `connectTimeoutMs` | 60,000ms | WebSocketが開かない試行を回収する。通常requestの応答待ちとは別 |
+| `reconnectInitialDelayMs` | 500ms | 最初の再試行の間隔の基準 |
+| `reconnectMaxDelayMs` | 30,000ms | 間隔を倍にして延ばす上限。0.5〜1.5倍のjitterを加えた後もこの上限で抑える |
+| `reconnectTimeoutMs` | 300,000ms（5分） | 接続試行が失敗した後、再試行を開始し続ける期間。進行中のhelloの応答待ちは15分の方に従う |
 
-VMではone-shot hintを外したJSON-RPCを比較し、client metadataや採番はadapterで対応付けます。
-WebSocketの1 message＝1 JSONを保持し、TCPのbyte chunkをWebSocket messageへ読み替えません。
-41caseは元の対話をそのまま実行したPASSではなく、browser側へ意味を写したcaseの案です。そのcoverageを同じF1 IDのPASSとして
-数えるかはcoordinatorと合わせる必要があります。
+これらは実ネットワークの実測で較正した値ではありません。仮想時計で、最後の受信による数え直し、呼び出しごとの延長、
+上限到達時の全pending回収、再試行間隔と終端を確認しています。Wi-Fi、端末のsleep、proxyのidle上限は別に測る必要があります。
 
-特にAUのTCP `connect`／`peer_eof`は、Bridgeが持つplugin側の一時TCPと、Scratch側のWebSocketの寿命が異なります。
-これを全部WebSocketのcloseへ変えると、現在のone-shot pairingの契約を検査できません。接続IDとid採番のadapterを明示し、
-どの境界を検査したかを返す案です。AU-02はserverが期限切れを返す経路として残し、client判断の期限切れとは時計・入力を分けます。
-fixture自体を誤りとは判断していません。
+`_request(method, params, {requestIdleTimeoutMs})`で、その呼び出しの待ちを既定より長くできます。応答待ちがある間だけtimerを持ち、
+接続で最後に受信した時から数えます。待っている呼び出しに延長があれば、その最長の値を接続の上限として使います。
+長くidleだった接続の新しい要求は、送信した時から待ち始めます。上限に達したら全pendingを失敗にし、接続を閉じます。
+`connection.flush`も同じ方針です。browserの送信bufferを待つ既存の5秒の上限とは別です。
 
-## 直さなかったblock／hat／表示の案
+## 失敗と認証
 
-### ⑦の認証フロー
+送信済みで応答を失った要求は`McRemoteCompletionUnknownError`（`origin: client`、`completionUnknown: true`）、
+未送信の要求は`McRemoteNotSentError`（`origin: client`、`notSent: true`）です。どちらにもtransportやserverの`code`／`reason`を
+作りません。接続epochを持ちます。再接続の失敗には、内部の`localReason`と元の`cause`を持たせ、認証の操作が必要な場合と
+版不一致を区別します。serverから受けたJSON-RPC errorの`code`／`data`／`reason`は、そのまま保持します。
 
-保存tokenが認証reasonで拒まれたら対象のtokenだけを捨て、tokenなしのhelloを試します。`auth_required`の後だけpairingへ進み、
-tokenなしで成功した場合はpairing表示もpairing完了hatも出さない案です。一試行に一度だけという上限は維持します。
-pairing後のhelloが再び認証reasonで拒まれたら、tokenを捨てて失敗を返し、二度目のpairingはしません。
+WebSocketのclose code／reasonは、接続の`transportDiagnostic`と接続eventに残します。要求の失敗の表示が`lastError`を更新しても、
+接続のdiagnosticは残ります。ローカルな配信失敗の表示は`deliveryFailure`で既存の案内へ投影し、同じ接続の案内を一度にまとめます。
+server由来のbackpressureの案内は、ローカルの配信失敗と区別します。
 
-今はpair pollのokでtokenを保存したときにhatを発火し、続くhelloの成功を待ちません。その時機を今回勝手に変えず、
-この流れでのhatと接続状態の表示をownerに判断してもらいます。
+明示の接続では、保存tokenが認証reasonで拒まれたら、その接続先のtokenだけを捨ててtokenなしのhelloへ戻ります。
+`auth_required`の後だけpairingへ進みます。tokenなしで成功したらpairingの表示も完了hatも出しません。
+pairingは一試行に一度だけです。tokenを保存した時にはhatを出さず、続くhelloの成功後に既存の完了hatを発火します。
 
-### ⑧の期限切れ
+pairingの期限は通常requestの待ちと別です。次のpollの前にも調べます。clientの期限切れは`localReason: pair_expired`で、
+serverの`code`／`reason`を作りません。接続の観測で判断元を区別できます。案内はserverの期限切れと同じ既存のエラー案内です。
 
-次のpollを送る前にもclientの期限を調べます。localな期限切れには判断元と同義の案内を表す内部属性を持たせ、serverの
-code／reasonは作りません。server由来の`pair_expired`とは観測で見分けられるようにする案です。
-期限を過ぎてpollを始めないことと、終了後のペアコード・接続状態の表示を合わせます。既に送ったpollの有効なokが遅れて届く場合の
-優先やhat発火の境界は、この票で新しく決めません。
+## 再接続の境界
 
-認証の流れは今回変更していないため、依頼の「認証の流れを変えたら」の実McRemote pulseは行いません。
-案の実装が承認されたときは、その変更後にhello→setBlock→getBlockのpulseを実施します。人の承認が要る場合は、その直前で止めて
-手順を返します。今回、接続先やcredentialを収集・公開したものはありません。
+- 一つのVM拡張は、同じJavaScript実行環境で同時に走る複数の呼び出しから使えます。一つの再接続Promiseを共有します。
+  Web Workerや別threadへVM objectを共有する仕組みは追加しません。
+- 接続が切れた後の新しい呼び出しで、保存tokenつきhelloから始めます。最後に成功を確認したdimensionとoriginだけを戻します。
+  応答を失ったsetterや、古い送信queueを再送しません。`autoReconnect: false`なら未送信で失敗にします。
+- 再接続で認証の操作が必要なら、pairingへ進まず未送信で止めます。版が合わなければ閉じて失敗にします。
+- helloでcatalogHashを照合し直します。古いcatalog、event cursor、実行中のevent contextは接続境界で無効になります。
+  entity handleはserverの接続に属する文字列です。古いepochのhandleが無効なことを接続eventで知らせます。
+  Scratchの変数に保存した文字列を消す処理はありません。
+- FASTで送信したepochを追い、新しい接続のflushが古いFASTを保証しないことを接続eventに含めます。build modeは自動再接続で維持します。
+- 古いsocketのevent、bootstrapの失敗処理、送信buffer待ちの完了が、新しい接続や同じidの新しいpendingを回収しないよう、
+  接続試行とpendingの同一性を確認します。
 
-## ③⑤：現状と次票へのAPI案
+runtimeの`MCREMOTE_CONNECTION_EVENT`は、コピーした入れ子の値までread-onlyです。主な種類は`disconnected`、`reconnected`、
+`request-failed`、`flush`です。epoch、旧／新hello、server／session／catalogHashの変更、event loss、失効した能力、
+flushが対象外とするepochを伝えます。この票では新しいblock、hat、画面表示を追加しません。
 
-| 対象 | 現状 | 案（未実装） |
-| --- | --- | --- |
-| 通常request timeout | 応答待ちのtimeoutは無い。送信bufferの待機だけ5秒の上限と4msのpollがある。pair poll間隔は1秒 | 内部connection policyに`requestIdleTimeoutMs`。通常requestに共通で、`_request(method, params, options)`の任意optionsで延長できる形。既定値は実測で決め、flush専用に分けない |
-| 生存確認 | WebSocketのerror／closeは検出する。無応答やidleのwatchdogは無い | 応答待ちのtimeoutとは別にtransportの生存確認を持つ。browserで使える仕組み、Wi-Fiへの待ち方と値は次票で決める |
-| 再接続 | 次のcommandで自動接続せず、明示の「接続する」が必要。`_openPromise`は明示接続の重複をまとめるだけ | 内部policyの`autoReconnect`を既定で有効にし、無効にもできる。切断後の次の呼び出しで一つの再接続Promiseを共有。待つ間隔は言語で選ぶbackoffにjitterを加える |
-| build | closeで`_buildContext`を消す。明示再接続のhelloはserver既定へ戻る | 最後に成功したdimension／originのsnapshotを接続中のcontextとは分けて保持し、次helloのbuildへ入れる。未確定setterを再送・復元しない |
-| 完了不明と未送信 | 未接続は`not_connected`、切断はtransport由来Error。新しい内部属性をpendingに付けても、表示の投影は従来のまま | 内部の`McRemoteCompletionUnknownError`／`McRemoteNotSentError`という別の分類。名前は案で、blockに新しい例外を露出させない。server reasonを作らない |
-| applicationへの知らせ | 接続statusと既存observationはあるが、再接続専用の知らせは無い | read-onlyの接続eventをruntimeへ出す。再接続、epoch変更、event loss、server／session変更、flush境界変更を意味として伝える。具体的なイベント名とUIは次票で判断 |
-| FASTとflush | 同じ接続のflush。再接続後の旧FASTとの関係を表示する仕組みは無い | 接続epochを管理し、新flushが旧FASTを保証しないと利用者に分かるようにする。UI／blockの投影はowner判断 |
-| 認証とcache | 初回接続は現在の認証フロー。catalogはhelloのhashに一致した後だけ利用 | 再接続では版とcatalogHashを照合し直し、古いhandle／cursorを失効させる。再認証が必要なら自動pairingに進まず止めて知らせる |
+### pairing中の接続回収
 
-このpolicyやoptionsは案です。runtime configのschemaや公開blockを今回追加せず、③⑤の実装開始は次の票を待ちます。
+Bridgeのone-shotは、pairBegin／pairPollの応答後にplugin側TCPを回収しても、WSSを保ちます。次のpollは同じrouteへ送れます。
+応答前のTCP EOFではBridgeがWSSを閉じます。そのpollを完了不明で終え、期限内なら新しいWSSで同じ`pairing_id`の次pollを送ります。
+応答を失ったpollの再送ではありません。続いたpollが`pair_not_found`等で拒まれたら二度目のpairingはせず失敗にします。
+新しいWSSを開けない場合も期限で終えます。
 
-## Protocol Inventoryの行の前と後
+通常のplugin TCPが閉じてもBridgeがWSSを保つ場合、VMはそのEOF自体を直接観測できません。新しいbackendから
+`expected_hello`が届いたら、wire §7.3でserverが閉じると規定された接続として回収します。そのerrorを受けた要求はserverの拒否を
+そのまま返し、ほかのpendingは完了不明で終えます。要求を再送せず、その次の呼び出しで新しいhelloを行います。
+この境界を実機のPaper再起動の成功と読み替えず、VM固有の回帰で確認します。
 
-- 前：取得元21a2a9a、既存10本をVM／GUIの用途別に使う。全case再生ではなく、F1は無し。
-- 後：取得元36ebe9e。既存10本の利用を維持し、F1六本48caseとschemaを取得してbytes／SHA-256・形・件数を検査。
-  F1の対話再生は未接続（PASS 0）。browserへの41case相当の接続案と、TCP側7caseの分担を返した。
+### browserの生存確認
+
+browserのWebSocket APIからTCP keepaliveやpingの間隔は設定できません。VMはclose／errorと、pendingがある間の無受信timerで
+回収します。何も送受信せず、close／errorも届かない切断を、VMだけで直ちに見つけられるとは主張しません。
+通常のScratchではevent pollもありますが、それを独立したtransportのpingの代わりとは扱いません。
+
+## 検証
+
+[F1の分担とadapter](polyglot-f1-browser_ja.md)にcase ID、低層APIで試すcase、TCPとの分離を書いています。
+取得元はtooling `335c604f859d6dfad04f0434bfa4eb6445761430`です。v1はbrowser側46 case、TCP側8 case、v2はbrowser側12 caseです。
+identity／schemaの検査と、対話の再生を別に数えます。Bridge／WireScope配布物の固定は変更しません。
+
+VM固有の`mcremote_reconnect.js`で、F1-AU-12の先（同じpairingの次pollからhello）、同時呼び出し一回の再接続、
+期限、未送信、backoff、古いbootstrap／pendingの後処理、catalog本文の再検証とnetwork fallbackを確かめます。
+GUIの`vm-listener-hoc`のtestは、完了不明と未送信の配信失敗を同じ既存の案内へ投影することを確かめます。
+
+実McRemote向けには`scripts/pulse-mcremote-reconnect.cjs`を用意しています。入力の接続先、token file、試験する場所はprivate fileへ
+置き、公開の返却へ含めません。`--hello-only`は設置しません。通常はhello→元の値の保存→setBlock→getBlock→元の値の復元と照合です。
+承認が必要ならその前で止めます。失敗時に復元が未確認ならprivateなrecovery fileを残します。
+`--reconnect`はPaperの停止・再起動を人が行ってから次の呼び出しと再接続eventを確かめる手順です。
+実機pulseの成否は、決定論的testの合格から推定しません。
+
+## human ownerへ返す表示の案（未実装）
+
+1. 接続状態欄で、再接続したことと「切れている間のイベントは受け取れていない」ことを知らせる。WireScopeにも同じepoch境界を渡す。
+2. FASTの後で接続が変わった場合、flushの成功とは別に、前の接続の設置結果は未確認と知らせる。既存の成功表示だけで保証したように見せない。
+3. 学習用blockで必要なら「接続し直されたとき」のhatやepochのreporterを検討する。entity handleは取り直す案内と組にする。
+
+### Bridgeのpingの案（未実装）
+
+BridgeからWebSocket pingを送り、十分長いpong待ちで回収する案です。browserはprotocolのpongに自動応答します。
+pingの間隔や待ちの値は、Wi-Fiの一時切断、端末のsleep、Caddy／NATのidle上限、WireScopeを併用した実測で決めます。
+これはScratch–Bridge区間の生存確認であり、Bridgeの先のMcRemoteの進行を保証しません。通常requestを同じFIFOへ追加して
+pingの代用にはしません。Bridgeの変更と値の採用はこの票で決めず、coordinatorへ返します。

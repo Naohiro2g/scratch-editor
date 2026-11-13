@@ -736,6 +736,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for read-only McRemote connection and flush boundaries.
+     * @constant {string}
+     */
+    static get MCREMOTE_CONNECTION_EVENT () {
+        return 'MCREMOTE_CONNECTION_EVENT';
+    }
+
+    /**
      * Event name for McRemote catalog picker state updates.
      * @constant {string}
      */
