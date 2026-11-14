@@ -1,7 +1,7 @@
 import classNames from 'classnames';
 import omit from 'lodash.omit';
 import PropTypes from 'prop-types';
-import React, {useEffect, useCallback} from 'react';
+import React, {useEffect, useCallback, useState} from 'react';
 import {defineMessages, FormattedMessage, useIntl} from 'react-intl';
 import {connect} from 'react-redux';
 import MediaQuery from 'react-responsive';
@@ -115,6 +115,8 @@ let isRendererSupported = null;
 
 const GUIComponent = props => {
     const intl = useIntl();
+    const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+    const togglePalette = useCallback(() => setPaletteCollapsed(collapsed => !collapsed), []);
     const {
         accountMenuOptions,
         activeTabIndex,
@@ -415,7 +417,9 @@ const GUIComponent = props => {
                                         role="tablist"
                                     >
                                         <Tab
+                                            aria-expanded={!paletteCollapsed}
                                             className={tabClassNames.tab}
+                                            onDoubleClick={togglePalette}
                                             tabIndex="0"
                                             role="tab"
                                         >
@@ -492,6 +496,7 @@ const GUIComponent = props => {
                                             canUseCloud={canUseCloud}
                                             grow={1}
                                             isVisible={blocksTabVisible}
+                                            paletteCollapsed={paletteCollapsed}
                                             options={{
                                                 media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
                                             }}
@@ -501,10 +506,12 @@ const GUIComponent = props => {
                                             colorMode={colorMode}
                                         />
                                     </Box>
-                                    <ExtensionsButton
-                                        intl={intl}
-                                        onExtensionButtonClick={onExtensionButtonClick}
-                                    />
+                                    {paletteCollapsed ? null : (
+                                        <ExtensionsButton
+                                            intl={intl}
+                                            onExtensionButtonClick={onExtensionButtonClick}
+                                        />
+                                    )}
                                     <Box className={styles.watermark}>
                                         <Watermark />
                                     </Box>
