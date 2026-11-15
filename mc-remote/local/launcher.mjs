@@ -257,7 +257,7 @@ export const runBridge = async ({root, port, target, origins, onExit}) => {
     probe.listen(port, '127.0.0.1');
     await once(probe, 'listening');
     await new Promise(resolveClose => probe.close(resolveClose));
-    const targetsFile = join(root, 'data/bridge-targets.json');
+    const targetsFile = join(root, 'bridge-targets.json');
     await writeFile(targetsFile, `${JSON.stringify(target, null, 2)}\n`, {mode: 0o600});
     const child = spawn(process.execPath, [join(root, 'bridge/dist/main.js')], {
         cwd: join(root, 'bridge'),
