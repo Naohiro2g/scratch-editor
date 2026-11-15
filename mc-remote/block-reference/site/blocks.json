@@ -1,8 +1,8 @@
 {
-  "release": "2321.1.0",
+  "release": "2321.2.0",
   "protocol": "23.2.1",
-  "sourceRef": "11bce3193c524135931a5bf342a9edb1bfdfbbac",
-  "sourceCommit": "11bce3193c524135931a5bf342a9edb1bfdfbbac",
+  "sourceRef": "c453e652ec",
+  "sourceCommit": "c453e652ecdbd614b19ba1bab7fbc90055be0df8",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
@@ -118,7 +118,7 @@
       "title": "建築する次元を選ぶ",
       "description": "ブロックの設置や取得などに使う次元を選びます。",
       "methods": [
-        "connection.setBuildContext"
+        "build.setDimension"
       ],
       "related": [
         {
@@ -166,7 +166,7 @@
       "title": "建築原点を決める",
       "description": "建築の座標の基準を決めます。このブロックでは原点のy座標は0です。",
       "methods": [
-        "connection.setBuildContext"
+        "build.setOrigin"
       ],
       "related": [
         {
