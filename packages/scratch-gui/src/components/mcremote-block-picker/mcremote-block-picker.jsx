@@ -18,7 +18,7 @@ import styles from './mcremote-block-picker.css';
 
 const messages = defineMessages({
     title: {
-        defaultMessage: 'Choose a Minecraft block',
+        defaultMessage: 'Catalog picker',
         description: 'Title of the McRemote block picker',
         id: 'gui.mcremote.blockPicker.title'
     },
@@ -26,6 +26,23 @@ const messages = defineMessages({
         defaultMessage: 'Search by block ID, name or category',
         description: 'Search field in the McRemote block picker',
         id: 'gui.mcremote.blockPicker.search'
+    },
+    searchLabel: {
+        defaultMessage: 'Search blocks',
+        description: 'Visible label for the catalog search',
+        id: 'gui.mcremote.blockPicker.searchLabel'
+    },
+    notAcquired: {
+        defaultMessage: 'The catalog has not been acquired, so search is unavailable. ' +
+            'You can enter a block ID and state below to write Scratch code.',
+        description: 'Guidance before acquiring a catalog',
+        id: 'gui.mcremote.blockPicker.notAcquired'
+    },
+    unavailable: {
+        defaultMessage: 'The catalog could not be acquired, so search is unavailable. ' +
+            'You can enter a block ID and state below to write Scratch code.',
+        description: 'Guidance when catalog acquisition fails',
+        id: 'gui.mcremote.blockPicker.unavailable'
     },
     minecraftDefaultValue: {
         defaultMessage: '{value} (default)',
@@ -157,179 +174,202 @@ const McRemoteBlockPicker = ({
         <Modal
             className={styles.modalContent}
             contentLabel={intl.formatMessage(messages.title)}
+            headerClassName={styles.modalHeader}
             id="mcremoteBlockPicker"
             onRequestClose={onCancel}
         >
             <Box className={styles.body}>
-                {canApply ? null : (
-                    <div className={styles.warning}>
-                        <FormattedMessage
-                            defaultMessage={'A reporter or variable is connected. The picker will not replace it; ' +
-                                'disconnect both inputs to insert literal values.'}
-                            description="Warning when a reporter occupies either McRemote block picker input"
-                            id="gui.mcremote.blockPicker.reporterConnected"
-                        />
-                    </div>
-                )}
-                <div className={styles.idAndStatus}>
-                    <label className={styles.outputLabel}>
-                        <FormattedMessage
-                            defaultMessage="Block ID"
-                            description="Label for the editable McRemote block ID"
-                            id="gui.mcremote.blockPicker.blockId"
-                        />
-                        <input
-                            className={styles.outputInput}
-                            value={blockIdDraft}
-                            onChange={handleBlockIdDraftChange}
-                        />
-                    </label>
-                    <section className={styles.catalogColumn}>
-                        <span className={styles.outputLabel}>
+                <div className={styles.scrollArea}>
+                    {canApply ? null : (
+                        <div className={styles.warning}>
                             <FormattedMessage
-                                defaultMessage="Catalog status"
-                                description="Heading for the catalog status beside the block ID"
-                                id="gui.mcremote.blockPicker.catalogStatus"
+                                defaultMessage={'A reporter or variable is connected. ' +
+                                'The picker will not replace it; disconnect both inputs to insert literal values.'}
+                                description="Warning when a reporter occupies a block picker input"
+                                id="gui.mcremote.blockPicker.reporterConnected"
                             />
-                        </span>
-                        <div
-                            className={classNames(styles.status, {[styles.warning]: !hasCurrentCatalog})}
-                            role={hasCurrentCatalog ? 'status' : 'alert'}
-                        >
-                            {status}
                         </div>
-                    </section>
-                </div>
-                <label className={styles.outputLabel}>
-                    <FormattedMessage
-                        defaultMessage="State"
-                        description="Label for the editable McRemote StateText"
-                        id="gui.mcremote.blockPicker.stateText"
-                    />
-                    <input
-                        className={classNames(styles.outputInput, styles.stateOutput)}
-                        value={stateDraft}
-                        onChange={handleStateDraftChange}
-                    />
-                </label>
-                <div className={styles.pickerGrid}>
-                    <section className={styles.blockColumn}>
-                        <input
-                            aria-label={intl.formatMessage(messages.search)}
-                            className={styles.searchInput}
-                            placeholder={intl.formatMessage(messages.search)}
-                            value={search}
-                            onChange={handleSearchChange}
-                        />
-                        {hasCurrentCatalog ? (
-                            <div
-                                aria-live="polite"
-                                className={styles.resultCount}
-                            >
-                                <FormattedMessage
-                                    defaultMessage="{count, plural, one {# block} other {# blocks}}"
-                                    description="Number of block choices matching the McRemote picker search"
-                                    id="gui.mcremote.blockPicker.resultCount"
-                                    values={{count: visibleBlockIds.length}}
-                                />
-                            </div>
-                        ) : null}
-                        <div className={styles.blockList}>
-                            {visibleBlockIds.map(id => {
-                                const names = getBlockNames(catalogState.mcVersion, id);
-                                const name = names && (isJapanese ? names.ja || names.en : names.en);
-                                return (
-                                    <button
-                                        className={selectedId === id ? styles.selectedBlock : styles.blockButton}
-                                        data-block-id={id}
-                                        key={id}
-                                        type="button"
-                                        onClick={handleBlockClick}
-                                    >
-                                        <span className={styles.blockLabel}>
-                                            <span className={styles.blockId}>{pickerBlockId(id)}</span>
-                                            {name ? ` ${name}` : null}
-                                        </span>
-                                        {isJapanese && names && names.en ? (
-                                            <span className={styles.englishName}>{names.en}</span>
-                                        ) : null}
-                                    </button>
-                                );
-                            })}
-                            {visibleBlockIds.length === 0 ? (
-                                <div className={styles.emptyList}>
-                                    {blockIds.length > 0 ? (
-                                        <FormattedMessage
-                                            defaultMessage="No blocks match your search."
-                                            description="No matching blocks in the McRemote block picker"
-                                            id="gui.mcremote.blockPicker.noMatches"
-                                        />
-                                    ) : (
-                                        <FormattedMessage
-                                            defaultMessage={'No catalog block is available. ' +
-                                                'You can still type a value above.'}
-                                            description="Empty McRemote catalog picker list"
-                                            id="gui.mcremote.blockPicker.empty"
-                                        />
-                                    )}
-                                </div>
-                            ) : null}
-                        </div>
-                    </section>
-                    <section className={styles.stateColumn}>
-                        <h3>
+                    )}
+                    <div className={styles.introRow}>
+                        <p className={styles.description}>
                             <FormattedMessage
-                                defaultMessage="Block state"
-                                description="Heading for McRemote block state choices"
-                                id="gui.mcremote.blockPicker.stateHeading"
-                            />
-                        </h3>
-                        <p className={styles.defaultExplanation}>
-                            <FormattedMessage
-                                defaultMessage={'Default values are omitted from the state. ' +
-                                    'Placing the block replaces all block data; ' +
-                                    'it does not merge with the existing state.'}
-                                description="Explanation of omitted state in the McRemote block picker"
-                                id="gui.mcremote.blockPicker.defaultExplanation"
+                                defaultMessage="Choose a Minecraft block from the catalog and configure its state."
+                                description="Description below the catalog picker title"
+                                id="gui.mcremote.blockPicker.description"
                             />
                         </p>
-                        {selectedEntry && Object.keys(selectedEntry.states)
-                            .sort()
-                            .map(property => {
-                                const selectedValue = selectedStates[property];
-                                const selectedIndex = typeof selectedValue === 'undefined' ? '' :
-                                    String(selectedEntry.states[property]
-                                        .findIndex(value => value === selectedValue));
-                                return (
-                                    <label
-                                        className={styles.stateRow}
-                                        key={property}
+                        <section className={styles.catalogColumn}>
+                            <span>
+                                <FormattedMessage
+                                    defaultMessage="Catalog:"
+                                    description="Compact label before catalog status"
+                                    id="gui.mcremote.blockPicker.catalogStatus"
+                                />
+                            </span>
+                            <div
+                                className={classNames(styles.status, {[styles.warning]: !hasCurrentCatalog})}
+                                role={hasCurrentCatalog ? 'status' : 'alert'}
+                            >
+                                {status}
+                            </div>
+                        </section>
+                    </div>
+                    <div className={styles.pickerGrid}>
+                        <section className={styles.blockColumn}>
+                            <label
+                                className={styles.sectionHeading}
+                                htmlFor="mcremote-block-picker-search"
+                            >
+                                {intl.formatMessage(messages.searchLabel)}
+                            </label>
+                            <div className={styles.searchRow}>
+                                <input
+                                    autoFocus
+                                    id="mcremote-block-picker-search"
+                                    className={styles.searchInput}
+                                    placeholder={intl.formatMessage(messages.search)}
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                />
+                                {hasCurrentCatalog ? (
+                                    <div
+                                        aria-live="polite"
+                                        className={styles.resultCount}
                                     >
-                                        <span>{property}</span>
-                                        <select
-                                            data-property={property}
-                                            value={selectedIndex}
-                                            onChange={handleStateChange}
+                                        <FormattedMessage
+                                            defaultMessage="{count, plural, one {# block} other {# blocks}}"
+                                            description="Number of block choices matching the McRemote picker search"
+                                            id="gui.mcremote.blockPicker.resultCount"
+                                            values={{count: visibleBlockIds.length}}
+                                        />
+                                    </div>
+                                ) : null}
+                            </div>
+                            <div className={styles.blockList}>
+                                {visibleBlockIds.map(id => {
+                                    const names = getBlockNames(catalogState.mcVersion, id);
+                                    const name = names && (isJapanese ? names.ja || names.en : names.en);
+                                    return (
+                                        <button
+                                            className={selectedId === id ? styles.selectedBlock : styles.blockButton}
+                                            data-block-id={id}
+                                            key={id}
+                                            type="button"
+                                            onClick={handleBlockClick}
                                         >
-                                            {selectedEntry.states[property].map((value, index) => {
-                                                const isDefault = value === selectedEntry.default_state[property];
-                                                return (
-                                                    <option
-                                                        key={`${typeof value}:${stateValueText(value)}`}
-                                                        value={isDefault ? '' : index}
-                                                    >
-                                                        {isDefault ?
-                                                            intl.formatMessage(messages.minecraftDefaultValue, {
-                                                                value: stateValueText(value)
-                                                            }) : stateValueText(value)}
-                                                    </option>
-                                                );
-                                            })}
-                                        </select>
-                                    </label>
-                                );
-                            })}
-                    </section>
+                                            <span className={styles.blockLabel}>
+                                                <span className={styles.blockId}>{pickerBlockId(id)}</span>
+                                                {name ? ` ${name}` : null}
+                                            </span>
+                                            {isJapanese && names && names.en ? (
+                                                <span className={styles.englishName}>{names.en}</span>
+                                            ) : null}
+                                        </button>
+                                    );
+                                })}
+                                {visibleBlockIds.length === 0 ? (
+                                    <div className={styles.emptyList}>
+                                        {blockIds.length > 0 ? (
+                                            <FormattedMessage
+                                                defaultMessage="No blocks match your search."
+                                                description="No matching blocks in the McRemote block picker"
+                                                id="gui.mcremote.blockPicker.noMatches"
+                                            />
+                                        ) : hasCurrentCatalog ? (
+                                            <FormattedMessage
+                                                defaultMessage={'No catalog block is available. ' +
+                                                'You can still enter a block ID and state below.'}
+                                                description="Empty McRemote catalog picker list"
+                                                id="gui.mcremote.blockPicker.empty"
+                                            />
+                                        ) : (
+                                            intl.formatMessage(catalogState.status === 'unavailable' ?
+                                                messages.unavailable : messages.notAcquired)
+                                        )}
+                                    </div>
+                                ) : null}
+                            </div>
+                        </section>
+                        <section className={styles.stateColumn}>
+                            <h3>
+                                <FormattedMessage
+                                    defaultMessage="Configure block state"
+                                    description="Heading for McRemote block state choices"
+                                    id="gui.mcremote.blockPicker.stateHeading"
+                                />
+                            </h3>
+                            <p className={styles.defaultExplanation}>
+                                <FormattedMessage
+                                    defaultMessage={'Default values are omitted from the state. ' +
+                                    'The block and state at the placement position are overwritten.'}
+                                    description="Explanation of omitted state in the McRemote block picker"
+                                    id="gui.mcremote.blockPicker.defaultExplanation"
+                                />
+                            </p>
+                            {selectedEntry && Object.keys(selectedEntry.states)
+                                .sort()
+                                .map(property => {
+                                    const selectedValue = selectedStates[property];
+                                    const selectedIndex = typeof selectedValue === 'undefined' ? '' :
+                                        String(selectedEntry.states[property]
+                                            .findIndex(value => value === selectedValue));
+                                    return (
+                                        <label
+                                            className={styles.stateRow}
+                                            key={property}
+                                        >
+                                            <span>{property}</span>
+                                            <select
+                                                data-property={property}
+                                                value={selectedIndex}
+                                                onChange={handleStateChange}
+                                            >
+                                                {selectedEntry.states[property].map((value, index) => {
+                                                    const isDefault = value === selectedEntry.default_state[property];
+                                                    return (
+                                                        <option
+                                                            key={`${typeof value}:${stateValueText(value)}`}
+                                                            value={isDefault ? '' : index}
+                                                        >
+                                                            {isDefault ?
+                                                                intl.formatMessage(messages.minecraftDefaultValue, {
+                                                                    value: stateValueText(value)
+                                                                }) : stateValueText(value)}
+                                                        </option>
+                                                    );
+                                                })}
+                                            </select>
+                                        </label>
+                                    );
+                                })}
+                        </section>
+                    </div>
+                    <div className={styles.selectionResult}>
+                        <label className={styles.outputLabel}>
+                            <FormattedMessage
+                                defaultMessage="Block ID"
+                                description="Label for the editable McRemote block ID"
+                                id="gui.mcremote.blockPicker.blockId"
+                            />
+                            <input
+                                className={styles.outputInput}
+                                value={blockIdDraft}
+                                onChange={handleBlockIdDraftChange}
+                            />
+                        </label>
+                        <label className={styles.outputLabel}>
+                            <FormattedMessage
+                                defaultMessage="Block state"
+                                description="Label for the editable McRemote StateText"
+                                id="gui.mcremote.blockPicker.stateText"
+                            />
+                            <input
+                                className={styles.outputInput}
+                                value={stateDraft}
+                                onChange={handleStateDraftChange}
+                            />
+                        </label>
+                    </div>
                 </div>
                 <Box className={styles.buttonRow}>
                     <button onClick={onCancel}>
@@ -345,7 +385,7 @@ const McRemoteBlockPicker = ({
                         onClick={handleApply}
                     >
                         <FormattedMessage
-                            defaultMessage="Use these values"
+                            defaultMessage="Done"
                             description="Apply the block ID and StateText in the McRemote block picker"
                             id="gui.mcremote.blockPicker.apply"
                         />

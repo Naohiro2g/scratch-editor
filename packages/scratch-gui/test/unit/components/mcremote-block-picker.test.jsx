@@ -41,6 +41,30 @@ describe('McRemoteBlockPicker', () => {
         <Provider store={store}>{picker}</Provider>, options
     );
 
+    test('opens with search focused and shows editable results below the choices', () => {
+        renderPicker(
+            <McRemoteBlockPicker
+                canApply
+                catalogState={catalogState}
+                initialBlockId="oak_log"
+                initialStateText=""
+                onApply={jest.fn()}
+                onCancel={jest.fn()}
+            />,
+            {locale: 'ja', messages: mcremoteMessages.ja}
+        );
+        const search = screen.getByRole('textbox', {name: 'ブロックの検索'});
+        expect(search).toHaveFocus();
+        expect(screen.getByText('Minecraftブロックをカタログから選び、状態を設定します。')).toBeInTheDocument();
+        expect(screen.getByRole('dialog')).toHaveAccessibleName('カタログピッカー');
+        expect(screen.getByRole('heading', {name: 'ブロック状態の設定'})).toBeInTheDocument();
+        const result = screen.getByLabelText('ブロックID');
+        expect(screen.getByLabelText('axis').compareDocumentPosition(result) & Node.DOCUMENT_POSITION_FOLLOWING)
+            .toBeTruthy();
+        expect(screen.getByLabelText('ブロック状態')).toHaveValue('');
+        expect(screen.getByRole('button', {name: '決定'})).toBeEnabled();
+    });
+
     test('shows catalog provenance and emits short vanilla input with explicit state only', () => {
         const onApply = jest.fn();
         renderPicker(
@@ -60,17 +84,17 @@ describe('McRemoteBlockPicker', () => {
 
         fireEvent.click(screen.getByRole('button', {name: 'oak_log Oak Log'}));
         expect(screen.getByLabelText('Block ID')).toHaveValue('oak_log');
-        expect(screen.getByLabelText('State')).toHaveValue('');
+        expect(screen.getByLabelText('Block state')).toHaveValue('');
         expect(Array.from(screen.getByLabelText('axis').options, option => option.text)).toEqual([
             'x', 'y (default)', 'z'
         ]);
         fireEvent.change(screen.getByLabelText('axis'), {target: {value: '2'}});
-        expect(screen.getByLabelText('State')).toHaveValue('axis=z');
+        expect(screen.getByLabelText('Block state')).toHaveValue('axis=z');
         fireEvent.change(screen.getByLabelText('axis'), {target: {value: ''}});
-        expect(screen.getByLabelText('State')).toHaveValue('');
+        expect(screen.getByLabelText('Block state')).toHaveValue('');
         fireEvent.change(screen.getByLabelText('axis'), {target: {value: '2'}});
 
-        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        fireEvent.click(screen.getByRole('button', {name: 'Done'}));
         expect(onApply).toHaveBeenCalledWith('oak_log', 'axis=z');
     });
 
@@ -87,15 +111,15 @@ describe('McRemoteBlockPicker', () => {
             />
         );
 
-        expect(screen.getByLabelText('State')).toHaveValue('facing=east');
+        expect(screen.getByLabelText('Block state')).toHaveValue('facing=east');
         const powered = screen.getByLabelText('powered');
         expect(Array.from(powered.options, option => option.text)).toEqual(['false (default)', 'true']);
         expect(powered).toHaveValue('');
         fireEvent.change(powered, {target: {value: '1'}});
-        expect(screen.getByLabelText('State')).toHaveValue('facing=east,powered=true');
+        expect(screen.getByLabelText('Block state')).toHaveValue('facing=east,powered=true');
         fireEvent.change(powered, {target: {value: ''}});
-        expect(screen.getByLabelText('State')).toHaveValue('facing=east');
-        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        expect(screen.getByLabelText('Block state')).toHaveValue('facing=east');
+        fireEvent.click(screen.getByRole('button', {name: 'Done'}));
         expect(onApply).toHaveBeenCalledWith('repeater', 'facing=east');
     });
 
@@ -112,10 +136,10 @@ describe('McRemoteBlockPicker', () => {
             />
         );
 
-        fireEvent.change(screen.getByLabelText('State'), {target: {value: 'facing=north,powered=true'}});
-        expect(screen.getByLabelText('State')).toHaveValue('powered=true');
+        fireEvent.change(screen.getByLabelText('Block state'), {target: {value: 'facing=north,powered=true'}});
+        expect(screen.getByLabelText('Block state')).toHaveValue('powered=true');
         expect(screen.getByLabelText('facing')).toHaveValue('');
-        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        fireEvent.click(screen.getByRole('button', {name: 'Done'}));
         expect(onApply).toHaveBeenCalledWith('repeater', 'powered=true');
     });
 
@@ -166,7 +190,7 @@ describe('McRemoteBlockPicker', () => {
         );
 
         expect(screen.getByRole('button', {name: /^poplar_log /})).toHaveTextContent('poplar_log ポプラの原木');
-        fireEvent.change(screen.getByRole('textbox', {name: /ブロックID・/}), {target: {value: 'ポプラ'}});
+        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックの検索'}), {target: {value: 'ポプラ'}});
         expect(screen.getByRole('button', {name: /^poplar_log /})).toBeInTheDocument();
     });
 
@@ -184,10 +208,10 @@ describe('McRemoteBlockPicker', () => {
         );
 
         expect(screen.getByText('4件')).toBeInTheDocument();
-        fireEvent.change(screen.getByRole('textbox', {name: /ブロックID・/}), {target: {value: 'gold'}});
+        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックの検索'}), {target: {value: 'gold'}});
         expect(screen.getByText('1件')).toBeInTheDocument();
         expect(screen.getAllByRole('button', {name: /^gold_block /})).toHaveLength(1);
-        fireEvent.change(screen.getByRole('textbox', {name: /ブロックID・/}), {target: {value: 'gold 木'}});
+        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックの検索'}), {target: {value: 'gold 木'}});
         expect(screen.getByText('0件')).toBeInTheDocument();
     });
 
@@ -205,7 +229,7 @@ describe('McRemoteBlockPicker', () => {
             {locale: 'ja', messages: mcremoteMessages.ja}
         );
 
-        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックID・名前・カテゴリで検索'}), {
+        fireEvent.change(screen.getByRole('textbox', {name: 'ブロックの検索'}), {
             target: {value: '建築ブロック gold'}
         });
         expect(screen.getByText('1件')).toBeInTheDocument();
@@ -271,10 +295,10 @@ describe('McRemoteBlockPicker', () => {
             />
         );
 
-        expect(screen.getByLabelText('State')).toHaveValue('facing=east,powered=true');
+        expect(screen.getByLabelText('Block state')).toHaveValue('facing=east,powered=true');
         fireEvent.change(screen.getByLabelText('Block ID'), {target: {value: 'examplemod:ruby_block'}});
-        expect(screen.getByLabelText('State')).toHaveValue('');
-        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        expect(screen.getByLabelText('Block state')).toHaveValue('');
+        fireEvent.click(screen.getByRole('button', {name: 'Done'}));
         expect(onApply).toHaveBeenCalledWith('examplemod:ruby_block', '');
     });
 
@@ -292,12 +316,12 @@ describe('McRemoteBlockPicker', () => {
         );
 
         expect(screen.getByRole('alert')).toHaveTextContent('NOT ACQUIRED');
-        expect(screen.getByText(/No catalog block is available/)).toBeInTheDocument();
+        expect(screen.getByText(/The catalog has not been acquired/)).toBeInTheDocument();
         fireEvent.change(screen.getByLabelText('Block ID'), {
             target: {value: 'futuremod:new_block'}
         });
-        fireEvent.change(screen.getByLabelText('State'), {target: {value: 'mode=demo'}});
-        fireEvent.click(screen.getByRole('button', {name: 'Use these values'}));
+        fireEvent.change(screen.getByLabelText('Block state'), {target: {value: 'mode=demo'}});
+        fireEvent.click(screen.getByRole('button', {name: 'Done'}));
         expect(onApply).toHaveBeenCalledWith('futuremod:new_block', 'mode=demo');
     });
 
@@ -314,8 +338,9 @@ describe('McRemoteBlockPicker', () => {
         );
 
         expect(screen.getByRole('alert')).toHaveTextContent('UNAVAILABLE');
+        expect(screen.getByText(/The catalog could not be acquired/)).toBeInTheDocument();
         expect(screen.queryByRole('button', {name: /^oak_log/})).not.toBeInTheDocument();
-        expect(screen.getByLabelText('State')).toHaveValue('axis=z');
+        expect(screen.getByLabelText('Block state')).toHaveValue('axis=z');
     });
 
     test('does not permit the picker to replace a connected reporter', () => {
@@ -331,6 +356,6 @@ describe('McRemoteBlockPicker', () => {
         );
 
         expect(screen.getByText(/will not replace it/)).toBeInTheDocument();
-        expect(screen.getByRole('button', {name: 'Use these values'})).toBeDisabled();
+        expect(screen.getByRole('button', {name: 'Done'})).toBeDisabled();
     });
 });

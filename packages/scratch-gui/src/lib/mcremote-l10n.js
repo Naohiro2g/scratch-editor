@@ -57,28 +57,34 @@ const mcremoteMessages = {
             'カタログを取得できません。Minecraftへの接続を確認して、もう一度実行してください。',
         'gui.aria.mcremoteConnectionMenu': 'mc-remote 接続先メニュー',
         'gui.menuBar.mcremoteConnection': '接続先',
+        'gui.mcremote.blockPicker.description': 'Minecraftブロックをカタログから選び、状態を設定します。',
+        'gui.mcremote.blockPicker.searchLabel': 'ブロックの検索',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
-        'gui.mcremote.blockPicker.catalogStatus': 'カタログ状態',
-        'gui.mcremote.blockPicker.stateText': '状態',
+        'gui.mcremote.blockPicker.catalogStatus': 'カタログ：',
+        'gui.mcremote.blockPicker.stateText': 'ブロック状態',
         'gui.mcremote.blockPicker.cancel': 'キャンセル',
         'gui.mcremote.blockPicker.defaultExplanation':
-            'デフォルト値は状態欄から省略します。ブロック設置時はブロックデータ全体を置き換え、既存の状態とはマージしません。',
+            'デフォルト値の項目は「ブロック状態」欄に表示されません。設置先のブロックと状態は上書きされます。',
         'gui.mcremote.blockPicker.empty':
-            '利用できるカタログのブロックがありません。上の欄へ自由に入力できます。',
+            '利用できるカタログのブロックがありません。下のブロックID・ブロック状態欄へ直接入力できます。',
+        'gui.mcremote.blockPicker.notAcquired':
+            'カタログをまだ取得していないため、検索は利用できません。下のブロックIDとブロック状態を直接入力して、Scratchのコードを作成できます。',
+        'gui.mcremote.blockPicker.unavailable':
+            'カタログを取得できないため、検索は利用できません。下のブロックIDとブロック状態を直接入力して、Scratchのコードを作成できます。',
         'gui.mcremote.blockPicker.minecraftDefaultValue': '{value}（デフォルト）',
         'gui.mcremote.blockPicker.noMatches': '検索に一致するブロックがありません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたは変数が接続されています。picker は取り外しません。両方の入力を文字列へ戻してから適用してください。',
         'gui.mcremote.blockPicker.resultCount': '{count}件',
         'gui.mcremote.blockPicker.search': 'ブロックID・名前・カテゴリで検索',
-        'gui.mcremote.blockPicker.stateHeading': 'ブロックの状態',
+        'gui.mcremote.blockPicker.stateHeading': 'ブロック状態の設定',
         'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':
             '未取得 — Minecraft に接続するとブロックを選べます。',
         'gui.mcremote.blockPicker.statusUnavailable':
             '利用不可 — 接続先からカタログを取得できませんでした。',
-        'gui.mcremote.blockPicker.title': 'Minecraft のブロックを選ぶ',
-        'gui.mcremote.blockPicker.apply': 'この値の組を使う',
+        'gui.mcremote.blockPicker.title': 'カタログピッカー',
+        'gui.mcremote.blockPicker.apply': '決定',
         'gui.mcremote.notice.collapse': 'お知らせを閉じる',
         'gui.mcremote.notice.expand': 'お知らせを開く',
         'gui.mcremote.wireScope.actionConnect': 'まず「接続する」ブロックを実行してください。',
@@ -271,28 +277,34 @@ const mcremoteMessages = {
             'カタログをしゅとくできません。Minecraftへのせつぞくをかくにんして、もういちどじっこうしてください。',
         'gui.aria.mcremoteConnectionMenu': 'mc-remote せつぞくさきメニュー',
         'gui.menuBar.mcremoteConnection': 'せつぞくさき',
+        'gui.mcremote.blockPicker.description': 'Minecraftブロックをカタログからえらび、じょうたいをせっていします。',
+        'gui.mcremote.blockPicker.searchLabel': 'ブロックをさがす',
         'gui.mcremote.blockPicker.blockId': 'ブロックID',
-        'gui.mcremote.blockPicker.catalogStatus': 'カタログじょうたい',
-        'gui.mcremote.blockPicker.stateText': 'じょうたい',
+        'gui.mcremote.blockPicker.catalogStatus': 'カタログ：',
+        'gui.mcremote.blockPicker.stateText': 'ブロックじょうたい',
         'gui.mcremote.blockPicker.cancel': 'キャンセル',
         'gui.mcremote.blockPicker.defaultExplanation':
-            'デフォルトのあたいはじょうたいのらんからしょうりゃくします。ブロックをおくときはブロックデータぜんたいをおきかえ、いまのじょうたいとはまぜません。',
+            'デフォルトのこうもくは「ブロックじょうたい」にひょうじされません。おくばしょのブロックとじょうたいはうわがきされます。',
         'gui.mcremote.blockPicker.empty':
-            'つかえるカタログのブロックがありません。うえのらんにじゆうににゅうりょくできます。',
+            'つかえるカタログのブロックがありません。したのブロックID・ブロックじょうたいにちょくせつにゅうりょくできます。',
+        'gui.mcremote.blockPicker.notAcquired':
+            'カタログをまだしゅとくしていないため、けんさくできません。したのブロックIDとブロックじょうたいをちょくせつにゅうりょくして、Scratchのコードをつくれます。',
+        'gui.mcremote.blockPicker.unavailable':
+            'カタログをしゅとくできないため、けんさくできません。したのブロックIDとブロックじょうたいをちょくせつにゅうりょくして、Scratchのコードをつくれます。',
         'gui.mcremote.blockPicker.minecraftDefaultValue': '{value}（デフォルト）',
         'gui.mcremote.blockPicker.noMatches': 'さがしているブロックがみつかりません。',
         'gui.mcremote.blockPicker.reporterConnected':
             'レポーターブロックまたはへんすうがせつぞくされています。ピッカーはとりはずしません。りょうほうのにゅうりょくをもじにもどしてからつかってください。',
         'gui.mcremote.blockPicker.resultCount': '{count}けん',
         'gui.mcremote.blockPicker.search': 'ブロックID・なまえ・カテゴリでさがす',
-        'gui.mcremote.blockPicker.stateHeading': 'ブロックのじょうたい',
+        'gui.mcremote.blockPicker.stateHeading': 'ブロックじょうたいのせってい',
         'gui.mcremote.blockPicker.statusCurrent': 'しゅとくずみ — {version} · {source} · {hash}',
         'gui.mcremote.blockPicker.statusNotAcquired':
             'みしゅとく — Minecraft にせつぞくするとブロックをえらべます。',
         'gui.mcremote.blockPicker.statusUnavailable':
             'りようできません — せつぞくさきからカタログをしゅとくできませんでした。',
-        'gui.mcremote.blockPicker.title': 'Minecraft のブロックをえらぶ',
-        'gui.mcremote.blockPicker.apply': 'このあたいのくみをつかう',
+        'gui.mcremote.blockPicker.title': 'カタログピッカー',
+        'gui.mcremote.blockPicker.apply': 'けってい',
         'gui.mcremote.notice.collapse': 'おしらせをとじる',
         'gui.mcremote.notice.expand': 'おしらせをひらく',
         'gui.mcremote.wireScope.actionConnect': 'まず「せつぞくする」ブロックをうごかしてください。',
