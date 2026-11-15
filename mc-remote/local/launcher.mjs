@@ -1,4 +1,5 @@
 import {spawn} from 'node:child_process';
+import {defaultConnectionTargets, validateConnectionTargets} from './connection-targets.mjs';
 import {createReadStream} from 'node:fs';
 import {access, readFile, realpath, rename, stat, writeFile} from 'node:fs/promises';
 import {createServer} from 'node:http';
@@ -7,7 +8,6 @@ import {dirname, extname, join, resolve, sep} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {once} from 'node:events';
 
-const defaultTarget = {host: '127.0.0.1', port: 25575};
 const mime = {
     '.html': 'text/html; charset=utf-8',
     '.js': 'text/javascript; charset=utf-8',
@@ -44,9 +44,19 @@ export const validateTarget = target => {
     return {host: target.host, port: target.port};
 };
 
+export const normalizeSettings = value => {
+    if (value && typeof value === 'object' && !Array.isArray(value) && 'host' in value) {
+        const endpoint = validateTarget(value);
+        return {schema_version: 1,
+            default_target_id: 'local',
+            targets: [{id: 'local', label: 'Minecraft', ...endpoint}]};
+    }
+    return validateConnectionTargets(value);
+};
+
 const readTarget = async root => {
     try {
-        return validateTarget(JSON.parse(await readFile(join(root, 'settings.json'), 'utf8')));
+        return normalizeSettings(JSON.parse(await readFile(join(root, 'settings.json'), 'utf8')));
     } catch (error) {
         if (error.code === 'ENOENT') return null;
         throw new Error(`settings.jsonを読み取れません: ${error.message}`, {cause: error});
@@ -83,7 +93,7 @@ const serveFile = async (request, response, root, relative) => {
 
 export const createLocalServer = async ({root, webPort, bridgePort, wireScopePort, startBridge}) => {
     const savedTarget = await readTarget(root);
-    let target = savedTarget || {...defaultTarget};
+    let target = savedTarget || defaultConnectionTargets();
     let targetSaved = Boolean(savedTarget);
     let stopBridge;
     let changing = false;
@@ -138,11 +148,11 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
                 let body = '';
                 for await (const chunk of request) {
                     body += chunk;
-                    if (Buffer.byteLength(body) > 2048) {
+                    if (Buffer.byteLength(body) > 65536) {
                         return sendJson(response, 413, {error: '入力が長すぎます。'});
                     }
                 }
-                next = validateTarget(JSON.parse(body));
+                next = validateConnectionTargets(JSON.parse(body));
             } catch (error) {
                 return sendJson(response, 400, {error: error.message});
             }
@@ -178,7 +188,7 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
         if (pathname === '/identity.json') {
             return sendJson(response, 200, JSON.parse(await readFile(join(root, 'data/identity.json'))));
         }
-        if (['/setup.mjs', '/editor-tab.mjs'].includes(pathname)) {
+        if (['/setup.mjs', '/editor-tab.mjs', '/connection-targets.mjs'].includes(pathname)) {
             return serveFile(request, response, dirname(fileURLToPath(import.meta.url)), pathname.slice(1));
         }
         if (['/guide-images/extension-card.png', '/guide-images/connect-block.png'].includes(pathname)) {
@@ -186,14 +196,12 @@ export const createLocalServer = async ({root, webPort, bridgePort, wireScopePor
         }
         if (pathname === '/editor/mc-remote-runtime-config.json') {
             return sendJson(response, 200, {
-                schema_version: 1,
+                schema_version: 2,
                 connection_enabled: true,
                 bridge_url: `ws://127.0.0.1:${bridgePort}`,
                 wirescope_url: wireScopeUrl,
-                default_sandbox: target.host,
-                connection_targets: [
-                    {id: 'local', label: `Minecraft — ${target.host}`, sandbox: target.host}
-                ],
+                default_target_id: target.default_target_id,
+                connection_targets: target.targets,
                 storage_persist_enabled: true
             });
         }
@@ -249,17 +257,18 @@ export const runBridge = async ({root, port, target, origins, onExit}) => {
     probe.listen(port, '127.0.0.1');
     await once(probe, 'listening');
     await new Promise(resolveClose => probe.close(resolveClose));
+    const targetsFile = join(root, 'data/bridge-targets.json');
+    await writeFile(targetsFile, `${JSON.stringify(target, null, 2)}\n`, {mode: 0o600});
     const child = spawn(process.execPath, [join(root, 'bridge/dist/main.js')], {
         cwd: join(root, 'bridge'),
         stdio: ['ignore', 'inherit', 'inherit'],
         env: {
-            ...process.env,
+            ...Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+                !['BRIDGE_SANDBOX_ALLOWLIST', 'BRIDGE_DEFAULT_SANDBOX', 'BRIDGE_SANDBOX_PORT'].includes(key))),
             BRIDGE_WS_HOST: '127.0.0.1',
             BRIDGE_WS_PORT: String(port),
             BRIDGE_ORIGIN_ALLOWLIST: origins.join(','),
-            BRIDGE_SANDBOX_ALLOWLIST: target.host,
-            BRIDGE_DEFAULT_SANDBOX: target.host,
-            BRIDGE_SANDBOX_PORT: String(target.port)
+            BRIDGE_TARGETS_FILE: targetsFile
         }
     });
     let stopped = false;

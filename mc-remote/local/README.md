@@ -59,3 +59,18 @@ workflow dispatchでは`local_candidate_artifact_id`と`local_candidate_artifact
 manifestの契約は[`release-manifest-lock.json`](../release-manifest-lock.json)で、Bridge／WireScopeのlockとは別に固定します。取得したschema、fixture、reference実装はGit管理外の`mc-remote/release-manifest/`へ置き、実行時にもbytesとSHA-256を照合します。schema versionでv1／v2を選んで文書全体を検査し、未知version、不正なv2、鍵の重複やrole内の混在を拒否します。baselineのScratch OCIは、roleが1件でkindが`oci`のものだけを利用します。変種の選択は明示したos／archが一致する1件に限り、別のOSへfallbackしません。
 
 v2の形はDECISION `2026-10-07-09`で確定しています。共有fixtureのconsumer照合は`npm run release-manifest:test`で行います。McRemote／Stackの取り込みと公開の可否は、横断gateで確認します。
+
+## 複数接続先（次版の実装案）
+
+初回設定には、同じPCの「Minecraft」（127.0.0.1:25575）と「Unity箱庭」（127.0.0.1:25585）を表示します。
+設定画面で接続先の追加・削除、表示名・host・port・既定の変更ができ、Scratchの接続先メニューで選びます。
+接続先が起動していなくても設定は保存できます。一覧の編集時はScratchのタブを閉じます。
+
+各接続先には作成時のIDを持たせ、表示名やhost・portの編集では変更しません。画面で追加した接続先には新しいIDを発行します。
+`settings.json`はtoolingの接続先一覧契約案（schema_version 1、default_target_id、targets）で保存します。
+同じ一覧からScratch runtime config v2と、Bridgeの`BRIDGE_TARGETS_FILE`へ渡すファイルを生成します。
+入力、query、移行の案は`CONNECTION_TARGETS_PROPOSAL_ja.md`を参照してください。
+
+旧`{host, port}`の設定は、起動時にID=`local`、表示名=`Minecraft`の一件へ読み替えます。
+既存の接続先に新しい接続先を勝手に追加せず、元のファイルも保存操作までは書き換えません。
+新しいID方式では旧host単位のtokenをコピーせず、初回に接続先ごとの再ペアリングが必要です。

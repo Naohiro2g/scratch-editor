@@ -1,4 +1,4 @@
-jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}));
+jest.mock('@scratch/scratch-vm', () => ({MCREMOTE_CLIENT_VERSION: '2301.0.0b7'}), {virtual: true});
 
 const runtimeValue = overrides => ({
     schema_version: 1,
@@ -35,6 +35,55 @@ describe('McRemote runtime config', () => {
 
     afterEach(() => {
         delete global.fetch;
+    });
+
+    test('loads v2 IDs with same-host different-port and three targets', async () => {
+        mockConfigs({
+            schema_version: 2,
+            connection_enabled: true,
+            bridge_url: 'ws://127.0.0.1:8602',
+            default_target_id: 'unity',
+            connection_targets: [
+                {id: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 25575},
+                {id: 'unity', label: 'Unity箱庭', host: '127.0.0.1', port: 25585},
+                {id: 'remote', label: '別のPC', host: 'server.example', port: 25595}
+            ]
+        });
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({
+            defaultSandbox: 'unity',
+            targetRouting: 'id',
+            connectionTargets: [
+                {id: 'minecraft', sandboxRoute: 'minecraft', host: '127.0.0.1', port: 25575},
+                {id: 'unity', sandboxRoute: 'unity', host: '127.0.0.1', port: 25585},
+                {id: 'remote', sandboxRoute: 'remote', host: 'server.example', port: 25595}
+            ]
+        });
+    });
+
+    test.each([
+        {default_target_id: 'missing'},
+        {connection_targets: [
+            {id: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 25575},
+            {id: 'minecraft', label: 'Unity', host: '127.0.0.1', port: 25585}
+        ]},
+        {connection_targets: [{id: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 0}]},
+        {connection_targets: [{id: 'minecraft', label: 'Minecraft', host: 'http://localhost', port: 25575}]}
+    ])('fails closed for an invalid v2 ID map %#', async overrides => {
+        mockConfigs({schema_version: 2,
+            connection_enabled: true,
+            bridge_url: 'ws://127.0.0.1:8602',
+            default_target_id: 'minecraft',
+            connection_targets: [
+                {id: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 25575}
+            ],
+            ...overrides});
+        const log = require('../../../src/lib/log.js').default;
+        const warn = jest.spyOn(log, 'warn').mockImplementation(() => {});
+        const {loadMcRemoteRuntimeConfig} = require('../../../src/lib/mcremote-runtime-config.js');
+        await expect(loadMcRemoteRuntimeConfig()).resolves.toMatchObject({connectionEnabled: false});
+        expect(warn).toHaveBeenCalled();
+        warn.mockRestore();
     });
 
     test('loads the deployment and image-owned files independently', async () => {
@@ -148,7 +197,7 @@ describe('McRemote runtime config', () => {
     });
 
     test.each([
-        ['schema version', {schema_version: 2, connection_enabled: false}, 'schema_version'],
+        ['schema version', {schema_version: 99, connection_enabled: false}, 'schema_version'],
         ['top-level unknown field', {
             schema_version: 1,
             connection_enabled: false,

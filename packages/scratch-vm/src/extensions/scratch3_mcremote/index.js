@@ -2572,7 +2572,9 @@ class Scratch3McRemoteBlocks {
      */
     _sessionTokenStorageKey () {
         const sandboxRoute = this._currentConnectionTarget().sandboxRoute;
-        return `${SESSION_TOKEN_STORAGE_KEY_PREFIX}${encodeURIComponent(sandboxRoute)}`;
+        const prefix = this._runtimeConfig().targetRouting === 'id' ?
+            'mcremote.sessionToken.v2:' : SESSION_TOKEN_STORAGE_KEY_PREFIX;
+        return `${prefix}${encodeURIComponent(sandboxRoute)}`;
     }
 
     /**

@@ -159,7 +159,7 @@ artifacts; neither workflow is permission to publish a tag or release.
 
 `mc-remote/local/` contains the Scratch Local launcher, setup page, ZIP user guide and tests.
 The ZIP root keeps the start script, README, notice and source guide visible; runtime files and
-saved host/port settings live under `data/`. First launch opens setup; subsequent launches open
+saved connection settings live under `data/`. First launch opens setup; subsequent launches open
 setup and the editor with `?extension=mcremote`. The setup page and packaged editor use a
 same-origin BroadcastChannel to reuse an open editor and lock target changes until its tab closes.
 `mc-remote/local-runtime-lock.json` pins official Node archives for Windows x64, macOS arm64 and Linux x64.
@@ -250,3 +250,11 @@ Review all changes and confirm:
 - **Build passes**: `npm run build` (or `npm run build` in the affected package) completes successfully.
 - **Tests pass**: `npm test` (or `npm test` in the affected package) completes with no failures.
 - **No lint errors**: `npm run test:lint` (or `npm run lint`) passes in the affected package.
+
+### Connection target routing proposal
+
+The new runtime config v2 uses independent target IDs with host/port and keeps the `?sandbox=<id>` query name.
+The GUI still reads v1 configs. VM runtime preserves `targetRouting: 'id'` and separates v2 ID tokens from v1 host tokens.
+The Local launcher keeps its target list in `settings.json`, derives both the GUI config and `data/bridge-targets.json`,
+and requires an ID-capable pinned Bridge. Legacy `{host, port}` settings migrate on read without overwriting the file until save.
+See `mc-remote/local/CONNECTION_TARGETS_PROPOSAL_ja.md` for the proposal awaiting human adoption.

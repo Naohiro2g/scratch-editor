@@ -56,12 +56,12 @@ const assertSchema = (validate, value, configName) => {
 };
 
 // Rest destructuring preserves single-argument semantics under both active arrow-parens rules.
-const normalizeConnectionTargets = (...[value]) => {
+const normalizeConnectionTargets = (value, version) => {
     const ids = new Set();
     const sandboxRoutes = new Set();
     return Object.freeze(value.map((target, index) => {
         const id = target.id.trim();
-        const sandboxRoute = target.sandbox.trim();
+        const sandboxRoute = version === 2 ? id : target.sandbox.trim();
         const label = target.label.trim();
         if (!id || !sandboxRoute || !label) {
             throw new Error(`connection_targets[${index}] must have non-empty id, label, and sandbox values`);
@@ -72,7 +72,8 @@ const normalizeConnectionTargets = (...[value]) => {
         }
         ids.add(id);
         sandboxRoutes.add(sandboxRoute);
-        return Object.freeze({id, sandboxRoute, label});
+        return Object.freeze(version === 2 ?
+            {id, sandboxRoute, label, host: target.host, port: target.port} : {id, sandboxRoute, label});
     }));
 };
 
@@ -124,10 +125,11 @@ const normalizeRuntimeConfig = (...[value]) => {
             'without credentials or a fragment'
         );
     }
-    const defaultSandbox = value.default_sandbox.trim();
-    const connectionTargets = normalizeConnectionTargets(value.connection_targets);
+    const defaultSandbox = (value.schema_version === 2 ? value.default_target_id : value.default_sandbox).trim();
+    const connectionTargets = normalizeConnectionTargets(value.connection_targets, value.schema_version);
     if (!connectionTargets.some(({sandboxRoute}) => sandboxRoute === defaultSandbox)) {
-        throw new Error('default_sandbox must be listed in connection_targets');
+        throw new Error(`${value.schema_version === 2 ? 'default_target_id' : 'default_sandbox'} ` +
+            'must be listed in connection_targets');
     }
 
     let wireScopeUrl = null;
@@ -142,6 +144,7 @@ const normalizeRuntimeConfig = (...[value]) => {
         wireScopeUrl = candidate.toString();
     }
     return Object.freeze({
+        ...(value.schema_version === 2 ? {targetRouting: 'id'} : {}),
         bridgeUrl: bridgeUrl.toString(),
         defaultSandbox,
         connectionTargets,

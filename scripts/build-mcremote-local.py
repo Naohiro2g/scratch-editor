@@ -292,7 +292,7 @@ def build(args):
             if path.relative_to(gui).as_posix() == 'index.html':
                 data += b'\n<script type="module" src="/editor-tab.mjs"></script>\n'
             files['scratch/' + path.relative_to(gui).as_posix()] = data
-    for name in ['launcher.mjs', 'setup.html', 'setup.mjs', 'editor-tab.mjs']:
+    for name in ['launcher.mjs', 'setup.html', 'setup.mjs', 'editor-tab.mjs', 'connection-targets.mjs']:
         files['app/' + name] = (ROOT / 'mc-remote/local' / name).read_bytes()
     for name in ['extension-card.png', 'connect-block.png']:
         files['app/guide-images/' + name] = (ROOT / 'mc-remote/local/guide-images' / name).read_bytes()
