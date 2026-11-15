@@ -1,3 +1,4 @@
+import {errorDetails} from './mcremote-error-details';
 const HANDOFF_PROTOCOL_VERSION = 1;
 const HANDOFF_READY = 'mcremote.wirescope.ready';
 const HANDOFF_ATTACH = 'mcremote.wirescope.attach';
@@ -81,6 +82,9 @@ const allowHello = function (value) {
     const dimension = optionalString(value.dimension);
     const origin = numberTuple(value.origin);
     if (!dimension || !/^[a-z0-9_.-]+:[a-z0-9_./-]+$/.test(dimension) || !origin) return null;
+    if (isObject(value.server) && optionalString(value.server.name) && optionalString(value.server.version)) {
+        result.server = {name: value.server.name, version: value.server.version};
+    }
     result.dimension = dimension;
     result.origin = origin;
     if (isObject(value.permissions)) {
@@ -424,11 +428,7 @@ const allowError = function (value) {
                 .filter((...[item]) => typeof item !== 'undefined');
             if (allowed.length === value.data.allowed.length) data.allowed = allowed;
         }
-        for (const field of ['bounds', 'violating']) {
-            if (Array.isArray(value.data[field]) && value.data[field].every(finiteNumber)) {
-                data[field] = value.data[field].slice();
-            }
-        }
+        Object.assign(data, errorDetails(value.data));
         if (Object.keys(data).length) error.data = data;
     }
     return error;

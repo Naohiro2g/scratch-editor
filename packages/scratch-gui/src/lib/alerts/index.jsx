@@ -409,7 +409,7 @@ const alerts = [
         ],
         content: (
             <FormattedMessage
-                defaultMessage="The Minecraft operation failed. Check the mc-remote error."
+                defaultMessage="The The operation failed. Open WireScope mini for details."
                 description="Guidance after a McRemote operation fails for a reason without a specialized message"
                 id="gui.alerts.mcremoteOperationFailed"
             />

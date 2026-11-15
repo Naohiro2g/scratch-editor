@@ -959,3 +959,32 @@ describe('McRemote WireScope source adapter', () => {
         expect(port1.close).toHaveBeenCalled();
     });
 });
+
+test('passes server identity and structured diagnostics without unrelated private fields', () => {
+    const observation = connectedObservation();
+    observation.hello.server = {name: 'mc-remote-unity-sandbox', version: '2321.3.0', private: 'hidden'};
+    observation.frameLog = [{sequence: 1,
+        timestamp: 1000,
+        streamId: 'default',
+        direction: 'receive',
+        id: 1,
+        method: 'world.setBlocks',
+        payload: {error: {code: -32000,
+            message: 'outside',
+            data: {
+                reason: 'build_range_exceeded',
+                bounds: {center: {x: 200, z: 200, private: 'hidden'}, build_range: 50},
+                violating: {x: 251.5, y: 64, z: 200},
+                limit: 32768,
+                requested: 40000,
+                token: 'hidden'
+            }}}}];
+    const snapshot = toWireScopeSnapshot(observation, 'target-01', 2000);
+    expect(snapshot.streams[0].hello.server).toEqual({name: 'mc-remote-unity-sandbox', version: '2321.3.0'});
+    const data = snapshot.streams[0].frames[0].payload.error.data;
+    expect(data.bounds).toEqual({center: {x: 200, z: 200}, build_range: 50});
+    expect(data.violating.x).toEqual(251.5);
+    expect(data.limit).toEqual(32768);
+    expect(data.requested).toEqual(40000);
+    expect(JSON.stringify(snapshot)).not.toContain('hidden');
+});
