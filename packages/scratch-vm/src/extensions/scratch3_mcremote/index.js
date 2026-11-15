@@ -268,6 +268,8 @@ class Scratch3McRemoteBlocks {
         this._hasConnected = false;
         this._connectionEpoch = 0;
         this._connectionAttempt = 0;
+        this._targetGeneration = 0;
+        this._cancelDial = null;
         this._confirmedBuild = null;
         this._lastSuccessfulHello = null;
         this._pairingInProgress = false;
@@ -2059,6 +2061,29 @@ class Scratch3McRemoteBlocks {
             this._setConnectionStatus(ConnectionStatus.ERROR, error);
             return Promise.reject(error);
         }
+        if (!options.reconnect) {
+            const target = this._resolveConnectionTarget(sandbox);
+            if (this._connectionTarget && target.sandboxRoute !== this._connectionTarget.sandboxRoute) {
+                this._targetGeneration++;
+                this._connectionAttempt++;
+                this._hasConnected = false;
+                this._openPromise = null;
+                this._reconnectPromise = null;
+                this._lastSuccessfulHello = null;
+                this._confirmedBuild = null;
+                this._pairingInProgress = false;
+                this._setPairCode('');
+                const socket = this._socket;
+                const error = new McRemoteCompletionUnknownError('McRemote connection target changed',
+                    this._connectionEpoch);
+                error.localReason = 'connection_target_changed';
+                const cancelDial = this._cancelDial;
+                this._cancelDial = null;
+                if (cancelDial) cancelDial(error);
+                this._loseConnection(socket, error);
+                if (socket) socket.close();
+            }
+        }
         if (this._openPromise) return this._openPromise;
         if (this._socket && this._socket.readyState === WebSocket.OPEN &&
             this._connectionStatus === ConnectionStatus.CONNECTED) return Promise.resolve();
@@ -2077,7 +2102,10 @@ class Scratch3McRemoteBlocks {
         const opening = this._dial(() => this._authenticate(options));
         this._openPromise = opening;
         const clear = () => {
-            if (this._openPromise === opening) this._openPromise = null;
+            if (this._openPromise === opening) {
+                this._openPromise = null;
+                this._cancelDial = null;
+            }
         };
         opening.then(clear, clear);
         return opening;
@@ -2104,6 +2132,10 @@ class Scratch3McRemoteBlocks {
                 reject(error);
                 socket.close();
             }, Math.min(this._connectionPolicy.connectTimeoutMs, deadline - this._connectionClock.now()));
+            this._cancelDial = error => {
+                this._connectionClock.clearTimeout(timer);
+                reject(error);
+            };
             socket.addEventListener('open', () => {
                 if (socket !== this._socket) return;
                 opened = true;
@@ -2191,6 +2223,16 @@ class Scratch3McRemoteBlocks {
         return timer;
     }
 
+    /**
+     * @param {number} generation target selection owning an asynchronous operation.
+     */
+    _assertTargetGeneration (generation) {
+        if (generation !== this._targetGeneration) {
+            throw Object.assign(new McRemoteNotSentError('McRemote connection target changed', this._connectionEpoch),
+                {localReason: 'connection_target_changed'});
+        }
+    }
+
     /** All pending waits share the connection's last reception clock. */
     _armResponseTimer () {
         this._connectionClock.clearTimeout(this._responseTimer);
@@ -2223,35 +2265,41 @@ class Scratch3McRemoteBlocks {
             return Promise.reject(new McRemoteNotSentError('McRemote automatic reconnect is disabled',
                 this._connectionEpoch));
         }
+        const generation = this._targetGeneration;
         const startedAt = this._connectionClock.now();
         let delay = this._connectionPolicy.reconnectInitialDelayMs;
-        const attempt = () => this._open(void 0, {reconnect: true}).catch(error => {
-            if (this._isAuthError(error) || error.reason === 'protocol_mismatch' ||
+        const attempt = () => {
+            this._assertTargetGeneration(generation);
+            return this._open(void 0, {reconnect: true}).catch(error => {
+                this._assertTargetGeneration(generation);
+                if (this._isAuthError(error) || error.reason === 'protocol_mismatch' ||
                 error.reason === 'bridge_transport_incompatible' || error.reason === 'connection_disabled' ||
                 error.origin === 'server') {
-                const failure = new McRemoteNotSentError('McRemote reconnect requires attention',
-                    this._connectionEpoch);
-                failure.localReason = this._isAuthError(error) ? 'pairing_required' : error.reason;
-                failure.cause = error;
-                throw failure;
-            }
-            const remaining = this._connectionPolicy.reconnectTimeoutMs -
+                    const failure = new McRemoteNotSentError('McRemote reconnect requires attention',
+                        this._connectionEpoch);
+                    failure.localReason = this._isAuthError(error) ? 'pairing_required' : error.reason;
+                    failure.cause = error;
+                    throw failure;
+                }
+                const remaining = this._connectionPolicy.reconnectTimeoutMs -
                 (this._connectionClock.now() - startedAt);
-            if (remaining <= 0) {
-                throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
-                    {localReason: 'connection_failed'});
-            }
-            const waiting = Math.min(remaining, this._connectionPolicy.reconnectMaxDelayMs,
-                delay * (0.5 + this._connectionClock.random()));
-            delay = Math.min(this._connectionPolicy.reconnectMaxDelayMs, delay * 2);
-            return this._delay(waiting).then(() => {
-                if (this._connectionClock.now() - startedAt >= this._connectionPolicy.reconnectTimeoutMs) {
+                if (remaining <= 0) {
                     throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
                         {localReason: 'connection_failed'});
                 }
-                return attempt();
+                const waiting = Math.min(remaining, this._connectionPolicy.reconnectMaxDelayMs,
+                    delay * (0.5 + this._connectionClock.random()));
+                delay = Math.min(this._connectionPolicy.reconnectMaxDelayMs, delay * 2);
+                return this._delay(waiting).then(() => {
+                    if (this._connectionClock.now() - startedAt >= this._connectionPolicy.reconnectTimeoutMs) {
+                        throw Object.assign(
+                            new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
+                            {localReason: 'connection_failed'});
+                    }
+                    return attempt();
+                });
             });
-        });
+        };
         const reconnecting = attempt();
         this._reconnectPromise = reconnecting;
         const clear = () => {
@@ -2380,9 +2428,11 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     async _authenticate (options = {}) {
+        const generation = this._targetGeneration;
         try {
             return await this._hello(options).then(() => {});
         } catch (error) {
+            this._assertTargetGeneration(generation);
             if (!this._isAuthError(error)) throw error;
             this._clearSessionToken();
             let authError = error;
@@ -2399,11 +2449,15 @@ class Scratch3McRemoteBlocks {
             this._pairingInProgress = true;
             try {
                 await this._pair();
+                this._assertTargetGeneration(generation);
                 await this._hello(options);
+                this._assertTargetGeneration(generation);
                 this._firePairingComplete();
             } finally {
-                this._pairingInProgress = false;
-                this._setPairCode('');
+                if (generation === this._targetGeneration) {
+                    this._pairingInProgress = false;
+                    this._setPairCode('');
+                }
             }
         }
     }
@@ -2414,14 +2468,16 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _pair () {
+        const generation = this._targetGeneration;
         return this._request('auth.pairBegin', {
             token_type: 'session',
             client: this._clientInfo()
         }).then(result => {
+            this._assertTargetGeneration(generation);
             const pairingId = result && result.pairing_id;
             const expiresIn = Number(result && result.expires_in) || 120;
             this._setPairCode(result && result.pair_code);
-            return this._pollPair(pairingId, this._connectionClock.now() + (expiresIn * 1000));
+            return this._pollPair(pairingId, this._connectionClock.now() + (expiresIn * 1000), generation);
         });
     }
 
@@ -2429,10 +2485,12 @@ class Scratch3McRemoteBlocks {
      * Poll until the pairing completes or expires.
      * @param {string} pairingId - Wire correlation id from auth.pairBegin.
      * @param {number} expiresAt - Unix time in ms when polling should stop.
+     * @param {number} generation target selection owning this pair flow.
      * @returns {Promise} resolves once the token has been saved.
      * @private
      */
-    async _pollPair (pairingId, expiresAt) {
+    async _pollPair (pairingId, expiresAt, generation = this._targetGeneration) {
+        this._assertTargetGeneration(generation);
         if (this._connectionClock.now() >= expiresAt) {
             const error = new Error('pair_expired');
             error.origin = 'client';
@@ -2447,7 +2505,7 @@ class Scratch3McRemoteBlocks {
                 const remaining = expiresAt - this._connectionClock.now();
                 if (remaining > 0) await this._delay(Math.min(this._pairPollIntervalMs, remaining));
             }
-            return this._pollPair(pairingId, expiresAt);
+            return this._pollPair(pairingId, expiresAt, generation);
         }
         let result;
         try {
@@ -2457,15 +2515,16 @@ class Scratch3McRemoteBlocks {
                 throw error;
             }
             await this._delay(this._pairPollIntervalMs);
-            return this._pollPair(pairingId, expiresAt);
+            return this._pollPair(pairingId, expiresAt, generation);
         }
+        this._assertTargetGeneration(generation);
         if (result && result.status === 'ok' && result.token) {
             this._saveSessionToken(result.token);
             this._setPairCode('');
             return;
         }
         await this._delay(this._pairPollIntervalMs);
-        return this._pollPair(pairingId, expiresAt);
+        return this._pollPair(pairingId, expiresAt, generation);
     }
 
     /**
