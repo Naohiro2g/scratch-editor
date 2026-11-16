@@ -2367,7 +2367,11 @@ class Runtime extends EventEmitter {
                 throw new Error(`Runtime.setMcRemoteRuntimeConfig: ${key} must be a non-empty string`);
             }
         }
+        if (typeof config.targetRouting !== 'undefined' && config.targetRouting !== 'id') {
+            throw new Error('Runtime.setMcRemoteRuntimeConfig: targetRouting must be id when specified');
+        }
         this._mcremoteRuntimeConfig = {
+            ...(config.targetRouting === 'id' ? {targetRouting: 'id'} : {}),
             bridgeUrl: config.bridgeUrl,
             defaultSandbox: config.defaultSandbox,
             connectionEnabled: config.connectionEnabled,

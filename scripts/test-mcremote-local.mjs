@@ -123,7 +123,8 @@ try {
     assert.equal((await fetch(`${url}/editor/gui.js`)).status, 200);
     const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
     assert.equal(config.connection_enabled, true);
-    assert.equal(config.default_sandbox, target.host);
+    assert.equal(config.default_target_id, 'local');
+    assert.deepEqual(config.connection_targets[0], {id: 'local', label: 'Minecraft', ...target});
     assert.equal(config.wirescope_url, `http://127.0.0.1:${wireScopePort}/`);
     assert.notEqual(new URL(config.wirescope_url).origin, new URL(url).origin);
     const wireScopeManifest = JSON.parse(await readFile(join(dataRoot, 'wirescope-app.manifest.json')));

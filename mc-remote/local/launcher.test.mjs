@@ -7,6 +7,10 @@ import {createServer, request} from 'node:http';
 import {once} from 'node:events';
 import {browserCommands, createLocalServer, validateTarget} from './launcher.mjs';
 
+const singleTarget = (host, port) => ({
+    schema_version: 1, default_target_id: 'local', targets: [{id: 'local', label: 'Minecraft', host, port}]
+});
+
 test('target accepts loopback/LAN hostnames and rejects URLs, lists and invalid ports', () => {
     for (const host of ['127.0.0.1', '192.168.1.2', 'minecraft.local', '::1']) {
         assert.deepEqual(validateTarget({host, port: 25575}), {host, port: 25575});
@@ -55,27 +59,40 @@ test('serves editor and runtime settings on loopback and preserves pairing stora
     const r = await fetch(`${url}/editor/mc-remote-runtime-config.json`);
     const config = await r.json();
     assert.equal(config.bridge_url, 'ws://127.0.0.1:8602');
-    assert.equal(config.default_sandbox, '127.0.0.1');
+    assert.equal(config.default_target_id, 'minecraft');
     assert.equal(config.connection_enabled, true);
     assert.equal(r.headers.get('cache-control'), 'no-store');
     assert.equal((await fetch(`${url}/identity.json`)).status, 200);
     assert.equal((await (await fetch(`${url}/target`)).json()).saved, false);
 });
 
-test('changing target updates both Bridge and editor and persists only host/port', async t => {
+test('serves two local target IDs and sends the same list to Bridge', async t => {
+    const {url, calls} = await setup(t);
+    const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
+    assert.equal(config.schema_version, 2);
+    assert.equal(config.default_target_id, 'minecraft');
+    assert.deepEqual(config.connection_targets.map(({id, host, port}) => ({id, host, port})), [
+        {id: 'minecraft', host: '127.0.0.1', port: 25575},
+        {id: 'unity', host: '127.0.0.1', port: 25585}
+    ]);
+    assert.deepEqual(calls[0].targets, config.connection_targets);
+});
+
+test('changing targets updates both Bridge and editor and persists stable IDs', async t => {
     const {url, root, calls} = await setup(t);
     const r = await fetch(`${url}/target`, {
         method: 'POST',
         headers: {'Origin': url, 'Content-Type': 'application/json'},
-        body: JSON.stringify({host: 'minecraft.local', port: 25576})
+        body: JSON.stringify(singleTarget('minecraft.local', 25576))
     });
     assert.equal(r.status, 200);
     assert.equal(calls.length, 2);
-    assert.deepEqual(calls.at(-1), {host: 'minecraft.local', port: 25576});
+    assert.deepEqual(calls.at(-1), singleTarget('minecraft.local', 25576));
     assert.deepEqual(JSON.parse(await readFile(join(root, 'settings.json'))), calls.at(-1));
     assert.equal((await (await fetch(`${url}/target`)).json()).saved, true);
     const config = await (await fetch(`${url}/editor/mc-remote-runtime-config.json`)).json();
-    assert.equal(config.default_sandbox, 'minecraft.local');
+    assert.equal(config.default_target_id, 'local');
+    assert.deepEqual(config.connection_targets, singleTarget('minecraft.local', 25576).targets);
 });
 
 test('first launch opens setup, and saved settings open setup followed by the editor with McRemote', async t => {
@@ -94,7 +111,9 @@ test('first launch opens setup, and saved settings open setup followed by the ed
     assert.deepEqual(restarted.openUrls, [
         `${restarted.url}/?scratch=opening`, `${restarted.url}/editor/?extension=mcremote`
     ]);
-    assert.equal((await (await fetch(`${restarted.url}/target`)).json()).port, 25576);
+    const migrated = await (await fetch(`${restarted.url}/target`)).json();
+    assert.deepEqual(migrated.targets, singleTarget('minecraft.local', 25576).targets);
+    assert.deepEqual(JSON.parse(await readFile(join(root, 'settings.json'))), {host: 'minecraft.local', port: 25576});
 });
 
 test('opens each URL through the OS browser handler in order', () => {
@@ -235,12 +254,12 @@ test('stops the replacement Bridge when shutdown occurs during a target change',
         bridgePort: 8602,
         wireScopePort: 0,
         startBridge: async target => {
-            if (target.host === 'other.local') {
+            if (target.targets[0].host === 'other.local') {
                 changed();
                 await release;
             }
             return async () => {
-                stopped.push(target.host);
+                stopped.push(target.targets[0].host);
             };
         }
     });
@@ -248,7 +267,7 @@ test('stops the replacement Bridge when shutdown occurs during a target change',
     const update = fetch(`${local.url}/target`, {
         method: 'POST',
         headers: {'Origin': local.url, 'Content-Type': 'application/json'},
-        body: JSON.stringify({host: 'other.local', port: 25575})
+        body: JSON.stringify(singleTarget('other.local', 25575))
     });
     await starting;
     const shutdown = local.close();

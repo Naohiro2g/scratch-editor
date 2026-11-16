@@ -28,7 +28,7 @@ jobs:
           npm run tooling:release-manifest
           npm run release-manifest:test
           npm run release-manifest:lint
-          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs mc-remote/local/launcher.test.mjs mc-remote/local/setup.test.mjs
+          node --test scripts/acquire-mcremote-tooling.test.mjs scripts/build-mcremote-candidate-manifest.test.mjs scripts/mcremote-local-artifacts.test.mjs scripts/acquire-mcremote-local.test.mjs mc-remote/local/launcher.test.mjs mc-remote/local/setup.test.mjs mc-remote/local/connection-targets.test.mjs
           python3 scripts/build-mcremote-local.test.py
           npm run local:lint
           npm run tooling:artifacts

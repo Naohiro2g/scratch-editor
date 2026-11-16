@@ -278,6 +278,9 @@ describe('Working with the blocks', () => {
         await clickBlocksCategory('Variables');
         await clickText('my\u00A0variable');
 
+        // Project-page navigation is available in the wide editor layout.
+        await driver.manage().window()
+            .setSize(1280, 960);
         await clickText('See Project Page');
         await clickText('See inside');
 

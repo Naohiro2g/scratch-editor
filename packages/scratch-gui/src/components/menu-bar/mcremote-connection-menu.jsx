@@ -90,9 +90,11 @@ const McRemoteConnectionMenu = ({
                 />
             </button>
             <Submenu place={isRtl ? 'left' : 'right'}>
-                {/* eslint-disable-next-line arrow-parens */}
+                { }
                 {MCREMOTE_CONNECTION_TARGETS.map(target => {
                     const isSelected = target.sandboxRoute === selectedTarget.sandboxRoute;
+                    const host = target.host && target.host.includes(':') ? `[${target.host}]` : target.host;
+                    const address = target.host ? `${host}:${target.port}` : target.sandboxRoute;
                     return (
                         <MenuItem
                             isDataMenuItem
@@ -113,7 +115,7 @@ const McRemoteConnectionMenu = ({
                                     <span>
                                         {target.label}
                                     </span>
-                                    <code>{target.sandboxRoute}</code>
+                                    <code>{address}</code>
                                 </div>
                             </div>
                         </MenuItem>

@@ -37,6 +37,8 @@ const renderArgument = argument => {
 
 const renderBlock = block => {
     const search = [block.title, block.text, block.opcode, block.description, ...(block.methods || []),
+        ...(block.keywords || []), ...(block.targets || []).flatMap(target =>
+            target === 'unity' ? ['Unity', 'Unity箱庭', 'ユニティ'] : [target]),
         ...block.arguments.flatMap(argument => [argument.label,
             ...(argument.options || []).flatMap(option => [option.text, option.value])])].join(' ');
     const argumentsTable = block.arguments.length ? `<details class="inputs"><summary>入力・選択肢 ` +
@@ -55,7 +57,7 @@ const renderBlock = block => {
             return `<a href="https://mc-remote.com/api/#${category}"><code>${escapeHtml(method)}</code></a>`;
         }).join(' ')}</div>` : '';
     return `<article id="${escapeHtml(block.opcode)}" class="block-card" data-search="${escapeHtml(search)}" ` +
-        `data-kind="${escapeHtml(block.blockType)}"><div class="card-heading"><h3>${escapeHtml(block.title)}</h3>` +
+        `data-kind="${escapeHtml(block.blockType)}" data-targets="${escapeHtml((block.targets || []).join(' '))}"><div class="card-heading"><h3>${escapeHtml(block.title)}</h3>` +
         `<div><span class="kind kind-${escapeHtml(block.blockType)}">${typeNames[block.blockType]}</span>` +
         `<a class="permalink" href="#${escapeHtml(block.opcode)}" ` +
         `aria-label="ブロック「${escapeHtml(block.title)}」へのリンク" ` +

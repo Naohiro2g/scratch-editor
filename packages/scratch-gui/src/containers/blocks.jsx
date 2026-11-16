@@ -7,6 +7,8 @@ import React from 'react';
 import VMScratchBlocks from '../lib/blocks';
 import allowNativeBlocklyInputEditingShortcut from '../lib/blockly-input-editing-shortcuts';
 import configureWorkspaceZoom from '../lib/configure-workspace-zoom';
+import configurePaletteVisibility from '../lib/configure-palette-visibility';
+import configurePaletteNavigation from '../lib/configure-palette-navigation';
 import VM from '@scratch/scratch-vm';
 
 import analytics from '../lib/analytics';
@@ -131,6 +133,15 @@ class Blocks extends React.Component {
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
         configureWorkspaceZoom(this.workspace);
+        this.setPaletteCollapsed = configurePaletteVisibility(this.workspace);
+        if (this.props.paletteCollapsed) this.setPaletteCollapsed(true, false);
+        this.disposePaletteNavigation = configurePaletteNavigation(this.workspace, {
+            expand: () => {
+                this.setPaletteCollapsed(false);
+                this.props.onPaletteOpen();
+            },
+            toggle: () => this.props.onPaletteToggle()
+        });
         document.addEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.workspace.registerToolboxCategoryCallback(
             'VARIABLE',
@@ -203,6 +214,7 @@ class Blocks extends React.Component {
             this.state.prompt !== nextState.prompt ||
             this.state.mcRemoteBlockPicker !== nextState.mcRemoteBlockPicker ||
             this.props.isVisible !== nextProps.isVisible ||
+            this.props.paletteCollapsed !== nextProps.paletteCollapsed ||
             this._renderedToolboxXML !== nextProps.toolboxXML ||
             this.props.extensionLibraryVisible !== nextProps.extensionLibraryVisible ||
             this.props.customProceduresVisible !== nextProps.customProceduresVisible ||
@@ -213,6 +225,9 @@ class Blocks extends React.Component {
         );
     }
     componentDidUpdate (prevProps) {
+        if (this.props.paletteCollapsed !== prevProps.paletteCollapsed) {
+            this.setPaletteCollapsed(this.props.paletteCollapsed);
+        }
         // If any modals are open, call hideChaff to close z-indexed field editors
         if (this.props.anyModalVisible && !prevProps.anyModalVisible) {
             this.ScratchBlocks.hideChaff();
@@ -250,6 +265,8 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+        this.disposePaletteNavigation();
+        this.setPaletteCollapsed.dispose();
         document.removeEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.detachVM();
         // Hide any open field editor and move Blockly focus to the workspace
@@ -669,6 +686,8 @@ class Blocks extends React.Component {
         this.setState({mcRemoteBlockPicker: null});
     }
     handleCategorySelected (categoryId) {
+        this.setPaletteCollapsed(false);
+        this.props.onPaletteOpen();
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
         if (extension && extension.launchPeripheralConnectionFlow) {
             this.handleConnectionModalStart(categoryId);
@@ -755,6 +774,7 @@ class Blocks extends React.Component {
             onRequestCloseExtensionLibrary,
             onRequestCloseCustomProcedures,
             toolboxXML,
+            paletteCollapsed,
             updateMetrics: updateMetricsProp,
             useCatBlocks,
             workspaceMetrics,
@@ -846,6 +866,9 @@ Blocks.propTypes = {
     stageSize: PropTypes.oneOf(Object.keys(STAGE_DISPLAY_SIZES)).isRequired,
     colorMode: PropTypes.oneOf(Object.keys(colorModeMap)),
     toolboxXML: PropTypes.string,
+    paletteCollapsed: PropTypes.bool,
+    onPaletteOpen: PropTypes.func,
+    onPaletteToggle: PropTypes.func,
     updateMetrics: PropTypes.func,
     updateToolboxState: PropTypes.func,
     useCatBlocks: PropTypes.bool,
@@ -878,6 +901,8 @@ Blocks.defaultOptions = {
 };
 
 Blocks.defaultProps = {
+    onPaletteOpen: () => {},
+    onPaletteToggle: () => {},
     isVisible: true,
     options: Blocks.defaultOptions,
     colorMode: DEFAULT_MODE

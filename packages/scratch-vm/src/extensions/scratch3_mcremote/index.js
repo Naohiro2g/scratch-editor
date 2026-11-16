@@ -1,3 +1,4 @@
+const {errorDetails} = require('./error-details');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
@@ -268,6 +269,8 @@ class Scratch3McRemoteBlocks {
         this._hasConnected = false;
         this._connectionEpoch = 0;
         this._connectionAttempt = 0;
+        this._targetGeneration = 0;
+        this._cancelDial = null;
         this._confirmedBuild = null;
         this._lastSuccessfulHello = null;
         this._pairingInProgress = false;
@@ -526,6 +529,7 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    hideFromPalette: true,
                     opcode: 'pairCode',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -535,6 +539,7 @@ class Scratch3McRemoteBlocks {
                     })
                 },
                 {
+                    hideFromPalette: true,
                     opcode: 'pairCommand',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -544,6 +549,7 @@ class Scratch3McRemoteBlocks {
                     })
                 },
                 {
+                    hideFromPalette: true,
                     opcode: 'whenPaired',
                     blockType: BlockType.HAT,
                     isEdgeActivated: false,
@@ -612,6 +618,31 @@ class Scratch3McRemoteBlocks {
                         description: 'Wait for earlier block placement commands on this connection to finish'
                     })
                 },
+                {
+                    opcode: 'isMcRemoteError',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.isMcRemoteError',
+                        default: '[VALUE] is a mc-remote error',
+                        description: 'Check the exact reserved McRemote ErrorText grammar'
+                    }),
+                    arguments: {
+                        VALUE: {type: ArgumentType.STRING, defaultValue: makeErrorText('unknown_block')}
+                    }
+                },
+                {
+                    opcode: 'catalogToList',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.catalogToList',
+                        default: 'put catalog [KIND] in [LIST]',
+                        description: 'Replace a selected Scratch list with IDs from the current server catalog'
+                    }),
+                    arguments: {
+                        KIND: {type: ArgumentType.STRING, menu: 'catalogKinds', defaultValue: 'block'},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'catalog list'}
+                    }
+                },
                 '---',
                 {
                     opcode: 'postToChat',
@@ -628,6 +659,35 @@ class Scratch3McRemoteBlocks {
                         }
                     }
                 },
+                '---',
+                {
+                    opcode: 'getHeight',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getHeight',
+                        default: 'ground height at x :[X]  z :[Z]',
+                        description: 'Get the highest ground surface in one Minecraft column'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'getHeightBelow',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getHeightBelow',
+                        default: 'ground height at x :[X]  z :[Z] at or below y :[MAX_Y]',
+                        description: 'Get the highest ground surface at or below an inclusive maximum y'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        MAX_Y: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                '---',
                 {
                     opcode: 'setBlock',
                     blockType: BlockType.COMMAND,
@@ -700,46 +760,6 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
-                    opcode: 'catalogToList',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.catalogToList',
-                        default: 'put catalog [KIND] in [LIST]',
-                        description: 'Replace a selected Scratch list with IDs from the current server catalog'
-                    }),
-                    arguments: {
-                        KIND: {type: ArgumentType.STRING, menu: 'catalogKinds', defaultValue: 'block'},
-                        LIST: {type: ArgumentType.LIST, defaultValue: 'catalog list'}
-                    }
-                },
-                {
-                    opcode: 'getHeight',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.getHeight',
-                        default: 'ground height at x :[X]  z :[Z]',
-                        description: 'Get the highest ground surface in one Minecraft column'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
-                    opcode: 'getHeightBelow',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.getHeightBelow',
-                        default: 'ground height at x :[X]  z :[Z] at or below y :[MAX_Y]',
-                        description: 'Get the highest ground surface at or below an inclusive maximum y'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        MAX_Y: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
                     opcode: 'blockInfoId',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -789,13 +809,14 @@ class Scratch3McRemoteBlocks {
                         PROPERTY: {type: ArgumentType.STRING, defaultValue: 'axis'}
                     }
                 },
+                '---',
                 {
-                    opcode: 'getSign',
-                    blockType: BlockType.REPORTER,
+                    opcode: 'setPlayerXYZ',
+                    blockType: BlockType.COMMAND,
                     text: formatMessage({
-                        id: 'mcremote.getSign',
-                        default: 'sign information at x :[X]  y :[Y]  z :[Z]',
-                        description: 'Get one immutable sign information snapshot at a position'
+                        id: 'mcremote.setPlayerXYZ',
+                        default: 'move player to x :[X]  y :[Y]  z :[Z]',
+                        description: 'Teleport the paired player within the player\'s current dimension'
                     }),
                     arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
@@ -803,6 +824,226 @@ class Scratch3McRemoteBlocks {
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 },
+                {
+                    opcode: 'setPlayerPos',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerPos',
+                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z]',
+                        description: 'Teleport the paired player to a dimension and position'
+                    }),
+                    arguments: {
+                        DIMENSION: {
+                            type: ArgumentType.STRING,
+                            menu: 'dimensions',
+                            defaultValue: BuildDimension.OVERWORLD
+                        },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setPlayerDirection',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerDirection',
+                        default: 'set player direction to x[X]  y[Y]  z[Z]',
+                        description: 'Set the paired player direction and validate the post-read direction'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setPlayerPose',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerPose',
+                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
+                        description: 'Teleport the paired player to a dimension, position and orientation'
+                    }),
+                    arguments: {
+                        DIMENSION: {
+                            type: ArgumentType.STRING,
+                            menu: 'dimensions',
+                            defaultValue: BuildDimension.OVERWORLD
+                        },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'playerAttribute',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.playerAttribute',
+                        default: 'player\'s [PROPERTY]',
+                        description: 'Report an attribute of the paired Minecraft player'
+                    }),
+                    arguments: {
+                        PROPERTY: {
+                            type: ArgumentType.STRING,
+                            menu: 'playerAttributes'
+                        }
+                    }
+                },
+                {
+                    opcode: 'playerDirection',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.playerDirection',
+                        default: 'player direction [AXIS]',
+                        description: 'Report one component of the paired player direction'
+                    }),
+                    arguments: {
+                        AXIS: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionAxes',
+                            defaultValue: 'x'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'spawnEntity',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.spawnEntity',
+                        default: 'spawn entity [ENTITY] at x :[X]  y :[Y]  z :[Z] and put its handle in [VARIABLE]',
+                        description: 'Spawn one entity and store its connection-scoped handle in a variable'
+                    }),
+                    arguments: {
+                        ENTITY: {type: ArgumentType.STRING, defaultValue: 'minecraft:allay'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        VARIABLE: {type: ArgumentType.VARIABLE, defaultValue: 'entity handle'}
+                    }
+                },
+                {
+                    opcode: 'getNearbyEntities',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.getNearbyEntities',
+                        default: 'put entities near x :[X]  y :[Y]  z :[Z] ' +
+                            'radius [RADIUS] limit [MAX_ENTITIES] in [LIST]',
+                        description: 'Replace a Scratch list with bounded nearby entity snapshots'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        RADIUS: {type: ArgumentType.NUMBER, defaultValue: 10},
+                        MAX_ENTITIES: {type: ArgumentType.NUMBER, defaultValue: 16},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'entity list'}
+                    }
+                },
+                {
+                    opcode: 'entityInfo',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityInfo',
+                        default: '[PROPERTY] of entity information [ENTITY_INFO]',
+                        description: 'Read one nearby entity snapshot property without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, menu: 'entityProperties', defaultValue: 'handle'},
+                        ENTITY_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'removeEntity',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.removeEntity',
+                        default: 'remove entity [HANDLE]',
+                        description: 'Remove one entity and invalidate its connection-scoped handle'
+                    }),
+                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
+                },
+                '---',
+                {
+                    opcode: 'setEntityPose',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setEntityPose',
+                        default: 'move entity [HANDLE] to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
+                        description: 'Set entity dimension, position and orientation with one acknowledged teleport'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        DIMENSION: {type: ArgumentType.STRING, menu: 'dimensions', defaultValue: 'overworld'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setEntityDirection',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setEntityDirection',
+                        default: 'set direction of entity [HANDLE] to x[X]  y[Y]  z[Z]',
+                        description: 'Set an entity direction by opaque handle and validate the post-read direction'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                '---',
+                {
+                    opcode: 'getEntityPose',
+                    blockType: BlockType.REPORTER,
+                    disableMonitor: true,
+                    text: formatMessage({
+                        id: 'mcremote.getEntityPose',
+                        default: 'pose of entity [HANDLE]',
+                        description: 'Get one entity pose snapshot by its connection-scoped handle'
+                    }),
+                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
+                },
+                {
+                    opcode: 'entityPoseInfo',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityPoseInfo',
+                        default: '[PROPERTY] of entity pose [POSE]',
+                        description: 'Read one entity pose snapshot property without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, menu: 'playerAttributes', defaultValue: 'x'},
+                        POSE: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'entityDirection',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityDirection',
+                        default: 'direction [AXIS] of entity [HANDLE]',
+                        description: 'Report one direction component using an opaque entity handle'
+                    }),
+                    arguments: {
+                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
+                        AXIS: {
+                            type: ArgumentType.STRING,
+                            menu: 'directionAxes',
+                            defaultValue: 'x'
+                        }
+                    }
+                },
+                '---',
                 {
                     opcode: 'setSign',
                     blockType: BlockType.COMMAND,
@@ -837,6 +1078,20 @@ class Scratch3McRemoteBlocks {
                         FACE: {type: ArgumentType.STRING, menu: 'signFaces', defaultValue: 'front'},
                         LINE: {type: ArgumentType.STRING, menu: 'signLineIndices', defaultValue: '0'},
                         TEXT: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'getSign',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.getSign',
+                        default: 'sign information at x :[X]  y :[Y]  z :[Z]',
+                        description: 'Get one immutable sign information snapshot at a position'
+                    }),
+                    arguments: {
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 },
                 {
@@ -894,18 +1149,7 @@ class Scratch3McRemoteBlocks {
                         SIGN_INFO: {type: ArgumentType.STRING, defaultValue: ''}
                     }
                 },
-                {
-                    opcode: 'isMcRemoteError',
-                    blockType: BlockType.BOOLEAN,
-                    text: formatMessage({
-                        id: 'mcremote.isMcRemoteError',
-                        default: '[VALUE] is a mc-remote error',
-                        description: 'Check the exact reserved McRemote ErrorText grammar'
-                    }),
-                    arguments: {
-                        VALUE: {type: ArgumentType.STRING, defaultValue: makeErrorText('unknown_block')}
-                    }
-                },
+                '---',
                 {
                     opcode: 'spawnParticle',
                     blockType: BlockType.COMMAND,
@@ -932,105 +1176,6 @@ class Scratch3McRemoteBlocks {
                             defaultValue: 'true'
                         }
                     }
-                },
-                {
-                    opcode: 'spawnEntity',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.spawnEntity',
-                        default: 'spawn entity [ENTITY] at x :[X]  y :[Y]  z :[Z] and put its handle in [VARIABLE]',
-                        description: 'Spawn one entity and store its connection-scoped handle in a variable'
-                    }),
-                    arguments: {
-                        ENTITY: {type: ArgumentType.STRING, defaultValue: 'minecraft:allay'},
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        VARIABLE: {type: ArgumentType.VARIABLE, defaultValue: 'entity handle'}
-                    }
-                },
-                {
-                    opcode: 'getNearbyEntities',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.getNearbyEntities',
-                        default: 'put entities near x :[X]  y :[Y]  z :[Z] ' +
-                            'radius [RADIUS] limit [MAX_ENTITIES] in [LIST]',
-                        description: 'Replace a Scratch list with bounded nearby entity snapshots'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        RADIUS: {type: ArgumentType.NUMBER, defaultValue: 10},
-                        MAX_ENTITIES: {type: ArgumentType.NUMBER, defaultValue: 16},
-                        LIST: {type: ArgumentType.LIST, defaultValue: 'entity list'}
-                    }
-                },
-                {
-                    opcode: 'entityInfo',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.entityInfo',
-                        default: '[PROPERTY] of entity information [ENTITY_INFO]',
-                        description: 'Read one nearby entity snapshot property without network access'
-                    }),
-                    arguments: {
-                        PROPERTY: {type: ArgumentType.STRING, menu: 'entityProperties', defaultValue: 'handle'},
-                        ENTITY_INFO: {type: ArgumentType.STRING, defaultValue: ''}
-                    }
-                },
-                {
-                    opcode: 'getEntityPose',
-                    blockType: BlockType.REPORTER,
-                    disableMonitor: true,
-                    text: formatMessage({
-                        id: 'mcremote.getEntityPose',
-                        default: 'pose of entity [HANDLE]',
-                        description: 'Get one entity pose snapshot by its connection-scoped handle'
-                    }),
-                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
-                },
-                {
-                    opcode: 'entityPoseInfo',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.entityPoseInfo',
-                        default: '[PROPERTY] of entity pose [POSE]',
-                        description: 'Read one entity pose snapshot property without network access'
-                    }),
-                    arguments: {
-                        PROPERTY: {type: ArgumentType.STRING, menu: 'playerAttributes', defaultValue: 'x'},
-                        POSE: {type: ArgumentType.STRING, defaultValue: ''}
-                    }
-                },
-                {
-                    opcode: 'setEntityPose',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setEntityPose',
-                        default: 'move entity [HANDLE] to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
-                        description: 'Set entity dimension, position and orientation with one acknowledged teleport'
-                    }),
-                    arguments: {
-                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
-                        DIMENSION: {type: ArgumentType.STRING, menu: 'dimensions', defaultValue: 'overworld'},
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
-                    opcode: 'removeEntity',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.removeEntity',
-                        default: 'remove entity [HANDLE]',
-                        description: 'Remove one entity and invalidate its connection-scoped handle'
-                    }),
-                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
                 },
                 {
                     opcode: 'particleSpec',
@@ -1077,68 +1222,6 @@ class Scratch3McRemoteBlocks {
                 },
                 '---',
                 {
-                    opcode: 'playerDirection',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.playerDirection',
-                        default: 'player direction [AXIS]',
-                        description: 'Report one component of the paired player direction'
-                    }),
-                    arguments: {
-                        AXIS: {
-                            type: ArgumentType.STRING,
-                            menu: 'directionAxes',
-                            defaultValue: 'x'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setPlayerDirection',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setPlayerDirection',
-                        default: 'set player direction to x[X]  y[Y]  z[Z]',
-                        description: 'Set the paired player direction and validate the post-read direction'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
-                    opcode: 'entityDirection',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.entityDirection',
-                        default: 'direction [AXIS] of entity [HANDLE]',
-                        description: 'Report one direction component using an opaque entity handle'
-                    }),
-                    arguments: {
-                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
-                        AXIS: {
-                            type: ArgumentType.STRING,
-                            menu: 'directionAxes',
-                            defaultValue: 'x'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setEntityDirection',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setEntityDirection',
-                        default: 'set direction of entity [HANDLE] to x[X]  y[Y]  z[Z]',
-                        description: 'Set an entity direction by opaque handle and validate the post-read direction'
-                    }),
-                    arguments: {
-                        HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'},
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
                     opcode: 'playSound',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -1184,6 +1267,7 @@ class Scratch3McRemoteBlocks {
                         RECEIVER: {type: ArgumentType.STRING, menu: 'soundReceivers', defaultValue: 'world'}
                     }
                 },
+                '---',
                 {
                     opcode: 'strikeLightning',
                     blockType: BlockType.COMMAND,
@@ -1238,7 +1322,7 @@ class Scratch3McRemoteBlocks {
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
                         id: 'mcremote.eventValue',
-                        default: '[PROPERTY] of this Minecraft event',
+                        default: '[PROPERTY] of this event',
                         description: 'Read one value from the event bound to the current hat thread'
                     }),
                     arguments: {
@@ -1261,76 +1345,6 @@ class Scratch3McRemoteBlocks {
                             type: ArgumentType.STRING,
                             menu: 'eventStatusValues'
                         }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'playerAttribute',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.playerAttribute',
-                        default: 'player\'s [PROPERTY]',
-                        description: 'Report an attribute of the paired Minecraft player'
-                    }),
-                    arguments: {
-                        PROPERTY: {
-                            type: ArgumentType.STRING,
-                            menu: 'playerAttributes'
-                        }
-                    }
-                },
-                {
-                    opcode: 'setPlayerPos',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setPlayerPos',
-                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z]',
-                        description: 'Teleport the paired player to a dimension and position'
-                    }),
-                    arguments: {
-                        DIMENSION: {
-                            type: ArgumentType.STRING,
-                            menu: 'dimensions',
-                            defaultValue: BuildDimension.OVERWORLD
-                        },
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
-                    opcode: 'setPlayerPose',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setPlayerPose',
-                        default: 'move player to [DIMENSION] x :[X]  y :[Y]  z :[Z] yaw:[YAW] pitch:[PITCH]',
-                        description: 'Teleport the paired player to a dimension, position and orientation'
-                    }),
-                    arguments: {
-                        DIMENSION: {
-                            type: ArgumentType.STRING,
-                            menu: 'dimensions',
-                            defaultValue: BuildDimension.OVERWORLD
-                        },
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        YAW: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        PITCH: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
-                {
-                    opcode: 'setPlayerXYZ',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setPlayerXYZ',
-                        default: 'move player to x :[X]  y :[Y]  z :[Z]',
-                        description: 'Teleport the paired player within the player\'s current dimension'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 }
             ],
@@ -1499,7 +1513,7 @@ class Scratch3McRemoteBlocks {
                         value: 'world'},
                         {text: formatMessage({
                             id: 'mcremote.particleReceiver.self',
-                            default: 'paired player only',
+                            default: 'only me',
                             description: 'Send particles only to the paired player'
                         }),
                         value: 'self'}
@@ -1514,7 +1528,7 @@ class Scratch3McRemoteBlocks {
                     acceptReporters: false,
                     items: [
                         menuItem('mcremote.soundReceiver.world', 'nearby players', 'world'),
-                        menuItem('mcremote.soundReceiver.self', 'paired player only', 'self')
+                        menuItem('mcremote.soundReceiver.self', 'only me', 'self')
                     ]
                 },
                 directionAxes: {
@@ -1920,6 +1934,9 @@ class Scratch3McRemoteBlocks {
                 {y_sea: result.y_sea} :
                 null;
         this._helloInfo = result && typeof result === 'object' ? {
+            ...(result.server && typeof result.server.name === 'string' &&
+                typeof result.server.version === 'string' ?
+                {server: {name: result.server.name, version: result.server.version}} : {}),
             protocol: result.protocol || '',
             mc_version: result.mc_version || '',
             catalogHash: typeof result.catalogHash === 'string' ? result.catalogHash.toLowerCase() : null,
@@ -2004,7 +2021,7 @@ class Scratch3McRemoteBlocks {
     _connectionDisabledError () {
         const error = new Error(formatMessage({
             id: 'mcremote.connectionDisabled',
-            default: 'This page is a showcase with the Minecraft connection turned off.',
+            default: 'This page is a showcase with the server connection turned off.',
             description: 'Shown when McRemote blocks run on a deployment that ships without connectivity'
         }));
         error.reason = 'connection_disabled';
@@ -2023,6 +2040,11 @@ class Scratch3McRemoteBlocks {
             reason: error && error.reason
         };
         if (error && error.origin) summary.origin = error.origin;
+        if (error && typeof error.method === 'string') summary.method = error.method;
+        if (error && error.data) {
+            const data = errorDetails(error.data);
+            if (Object.keys(data).length) summary.data = data;
+        }
         for (const key of ['completionUnknown', 'notSent', 'epoch', 'deliveryFailure', 'localReason']) {
             if (error && typeof error[key] !== 'undefined') summary[key] = error[key];
         }
@@ -2059,6 +2081,29 @@ class Scratch3McRemoteBlocks {
             this._setConnectionStatus(ConnectionStatus.ERROR, error);
             return Promise.reject(error);
         }
+        if (!options.reconnect) {
+            const target = this._resolveConnectionTarget(sandbox);
+            if (this._connectionTarget && target.sandboxRoute !== this._connectionTarget.sandboxRoute) {
+                this._targetGeneration++;
+                this._connectionAttempt++;
+                this._hasConnected = false;
+                this._openPromise = null;
+                this._reconnectPromise = null;
+                this._lastSuccessfulHello = null;
+                this._confirmedBuild = null;
+                this._pairingInProgress = false;
+                this._setPairCode('');
+                const socket = this._socket;
+                const error = new McRemoteCompletionUnknownError('McRemote connection target changed',
+                    this._connectionEpoch);
+                error.localReason = 'connection_target_changed';
+                const cancelDial = this._cancelDial;
+                this._cancelDial = null;
+                if (cancelDial) cancelDial(error);
+                this._loseConnection(socket, error);
+                if (socket) socket.close();
+            }
+        }
         if (this._openPromise) return this._openPromise;
         if (this._socket && this._socket.readyState === WebSocket.OPEN &&
             this._connectionStatus === ConnectionStatus.CONNECTED) return Promise.resolve();
@@ -2077,7 +2122,10 @@ class Scratch3McRemoteBlocks {
         const opening = this._dial(() => this._authenticate(options));
         this._openPromise = opening;
         const clear = () => {
-            if (this._openPromise === opening) this._openPromise = null;
+            if (this._openPromise === opening) {
+                this._openPromise = null;
+                this._cancelDial = null;
+            }
         };
         opening.then(clear, clear);
         return opening;
@@ -2104,6 +2152,10 @@ class Scratch3McRemoteBlocks {
                 reject(error);
                 socket.close();
             }, Math.min(this._connectionPolicy.connectTimeoutMs, deadline - this._connectionClock.now()));
+            this._cancelDial = error => {
+                this._connectionClock.clearTimeout(timer);
+                reject(error);
+            };
             socket.addEventListener('open', () => {
                 if (socket !== this._socket) return;
                 opened = true;
@@ -2191,6 +2243,16 @@ class Scratch3McRemoteBlocks {
         return timer;
     }
 
+    /**
+     * @param {number} generation target selection owning an asynchronous operation.
+     */
+    _assertTargetGeneration (generation) {
+        if (generation !== this._targetGeneration) {
+            throw Object.assign(new McRemoteNotSentError('McRemote connection target changed', this._connectionEpoch),
+                {localReason: 'connection_target_changed'});
+        }
+    }
+
     /** All pending waits share the connection's last reception clock. */
     _armResponseTimer () {
         this._connectionClock.clearTimeout(this._responseTimer);
@@ -2223,35 +2285,41 @@ class Scratch3McRemoteBlocks {
             return Promise.reject(new McRemoteNotSentError('McRemote automatic reconnect is disabled',
                 this._connectionEpoch));
         }
+        const generation = this._targetGeneration;
         const startedAt = this._connectionClock.now();
         let delay = this._connectionPolicy.reconnectInitialDelayMs;
-        const attempt = () => this._open(void 0, {reconnect: true}).catch(error => {
-            if (this._isAuthError(error) || error.reason === 'protocol_mismatch' ||
+        const attempt = () => {
+            this._assertTargetGeneration(generation);
+            return this._open(void 0, {reconnect: true}).catch(error => {
+                this._assertTargetGeneration(generation);
+                if (this._isAuthError(error) || error.reason === 'protocol_mismatch' ||
                 error.reason === 'bridge_transport_incompatible' || error.reason === 'connection_disabled' ||
                 error.origin === 'server') {
-                const failure = new McRemoteNotSentError('McRemote reconnect requires attention',
-                    this._connectionEpoch);
-                failure.localReason = this._isAuthError(error) ? 'pairing_required' : error.reason;
-                failure.cause = error;
-                throw failure;
-            }
-            const remaining = this._connectionPolicy.reconnectTimeoutMs -
+                    const failure = new McRemoteNotSentError('McRemote reconnect requires attention',
+                        this._connectionEpoch);
+                    failure.localReason = this._isAuthError(error) ? 'pairing_required' : error.reason;
+                    failure.cause = error;
+                    throw failure;
+                }
+                const remaining = this._connectionPolicy.reconnectTimeoutMs -
                 (this._connectionClock.now() - startedAt);
-            if (remaining <= 0) {
-                throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
-                    {localReason: 'connection_failed'});
-            }
-            const waiting = Math.min(remaining, this._connectionPolicy.reconnectMaxDelayMs,
-                delay * (0.5 + this._connectionClock.random()));
-            delay = Math.min(this._connectionPolicy.reconnectMaxDelayMs, delay * 2);
-            return this._delay(waiting).then(() => {
-                if (this._connectionClock.now() - startedAt >= this._connectionPolicy.reconnectTimeoutMs) {
+                if (remaining <= 0) {
                     throw Object.assign(new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
                         {localReason: 'connection_failed'});
                 }
-                return attempt();
+                const waiting = Math.min(remaining, this._connectionPolicy.reconnectMaxDelayMs,
+                    delay * (0.5 + this._connectionClock.random()));
+                delay = Math.min(this._connectionPolicy.reconnectMaxDelayMs, delay * 2);
+                return this._delay(waiting).then(() => {
+                    if (this._connectionClock.now() - startedAt >= this._connectionPolicy.reconnectTimeoutMs) {
+                        throw Object.assign(
+                            new McRemoteNotSentError('McRemote reconnect failed', this._connectionEpoch),
+                            {localReason: 'connection_failed'});
+                    }
+                    return attempt();
+                });
             });
-        });
+        };
         const reconnecting = attempt();
         this._reconnectPromise = reconnecting;
         const clear = () => {
@@ -2380,9 +2448,11 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     async _authenticate (options = {}) {
+        const generation = this._targetGeneration;
         try {
             return await this._hello(options).then(() => {});
         } catch (error) {
+            this._assertTargetGeneration(generation);
             if (!this._isAuthError(error)) throw error;
             this._clearSessionToken();
             let authError = error;
@@ -2399,11 +2469,15 @@ class Scratch3McRemoteBlocks {
             this._pairingInProgress = true;
             try {
                 await this._pair();
+                this._assertTargetGeneration(generation);
                 await this._hello(options);
+                this._assertTargetGeneration(generation);
                 this._firePairingComplete();
             } finally {
-                this._pairingInProgress = false;
-                this._setPairCode('');
+                if (generation === this._targetGeneration) {
+                    this._pairingInProgress = false;
+                    this._setPairCode('');
+                }
             }
         }
     }
@@ -2414,14 +2488,16 @@ class Scratch3McRemoteBlocks {
      * @private
      */
     _pair () {
+        const generation = this._targetGeneration;
         return this._request('auth.pairBegin', {
             token_type: 'session',
             client: this._clientInfo()
         }).then(result => {
+            this._assertTargetGeneration(generation);
             const pairingId = result && result.pairing_id;
             const expiresIn = Number(result && result.expires_in) || 120;
             this._setPairCode(result && result.pair_code);
-            return this._pollPair(pairingId, this._connectionClock.now() + (expiresIn * 1000));
+            return this._pollPair(pairingId, this._connectionClock.now() + (expiresIn * 1000), generation);
         });
     }
 
@@ -2429,10 +2505,12 @@ class Scratch3McRemoteBlocks {
      * Poll until the pairing completes or expires.
      * @param {string} pairingId - Wire correlation id from auth.pairBegin.
      * @param {number} expiresAt - Unix time in ms when polling should stop.
+     * @param {number} generation target selection owning this pair flow.
      * @returns {Promise} resolves once the token has been saved.
      * @private
      */
-    async _pollPair (pairingId, expiresAt) {
+    async _pollPair (pairingId, expiresAt, generation = this._targetGeneration) {
+        this._assertTargetGeneration(generation);
         if (this._connectionClock.now() >= expiresAt) {
             const error = new Error('pair_expired');
             error.origin = 'client';
@@ -2447,7 +2525,7 @@ class Scratch3McRemoteBlocks {
                 const remaining = expiresAt - this._connectionClock.now();
                 if (remaining > 0) await this._delay(Math.min(this._pairPollIntervalMs, remaining));
             }
-            return this._pollPair(pairingId, expiresAt);
+            return this._pollPair(pairingId, expiresAt, generation);
         }
         let result;
         try {
@@ -2457,15 +2535,16 @@ class Scratch3McRemoteBlocks {
                 throw error;
             }
             await this._delay(this._pairPollIntervalMs);
-            return this._pollPair(pairingId, expiresAt);
+            return this._pollPair(pairingId, expiresAt, generation);
         }
+        this._assertTargetGeneration(generation);
         if (result && result.status === 'ok' && result.token) {
             this._saveSessionToken(result.token);
             this._setPairCode('');
             return;
         }
         await this._delay(this._pairPollIntervalMs);
-        return this._pollPair(pairingId, expiresAt);
+        return this._pollPair(pairingId, expiresAt, generation);
     }
 
     /**
@@ -2572,7 +2651,9 @@ class Scratch3McRemoteBlocks {
      */
     _sessionTokenStorageKey () {
         const sandboxRoute = this._currentConnectionTarget().sandboxRoute;
-        return `${SESSION_TOKEN_STORAGE_KEY_PREFIX}${encodeURIComponent(sandboxRoute)}`;
+        const prefix = this._runtimeConfig().targetRouting === 'id' ?
+            'mcremote.sessionToken.v2:' : SESSION_TOKEN_STORAGE_KEY_PREFIX;
+        return `${prefix}${encodeURIComponent(sandboxRoute)}`;
     }
 
     /**
@@ -2661,6 +2742,7 @@ class Scratch3McRemoteBlocks {
             error.code = msg.error.code;
             error.data = msg.error.data;
             error.origin = 'server';
+            error.method = pending.method;
             if (msg.error.data) error.reason = msg.error.data.reason;
             if (this._isAuthError(error)) this._clearSessionToken();
             if (pending.method === 'hello' && !this._isAuthError(error)) {
@@ -3219,6 +3301,7 @@ class Scratch3McRemoteBlocks {
         if (isDeliveryFailure && this._buildDeliveryNoticeShown) return Promise.resolve();
         if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
         log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
+        error.method = error.method || method;
         this._lastError = this._errorInfo(error);
         this._emitObservation();
         if (this.runtime && typeof this.runtime.emit === 'function') {

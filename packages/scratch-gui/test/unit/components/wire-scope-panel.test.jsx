@@ -130,7 +130,7 @@ describe('WireScopePanel', () => {
 
     test.each([
         ['not_connected', 'まず「接続する」ブロックを実行してください。'],
-        ['connection_disabled', 'このショーケースページでは Minecraft の操作が無効です。'],
+        ['connection_disabled', 'このショーケースページでは 接続先の操作が無効です。'],
         ['token_expired', '「接続する」ブロックを実行し、もう一度ペアリングしてください。'],
         ['protocol_mismatch', 'Scratch と mc-remote サーバーのバージョンを揃えてください。'],
         ['unknown', '接続を確認して、もう一度試してください。']

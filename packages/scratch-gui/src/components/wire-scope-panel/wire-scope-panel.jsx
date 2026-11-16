@@ -1,3 +1,4 @@
+import ErrorMessage from './mcremote-error-message';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
@@ -111,7 +112,7 @@ const messages = defineMessages({
     },
     actionConnectionDisabled: {
         id: 'gui.mcremote.wireScope.actionConnectionDisabled',
-        defaultMessage: 'Minecraft commands are turned off on this showcase page.',
+        defaultMessage: 'Server commands are turned off on this showcase page.',
         description: 'Action shown when a deployment intentionally disables McRemote connectivity'
     },
     actionProtocolMismatch: {
@@ -213,7 +214,10 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
     const statusText = intl.formatMessage(currentStatus.message);
     const reconnect = reconnectInfo(state.status, routeOf(connectionTarget), routeOf(state.connectionTarget));
     const reconnectText = intl.formatMessage(reconnect.message);
-    const nextAction = actionMessage(state.lastError);
+    const diagnosticError = state.lastError && (state.lastError.code === -32601 ||
+        ['method_not_found', 'out_of_bounds', 'build_range_exceeded', 'block_count_limit_exceeded']
+            .includes(state.lastError.reason));
+    const nextAction = diagnosticError ? null : actionMessage(state.lastError);
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
     const observationLabel = `${state.sourceKind === 'scratch' ? 'Scratch' : EMPTY} · ${state.displayAlias}`;
 
@@ -285,6 +289,24 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
                         <span><FormattedMessage {...messages.reconnectStatus} /></span>
                         <strong>{reconnectText}</strong>
                     </div>
+                    {state.hello && state.hello.server ? (
+                        <div className={styles.detailRow}>
+                            <span>
+                                <FormattedMessage
+                                    id="gui.mcremote.wireScope.server"
+                                    defaultMessage="Server implementation / version"
+                                    description="The identity advertised by the connected server"
+                                />
+                            </span>
+                            <strong>{state.hello.server.name} / {state.hello.server.version}</strong>
+                        </div>
+                    ) : null}
+                    {diagnosticError ? (
+                        <ErrorMessage
+                            error={state.lastError}
+                            server={state.hello && state.hello.server}
+                        />
+                    ) : null}
                     {state.pairCode ? (
                         <div className={styles.detailRow}>
                             <span><FormattedMessage {...messages.pairCode} /></span>
@@ -335,6 +357,7 @@ WireScopePanel.propTypes = {
             sandboxRoute: PropTypes.string,
             label: PropTypes.string
         }),
+        hello: PropTypes.shape({server: PropTypes.shape({name: PropTypes.string, version: PropTypes.string})}),
         pairCode: PropTypes.string,
         pairCommand: PropTypes.string,
         lastError: PropTypes.shape({

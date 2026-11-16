@@ -8,7 +8,7 @@ body {font: 17px/1.7 system-ui, sans-serif; color: #243439; background: #f3f8f6;
 main {max-width: 640px; padding: 32px 24px; margin: auto;}
 h1 {font-size: 1.6em;}
 label {display: block; margin: 18px 0 4px;}
-fieldset {border: 0; padding: 0; margin: 18px 0;}
+fieldset {border: 1px solid #8ca9a1; padding: 16px; margin: 18px 0; border-radius: 8px;}
 legend {font-weight: 700;}
 label.choice {margin: 6px 0;}
 label.choice input {width: auto; margin-right: 8px;}
@@ -31,17 +31,10 @@ a {color: #006e58;}
 <h1>LANの中でマイクラリモコンScratchを始める</h1>
 <p>マイクラリモコンするときは、そのマイクラ世界にプレイヤーとして参加している必要があります。サーバーの準備方法については、ホームページ（<a href="https://mc-remote.com/#quickstart" target="_blank" rel="noopener">mc-remote.com</a>）のクイックスタートへ。</p>
 <form id="target">
-<fieldset>
-<legend>マイクラサーバーは、どのPCで動いていますか？</legend>
-<label class="choice"><input type="radio" name="location" value="this" checked>このPC</label>
-<label class="choice"><input type="radio" name="location" value="lan">LAN内の別のPC</label>
-</fieldset>
-<label for="host">マイクラ／マイクラリモコンの接続先</label>
-<input id="host" name="host" required autocomplete="off" value="127.0.0.1">
-<p>別のPCで動かす場合は、そのPCのIPアドレスまたはホスト名を入力します。</p>
-<label for="port">マイクラリモコンのポート</label>
-<input id="port" name="port" type="number" min="1" max="65535" required value="25575">
-<p>マイクラに参加するときのポート25565とは別です。マイクラリモコンではデフォルトが25575です。</p>
+<div id="target-list"></div>
+<button id="add-target" type="button" disabled>接続先を追加</button>
+<p>このPCで動かす場合のホスト名は127.0.0.1です。別のPCの場合は、そのPCのホスト名かIPアドレスを指定します。</p>
+<p>MinecraftのMcRemoteは通常25575、Unity箱庭は通常25585です。ゲームに参加するときのポートとは別です。</p>
 <div class="actions">
 <button id="save-target" type="submit" disabled>設定を保存する</button>
 <button id="open-scratch" type="button" disabled>改造版のScratchを開く</button>
@@ -53,7 +46,7 @@ a {color: #006e58;}
 <img src="/guide-images/extension-card.png" alt="拡張機能「mc-remote／マイクラリモコン」のパネル" width="314" height="363">
 <img src="/guide-images/connect-block.png" alt="mc-remoteの「接続する」ブロック" width="226" height="185">
 </div>
-<p>まず、拡張機能「mc-remote／マイクラリモコン」の「接続する」ブロックを実行します。WireScope miniにペアリングコマンドが表示されるので、マイクラのチャットコマンドとしてコピペして実行します。</p>
+<p>まず、拡張機能「mc-remote／マイクラリモコン」の「接続する」ブロックを実行します。WireScope miniにペアリングコマンドが表示されるので、接続先のチャットで実行します。</p>
 <p>起動したときのターミナル画面は閉じてはいけません。終了するには、その画面でCtrl+Cを押します。</p>
 <p><a href="/identity.json" target="_blank">配布物の情報</a></p>
 </main>

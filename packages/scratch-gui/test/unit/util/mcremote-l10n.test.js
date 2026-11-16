@@ -12,12 +12,14 @@ describe('McRemote Japanese localization', () => {
             'gui.menuBar.mcremoteConnection': '接続先',
             'gui.mcremote.blockPicker.statusCurrent': '取得済み — {version} · {source} · {hash}',
             'gui.mcremote.blockPicker.statusNotAcquired':
-                '未取得 — Minecraft に接続するとブロックを選べます。',
+                '未取得 — 接続先につなぐとブロックを選べます。',
             'gui.mcremote.blockPicker.statusUnavailable':
                 '利用不可 — 接続先からカタログを取得できませんでした。',
             'gui.mcremote.wireScope.statusPairing': 'ペア待ち',
             'mcremote.connect': '接続する',
-            'mcremote.connectionDisabled': 'このページでは Minecraft への接続が無効です。',
+            'mcremote.particleReceiver.self': '自分だけ',
+            'mcremote.soundReceiver.self': '自分だけ',
+            'mcremote.connectionDisabled': 'このページでは 接続先への接続が無効です。',
             'mcremote.setBuildMode': '建築モードを [MODE] にする（TRACEの待ち時間 [TRACE_DELAY] 秒）',
             'mcremote.flushBuildCommands': '送ったブロック設置が終わるまで待つ',
             'mcremote.setBuildOrigin': '建築原点 (x, y, z) を[X],  0,  [Z]にする',
@@ -88,6 +90,8 @@ describe('McRemote Japanese localization', () => {
             'gui.menuBar.mcremoteConnection': 'せつぞくさき',
             'gui.mcremote.wireScope.statusPairing': 'ペアリングまち',
             'mcremote.connect': 'せつぞくする',
+            'mcremote.particleReceiver.self': 'じぶんだけ',
+            'mcremote.soundReceiver.self': 'じぶんだけ',
             'mcremote.setDimension': 'けんちくするじげんを [DIMENSION] にする',
             'mcremote.setBuildMode':
                 'けんちくモードを [MODE] にする（TRACEのまちじかん [TRACE_DELAY] びょう）',
