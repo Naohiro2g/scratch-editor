@@ -154,6 +154,22 @@ describe('Menu bar settings', () => {
         expect(await (await findByText('Esperanto', scope.menuBar)).isDisplayed()).toBe(true);
     });
 
+    test('project title width stays 240px while secondary controls hide on narrow layouts', async () => {
+        await loadUri(uri);
+        const title = await findByXpath('//input[contains(@class, "project-title-input_title-field")]');
+        for (const width of [1280, 1024, 800]) {
+            await driver.manage().window()
+                .setSize(width, 960);
+            expect((await title.getSize()).width).toBe(240);
+            if (width <= 1024) {
+                const page = await findByXpath('//div[contains(@class, "menu-bar_community-button-wrapper")]');
+                const account = await findByXpath('//div[contains(@class, "menu-bar_account-controls")]');
+                expect(await page.isDisplayed()).toBe(false);
+                expect(await account.isDisplayed()).toBe(false);
+            }
+        }
+    });
+
     test('Menu labels hidden when width is equal to 1024', async () => {
         await loadUri(uri);
         await driver.manage()
