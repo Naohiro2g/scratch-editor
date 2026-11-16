@@ -618,6 +618,31 @@ class Scratch3McRemoteBlocks {
                         description: 'Wait for earlier block placement commands on this connection to finish'
                     })
                 },
+                {
+                    opcode: 'isMcRemoteError',
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'mcremote.isMcRemoteError',
+                        default: '[VALUE] is a mc-remote error',
+                        description: 'Check the exact reserved McRemote ErrorText grammar'
+                    }),
+                    arguments: {
+                        VALUE: {type: ArgumentType.STRING, defaultValue: makeErrorText('unknown_block')}
+                    }
+                },
+                {
+                    opcode: 'catalogToList',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.catalogToList',
+                        default: 'put catalog [KIND] in [LIST]',
+                        description: 'Replace a selected Scratch list with IDs from the current server catalog'
+                    }),
+                    arguments: {
+                        KIND: {type: ArgumentType.STRING, menu: 'catalogKinds', defaultValue: 'block'},
+                        LIST: {type: ArgumentType.LIST, defaultValue: 'catalog list'}
+                    }
+                },
                 '---',
                 {
                     opcode: 'postToChat',
@@ -662,6 +687,7 @@ class Scratch3McRemoteBlocks {
                         MAX_Y: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 },
+                '---',
                 {
                     opcode: 'setBlock',
                     blockType: BlockType.COMMAND,
@@ -734,19 +760,6 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
-                    opcode: 'catalogToList',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.catalogToList',
-                        default: 'put catalog [KIND] in [LIST]',
-                        description: 'Replace a selected Scratch list with IDs from the current server catalog'
-                    }),
-                    arguments: {
-                        KIND: {type: ArgumentType.STRING, menu: 'catalogKinds', defaultValue: 'block'},
-                        LIST: {type: ArgumentType.LIST, defaultValue: 'catalog list'}
-                    }
-                },
-                {
                     opcode: 'blockInfoId',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
@@ -796,33 +809,7 @@ class Scratch3McRemoteBlocks {
                         PROPERTY: {type: ArgumentType.STRING, defaultValue: 'axis'}
                     }
                 },
-                {
-                    opcode: 'isMcRemoteError',
-                    blockType: BlockType.BOOLEAN,
-                    text: formatMessage({
-                        id: 'mcremote.isMcRemoteError',
-                        default: '[VALUE] is a mc-remote error',
-                        description: 'Check the exact reserved McRemote ErrorText grammar'
-                    }),
-                    arguments: {
-                        VALUE: {type: ArgumentType.STRING, defaultValue: makeErrorText('unknown_block')}
-                    }
-                },
                 '---',
-                {
-                    opcode: 'setPlayerDirection',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.setPlayerDirection',
-                        default: 'set player direction to x[X]  y[Y]  z[Z]',
-                        description: 'Set the paired player direction and validate the post-read direction'
-                    }),
-                    arguments: {
-                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
-                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
-                    }
-                },
                 {
                     opcode: 'setPlayerXYZ',
                     blockType: BlockType.COMMAND,
@@ -851,6 +838,20 @@ class Scratch3McRemoteBlocks {
                             menu: 'dimensions',
                             defaultValue: BuildDimension.OVERWORLD
                         },
+                        X: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Y: {type: ArgumentType.NUMBER, defaultValue: 0},
+                        Z: {type: ArgumentType.NUMBER, defaultValue: 0}
+                    }
+                },
+                {
+                    opcode: 'setPlayerDirection',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.setPlayerDirection',
+                        default: 'set player direction to x[X]  y[Y]  z[Z]',
+                        description: 'Set the paired player direction and validate the post-read direction'
+                    }),
+                    arguments: {
                         X: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Y: {type: ArgumentType.NUMBER, defaultValue: 0},
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
@@ -944,6 +945,30 @@ class Scratch3McRemoteBlocks {
                     }
                 },
                 {
+                    opcode: 'entityInfo',
+                    blockType: BlockType.REPORTER,
+                    text: formatMessage({
+                        id: 'mcremote.entityInfo',
+                        default: '[PROPERTY] of entity information [ENTITY_INFO]',
+                        description: 'Read one nearby entity snapshot property without network access'
+                    }),
+                    arguments: {
+                        PROPERTY: {type: ArgumentType.STRING, menu: 'entityProperties', defaultValue: 'handle'},
+                        ENTITY_INFO: {type: ArgumentType.STRING, defaultValue: ''}
+                    }
+                },
+                {
+                    opcode: 'removeEntity',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'mcremote.removeEntity',
+                        default: 'remove entity [HANDLE]',
+                        description: 'Remove one entity and invalidate its connection-scoped handle'
+                    }),
+                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
+                },
+                '---',
+                {
                     opcode: 'setEntityPose',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -976,29 +1001,7 @@ class Scratch3McRemoteBlocks {
                         Z: {type: ArgumentType.NUMBER, defaultValue: 0}
                     }
                 },
-                {
-                    opcode: 'removeEntity',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'mcremote.removeEntity',
-                        default: 'remove entity [HANDLE]',
-                        description: 'Remove one entity and invalidate its connection-scoped handle'
-                    }),
-                    arguments: {HANDLE: {type: ArgumentType.STRING, defaultValue: 'mcr_eh_...'}}
-                },
-                {
-                    opcode: 'entityInfo',
-                    blockType: BlockType.REPORTER,
-                    text: formatMessage({
-                        id: 'mcremote.entityInfo',
-                        default: '[PROPERTY] of entity information [ENTITY_INFO]',
-                        description: 'Read one nearby entity snapshot property without network access'
-                    }),
-                    arguments: {
-                        PROPERTY: {type: ArgumentType.STRING, menu: 'entityProperties', defaultValue: 'handle'},
-                        ENTITY_INFO: {type: ArgumentType.STRING, defaultValue: ''}
-                    }
-                },
+                '---',
                 {
                     opcode: 'getEntityPose',
                     blockType: BlockType.REPORTER,
@@ -1510,7 +1513,7 @@ class Scratch3McRemoteBlocks {
                         value: 'world'},
                         {text: formatMessage({
                             id: 'mcremote.particleReceiver.self',
-                            default: 'paired player only',
+                            default: 'only me',
                             description: 'Send particles only to the paired player'
                         }),
                         value: 'self'}
@@ -1525,7 +1528,7 @@ class Scratch3McRemoteBlocks {
                     acceptReporters: false,
                     items: [
                         menuItem('mcremote.soundReceiver.world', 'nearby players', 'world'),
-                        menuItem('mcremote.soundReceiver.self', 'paired player only', 'self')
+                        menuItem('mcremote.soundReceiver.self', 'only me', 'self')
                     ]
                 },
                 directionAxes: {

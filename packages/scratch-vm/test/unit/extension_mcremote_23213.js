@@ -22,7 +22,7 @@ test('palette keeps topic operations and their reporters together in the agreed 
     const opcodes = make().getInfo().blocks.filter(block => typeof block === 'object' &&
         !block.hideFromPalette).map(block => block.opcode);
     const sequence = ['postToChat', 'getHeight', 'setBlock', 'setBlocks', 'getBlock', 'getBlocks',
-        'setPlayerDirection', 'setPlayerXYZ', 'playerAttribute', 'playerDirection',
+        'setPlayerXYZ', 'setPlayerDirection', 'playerAttribute', 'playerDirection',
         'spawnEntity', 'entityDirection', 'setSign', 'getSign', 'spawnParticle',
         'playSound', 'strikeLightning', 'whenPickaxePoke'];
     for (let i = 1; i < sequence.length; i++) {
@@ -114,4 +114,33 @@ test('a serialized legacy project loads and executes all three hidden pairing bl
     vm.runtime._step();
     t.equal(stage.variables.code.value, '123-456');
     t.equal(stage.variables.command.value, '/mcremote pair 123-456');
+});
+
+
+test('world utilities and entity/player groups follow the agreed reading order', t => {
+    const blocks = make().getInfo().blocks;
+    const index = opcode => blocks.findIndex(block => block && block.opcode === opcode);
+    t.equal(blocks[index('getHeightBelow') + 1], '---');
+    t.equal(blocks[index('flushBuildCommands') + 1].opcode, 'isMcRemoteError');
+    t.equal(blocks[index('isMcRemoteError') + 1].opcode, 'catalogToList');
+    const opcodes = blocks.filter(block => typeof block === 'object' && !block.hideFromPalette)
+        .map(block => block.opcode);
+    t.same(opcodes.slice(opcodes.indexOf('spawnEntity'), opcodes.indexOf('setSign')), [
+        'spawnEntity', 'getNearbyEntities', 'entityInfo', 'removeEntity',
+        'setEntityPose', 'setEntityDirection', 'getEntityPose', 'entityPoseInfo', 'entityDirection'
+    ]);
+    t.same(opcodes.slice(opcodes.indexOf('setPlayerXYZ'), opcodes.indexOf('spawnEntity')), [
+        'setPlayerXYZ', 'setPlayerPos', 'setPlayerDirection', 'setPlayerPose', 'playerAttribute', 'playerDirection'
+    ]);
+    t.end();
+});
+
+
+test('receiver labels describe the learner while preserving protocol values', t => {
+    const menus = make().getInfo().menus;
+    for (const name of ['particleReceivers', 'soundReceivers']) {
+        t.same(menus[name].items.map(item => item.value), ['world', 'self']);
+        t.equal(menus[name].items[1].text, 'only me');
+    }
+    t.end();
 });
