@@ -112,7 +112,7 @@ const renderGUI = function (appTarget) {
             /> :
             <WrappedGui
                 canEditTitle
-                backpackVisible
+                backpackVisible={Boolean(backpackHost)}
                 showComingSoon
                 backpackHost={backpackHost}
                 canSave={false}
