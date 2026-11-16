@@ -1,10 +1,10 @@
-import {MetricsManager, Scrollbar, utils} from 'blockly/core';
+import {MetricsManager, Scrollbar, Toolbox, utils} from 'blockly/core';
 
 import configurePaletteVisibility from '../../../src/lib/configure-palette-visibility';
 
-const panel = width => ({getWidth: () => width, position: jest.fn(), setVisible: jest.fn(), getFocusableElement: () => document.createElement('div')});
+const panel = width => ({getWidth: () => width, position: jest.fn(), setVisible: jest.fn(), getFocusableElement: () => document.createElement('div'), getClientRect: jest.fn()});
 
-test('collapsing releases toolbox and flyout width and stays collapsed across toolbox updates', () => {
+test('collapsing preserves the category column and releases flyout width and stays collapsed across toolbox updates', () => {
     const toolbox = panel(60);
     const flyout = panel(300);
     const workspace = {
@@ -20,9 +20,9 @@ test('collapsing releases toolbox and flyout width and stays collapsed across to
     const flyoutVisibility = flyout.setVisible;
     const setCollapsed = configurePaletteVisibility(workspace);
     setCollapsed(true, false);
-    expect(toolbox.getWidth()).toBe(0);
+    expect(toolbox.getWidth()).toBe(60);
     expect(flyout.getWidth()).toBe(0);
-    expect(toolboxVisibility).toHaveBeenLastCalledWith(false);
+    expect(toolboxVisibility).not.toHaveBeenCalled();
     expect(flyoutVisibility).toHaveBeenLastCalledWith(false);
     flyout.setVisible(true);
     expect(flyoutVisibility).toHaveBeenLastCalledWith(false);
@@ -30,7 +30,7 @@ test('collapsing releases toolbox and flyout width and stays collapsed across to
     setCollapsed(false, false);
     expect(toolbox.getWidth()).toBe(60);
     expect(flyout.getWidth()).toBe(300);
-    expect(toolboxVisibility).toHaveBeenLastCalledWith(true);
+    expect(toolboxVisibility).not.toHaveBeenCalled();
     expect(flyoutVisibility).toHaveBeenLastCalledWith(true);
     expect(workspace.resize).toHaveBeenCalledTimes(2);
 });
@@ -68,8 +68,9 @@ test('closing slides before releasing width; reversal cancels stale closing comp
     const toggle = configurePaletteVisibility(workspace);
     toggle(true);
     expect(toolbox.getWidth()).toBe(60);
-    expect(elements[0].animate.mock.calls[0][0][1].translate).toBe('-360px');
-    const closing = elements[0].animate.mock.results[0].value;
+    expect(elements[0].animate).not.toHaveBeenCalled();
+    expect(elements[1].animate.mock.calls[0][0][1].translate).toBe('-300px');
+    const closing = elements[1].animate.mock.results[0].value;
     toggle(false);
     expect(closing.cancel).toHaveBeenCalled();
     finished.forEach(resolve => resolve());
@@ -77,10 +78,10 @@ test('closing slides before releasing width; reversal cancels stale closing comp
     await Promise.resolve();
     expect(toolbox.getWidth()).toBe(60);
     toggle(true);
-    finished.slice(-2).forEach(resolve => resolve());
+    finished.slice(-1).forEach(resolve => resolve());
     await Promise.resolve();
     await Promise.resolve();
-    expect(toolbox.getWidth()).toBe(0);
+    expect(toolbox.getWidth()).toBe(60);
     toggle(false);
     expect(toolbox.getWidth()).toBe(60);
     toggle.dispose();
@@ -102,7 +103,7 @@ test('reduced motion applies visibility immediately', () => {
     };
     const toggle = configurePaletteVisibility(workspace);
     toggle(true);
-    expect(toolbox.getWidth()).toBe(0);
+    expect(toolbox.getWidth()).toBe(60);
     expect(flyout.getWidth()).toBe(0);
     expect(workspace.resize).toHaveBeenCalledTimes(1);
 });
@@ -203,11 +204,43 @@ test.each([
     // The user can move scripts into the space freed by the collapsed palette.
     toggle(true, false);
     workspace.scrollX = -contentLeft * workspace.scale;
-    const movedX = workspace.scrollX;
+    const movedX = workspace.scrollX + workspace.getMetrics().absoluteLeft;
     toggle(false, false);
     expect(workspace.scrollX + workspace.getMetrics().absoluteLeft).toBeCloseTo(movedX);
     const pixels = metrics.getScrollMetrics();
     const coordinates = metrics.getScrollMetrics(true);
     expect(coordinates.left).toBeCloseTo(pixels.left / workspace.scale);
     expect(coordinates.width).toBeCloseTo(pixels.width / workspace.scale);
+});
+
+
+test('the visible category column remains a deletion target while the flyout is closed', () => {
+    const column = document.createElement('div');
+    column.getBoundingClientRect = () => ({left: 0, top: 0, width: 60, height: 800});
+    const openRegion = {name: 'flyout deletion region'};
+    const toolbox = Object.assign(Object.create(Toolbox.prototype), panel(60), {
+        HtmlDiv: column,
+        isVisible_: true,
+        toolboxPosition: utils.toolbox.Position.LEFT,
+        getClientRect: () => openRegion
+    });
+    const flyout = panel(300);
+    const workspace = {
+        scrollX: 0,
+        scrollY: 0,
+        getMetricsManager: () => ({getScrollMetrics: jest.fn()}),
+        getMetrics: () => ({absoluteLeft: toolbox.getWidth() + flyout.getWidth(), absoluteTop: 0}),
+        getToolbox: () => toolbox,
+        getFlyout: () => flyout,
+        resize: jest.fn()
+    };
+    const toggle = configurePaletteVisibility(workspace);
+    toggle(true, false);
+    const region = toolbox.getClientRect();
+    expect(region.contains(30, 400)).toBe(true);
+    expect(region.contains(70, 400)).toBe(false);
+    expect(toolbox.wouldDelete({isDeletable: () => true, dispose: jest.fn(), setDeleteStyle: jest.fn()})).toBe(true);
+    expect(toolbox.wouldDelete({isDeletable: () => false, dispose: jest.fn(), setDeleteStyle: jest.fn()})).toBe(false);
+    toggle(false, false);
+    expect(toolbox.getClientRect()).toBe(openRegion);
 });

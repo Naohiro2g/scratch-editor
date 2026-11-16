@@ -8,6 +8,7 @@ import VMScratchBlocks from '../lib/blocks';
 import allowNativeBlocklyInputEditingShortcut from '../lib/blockly-input-editing-shortcuts';
 import configureWorkspaceZoom from '../lib/configure-workspace-zoom';
 import configurePaletteVisibility from '../lib/configure-palette-visibility';
+import configurePaletteNavigation from '../lib/configure-palette-navigation';
 import VM from '@scratch/scratch-vm';
 
 import analytics from '../lib/analytics';
@@ -134,6 +135,13 @@ class Blocks extends React.Component {
         configureWorkspaceZoom(this.workspace);
         this.setPaletteCollapsed = configurePaletteVisibility(this.workspace);
         if (this.props.paletteCollapsed) this.setPaletteCollapsed(true, false);
+        this.disposePaletteNavigation = configurePaletteNavigation(this.workspace, {
+            expand: () => {
+                this.setPaletteCollapsed(false);
+                this.props.onPaletteOpen();
+            },
+            toggle: () => this.props.onPaletteToggle()
+        });
         document.addEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.workspace.registerToolboxCategoryCallback(
             'VARIABLE',
@@ -257,6 +265,7 @@ class Blocks extends React.Component {
         }
     }
     componentWillUnmount () {
+        this.disposePaletteNavigation();
         this.setPaletteCollapsed.dispose();
         document.removeEventListener('keydown', allowNativeBlocklyInputEditingShortcut, true);
         this.detachVM();
@@ -677,6 +686,8 @@ class Blocks extends React.Component {
         this.setState({mcRemoteBlockPicker: null});
     }
     handleCategorySelected (categoryId) {
+        this.setPaletteCollapsed(false);
+        this.props.onPaletteOpen();
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
         if (extension && extension.launchPeripheralConnectionFlow) {
             this.handleConnectionModalStart(categoryId);
@@ -856,6 +867,8 @@ Blocks.propTypes = {
     colorMode: PropTypes.oneOf(Object.keys(colorModeMap)),
     toolboxXML: PropTypes.string,
     paletteCollapsed: PropTypes.bool,
+    onPaletteOpen: PropTypes.func,
+    onPaletteToggle: PropTypes.func,
     updateMetrics: PropTypes.func,
     updateToolboxState: PropTypes.func,
     useCatBlocks: PropTypes.bool,
@@ -888,6 +901,8 @@ Blocks.defaultOptions = {
 };
 
 Blocks.defaultProps = {
+    onPaletteOpen: () => {},
+    onPaletteToggle: () => {},
     isVisible: true,
     options: Blocks.defaultOptions,
     colorMode: DEFAULT_MODE

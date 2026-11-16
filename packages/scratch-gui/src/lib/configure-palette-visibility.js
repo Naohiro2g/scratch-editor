@@ -1,3 +1,5 @@
+import {Toolbox} from 'blockly/core';
+
 const DURATION_MS = 180;
 
 /**
@@ -20,7 +22,12 @@ const configurePaletteVisibility = workspace => {
     let collapsed = false;
     let animations = [];
     let generation = 0;
-    const panels = [workspace.getToolbox(), workspace.getFlyout()];
+    const toolbox = workspace.getToolbox();
+    const flyout = workspace.getFlyout();
+    const getClientRect = toolbox.getClientRect;
+    toolbox.getClientRect = function () {
+        return collapsed ? Toolbox.prototype.getClientRect.call(this) : getClientRect.call(this);
+    };
     const configurePanel = panel => {
         const getWidth = panel.getWidth;
         const setVisible = panel.setVisible;
@@ -32,15 +39,14 @@ const configurePaletteVisibility = workspace => {
             setVisible.call(this, visible && !collapsed);
         };
     };
-    panels.forEach(configurePanel);
+    configurePanel(flyout);
     const apply = value => {
         const before = workspace.getMetrics();
         const canvasX = workspace.scrollX + before.absoluteLeft;
         const canvasY = workspace.scrollY + before.absoluteTop;
         collapsed = value;
-        panels.forEach(panel => panel.setVisible(!collapsed));
-        // A hidden toolbox caches zero width. Measure it before converting the canvas offset.
-        panels[0].position();
+        flyout.setVisible(!collapsed);
+        toolbox.position();
         const after = workspace.getMetrics();
         // Blockly adds the palette offset to the canvas translation.
         workspace.scrollX = canvasX - after.absoluteLeft;
@@ -52,11 +58,15 @@ const configurePaletteVisibility = workspace => {
         animations.forEach(animation => animation.cancel());
         animations = [];
     };
+    let targetCollapsed = false;
     const setCollapsed = (value, animate = true) => {
         const immediate = !animate || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!animations.length && value === collapsed) return;
+        if (!immediate && animations.length && value === targetCollapsed) return;
+        targetCollapsed = value;
         const elements = [];
         if (!immediate) {
-            elements.push(panels[0].getFocusableElement(), panels[1].getWorkspace().getParentSvg());
+            elements.push(flyout.getWorkspace().getParentSvg());
         }
         const reversing = animations.length > 0;
         const starts = reversing ? elements.map(element => getComputedStyle(element).translate) : [];
@@ -67,7 +77,7 @@ const configurePaletteVisibility = workspace => {
         }
         if (value === collapsed && !reversing) return;
         if (!value) apply(false);
-        const distance = panels.reduce((width, panel) => width + panel.getWidth(), 0) * (workspace.RTL ? 1 : -1);
+        const distance = flyout.getWidth() * (workspace.RTL ? 1 : -1);
         const currentGeneration = generation;
         animations = elements.map((element, index) => element.animate([
             {translate: reversing ? starts[index] : value ? '0px' : `${distance}px`},
@@ -79,7 +89,10 @@ const configurePaletteVisibility = workspace => {
             if (value) apply(true);
         }, () => {});
     };
-    setCollapsed.dispose = cancel;
+    setCollapsed.dispose = () => {
+        cancel();
+        toolbox.getClientRect = getClientRect;
+    };
     return setCollapsed;
 };
 

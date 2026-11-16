@@ -116,6 +116,7 @@ let isRendererSupported = null;
 const GUIComponent = props => {
     const intl = useIntl();
     const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+    const openPalette = useCallback(() => setPaletteCollapsed(false), []);
     const togglePalette = useCallback(() => setPaletteCollapsed(collapsed => !collapsed), []);
     const {
         accountMenuOptions,
@@ -497,6 +498,8 @@ const GUIComponent = props => {
                                             grow={1}
                                             isVisible={blocksTabVisible}
                                             paletteCollapsed={paletteCollapsed}
+                                            onPaletteOpen={openPalette}
+                                            onPaletteToggle={togglePalette}
                                             options={{
                                                 media: `${basePath}static/${colorModeMap[colorMode].blocksMediaFolder}/`
                                             }}
@@ -506,12 +509,10 @@ const GUIComponent = props => {
                                             colorMode={colorMode}
                                         />
                                     </Box>
-                                    {paletteCollapsed ? null : (
-                                        <ExtensionsButton
-                                            intl={intl}
-                                            onExtensionButtonClick={onExtensionButtonClick}
-                                        />
-                                    )}
+                                    <ExtensionsButton
+                                        intl={intl}
+                                        onExtensionButtonClick={onExtensionButtonClick}
+                                    />
                                     <Box className={styles.watermark}>
                                         <Watermark />
                                     </Box>
