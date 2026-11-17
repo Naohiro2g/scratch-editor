@@ -1,6 +1,6 @@
 # Scratchブロック一覧
 
-公開b10のブロックを画像・入力項目・選択肢から探す、静的ページの試作です。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。[b9](https://mc-remote.com/api/scratch/2320.0.0b9/)と[b10](https://mc-remote.com/api/scratch/2320.0.0b10/)の版別ページを保持します。`site/2321.0.0rc1/`は公開前の候補です。通信protocolが同じでも、Scratchのブロックや動作はreleaseごとに確認します。
+Scratchのブロックを画像・入力項目・選択肢から探す静的ページです。[Scratchブロック一覧](https://mc-remote.com/api/scratch/)は、サーバーやMinecraftへの接続なしで閲覧できます。[b9](https://mc-remote.com/api/scratch/2320.0.0b9/)と[b10](https://mc-remote.com/api/scratch/2320.0.0b10/)の版別ページを保持します。`site/2321.2.0/`は2321.2.0の候補です。通信protocolが同じでも、Scratchのブロックや動作はreleaseごとに確認します。
 
 ## ブロックへ直接リンクする
 
@@ -17,6 +17,8 @@ python3 -m http.server 8640 --bind 127.0.0.1 --directory mc-remote/block-referen
 ```
 
 `site/index.html`を直接ブラウザで開いても表示・検索できます。`site/2320.0.0b9/`、`site/2320.0.0b10/`、`site/2321.0.0rc1/`が版別ページです。JavaScriptを無効にしてもブロック一覧は読めます。
+
+「Unity箱庭で使える」で、候補のUnity箱庭に対応するブロックを絞れます。[分類の根拠と対応範囲](UNITY_2321.2.0_ja.md)を参照してください。
 
 カテゴリーのチェックボックスで、命令・値を返す・イベント・条件を複数選んで絞り込めます。最初はすべて選択されています。カテゴリーはパネルの背景色とラベルでも見分けられます。
 
@@ -35,7 +37,7 @@ npm exec --workspace=@scratch/scratch-gui -- playwright install chromium
 ```sh
 node scripts/build-mcremote-block-reference.cjs \
   --editor-url=http://127.0.0.1:8611/ \
-  --source-ref=v2320.0.0b10
+  --source-ref=<候補のsource-commit>
 ```
 
 `--editor-url`は手元で配信した対象エディターのURLに置き換えます。`--source-ref`の既定値は公開b10のtagです。作業中のVM・翻訳・ブロック描画のソースがそのrefと異なる場合は、生成を止めます。この検査だけで配信中エディターのsourceを証明するものではありません。配信物とrefの対応は配信側で確認してください。
@@ -61,7 +63,7 @@ cp -a mc-remote/block-reference/site/images/. mc-remote/block-reference/site/232
 | `../../scripts/build-mcremote-block-reference.cjs` | 対象エディターから定義と画像を取り出し、ページを生成するスクリプト |
 | `site/index.html` | 現行版の一覧ページ |
 | `site/blocks.json` | 現行版の一覧データ。Scratch release、protocol、source commitを含む |
-| `site/images/` | 56ブロックと組み合わせ例2件のSVG画像 |
+| `site/images/` | 53ブロックと組み合わせ例2件のSVG画像 |
 | `site/<release>/` | releaseごとの一覧ページ、データ、画像 |
 
 画像は実際のScratch BlocksのSVGを使います。CSSと画像参照を埋め込み、エディターを開かずに表示できる形にしています。ブロック名・引数・初期値・選択肢はVMに登録された定義から取り出し、非表示ブロックや区切り線、入力用メニューだけのブロックは一覧に含めません。

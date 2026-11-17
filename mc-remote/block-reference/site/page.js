@@ -1,4 +1,5 @@
 const searchInput = document.getElementById('search');
+const unityOnly = document.getElementById('unity-only');
 const kindInputs = [...document.querySelectorAll('input[name="block-kind"]')];
 const categoryButtons = [...document.querySelectorAll('[data-category]')];
 const sections = [...document.querySelectorAll('[data-section]')];
@@ -20,6 +21,7 @@ const updateFilters = function () {
         for (const card of section.querySelectorAll('.block-card')) {
             const visible = (category === 'all' || category === section.dataset.section) &&
                 kinds.has(card.dataset.kind) &&
+                (!unityOnly.checked || (card.dataset.targets || '').split(' ').includes('unity')) &&
                 terms.every(term => searchText.get(card).includes(term));
             card.hidden = !visible;
             if (visible) sectionCount++;
@@ -38,6 +40,7 @@ const revealLinkedBlock = function (hash = location.hash) {
     const target = document.getElementById(hash.slice(1));
     if (!target || !target.classList.contains('block-card')) return;
     category = 'all';
+    unityOnly.checked = false;
     searchInput.value = '';
     for (const input of kindInputs) input.checked = true;
     updateFilters();
@@ -45,6 +48,7 @@ const revealLinkedBlock = function (hash = location.hash) {
 };
 
 searchInput.addEventListener('input', updateFilters);
+unityOnly.addEventListener('change', updateFilters);
 for (const input of kindInputs) input.addEventListener('change', updateFilters);
 document.getElementById('clear-search').addEventListener('click', () => {
     searchInput.value = '';
