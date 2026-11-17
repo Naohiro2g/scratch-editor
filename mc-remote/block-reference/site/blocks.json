@@ -1,8 +1,8 @@
 {
   "release": "2321.2.0",
   "protocol": "23.2.1",
-  "sourceRef": "c453e652ec",
-  "sourceCommit": "c453e652ecdbd614b19ba1bab7fbc90055be0df8",
+  "sourceRef": "f9e6625f4246529f0e894875ce20dccb21f6fc1c",
+  "sourceCommit": "f9e6625f4246529f0e894875ce20dccb21f6fc1c",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
@@ -24,91 +24,20 @@
       "text": "接続する",
       "blockType": "command",
       "category": "connection",
-      "title": "Minecraftに接続する",
-      "description": "エディターで選んだ接続先につなぎます。初めての接続では、Minecraft内でペアリングを行います。",
+      "title": "接続先につなぐ",
+      "description": "エディターで選んだ接続先につなぎます。初めての接続では、接続先でペアリングを行います。",
       "methods": [
         "hello",
         "auth.pairBegin",
         "auth.pairPoll"
       ],
-      "related": [
-        {
-          "opcode": "pairCommand",
-          "title": "ペアリングコマンドを読む"
-        },
-        {
-          "opcode": "whenPaired",
-          "title": "ペアリングできたら実行する"
-        }
+      "related": [],
+      "targets": [
+        "unity"
       ],
       "arguments": [],
       "imageWidth": 96,
       "imageHeight": 72
-    },
-    {
-      "opcode": "pairCode",
-      "text": "ペアコード",
-      "blockType": "reporter",
-      "category": "connection",
-      "title": "ペアコードを読む",
-      "description": "現在のペアリングに使うコードを返します。",
-      "result": "ペアコードの文字列",
-      "related": [
-        {
-          "opcode": "connect",
-          "title": "Minecraftに接続する"
-        },
-        {
-          "opcode": "pairCommand",
-          "title": "ペアリングコマンドを読む"
-        }
-      ],
-      "arguments": [],
-      "imageWidth": 124,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "pairCommand",
-      "text": "ペアリングコマンド",
-      "blockType": "reporter",
-      "category": "connection",
-      "title": "ペアリングコマンドを読む",
-      "description": "Minecraftのチャットへ入力するペアリングコマンドを返します。",
-      "result": "/mcremote pair で始まる文字列",
-      "related": [
-        {
-          "opcode": "connect",
-          "title": "Minecraftに接続する"
-        },
-        {
-          "opcode": "whenPaired",
-          "title": "ペアリングできたら実行する"
-        }
-      ],
-      "arguments": [],
-      "imageWidth": 188,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "whenPaired",
-      "text": "ペアリングできたとき",
-      "blockType": "hat",
-      "category": "connection",
-      "title": "ペアリングできたら実行する",
-      "description": "ペアリングが完了したとき、下につないだスクリプトを実行します。",
-      "related": [
-        {
-          "opcode": "connect",
-          "title": "Minecraftに接続する"
-        },
-        {
-          "opcode": "pairCommand",
-          "title": "ペアリングコマンドを読む"
-        }
-      ],
-      "arguments": [],
-      "imageWidth": 192,
-      "imageHeight": 89
     },
     {
       "opcode": "setDimension",
@@ -129,6 +58,12 @@
           "opcode": "setBlock",
           "title": "ブロックを1個置く"
         }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "notes": [
+        "Unity箱庭ではオーバーワールドだけを使えます。"
       ],
       "arguments": [
         {
@@ -178,6 +113,9 @@
           "title": "ブロックを1個置く"
         }
       ],
+      "targets": [
+        "unity"
+      ],
       "arguments": [
         {
           "name": "X",
@@ -218,6 +156,9 @@
           "opcode": "flushBuildCommands",
           "title": "送った設置が終わるまで待つ"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -275,8 +216,112 @@
           "title": "ブロック情報を取得する"
         }
       ],
+      "targets": [
+        "unity"
+      ],
       "arguments": [],
       "imageWidth": 304,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "isMcRemoteError",
+      "text": "[VALUE] はmc-remoteエラー",
+      "blockType": "Boolean",
+      "category": "connection",
+      "title": "取得した値がエラーか調べる",
+      "description": "値がmc-remoteのエラーを表す文字列かどうかを調べます。「もし」と組み合わせて使えます。",
+      "result": "はい・いいえ（真偽値）",
+      "related": [
+        {
+          "opcode": "getBlock",
+          "title": "ブロック情報を取得する"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "VALUE",
+          "label": "調べる値",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "⟦mcr-error:unknown_block⟧",
+          "defaultLabel": "⟦mcr-error:unknown_block⟧"
+        }
+      ],
+      "imageWidth": 421,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "catalogToList",
+      "text": "カタログの [KIND] を [LIST] に入れる",
+      "blockType": "command",
+      "category": "catalog",
+      "title": "カタログのIDをリストへ入れる",
+      "description": "取得済みカタログのブロックID・エンティティID・パーティクルIDを、選んだScratchリストへ入れます。",
+      "notes": [
+        "リストの中身を置き換えます。IDは名前空間付きで、文字列順に並びます。",
+        "Unity箱庭のカタログはブロックIDに対応しています。"
+      ],
+      "related": [
+        {
+          "opcode": "setBlock",
+          "title": "ブロックを1個置く"
+        },
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "particleSpec",
+          "title": "パーティクルの表示先を選ぶ"
+        }
+      ],
+      "methods": [
+        "catalog.get"
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "KIND",
+          "label": "種類",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "block",
+          "defaultLabel": "ブロックID",
+          "options": [
+            {
+              "text": "ブロックID",
+              "value": "block"
+            },
+            {
+              "text": "エンティティID",
+              "value": "entity"
+            },
+            {
+              "text": "パーティクルID",
+              "value": "particle"
+            }
+          ],
+          "acceptReporters": false
+        },
+        {
+          "name": "LIST",
+          "label": "保存先のリスト",
+          "type": "list",
+          "typeLabel": "リスト",
+          "defaultValue": "catalog list",
+          "defaultLabel": "catalog list"
+        }
+      ],
+      "imageWidth": 452,
       "imageHeight": 72
     },
     {
@@ -285,7 +330,7 @@
       "blockType": "command",
       "category": "chat",
       "title": "チャットに投稿する",
-      "description": "Minecraftのチャットへメッセージを送ります。文字列や変数を入力できます。",
+      "description": "接続先のチャットへメッセージを送ります。文字列や変数を入力できます。",
       "methods": [
         "chat.post"
       ],
@@ -294,6 +339,9 @@
           "opcode": "whenChatPosted",
           "title": "チャット投稿で実行する"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -307,6 +355,96 @@
       ],
       "imageWidth": 314,
       "imageHeight": 72
+    },
+    {
+      "opcode": "getHeight",
+      "text": "x :[X]  z :[Z] の地面の高さ",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "地面の高さを調べる",
+      "description": "指定したx・z座標で、地面の高さを取得します。",
+      "result": "地面のy座標",
+      "methods": [
+        "world.getHeight"
+      ],
+      "related": [
+        {
+          "opcode": "getHeightBelow",
+          "title": "指定した高さ以下の地面を調べる"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 270,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "getHeightBelow",
+      "text": "x :[X]  z :[Z] の y :[MAX_Y] 以下の地面の高さ",
+      "blockType": "reporter",
+      "category": "block",
+      "title": "指定した高さ以下の地面を調べる",
+      "description": "y座標の上限を指定して、その高さ以下の地面を探します。",
+      "result": "地面のy座標",
+      "methods": [
+        "world.getHeight"
+      ],
+      "related": [
+        {
+          "opcode": "getHeight",
+          "title": "地面の高さを調べる"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "MAX_Y",
+          "label": "調べる高さの上限",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 390,
+      "imageHeight": 56
     },
     {
       "opcode": "setBlock",
@@ -331,6 +469,9 @@
           "opcode": "getBlock",
           "title": "ブロック情報を取得する"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -396,6 +537,9 @@
           "opcode": "getBlocks",
           "title": "範囲のブロック情報をリストへ入れる"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -491,6 +635,9 @@
           "title": "取得した値がエラーか調べる"
         }
       ],
+      "targets": [
+        "unity"
+      ],
       "arguments": [
         {
           "name": "X",
@@ -539,6 +686,9 @@
           "opcode": "blockInfoState",
           "title": "ブロック情報から状態を読む"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -602,150 +752,6 @@
       "imageHeight": 72
     },
     {
-      "opcode": "catalogToList",
-      "text": "カタログの [KIND] を [LIST] に入れる",
-      "blockType": "command",
-      "category": "catalog",
-      "title": "カタログのIDをリストへ入れる",
-      "description": "取得済みカタログのブロックID・エンティティID・パーティクルIDを、選んだScratchリストへ入れます。",
-      "notes": [
-        "リストの中身を置き換えます。IDは名前空間付きで、文字列順に並びます。"
-      ],
-      "related": [
-        {
-          "opcode": "setBlock",
-          "title": "ブロックを1個置く"
-        },
-        {
-          "opcode": "spawnEntity",
-          "title": "エンティティを生成する"
-        },
-        {
-          "opcode": "particleSpec",
-          "title": "パーティクルの表示先を選ぶ"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "KIND",
-          "label": "種類",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "block",
-          "defaultLabel": "ブロックID",
-          "options": [
-            {
-              "text": "ブロックID",
-              "value": "block"
-            },
-            {
-              "text": "エンティティID",
-              "value": "entity"
-            },
-            {
-              "text": "パーティクルID",
-              "value": "particle"
-            }
-          ],
-          "acceptReporters": false
-        },
-        {
-          "name": "LIST",
-          "label": "保存先のリスト",
-          "type": "list",
-          "typeLabel": "リスト",
-          "defaultValue": "catalog list",
-          "defaultLabel": "catalog list"
-        }
-      ],
-      "imageWidth": 452,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "getHeight",
-      "text": "x :[X]  z :[Z] の地面の高さ",
-      "blockType": "reporter",
-      "category": "block",
-      "title": "地面の高さを調べる",
-      "description": "指定したx・z座標で、地面の高さを取得します。",
-      "result": "地面のy座標",
-      "methods": [
-        "world.getHeight"
-      ],
-      "related": [
-        {
-          "opcode": "getHeightBelow",
-          "title": "指定した高さ以下の地面を調べる"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 270,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "getHeightBelow",
-      "text": "x :[X]  z :[Z] の y :[MAX_Y] 以下の地面の高さ",
-      "blockType": "reporter",
-      "category": "block",
-      "title": "指定した高さ以下の地面を調べる",
-      "description": "y座標の上限を指定して、その高さ以下の地面を探します。",
-      "result": "地面のy座標",
-      "methods": [
-        "world.getHeight"
-      ],
-      "related": [
-        {
-          "opcode": "getHeight",
-          "title": "地面の高さを調べる"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "MAX_Y",
-          "label": "調べる高さの上限",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 390,
-      "imageHeight": 56
-    },
-    {
       "opcode": "blockInfoId",
       "text": "[BLOCK_INFO] のブロックID",
       "blockType": "reporter",
@@ -762,6 +768,9 @@
           "opcode": "blockInfoState",
           "title": "ブロック情報から状態を読む"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -794,6 +803,9 @@
           "title": "状態の項目を1つ読む"
         }
       ],
+      "targets": [
+        "unity"
+      ],
       "arguments": [
         {
           "name": "BLOCK_INFO",
@@ -824,6 +836,9 @@
           "opcode": "getBlock",
           "title": "ブロック情報を取得する"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -860,6 +875,9 @@
           "title": "状態の項目を1つ読む"
         }
       ],
+      "targets": [
+        "unity"
+      ],
       "arguments": [
         {
           "name": "BLOCK_INFO",
@@ -882,29 +900,28 @@
       "imageHeight": 56
     },
     {
-      "opcode": "getSign",
-      "text": "看板 x :[X]  y :[Y]  z :[Z] の情報",
-      "blockType": "reporter",
-      "category": "sign",
-      "title": "看板情報を取得する",
-      "description": "看板の両面の文字や装飾などをまとめて取得します。",
-      "result": "看板情報の文字列",
+      "opcode": "setPlayerXYZ",
+      "text": "プレイヤーを x :[X]  y :[Y]  z :[Z] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "今いる次元でプレイヤーを移動する",
+      "description": "プレイヤーが今いる次元で、指定した座標へ移動します。",
       "methods": [
-        "world.getSign"
+        "player.getPos",
+        "player.setPos"
       ],
       "related": [
         {
-          "opcode": "signLineText",
-          "title": "看板情報から文字を読む"
+          "opcode": "setPlayerPos",
+          "title": "次元を選んでプレイヤーを移動する"
         },
         {
-          "opcode": "signLineColor",
-          "title": "看板情報から文字色を読む"
-        },
-        {
-          "opcode": "signIsWaxed",
-          "title": "看板がワックス済みか調べる"
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -932,7 +949,884 @@
           "defaultLabel": 0
         }
       ],
-      "imageWidth": 326,
+      "imageWidth": 414,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setPlayerPos",
+      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "次元を選んでプレイヤーを移動する",
+      "description": "次元と座標を指定して、接続したプレイヤーを移動します。",
+      "methods": [
+        "player.setPos"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerXYZ",
+          "title": "今いる次元でプレイヤーを移動する"
+        },
+        {
+          "opcode": "setPlayerPose",
+          "title": "プレイヤーの位置と角度を変える"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "notes": [
+        "Unity箱庭ではオーバーワールドだけを使えます。"
+      ],
+      "arguments": [
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 597,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setPlayerDirection",
+      "text": "プレイヤーの向きを x[X]  y[Y]  z[Z] にする",
+      "blockType": "command",
+      "category": "player",
+      "title": "プレイヤーの向きを変える",
+      "description": "x・y・zの方向ベクトルで、接続したプレイヤーの向きを設定します。",
+      "methods": [
+        "player.setDirection"
+      ],
+      "related": [
+        {
+          "opcode": "playerDirection",
+          "title": "プレイヤーの向きを読む"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 421,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setPlayerPose",
+      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
+      "blockType": "command",
+      "category": "player",
+      "title": "プレイヤーの位置と角度を変える",
+      "description": "次元・座標・水平方向・上下方向を指定して、接続したプレイヤーを移動します。",
+      "methods": [
+        "player.setPose"
+      ],
+      "related": [
+        {
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
+        },
+        {
+          "opcode": "setPlayerPos",
+          "title": "次元を選んでプレイヤーを移動する"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "notes": [
+        "Unity箱庭ではオーバーワールドだけを使えます。"
+      ],
+      "arguments": [
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "YAW",
+          "label": "水平方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "PITCH",
+          "label": "上下方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 846,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "playerAttribute",
+      "text": "プレイヤーの [PROPERTY]",
+      "blockType": "reporter",
+      "category": "player",
+      "title": "プレイヤーの位置や角度を読む",
+      "description": "接続したプレイヤーの次元・座標・水平方向・上下方向を取得します。",
+      "notes": [
+        "取得に失敗した場合は空文字を返します。"
+      ],
+      "result": "選んだ項目の文字列または数値",
+      "methods": [
+        "player.getPos",
+        "player.getPose"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerXYZ",
+          "title": "今いる次元でプレイヤーを移動する"
+        },
+        {
+          "opcode": "setPlayerPose",
+          "title": "プレイヤーの位置と角度を変える"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "dimension",
+          "defaultLabel": "次元",
+          "options": [
+            {
+              "text": "次元",
+              "value": "dimension"
+            },
+            {
+              "text": "x座標",
+              "value": "x"
+            },
+            {
+              "text": "y座標",
+              "value": "y"
+            },
+            {
+              "text": "z座標",
+              "value": "z"
+            },
+            {
+              "text": "水平方向",
+              "value": "yaw"
+            },
+            {
+              "text": "上下方向",
+              "value": "pitch"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 216,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "playerDirection",
+      "text": "プレイヤーの向き [AXIS]",
+      "blockType": "reporter",
+      "category": "player",
+      "title": "プレイヤーの向きを読む",
+      "description": "接続したプレイヤーの向きを、方向ベクトルのx・y・z成分として取得します。",
+      "result": "選んだ成分の数値",
+      "methods": [
+        "player.getDirection"
+      ],
+      "related": [
+        {
+          "opcode": "setPlayerDirection",
+          "title": "プレイヤーの向きを変える"
+        },
+        {
+          "opcode": "playerAttribute",
+          "title": "プレイヤーの位置や角度を読む"
+        }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "arguments": [
+        {
+          "name": "AXIS",
+          "label": "向きの成分",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x",
+          "options": [
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 220,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "spawnEntity",
+      "text": "エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] に生成し ハンドルを [VARIABLE] に入れる",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティを生成する",
+      "description": "エンティティを生成し、後から操作するためのハンドルをScratch変数へ入れます。",
+      "notes": [
+        "保存先には通常の変数を使います。生成したハンドルを位置の変更や削除のブロックへ渡します。"
+      ],
+      "methods": [
+        "world.spawnEntity"
+      ],
+      "related": [
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        },
+        {
+          "opcode": "removeEntity",
+          "title": "エンティティを削除する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "ENTITY",
+          "label": "エンティティID",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "minecraft:allay",
+          "defaultLabel": "minecraft:allay"
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "VARIABLE",
+          "label": "保存先の変数",
+          "type": "variable",
+          "typeLabel": "変数",
+          "defaultValue": "entity handle",
+          "defaultLabel": "entity handle"
+        }
+      ],
+      "imageWidth": 846,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "getNearbyEntities",
+      "text": "x :[X]  y :[Y]  z :[Z] の半径 [RADIUS] 以内のエンティティを最大 [MAX_ENTITIES] 件 [LIST] に入れる",
+      "blockType": "command",
+      "category": "entity",
+      "title": "近くのエンティティをリストへ入れる",
+      "description": "指定した中心と半径でエンティティを探し、情報をScratchリストへ入れます。プレイヤーは含みません。",
+      "notes": [
+        "半径は0〜64、最大件数は1〜64です。サーバー設定で上限がさらに小さい場合があります。"
+      ],
+      "methods": [
+        "world.getNearbyEntities"
+      ],
+      "related": [
+        {
+          "opcode": "entityInfo",
+          "title": "エンティティ情報の項目を読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "RADIUS",
+          "label": "半径",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 10,
+          "defaultLabel": 10
+        },
+        {
+          "name": "MAX_ENTITIES",
+          "label": "最大件数",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 16,
+          "defaultLabel": 16
+        },
+        {
+          "name": "LIST",
+          "label": "保存先のリスト",
+          "type": "list",
+          "typeLabel": "リスト",
+          "defaultValue": "entity list",
+          "defaultLabel": "entity list"
+        }
+      ],
+      "imageWidth": 795,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "entityInfo",
+      "text": "エンティティ情報 [ENTITY_INFO] の [PROPERTY]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティ情報の項目を読む",
+      "description": "近くのエンティティのリストから取り出した情報を渡し、ハンドル・種類・座標を読みます。",
+      "result": "選んだ項目の文字列または数値",
+      "related": [
+        {
+          "opcode": "getNearbyEntities",
+          "title": "近くのエンティティをリストへ入れる"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "ENTITY_INFO",
+          "label": "エンティティ情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "handle",
+          "defaultLabel": "ハンドル",
+          "options": [
+            {
+              "text": "ハンドル",
+              "value": "handle"
+            },
+            {
+              "text": "種類",
+              "value": "type"
+            },
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 348,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "removeEntity",
+      "text": "エンティティ [HANDLE] を取り除く",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティを削除する",
+      "description": "ハンドルで指定したエンティティを削除します。",
+      "methods": [
+        "entity.remove"
+      ],
+      "related": [
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "getNearbyEntities",
+          "title": "近くのエンティティをリストへ入れる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        }
+      ],
+      "imageWidth": 322,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setEntityPose",
+      "text": "エンティティ [HANDLE] を [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティの位置と向きを変える",
+      "description": "ハンドルで指定したエンティティを移動し、水平方向と上下方向の角度を設定します。",
+      "methods": [
+        "entity.setPose"
+      ],
+      "related": [
+        {
+          "opcode": "spawnEntity",
+          "title": "エンティティを生成する"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "DIMENSION",
+          "label": "次元",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "overworld",
+          "defaultLabel": "オーバーワールド",
+          "options": [
+            {
+              "text": "オーバーワールド",
+              "value": "overworld"
+            },
+            {
+              "text": "ネザー",
+              "value": "the_nether"
+            },
+            {
+              "text": "エンド",
+              "value": "the_end"
+            }
+          ],
+          "acceptReporters": true
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "YAW",
+          "label": "水平方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "PITCH",
+          "label": "上下方向",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 976,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "setEntityDirection",
+      "text": "エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする",
+      "blockType": "command",
+      "category": "entity",
+      "title": "エンティティの向きを変える",
+      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルで設定します。",
+      "methods": [
+        "entity.setDirection"
+      ],
+      "related": [
+        {
+          "opcode": "entityDirection",
+          "title": "エンティティの向きを読む"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 551,
+      "imageHeight": 72
+    },
+    {
+      "opcode": "getEntityPose",
+      "text": "エンティティ [HANDLE] の姿勢",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティの位置と向きを取得する",
+      "description": "ハンドルで指定したエンティティの位置・次元・向きをまとめて取得します。",
+      "result": "位置と向きの情報の文字列",
+      "methods": [
+        "entity.getPose"
+      ],
+      "related": [
+        {
+          "opcode": "entityPoseInfo",
+          "title": "位置と向きの情報の項目を読む"
+        },
+        {
+          "opcode": "setEntityPose",
+          "title": "エンティティの位置と向きを変える"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        }
+      ],
+      "imageWidth": 298,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "entityPoseInfo",
+      "text": "エンティティの姿勢 [POSE] の [PROPERTY]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "位置と向きの情報の項目を読む",
+      "description": "取得したエンティティの位置と向きの情報から、次元・座標・角度を取り出します。",
+      "result": "選んだ項目の文字列または数値",
+      "related": [
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "POSE",
+          "label": "位置・向きの情報",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "",
+          "defaultLabel": ""
+        },
+        {
+          "name": "PROPERTY",
+          "label": "取り出す項目",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x座標",
+          "options": [
+            {
+              "text": "次元",
+              "value": "dimension"
+            },
+            {
+              "text": "x座標",
+              "value": "x"
+            },
+            {
+              "text": "y座標",
+              "value": "y"
+            },
+            {
+              "text": "z座標",
+              "value": "z"
+            },
+            {
+              "text": "水平方向",
+              "value": "yaw"
+            },
+            {
+              "text": "上下方向",
+              "value": "pitch"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 340,
+      "imageHeight": 56
+    },
+    {
+      "opcode": "entityDirection",
+      "text": "エンティティ [HANDLE] の向き [AXIS]",
+      "blockType": "reporter",
+      "category": "entity",
+      "title": "エンティティの向きを読む",
+      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルの成分として取得します。",
+      "result": "選んだ成分の数値",
+      "methods": [
+        "entity.getDirection"
+      ],
+      "related": [
+        {
+          "opcode": "setEntityDirection",
+          "title": "エンティティの向きを変える"
+        },
+        {
+          "opcode": "getEntityPose",
+          "title": "エンティティの位置と向きを取得する"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "HANDLE",
+          "label": "エンティティのハンドル",
+          "type": "string",
+          "typeLabel": "文字列",
+          "defaultValue": "mcr_eh_...",
+          "defaultLabel": "mcr_eh_..."
+        },
+        {
+          "name": "AXIS",
+          "label": "向きの成分",
+          "type": "string",
+          "typeLabel": "選択肢",
+          "defaultValue": "x",
+          "defaultLabel": "x",
+          "options": [
+            {
+              "text": "x",
+              "value": "x"
+            },
+            {
+              "text": "y",
+              "value": "y"
+            },
+            {
+              "text": "z",
+              "value": "z"
+            }
+          ],
+          "acceptReporters": false
+        }
+      ],
+      "imageWidth": 350,
       "imageHeight": 56
     },
     {
@@ -1137,6 +2031,60 @@
       ],
       "imageWidth": 575,
       "imageHeight": 72
+    },
+    {
+      "opcode": "getSign",
+      "text": "看板 x :[X]  y :[Y]  z :[Z] の情報",
+      "blockType": "reporter",
+      "category": "sign",
+      "title": "看板情報を取得する",
+      "description": "看板の両面の文字や装飾などをまとめて取得します。",
+      "result": "看板情報の文字列",
+      "methods": [
+        "world.getSign"
+      ],
+      "related": [
+        {
+          "opcode": "signLineText",
+          "title": "看板情報から文字を読む"
+        },
+        {
+          "opcode": "signLineColor",
+          "title": "看板情報から文字色を読む"
+        },
+        {
+          "opcode": "signIsWaxed",
+          "title": "看板がワックス済みか調べる"
+        }
+      ],
+      "arguments": [
+        {
+          "name": "X",
+          "label": "x座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Y",
+          "label": "y座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        },
+        {
+          "name": "Z",
+          "label": "z座標",
+          "type": "number",
+          "typeLabel": "数値",
+          "defaultValue": 0,
+          "defaultLabel": 0
+        }
+      ],
+      "imageWidth": 326,
+      "imageHeight": 56
     },
     {
       "opcode": "signLineText",
@@ -1416,37 +2364,6 @@
       "imageHeight": 56
     },
     {
-      "opcode": "isMcRemoteError",
-      "text": "[VALUE] はmc-remoteエラー",
-      "blockType": "Boolean",
-      "category": "connection",
-      "title": "取得した値がエラーか調べる",
-      "description": "値がmc-remoteのエラーを表す文字列かどうかを調べます。「もし」と組み合わせて使えます。",
-      "result": "はい・いいえ（真偽値）",
-      "related": [
-        {
-          "opcode": "getBlock",
-          "title": "ブロック情報を取得する"
-        },
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "VALUE",
-          "label": "調べる値",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "⟦mcr-error:unknown_block⟧",
-          "defaultLabel": "⟦mcr-error:unknown_block⟧"
-        }
-      ],
-      "imageWidth": 421,
-      "imageHeight": 56
-    },
-    {
       "opcode": "spawnParticle",
       "text": "パーティクル [PARTICLE] を x :[X]  y :[Y]  z :[Z] ずれ x[OFFSET_X]  y[OFFSET_Y]  z[OFFSET_Z] 速さ:[SPEED] 数:[COUNT] 表示:[FORCE] で生成する",
       "blockType": "command",
@@ -1567,433 +2484,6 @@
       "imageHeight": 72
     },
     {
-      "opcode": "spawnEntity",
-      "text": "エンティティ [ENTITY] を x :[X]  y :[Y]  z :[Z] に生成し ハンドルを [VARIABLE] に入れる",
-      "blockType": "command",
-      "category": "entity",
-      "title": "エンティティを生成する",
-      "description": "エンティティを生成し、後から操作するためのハンドルをScratch変数へ入れます。",
-      "notes": [
-        "保存先には通常の変数を使います。生成したハンドルを位置の変更や削除のブロックへ渡します。"
-      ],
-      "methods": [
-        "world.spawnEntity"
-      ],
-      "related": [
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        },
-        {
-          "opcode": "removeEntity",
-          "title": "エンティティを削除する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "ENTITY",
-          "label": "エンティティID",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "minecraft:allay",
-          "defaultLabel": "minecraft:allay"
-        },
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "VARIABLE",
-          "label": "保存先の変数",
-          "type": "variable",
-          "typeLabel": "変数",
-          "defaultValue": "entity handle",
-          "defaultLabel": "entity handle"
-        }
-      ],
-      "imageWidth": 846,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "getNearbyEntities",
-      "text": "x :[X]  y :[Y]  z :[Z] の半径 [RADIUS] 以内のエンティティを最大 [MAX_ENTITIES] 件 [LIST] に入れる",
-      "blockType": "command",
-      "category": "entity",
-      "title": "近くのエンティティをリストへ入れる",
-      "description": "指定した中心と半径でエンティティを探し、情報をScratchリストへ入れます。プレイヤーは含みません。",
-      "notes": [
-        "半径は0〜64、最大件数は1〜64です。サーバー設定で上限がさらに小さい場合があります。"
-      ],
-      "methods": [
-        "world.getNearbyEntities"
-      ],
-      "related": [
-        {
-          "opcode": "entityInfo",
-          "title": "エンティティ情報の項目を読む"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "RADIUS",
-          "label": "半径",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 10,
-          "defaultLabel": 10
-        },
-        {
-          "name": "MAX_ENTITIES",
-          "label": "最大件数",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 16,
-          "defaultLabel": 16
-        },
-        {
-          "name": "LIST",
-          "label": "保存先のリスト",
-          "type": "list",
-          "typeLabel": "リスト",
-          "defaultValue": "entity list",
-          "defaultLabel": "entity list"
-        }
-      ],
-      "imageWidth": 795,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "entityInfo",
-      "text": "エンティティ情報 [ENTITY_INFO] の [PROPERTY]",
-      "blockType": "reporter",
-      "category": "entity",
-      "title": "エンティティ情報の項目を読む",
-      "description": "近くのエンティティのリストから取り出した情報を渡し、ハンドル・種類・座標を読みます。",
-      "result": "選んだ項目の文字列または数値",
-      "related": [
-        {
-          "opcode": "getNearbyEntities",
-          "title": "近くのエンティティをリストへ入れる"
-        },
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "ENTITY_INFO",
-          "label": "エンティティ情報",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "",
-          "defaultLabel": ""
-        },
-        {
-          "name": "PROPERTY",
-          "label": "取り出す項目",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "handle",
-          "defaultLabel": "ハンドル",
-          "options": [
-            {
-              "text": "ハンドル",
-              "value": "handle"
-            },
-            {
-              "text": "種類",
-              "value": "type"
-            },
-            {
-              "text": "x",
-              "value": "x"
-            },
-            {
-              "text": "y",
-              "value": "y"
-            },
-            {
-              "text": "z",
-              "value": "z"
-            }
-          ],
-          "acceptReporters": false
-        }
-      ],
-      "imageWidth": 348,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "getEntityPose",
-      "text": "エンティティ [HANDLE] の姿勢",
-      "blockType": "reporter",
-      "category": "entity",
-      "title": "エンティティの位置と向きを取得する",
-      "description": "ハンドルで指定したエンティティの位置・次元・向きをまとめて取得します。",
-      "result": "位置と向きの情報の文字列",
-      "methods": [
-        "entity.getPose"
-      ],
-      "related": [
-        {
-          "opcode": "entityPoseInfo",
-          "title": "位置と向きの情報の項目を読む"
-        },
-        {
-          "opcode": "setEntityPose",
-          "title": "エンティティの位置と向きを変える"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "HANDLE",
-          "label": "エンティティのハンドル",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "mcr_eh_...",
-          "defaultLabel": "mcr_eh_..."
-        }
-      ],
-      "imageWidth": 298,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "entityPoseInfo",
-      "text": "エンティティの姿勢 [POSE] の [PROPERTY]",
-      "blockType": "reporter",
-      "category": "entity",
-      "title": "位置と向きの情報の項目を読む",
-      "description": "取得したエンティティの位置と向きの情報から、次元・座標・角度を取り出します。",
-      "result": "選んだ項目の文字列または数値",
-      "related": [
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "POSE",
-          "label": "位置・向きの情報",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "",
-          "defaultLabel": ""
-        },
-        {
-          "name": "PROPERTY",
-          "label": "取り出す項目",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "x",
-          "defaultLabel": "x座標",
-          "options": [
-            {
-              "text": "次元",
-              "value": "dimension"
-            },
-            {
-              "text": "x座標",
-              "value": "x"
-            },
-            {
-              "text": "y座標",
-              "value": "y"
-            },
-            {
-              "text": "z座標",
-              "value": "z"
-            },
-            {
-              "text": "水平方向",
-              "value": "yaw"
-            },
-            {
-              "text": "上下方向",
-              "value": "pitch"
-            }
-          ],
-          "acceptReporters": false
-        }
-      ],
-      "imageWidth": 340,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "setEntityPose",
-      "text": "エンティティ [HANDLE] を [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
-      "blockType": "command",
-      "category": "entity",
-      "title": "エンティティの位置と向きを変える",
-      "description": "ハンドルで指定したエンティティを移動し、水平方向と上下方向の角度を設定します。",
-      "methods": [
-        "entity.setPose"
-      ],
-      "related": [
-        {
-          "opcode": "spawnEntity",
-          "title": "エンティティを生成する"
-        },
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "HANDLE",
-          "label": "エンティティのハンドル",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "mcr_eh_...",
-          "defaultLabel": "mcr_eh_..."
-        },
-        {
-          "name": "DIMENSION",
-          "label": "次元",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "overworld",
-          "defaultLabel": "オーバーワールド",
-          "options": [
-            {
-              "text": "オーバーワールド",
-              "value": "overworld"
-            },
-            {
-              "text": "ネザー",
-              "value": "the_nether"
-            },
-            {
-              "text": "エンド",
-              "value": "the_end"
-            }
-          ],
-          "acceptReporters": true
-        },
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "YAW",
-          "label": "水平方向",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "PITCH",
-          "label": "上下方向",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 976,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "removeEntity",
-      "text": "エンティティ [HANDLE] を取り除く",
-      "blockType": "command",
-      "category": "entity",
-      "title": "エンティティを削除する",
-      "description": "ハンドルで指定したエンティティを削除します。",
-      "methods": [
-        "entity.remove"
-      ],
-      "related": [
-        {
-          "opcode": "spawnEntity",
-          "title": "エンティティを生成する"
-        },
-        {
-          "opcode": "getNearbyEntities",
-          "title": "近くのエンティティをリストへ入れる"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "HANDLE",
-          "label": "エンティティのハンドル",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "mcr_eh_...",
-          "defaultLabel": "mcr_eh_..."
-        }
-      ],
-      "imageWidth": 322,
-      "imageHeight": 72
-    },
-    {
       "opcode": "particleSpec",
       "text": "[RECEIVER] に表示するパーティクル [PARTICLE]",
       "blockType": "reporter",
@@ -2021,7 +2511,7 @@
               "value": "world"
             },
             {
-              "text": "接続したプレイヤーだけ",
+              "text": "自分だけ",
               "value": "self"
             }
           ],
@@ -2074,7 +2564,7 @@
               "value": "world"
             },
             {
-              "text": "接続したプレイヤーだけ",
+              "text": "自分だけ",
               "value": "self"
             }
           ],
@@ -2148,7 +2638,7 @@
               "value": "world"
             },
             {
-              "text": "接続したプレイヤーだけ",
+              "text": "自分だけ",
               "value": "self"
             }
           ],
@@ -2173,210 +2663,6 @@
       ],
       "imageWidth": 688,
       "imageHeight": 56
-    },
-    {
-      "opcode": "playerDirection",
-      "text": "プレイヤーの向き [AXIS]",
-      "blockType": "reporter",
-      "category": "player",
-      "title": "プレイヤーの向きを読む",
-      "description": "接続したプレイヤーの向きを、方向ベクトルのx・y・z成分として取得します。",
-      "result": "選んだ成分の数値",
-      "methods": [
-        "player.getDirection"
-      ],
-      "related": [
-        {
-          "opcode": "setPlayerDirection",
-          "title": "プレイヤーの向きを変える"
-        },
-        {
-          "opcode": "playerAttribute",
-          "title": "プレイヤーの位置や角度を読む"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "AXIS",
-          "label": "向きの成分",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "x",
-          "defaultLabel": "x",
-          "options": [
-            {
-              "text": "x",
-              "value": "x"
-            },
-            {
-              "text": "y",
-              "value": "y"
-            },
-            {
-              "text": "z",
-              "value": "z"
-            }
-          ],
-          "acceptReporters": false
-        }
-      ],
-      "imageWidth": 220,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "setPlayerDirection",
-      "text": "プレイヤーの向きを x[X]  y[Y]  z[Z] にする",
-      "blockType": "command",
-      "category": "player",
-      "title": "プレイヤーの向きを変える",
-      "description": "x・y・zの方向ベクトルで、接続したプレイヤーの向きを設定します。",
-      "methods": [
-        "player.setDirection"
-      ],
-      "related": [
-        {
-          "opcode": "playerDirection",
-          "title": "プレイヤーの向きを読む"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 421,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "entityDirection",
-      "text": "エンティティ [HANDLE] の向き [AXIS]",
-      "blockType": "reporter",
-      "category": "entity",
-      "title": "エンティティの向きを読む",
-      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルの成分として取得します。",
-      "result": "選んだ成分の数値",
-      "methods": [
-        "entity.getDirection"
-      ],
-      "related": [
-        {
-          "opcode": "setEntityDirection",
-          "title": "エンティティの向きを変える"
-        },
-        {
-          "opcode": "getEntityPose",
-          "title": "エンティティの位置と向きを取得する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "HANDLE",
-          "label": "エンティティのハンドル",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "mcr_eh_...",
-          "defaultLabel": "mcr_eh_..."
-        },
-        {
-          "name": "AXIS",
-          "label": "向きの成分",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "x",
-          "defaultLabel": "x",
-          "options": [
-            {
-              "text": "x",
-              "value": "x"
-            },
-            {
-              "text": "y",
-              "value": "y"
-            },
-            {
-              "text": "z",
-              "value": "z"
-            }
-          ],
-          "acceptReporters": false
-        }
-      ],
-      "imageWidth": 350,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "setEntityDirection",
-      "text": "エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする",
-      "blockType": "command",
-      "category": "entity",
-      "title": "エンティティの向きを変える",
-      "description": "ハンドルで指定したエンティティの向きを、方向ベクトルで設定します。",
-      "methods": [
-        "entity.setDirection"
-      ],
-      "related": [
-        {
-          "opcode": "entityDirection",
-          "title": "エンティティの向きを読む"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "HANDLE",
-          "label": "エンティティのハンドル",
-          "type": "string",
-          "typeLabel": "文字列",
-          "defaultValue": "mcr_eh_...",
-          "defaultLabel": "mcr_eh_..."
-        },
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 551,
-      "imageHeight": 72
     },
     {
       "opcode": "playSound",
@@ -2590,7 +2876,7 @@
               "value": "world"
             },
             {
-              "text": "接続したプレイヤーだけ",
+              "text": "自分だけ",
               "value": "self"
             }
           ],
@@ -2683,6 +2969,12 @@
           "title": "チャットに投稿する"
         }
       ],
+      "targets": [
+        "unity"
+      ],
+      "notes": [
+        "Unity箱庭ではペアリングした画面のチャット入力を受信します。"
+      ],
       "arguments": [],
       "imageWidth": 224,
       "imageHeight": 89
@@ -2709,11 +3001,11 @@
     },
     {
       "opcode": "eventValue",
-      "text": "このMinecraftイベントの [PROPERTY]",
+      "text": "このイベントの [PROPERTY]",
       "blockType": "reporter",
       "category": "event",
       "title": "このイベントの情報を読む",
-      "description": "実行中のMinecraftイベントから、座標・メッセージ・対象などの情報を取り出します。イベントブロックの下で使います。",
+      "description": "実行中の接続先のイベントから、座標・メッセージ・対象などの情報を取り出します。イベントブロックの下で使います。",
       "result": "選んだ項目の値",
       "related": [
         {
@@ -2728,6 +3020,12 @@
           "opcode": "whenProjectileHit",
           "title": "飛び道具が当たったら実行する"
         }
+      ],
+      "targets": [
+        "unity"
+      ],
+      "notes": [
+        "Unity箱庭ではチャットイベントの情報を読みます。"
       ],
       "arguments": [
         {
@@ -2830,7 +3128,7 @@
           "acceptReporters": false
         }
       ],
-      "imageWidth": 330,
+      "imageWidth": 264,
       "imageHeight": 56
     },
     {
@@ -2846,6 +3144,9 @@
           "opcode": "eventValue",
           "title": "このイベントの情報を読む"
         }
+      ],
+      "targets": [
+        "unity"
       ],
       "arguments": [
         {
@@ -2886,281 +3187,6 @@
       ],
       "imageWidth": 264,
       "imageHeight": 56
-    },
-    {
-      "opcode": "playerAttribute",
-      "text": "プレイヤーの [PROPERTY]",
-      "blockType": "reporter",
-      "category": "player",
-      "title": "プレイヤーの位置や角度を読む",
-      "description": "接続したプレイヤーの次元・座標・水平方向・上下方向を取得します。",
-      "notes": [
-        "取得に失敗した場合は空文字を返します。"
-      ],
-      "result": "選んだ項目の文字列または数値",
-      "methods": [
-        "player.getPos",
-        "player.getPose"
-      ],
-      "related": [
-        {
-          "opcode": "setPlayerXYZ",
-          "title": "今いる次元でプレイヤーを移動する"
-        },
-        {
-          "opcode": "setPlayerPose",
-          "title": "プレイヤーの位置と角度を変える"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "PROPERTY",
-          "label": "取り出す項目",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "dimension",
-          "defaultLabel": "次元",
-          "options": [
-            {
-              "text": "次元",
-              "value": "dimension"
-            },
-            {
-              "text": "x座標",
-              "value": "x"
-            },
-            {
-              "text": "y座標",
-              "value": "y"
-            },
-            {
-              "text": "z座標",
-              "value": "z"
-            },
-            {
-              "text": "水平方向",
-              "value": "yaw"
-            },
-            {
-              "text": "上下方向",
-              "value": "pitch"
-            }
-          ],
-          "acceptReporters": false
-        }
-      ],
-      "imageWidth": 216,
-      "imageHeight": 56
-    },
-    {
-      "opcode": "setPlayerPos",
-      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] へ移動する",
-      "blockType": "command",
-      "category": "player",
-      "title": "次元を選んでプレイヤーを移動する",
-      "description": "次元と座標を指定して、接続したプレイヤーを移動します。",
-      "methods": [
-        "player.setPos"
-      ],
-      "related": [
-        {
-          "opcode": "setPlayerXYZ",
-          "title": "今いる次元でプレイヤーを移動する"
-        },
-        {
-          "opcode": "setPlayerPose",
-          "title": "プレイヤーの位置と角度を変える"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "DIMENSION",
-          "label": "次元",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "overworld",
-          "defaultLabel": "オーバーワールド",
-          "options": [
-            {
-              "text": "オーバーワールド",
-              "value": "overworld"
-            },
-            {
-              "text": "ネザー",
-              "value": "the_nether"
-            },
-            {
-              "text": "エンド",
-              "value": "the_end"
-            }
-          ],
-          "acceptReporters": true
-        },
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 597,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "setPlayerPose",
-      "text": "プレイヤーを [DIMENSION] x :[X]  y :[Y]  z :[Z] 水平方向:[YAW] 上下方向:[PITCH] へ移動する",
-      "blockType": "command",
-      "category": "player",
-      "title": "プレイヤーの位置と角度を変える",
-      "description": "次元・座標・水平方向・上下方向を指定して、接続したプレイヤーを移動します。",
-      "methods": [
-        "player.setPose"
-      ],
-      "related": [
-        {
-          "opcode": "playerAttribute",
-          "title": "プレイヤーの位置や角度を読む"
-        },
-        {
-          "opcode": "setPlayerPos",
-          "title": "次元を選んでプレイヤーを移動する"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "DIMENSION",
-          "label": "次元",
-          "type": "string",
-          "typeLabel": "選択肢",
-          "defaultValue": "overworld",
-          "defaultLabel": "オーバーワールド",
-          "options": [
-            {
-              "text": "オーバーワールド",
-              "value": "overworld"
-            },
-            {
-              "text": "ネザー",
-              "value": "the_nether"
-            },
-            {
-              "text": "エンド",
-              "value": "the_end"
-            }
-          ],
-          "acceptReporters": true
-        },
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "YAW",
-          "label": "水平方向",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "PITCH",
-          "label": "上下方向",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 846,
-      "imageHeight": 72
-    },
-    {
-      "opcode": "setPlayerXYZ",
-      "text": "プレイヤーを x :[X]  y :[Y]  z :[Z] へ移動する",
-      "blockType": "command",
-      "category": "player",
-      "title": "今いる次元でプレイヤーを移動する",
-      "description": "プレイヤーが今いる次元で、指定した座標へ移動します。",
-      "methods": [
-        "player.getPos",
-        "player.setPos"
-      ],
-      "related": [
-        {
-          "opcode": "setPlayerPos",
-          "title": "次元を選んでプレイヤーを移動する"
-        },
-        {
-          "opcode": "playerAttribute",
-          "title": "プレイヤーの位置や角度を読む"
-        }
-      ],
-      "arguments": [
-        {
-          "name": "X",
-          "label": "x座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Y",
-          "label": "y座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        },
-        {
-          "name": "Z",
-          "label": "z座標",
-          "type": "number",
-          "typeLabel": "数値",
-          "defaultValue": 0,
-          "defaultLabel": 0
-        }
-      ],
-      "imageWidth": 414,
-      "imageHeight": 72
     }
   ]
 }
