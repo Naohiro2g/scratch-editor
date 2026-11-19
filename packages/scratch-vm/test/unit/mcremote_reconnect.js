@@ -502,8 +502,8 @@ test('a delivery notice cannot overwrite the connection transport diagnostic', a
     await blocks._actionableCommandError('connection.flush', await waiting);
     const observation = events.filter(event => event.type === Runtime.MCREMOTE_OBSERVATION_UPDATE).pop().payload;
     t.match(observation.transportDiagnostic, {code: 1011, reason: 'backpressure'});
-    t.equal(observation.lastError.reason, void 0);
-    t.equal(observation.lastError.completionUnknown, true);
+    t.match(observation.lastError, {code: 1011, reason: 'backpressure'});
+    t.match(observation.lastOperationError, {method: 'connection.flush', completionUnknown: true});
 });
 
 test('transport capacity timeout settles unsent requests and FAST notifications as not sent', async t => {

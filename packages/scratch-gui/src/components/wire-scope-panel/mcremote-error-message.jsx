@@ -70,6 +70,16 @@ const messages = defineMessages({
         defaultMessage: '“{operation}” failed. Open the error details for the reason.',
         description: 'Fallback for a client operation error'
     },
+    completionUnknown: {
+        id: 'gui.mcremote.error.completionUnknown',
+        defaultMessage: 'Could not confirm whether “{operation}” finished.',
+        description: 'An operation was sent but its result was lost'
+    },
+    notSent: {
+        id: 'gui.mcremote.error.notSent',
+        defaultMessage: '“{operation}” was not sent.',
+        description: 'An operation failed before it could be sent'
+    },
     point: {
         id: 'gui.mcremote.error.point',
         defaultMessage: 'Offending point (absolute world coordinates): x={x}, y={y}, z={z}.',
@@ -100,7 +110,11 @@ const ErrorMessage = ({error, server}) => {
     const reason = error.reason || data.reason;
     const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
     let message = intl.formatMessage(error.origin === 'server' ? messages.rejected : messages.failed, {operation});
-    if (reason === 'method_not_found' || error.code === -32601) {
+    if (error.completionUnknown) {
+        message = intl.formatMessage(messages.completionUnknown, {operation});
+    } else if (error.notSent) {
+        message = intl.formatMessage(messages.notSent, {operation});
+    } else if (reason === 'method_not_found' || error.code === -32601) {
         const name = server && server.name;
         message = intl.formatMessage(name ? messages.unsupportedNamed : messages.unsupported,
             {operation, server: name === 'mc-remote-unity-sandbox' ? intl.formatMessage(messages.unity) : name});

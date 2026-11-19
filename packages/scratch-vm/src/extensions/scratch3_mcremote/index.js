@@ -3314,7 +3314,10 @@ class Scratch3McRemoteBlocks {
         log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
         error.method = error.method || method;
         const summary = this._errorInfo(error);
-        if (error.origin !== 'server' && !summary.completionUnknown && !summary.notSent) {
+        const deliveryResult = summary.completionUnknown || summary.notSent;
+        // A failed request can settle after the next connection has started.
+        const currentDisconnect = this._transportDiagnostic && summary.epoch === this._connectionEpoch;
+        if (error.origin !== 'server' && (!deliveryResult || currentDisconnect)) {
             this._lastOperationError = summary;
             this._emitObservation();
         }

@@ -167,6 +167,19 @@ describe('WireScopePanel', () => {
         expect(screen.queryByText('次にすること')).not.toBeInTheDocument();
     });
 
+    test('shows the connection problem and an unconfirmed operation together', () => {
+        renderPanel({
+            status: 'closed',
+            transportDiagnostic: {reason: 'backpressure', code: 1011},
+            lastOperationError: {method: 'connection.flush', completionUnknown: true}
+        });
+        expand();
+
+        expect(screen.getByRole('status', {name: '状態: 切断'})).toBeInTheDocument();
+        expect(screen.getByText('接続を確認して、もう一度試してください。')).toBeInTheDocument();
+        expect(screen.getByText(/が完了したか確認できませんでした/)).toBeInTheDocument();
+    });
+
     test('guides the user to connect to the selected target after switching', () => {
         renderPanel({
             status: 'connected',

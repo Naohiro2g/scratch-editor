@@ -68,6 +68,8 @@ const mcremoteMessages = {
         'gui.mcremote.error.permission': 'この接続先で「{operation}」を実行する権限がありません。',
         'gui.mcremote.error.rejected': '接続先が「{operation}」を拒否しました。理由は「エラーの詳細」にあります。',
         'gui.mcremote.error.failed': '「{operation}」に失敗しました。理由は「エラーの詳細」にあります。',
+        'gui.mcremote.error.completionUnknown': '「{operation}」が完了したか確認できませんでした。',
+        'gui.mcremote.error.notSent': '「{operation}」は送信されませんでした。',
         'gui.mcremote.error.operation': 'この操作',
         'gui.mcremote.server.unity': 'Unity箱庭',
         'gui.mcremote.error.unsupported': '今の接続先では、「{operation}」は使えません。',
@@ -345,6 +347,8 @@ const mcremoteMessages = {
         'gui.mcremote.error.rejected':
             'せつぞくさきが「{operation}」をうけつけませんでした。りゆうは「エラーのしょうさい」にあります。',
         'gui.mcremote.error.failed': '「{operation}」にしっぱいしました。りゆうは「エラーのしょうさい」にあります。',
+        'gui.mcremote.error.completionUnknown': '「{operation}」がおわったか、たしかめられませんでした。',
+        'gui.mcremote.error.notSent': '「{operation}」はおくられませんでした。',
         'gui.mcremote.error.operation': 'このそうさ',
         'gui.mcremote.server.unity': 'Unityはこにわ',
         'gui.mcremote.error.unsupported': 'いまのせつぞくさきでは、「{operation}」はつかえません。',
