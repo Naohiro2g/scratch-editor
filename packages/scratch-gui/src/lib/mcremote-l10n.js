@@ -60,6 +60,14 @@ const mcremoteMessages = {
         'gui.mcremote.operation.world.strikeLightning': '雷を落とす',
 
         'gui.mcremote.wireScope.server': 'サーバー実装 / 版',
+        'gui.mcremote.wireScope.actionConnectTarget': '{target}には未接続です。「接続する」ブロックを実行してください。',
+        'gui.mcremote.wireScope.lastOperationError': '最後の操作エラー',
+        'gui.mcremote.error.zeroDirection': '向きの x・y・z のうち、少なくとも1つを0以外にしてください。',
+        'gui.mcremote.error.invalidInput': '「{operation}」ブロックの入力値を確認してください。',
+        'gui.mcremote.error.unknownBlock': 'この接続先では、そのブロックIDは使えません。カタログから選んでください。',
+        'gui.mcremote.error.permission': 'この接続先で「{operation}」を実行する権限がありません。',
+        'gui.mcremote.error.rejected': '接続先が「{operation}」を拒否しました。理由は「エラーの詳細」にあります。',
+        'gui.mcremote.error.failed': '「{operation}」に失敗しました。理由は「エラーの詳細」にあります。',
         'gui.mcremote.error.operation': 'この操作',
         'gui.mcremote.server.unity': 'Unity箱庭',
         'gui.mcremote.error.unsupported': '今の接続先では、「{operation}」は使えません。',
@@ -327,6 +335,16 @@ const mcremoteMessages = {
         'gui.mcremote.operation.world.strikeLightning': 'かみなりをおとす',
 
         'gui.mcremote.wireScope.server': 'サーバーじっそう / ばん',
+        'gui.mcremote.wireScope.actionConnectTarget':
+            '{target}にはまだつながっていません。「せつぞくする」ブロックをうごかしてください。',
+        'gui.mcremote.wireScope.lastOperationError': 'さいごのそうさエラー',
+        'gui.mcremote.error.zeroDirection': 'むきの x・y・z のうち、すくなくとも1つを0いがいにしてください。',
+        'gui.mcremote.error.invalidInput': '「{operation}」ブロックにいれたあたいをたしかめてください。',
+        'gui.mcremote.error.unknownBlock': 'このせつぞくさきでは、そのブロックIDはつかえません。カタログからえらんでください。',
+        'gui.mcremote.error.permission': 'このせつぞくさきでは「{operation}」をじっこうするきょかがありません。',
+        'gui.mcremote.error.rejected':
+            'せつぞくさきが「{operation}」をうけつけませんでした。りゆうは「エラーのしょうさい」にあります。',
+        'gui.mcremote.error.failed': '「{operation}」にしっぱいしました。りゆうは「エラーのしょうさい」にあります。',
         'gui.mcremote.error.operation': 'このそうさ',
         'gui.mcremote.server.unity': 'Unityはこにわ',
         'gui.mcremote.error.unsupported': 'いまのせつぞくさきでは、「{operation}」はつかえません。',

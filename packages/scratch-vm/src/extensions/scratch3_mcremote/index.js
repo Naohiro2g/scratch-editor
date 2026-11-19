@@ -407,6 +407,7 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._lastError = null;
+        this._lastOperationError = null;
         this._transportDiagnostic = null;
         this._buildDeliveryNoticeShown = false;
 
@@ -1726,6 +1727,7 @@ class Scratch3McRemoteBlocks {
         this._helloInfo = null;
         this._buildContext = null;
         this._lastError = null;
+        this._lastOperationError = null;
         this._transportDiagnostic = null;
         this._frameLog = [];
         this._frameSequence = 0;
@@ -1883,6 +1885,7 @@ class Scratch3McRemoteBlocks {
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
             lastError: this._sanitizeWireValue(this._lastError),
+            lastOperationError: this._sanitizeWireValue(this._lastOperationError),
             transportDiagnostic: this._sanitizeWireValue(this._transportDiagnostic),
             frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame)),
             droppedFrames: this._droppedFrameCount
@@ -2744,9 +2747,14 @@ class Scratch3McRemoteBlocks {
             error.origin = 'server';
             error.method = pending.method;
             if (msg.error.data) error.reason = msg.error.data.reason;
-            if (this._isAuthError(error)) this._clearSessionToken();
-            if (pending.method === 'hello' && !this._isAuthError(error)) {
+            const authError = this._isAuthError(error);
+            if (authError) this._clearSessionToken();
+            if (pending.method === 'hello' && !authError) {
                 this._setConnectionStatus(ConnectionStatus.ERROR, error);
+            } else if (pending.showOperationError && error.reason !== 'expected_hello') {
+                // Record the rejection before a block turns it into a warning or a reporter value.
+                this._lastOperationError = this._errorInfo(error);
+                this._emitObservation();
             }
             pending.reject(error);
             // expected_hello mandates server-side close even if Bridge retains its WebSocket.
@@ -3049,6 +3057,9 @@ class Scratch3McRemoteBlocks {
             method,
             params,
             sent: false,
+            // Background requests have their own status and should not replace the user's last operation.
+            showOperationError: options.showOperationError !== false && !this._isSessionSetupMethod(method) &&
+                method !== 'catalog.get' && method !== 'events.poll',
             idleTimeoutMs: Math.max(this._connectionPolicy.requestIdleTimeoutMs,
                 options.requestIdleTimeoutMs || 0)};
         this._pending.set(id, pendingEntry);
@@ -3302,10 +3313,13 @@ class Scratch3McRemoteBlocks {
         if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
         log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
         error.method = error.method || method;
-        this._lastError = this._errorInfo(error);
-        this._emitObservation();
+        const summary = this._errorInfo(error);
+        if (error.origin !== 'server' && !summary.completionUnknown && !summary.notSent) {
+            this._lastOperationError = summary;
+            this._emitObservation();
+        }
         if (this.runtime && typeof this.runtime.emit === 'function') {
-            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, summary);
         }
         return Promise.resolve();
     }
@@ -3440,7 +3454,7 @@ class Scratch3McRemoteBlocks {
             const pending = this._blockInfoMonitorPending.get(cacheKey);
             if (pending) return pending;
         }
-        const request = this._request('world.getBlock', params).then(result => {
+        const request = this._request('world.getBlock', params, {showOperationError: !isMonitorPoll}).then(result => {
             try {
                 return formatBlockInfoText(result);
             } catch (error) {
@@ -3543,7 +3557,7 @@ class Scratch3McRemoteBlocks {
             if (pending) return pending;
         }
 
-        const request = this._request('world.getHeight', params).then(result => {
+        const request = this._request('world.getHeight', params, {showOperationError: !isMonitorPoll}).then(result => {
             if (!Number.isInteger(result)) return makeErrorText('remote_error');
             this._heightNotFoundNoticeKeys.delete(cacheKey);
             return result;
@@ -4031,7 +4045,7 @@ class Scratch3McRemoteBlocks {
             (Date.now() - this._playerPosCache.fetchedAt) < PLAYER_POS_MONITOR_THROTTLE_MS) {
             return Promise.resolve(this._playerPosCache.result);
         }
-        return this._request('player.getPos', []).then(result => {
+        return this._request('player.getPos', [], {showOperationError: !isMonitorPoll}).then(result => {
             const parsed = playerResult(result, false);
             this._playerPosCache = {result: parsed, fetchedAt: Date.now()};
             return parsed;
@@ -4052,7 +4066,7 @@ class Scratch3McRemoteBlocks {
             (Date.now() - this._playerPoseCache.fetchedAt) < PLAYER_POSE_MONITOR_THROTTLE_MS) {
             return Promise.resolve(this._playerPoseCache.result);
         }
-        return this._request('player.getPose', []).then(result => {
+        return this._request('player.getPose', [], {showOperationError: !isMonitorPoll}).then(result => {
             const parsed = playerResult(result, true);
             this._playerPoseCache = {result: parsed, fetchedAt: Date.now()};
             return parsed;

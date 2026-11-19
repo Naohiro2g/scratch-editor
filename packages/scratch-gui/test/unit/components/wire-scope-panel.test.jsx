@@ -133,7 +133,7 @@ describe('WireScopePanel', () => {
         ['connection_disabled', 'このショーケースページでは 接続先の操作が無効です。'],
         ['token_expired', '「接続する」ブロックを実行し、もう一度ペアリングしてください。'],
         ['protocol_mismatch', 'Scratch と mc-remote サーバーのバージョンを揃えてください。'],
-        ['unknown', '接続を確認して、もう一度試してください。']
+        ['sandbox_unreachable', '接続を確認して、もう一度試してください。']
     ])('projects stable reason %s into an actionable message', (reason, expected) => {
         renderPanel({
             status: 'error',
@@ -143,6 +143,40 @@ describe('WireScopePanel', () => {
 
         expect(screen.getByText(expected)).toBeInTheDocument();
         expect(screen.queryByText('raw transport detail')).not.toBeInTheDocument();
+    });
+
+    test('shows the latest operation failure independently of the connection', () => {
+        const target = {sandboxRoute: 'unity', label: 'Unity箱庭'};
+        const connected = {status: 'connected', connectionTarget: target};
+        const {rerenderPanel} = renderPanel({
+            ...connected,
+            lastOperationError: {reason: 'zero_direction', code: -32602, method: 'player.setDirection'}
+        }, {connectionTarget: target});
+
+        expect(screen.getByRole('status', {name: '状態: 接続'})).toBeInTheDocument();
+        expect(screen.getByText('最後の操作エラー')).toBeInTheDocument();
+        expect(screen.getByText(/少なくとも1つを0以外/)).toBeInTheDocument();
+        expect(screen.queryByText('次にすること')).not.toBeInTheDocument();
+
+        rerenderPanel({
+            ...connected,
+            lastOperationError: {reason: 'new_reason', origin: 'server', code: -32000, method: 'world.setBlock'}
+        });
+        expect(screen.getByText(/ブロックを.*拒否/)).toBeInTheDocument();
+        expect(screen.getByText(/new_reason/)).toBeInTheDocument();
+        expect(screen.queryByText('次にすること')).not.toBeInTheDocument();
+    });
+
+    test('guides the user to connect to the selected target after switching', () => {
+        renderPanel({
+            status: 'connected',
+            connectionTarget: {sandboxRoute: 'minecraft'},
+            lastError: {reason: 'token_expired'}
+        }, {connectionTarget: {sandboxRoute: 'unity', label: 'Unity箱庭'}});
+
+        expect(screen.getByText('Unity箱庭には未接続です。「接続する」ブロックを実行してください。'))
+            .toBeInTheDocument();
+        expect(screen.queryByText(/もう一度ペアリングしてください/)).not.toBeInTheDocument();
     });
 
     test('renders a status badge for each connection state', () => {

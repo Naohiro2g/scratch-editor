@@ -40,6 +40,36 @@ const messages = defineMessages({
         defaultMessage: 'Too many blocks in one operation. Requested: {requested}. Limit: {limit}.',
         description: 'Learner-facing diagnostic: count'
     },
+    zeroDirection: {
+        id: 'gui.mcremote.error.zeroDirection',
+        defaultMessage: 'Set at least one of x, y, or z to a nonzero value.',
+        description: 'How to correct a zero direction vector'
+    },
+    invalidInput: {
+        id: 'gui.mcremote.error.invalidInput',
+        defaultMessage: 'Check the inputs to “{operation}”.',
+        description: 'The operation rejected one or more input values'
+    },
+    unknownBlock: {
+        id: 'gui.mcremote.error.unknownBlock',
+        defaultMessage: 'This target does not recognize that block ID. Choose a block from its catalog.',
+        description: 'The connected server rejected an unknown block ID'
+    },
+    permission: {
+        id: 'gui.mcremote.error.permission',
+        defaultMessage: 'You do not have permission for “{operation}” on this target.',
+        description: 'The connected server denied permission for the operation'
+    },
+    rejected: {
+        id: 'gui.mcremote.error.rejected',
+        defaultMessage: 'The target rejected “{operation}”. Open the error details for the reason.',
+        description: 'Fallback for a server rejection'
+    },
+    failed: {
+        id: 'gui.mcremote.error.failed',
+        defaultMessage: '“{operation}” failed. Open the error details for the reason.',
+        description: 'Fallback for a client operation error'
+    },
     point: {
         id: 'gui.mcremote.error.point',
         defaultMessage: 'Offending point (absolute world coordinates): x={x}, y={y}, z={z}.',
@@ -68,10 +98,10 @@ const ErrorMessage = ({error, server}) => {
     const bounds = data.bounds || {};
     const point = data.violating;
     const reason = error.reason || data.reason;
-    let message = error.message;
+    const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
+    let message = intl.formatMessage(error.origin === 'server' ? messages.rejected : messages.failed, {operation});
     if (reason === 'method_not_found' || error.code === -32601) {
         const name = server && server.name;
-        const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
         message = intl.formatMessage(name ? messages.unsupportedNamed : messages.unsupported,
             {operation, server: name === 'mc-remote-unity-sandbox' ? intl.formatMessage(messages.unity) : name});
     } else if (reason === 'out_of_bounds') {
@@ -87,6 +117,14 @@ const ErrorMessage = ({error, server}) => {
             requested: Number.isFinite(data.requested) ? intl.formatNumber(data.requested) : '—',
             limit: Number.isFinite(data.limit) ? intl.formatNumber(data.limit) : '—'
         });
+    } else if (reason === 'zero_direction') {
+        message = intl.formatMessage(messages.zeroDirection);
+    } else if (reason === 'unknown_block') {
+        message = intl.formatMessage(messages.unknownBlock);
+    } else if (reason === 'invalid_params' || reason === 'invalid_block_state' || error.code === -32602) {
+        message = intl.formatMessage(messages.invalidInput, {operation});
+    } else if (reason === 'permission_denied') {
+        message = intl.formatMessage(messages.permission, {operation});
     }
     return (
         <div role="alert">

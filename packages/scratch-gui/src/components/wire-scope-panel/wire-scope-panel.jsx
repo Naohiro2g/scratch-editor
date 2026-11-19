@@ -110,6 +110,16 @@ const messages = defineMessages({
         defaultMessage: 'Run the connect block first.',
         description: 'Action shown after a McRemote command runs while disconnected'
     },
+    actionConnectTarget: {
+        id: 'gui.mcremote.wireScope.actionConnectTarget',
+        defaultMessage: 'Not connected to {target}. Run the connect block.',
+        description: 'Action shown when the selected target needs its own connection'
+    },
+    lastOperationError: {
+        id: 'gui.mcremote.wireScope.lastOperationError',
+        defaultMessage: 'Last operation error',
+        description: 'Label for the latest operation failure in this session'
+    },
     actionConnectionDisabled: {
         id: 'gui.mcremote.wireScope.actionConnectionDisabled',
         defaultMessage: 'Server commands are turned off on this showcase page.',
@@ -184,19 +194,24 @@ const reconnectInfo = function (status, configuredRoute, actualRoute) {
     if (status === 'connected' && configuredRoute && configuredRoute === actualRoute) {
         return {message: messages.reconnectNotNeeded, className: styles.reconnectOk, icon: 'OK'};
     }
-    if (status === 'pairing') {
+    if (status === 'pairing' && (!configuredRoute || configuredRoute === actualRoute)) {
         return {message: messages.reconnectPending, className: styles.reconnectPending, icon: '...'};
     }
     return {message: messages.reconnectNeeded, className: styles.reconnectNeeded, icon: '!'};
 };
 
-const actionMessage = function (lastError) {
-    if (!lastError) return null;
-    if (lastError.reason === 'not_connected') return messages.actionConnect;
-    if (lastError.reason === 'connection_disabled') return messages.actionConnectionDisabled;
-    if (lastError.reason === 'protocol_mismatch') return messages.actionProtocolMismatch;
-    if (AUTH_REASONS.indexOf(lastError.reason) !== -1) return messages.actionPairAgain;
-    return messages.actionRetry;
+const connectionAction = function (state) {
+    if (state.status === 'pairing') return null;
+    const error = state.lastError;
+    const reason = error && error.reason;
+    if (reason === 'not_connected') return messages.actionConnect;
+    if (reason === 'connection_disabled') return messages.actionConnectionDisabled;
+    if (reason === 'protocol_mismatch') return messages.actionProtocolMismatch;
+    if (AUTH_REASONS.includes(reason)) return messages.actionPairAgain;
+    if (state.transportDiagnostic || ['sandbox_unreachable', 'bridge_transport_incompatible'].includes(reason)) {
+        return messages.actionRetry;
+    }
+    return null;
 };
 
 const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) => {
@@ -212,12 +227,18 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
     }, [state.status]);
     const currentStatus = statusInfo(state.status);
     const statusText = intl.formatMessage(currentStatus.message);
-    const reconnect = reconnectInfo(state.status, routeOf(connectionTarget), routeOf(state.connectionTarget));
+    const configuredRoute = routeOf(connectionTarget);
+    const actualRoute = routeOf(state.connectionTarget);
+    const reconnect = reconnectInfo(state.status, configuredRoute, actualRoute);
     const reconnectText = intl.formatMessage(reconnect.message);
-    const diagnosticError = state.lastError && (state.lastError.code === -32601 ||
-        ['method_not_found', 'out_of_bounds', 'build_range_exceeded', 'block_count_limit_exceeded']
-            .includes(state.lastError.reason));
-    const nextAction = diagnosticError ? null : actionMessage(state.lastError);
+    const targetChanged = configuredRoute && actualRoute && configuredRoute !== actualRoute;
+    const action = connectionAction(state);
+    const connectSelected = targetChanged || (configuredRoute && state.status === 'disconnected' && !action);
+    const nextAction = connectSelected ?
+        intl.formatMessage(messages.actionConnectTarget, {target: connectionTarget.label || configuredRoute}) :
+        action && intl.formatMessage(action);
+    const operationError = !targetChanged && (state.lastOperationError ||
+        (state.status === 'connected' && !action && state.lastError));
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
     const observationLabel = `${state.sourceKind === 'scratch' ? 'Scratch' : EMPTY} · ${state.displayAlias}`;
 
@@ -301,19 +322,22 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
                             <strong>{state.hello.server.name} / {state.hello.server.version}</strong>
                         </div>
                     ) : null}
-                    {diagnosticError ? (
-                        <ErrorMessage
-                            error={state.lastError}
-                            server={state.hello && state.hello.server}
-                        />
+                    {operationError ? (
+                        <div className={styles.detailColumn}>
+                            <span><FormattedMessage {...messages.lastOperationError} /></span>
+                            <ErrorMessage
+                                error={operationError}
+                                server={state.hello && state.hello.server}
+                            />
+                        </div>
                     ) : null}
-                    {state.pairCode ? (
+                    {!targetChanged && state.pairCode ? (
                         <div className={styles.detailRow}>
                             <span><FormattedMessage {...messages.pairCode} /></span>
                             <strong>{state.pairCode}</strong>
                         </div>
                     ) : null}
-                    {state.pairCommand ? (
+                    {!targetChanged && state.pairCommand ? (
                         <div className={styles.detailColumn}>
                             <span><FormattedMessage {...messages.pairCommand} /></span>
                             <code>{state.pairCommand}</code>
@@ -325,7 +349,7 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
                             role="alert"
                         >
                             <span><FormattedMessage {...messages.actionRequired} /></span>
-                            <strong><FormattedMessage {...nextAction} /></strong>
+                            <strong>{nextAction}</strong>
                         </div>
                     ) : null}
                     {state.status === 'connected' && state.displayAlias && wireScopeUrl ? (
@@ -343,9 +367,17 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
     );
 };
 
+const errorSummaryPropType = PropTypes.shape({
+    message: PropTypes.string,
+    code: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    reason: PropTypes.string,
+    method: PropTypes.string
+});
+
 WireScopePanel.propTypes = {
     connectionTarget: PropTypes.shape({
-        sandboxRoute: PropTypes.string
+        sandboxRoute: PropTypes.string,
+        label: PropTypes.string
     }),
     colorMode: PropTypes.string,
     wireScopeUrl: PropTypes.string,
@@ -360,11 +392,9 @@ WireScopePanel.propTypes = {
         hello: PropTypes.shape({server: PropTypes.shape({name: PropTypes.string, version: PropTypes.string})}),
         pairCode: PropTypes.string,
         pairCommand: PropTypes.string,
-        lastError: PropTypes.shape({
-            message: PropTypes.string,
-            code: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-            reason: PropTypes.string
-        })
+        lastOperationError: errorSummaryPropType,
+        transportDiagnostic: errorSummaryPropType,
+        lastError: errorSummaryPropType
     })
 };
 

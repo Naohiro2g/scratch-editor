@@ -1401,6 +1401,73 @@ test('setBlocks sends an empty state object without requiring a catalog', t =>
     })
 );
 
+test('server rejections reach mini without changing connection state or command completion', async t => {
+    const runtime = newRuntime();
+    const {blocks, socket} = await newConnectedBlocks(runtime);
+    const cases = [
+        ['world.setBlock', () => blocks.setBlock({X: 0, Y: 320, Z: 0, BLOCK: 'stone'}),
+            -32000, {reason: 'out_of_bounds', bounds: {y_min: -64, y_max: 319}, violating: {x: 0, y: 320, z: 0}}],
+        ['world.setBlocks', () => blocks.setBlocks({
+            X1: 0, Y1: 0, Z1: 0, X2: 32, Y2: 32, Z2: 32, BLOCK: 'stone'
+        }), -32000, {reason: 'block_count_limit_exceeded', requested: 35937, limit: 32768}],
+        ['world.setBlock', () => blocks.setBlock({X: 100, Y: 63, Z: 0, BLOCK: 'stone'}),
+            -32000, {reason: 'build_range_exceeded',
+                bounds: {build_range: 50, center: {x: 0, z: 0}},
+                violating: {x: 100, y: 63, z: 0}}],
+        ['world.spawnEntity', () => blocks.spawnEntity({
+            ENTITY: 'minecraft:allay', X: 0, Y: 63, Z: 0, VARIABLE: {id: 'var', name: 'entity'}
+        }, {target: {lookupOrCreateVariable: () => ({value: '', isCloud: false})}}), -32601,
+        {reason: 'method_not_found'}],
+        ['world.spawnParticle', () => blocks.spawnParticle({PARTICLE: 'minecraft:flame'}),
+            -32601, undefined],
+        ['player.setDirection', () => blocks.setPlayerDirection({X: 0, Y: 0, Z: 0}),
+            -32602, {reason: 'zero_direction'}]
+    ];
+    for (const [method, run, code, data] of cases) {
+        const completion = run();
+        const request = socket.lastSent();
+        t.equal(request.method, method);
+        socket.fireMessage({jsonrpc: '2.0', id: request.id, error: {code, message: 'Rejected', data}});
+        await completion;
+        const observed = latestObservation(runtime);
+        t.equal(observed.status, 'connected');
+        t.equal(observed.lastError, null, 'operation errors are separate from the connection error');
+        t.match(observed.lastOperationError, {method, code});
+        if (data) {
+            const {reason, ...details} = data;
+            t.equal(observed.lastOperationError.reason, reason);
+            if (Object.keys(details).length) t.same(observed.lastOperationError.data, details);
+        }
+    }
+    const operationError = latestObservation(runtime).lastOperationError;
+    socket.fireMessage({jsonrpc: '2.0', id: 9999, error: {code: -32603, message: 'Unmatched reply'}});
+    t.same(latestObservation(runtime).lastOperationError, operationError);
+    const monitor = blocks.getBlock({X: 0, Y: 320, Z: 0}, {thread: {updateMonitor: true}});
+    socket.fireMessage({
+        jsonrpc: '2.0',
+        id: socket.lastSent().id,
+        error: {code: -32000, message: 'Outside world', data: {reason: 'out_of_bounds'}}
+    });
+    t.equal(await monitor, '⟦mcr-error:remote_error⟧');
+    t.same(latestObservation(runtime).lastOperationError, operationError,
+        'a background monitor cannot replace the last operation error');
+    const next = blocks.postToChat({MSG: 'Still connected'});
+    const request = socket.lastSent();
+    t.equal(request.method, 'chat.post');
+    socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
+    await next;
+    t.same(latestObservation(runtime).lastOperationError, operationError, 'success does not erase the last failure');
+    t.same(actionableErrors(runtime).map(error => error.reason), ['zero_direction'],
+        'only the direction command emits its existing toast');
+    socket.fireClose({code: 1000});
+    const connecting = blocks.connect();
+    const newSocket = FakeWebSocket.instances[1];
+    newSocket.fireOpen();
+    newSocket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: McRemote.PROTOCOL_VERSION}});
+    await connecting;
+    t.equal(latestObservation(runtime).lastOperationError, null, 'new connection clears the previous operation');
+});
+
 test('FAST mode is applied after a flush fence and sends setters as notifications', t =>
     newConnectedBlocks().then(({blocks, socket}) => {
         const changingMode = blocks.setBuildMode({MODE: 'FAST', TRACE_DELAY: 0.25});
@@ -1532,7 +1599,7 @@ test('failed mode transition retains DEBUG and releases later registrations', t 
             const request = socket.lastSent();
             t.equal(request.method, 'world.setBlock');
             t.type(request.id, 'number', 'old DEBUG mode remains active');
-            t.equal(blocks._lastError.reason, 'transport_lost');
+            t.equal(latestObservation(blocks.runtime).lastOperationError.reason, 'transport_lost');
             socket.fireMessage({jsonrpc: '2.0', id: request.id, result: null});
             return settingBlock;
         }).then(() => t.end());
@@ -2210,7 +2277,7 @@ test('malformed StateText is not sent and emits an actionable local reason', t =
         const before = socket.sent.length;
         return blocks.setBlock({X: 0, Y: 0, Z: 0, BLOCK: 'oak_log', STATE: 'axis=z,'}).then(() => {
             t.equal(socket.sent.length, before);
-            t.equal(blocks._lastError.reason, 'invalid_block_state');
+            t.equal(latestObservation(blocks.runtime).lastOperationError.reason, 'invalid_block_state');
             t.end();
         });
     })
