@@ -81,7 +81,7 @@ class Socket {
 }
 Socket.OPEN = 1;
 Socket.instances = [];
-const hello = overrides => Object.assign({protocol: '23.2.1',
+const hello = overrides => Object.assign({protocol: McRemote.PROTOCOL_VERSION,
     catalogHash: null,
     dimension: 'minecraft:overworld',
     origin: [200, 0, 200],

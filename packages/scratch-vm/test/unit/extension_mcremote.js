@@ -369,7 +369,7 @@ test('catalog list rejects unavailable catalogs, invalid inputs and obsolete con
     t.equal(socket.sent.length, 1);
 });
 
-test('hello uses a JSON-RPC 2.0 request with protocol 23.2.1', t => {
+test('hello advertises protocol 24.0.0 and Scratch 2400.0.0rc1', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
@@ -386,9 +386,9 @@ test('hello uses a JSON-RPC 2.0 request with protocol 23.2.1', t => {
     t.equal(hello.jsonrpc, '2.0');
     t.equal(hello.id, 1, 'client-numbered id starts at 1');
     t.equal(hello.method, 'hello');
-    t.equal(hello.params.protocol, protocolFixture.protocol, 'clean protocol semver, no channel suffix');
+    t.equal(hello.params.protocol, '24.0.0', 'clean protocol semver, no channel suffix');
     t.equal(hello.params.client.name, 'scratch-mcremote');
-    t.equal(hello.params.client.version, '2321.2.0', 'client build label is diagnostic only');
+    t.equal(hello.params.client.version, '2400.0.0rc1', 'client build label is diagnostic only');
     t.equal(hello.params.sandbox, void 0, 'sandbox routing is not part of hello');
     t.end();
 });
@@ -449,7 +449,7 @@ test('connect uses the runtime-configured bridge and default sandbox without ove
         socket.url,
         'wss://bridge.classroom.example/ws?sandbox=minecraft.classroom.example'
     );
-    t.equal(socket.lastSent().params.client.version, '2321.2.0');
+    t.equal(socket.lastSent().params.client.version, '2400.0.0rc1');
     t.end();
 });
 
@@ -696,7 +696,7 @@ test('auth_required starts pair flow, stores token, retries hello and fires the 
             t.equal(pairBegin.method, 'auth.pairBegin');
             t.same(pairBegin.params.token_type, 'session');
             t.equal(pairBegin.params.client.name, 'scratch-mcremote');
-            t.equal(pairBegin.params.client.version, '2321.2.0');
+            t.equal(pairBegin.params.client.version, '2400.0.0rc1');
             t.equal(latestObservation(runtime).status, 'pairing');
             socket.fireMessage({jsonrpc: '2.0',
                 id: 2,
@@ -824,7 +824,7 @@ test('hello accepts a server with a newer compatible protocol minor', t => {
     const result = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.3.99'}});
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '24.1.99'}});
 
     return result.then(() => {
         t.equal(blocks._connectionStatus, 'connected');
@@ -832,15 +832,15 @@ test('hello accepts a server with a newer compatible protocol minor', t => {
     });
 });
 
-test('protocol 23.2.1 client accepts a 23.2.0 server', t => {
+test('protocol 24.0.0 client accepts a 24.0.0 server', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
     const result = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    t.equal(socket.lastSent().params.protocol, '23.2.1');
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.2.0'}});
+    t.equal(socket.lastSent().params.protocol, '24.0.0');
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '24.0.0'}});
 
     return result.then(() => {
         t.equal(blocks._connectionStatus, 'connected');
@@ -848,7 +848,7 @@ test('protocol 23.2.1 client accepts a 23.2.0 server', t => {
     });
 });
 
-test('hello rejects an incompatible server protocol before commands can run', t => {
+test('hello rejects a 23.3.0 server before commands can run', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const runtime = newRuntime();
@@ -856,7 +856,7 @@ test('hello rejects an incompatible server protocol before commands can run', t 
     const connection = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '20.9.0'}});
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.3.0'}});
 
     return Promise.all([
         connection.then(
@@ -873,17 +873,17 @@ test('hello rejects an incompatible server protocol before commands can run', t 
     });
 });
 
-test('hello rejects a 23.0.x server as older than the 23.2 client', t => {
+test('hello rejects protocol 25 while ignoring the patch within the supported major', t => {
     FakeWebSocket.instances = [];
     global.localStorage.clear();
     const blocks = new McRemote({});
     const connection = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.0.99'}});
-    t.equal(blocks._isProtocolCompatible('23.2.99'), true, 'server patch is ignored');
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '25.0.99'}});
+    t.equal(blocks._isProtocolCompatible('24.0.99'), true, 'server patch is ignored');
     return connection.then(
-        () => t.fail('23.0.x must not be accepted'),
+        () => t.fail('25.0.x must not be accepted'),
         error => {
             t.equal(error.reason, 'protocol_mismatch');
             t.end();
@@ -2830,7 +2830,7 @@ test('client protocol mismatch closes the socket while retaining the existing er
     const connection = blocks.connect();
     const socket = FakeWebSocket.instances[0];
     socket.fireOpen();
-    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '24.0.0'}});
+    socket.fireMessage({jsonrpc: '2.0', id: 1, result: {protocol: '23.3.0'}});
     await t.rejects(connection, {reason: 'protocol_mismatch'});
     t.equal(socket.readyState, 3, 'incompatible connection is closed');
     t.equal(blocks._socket, null);

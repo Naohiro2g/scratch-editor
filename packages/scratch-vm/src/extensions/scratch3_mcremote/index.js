@@ -74,7 +74,7 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '23.2.1';
+const PROTOCOL_VERSION = '24.0.0';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';

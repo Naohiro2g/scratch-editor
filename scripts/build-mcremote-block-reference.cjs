@@ -96,7 +96,7 @@ const main = async function () {
         return [argument.slice(0, separator), argument.slice(separator + 1)];
     }));
     for (const option of Object.keys(options)) {
-        if (!['--editor-url', '--source-ref', '--output'].includes(option)) {
+        if (!['--editor-url', '--source-ref', '--output', '--release'].includes(option)) {
             throw new Error(`Unknown option: ${option}`);
         }
     }
@@ -113,7 +113,11 @@ const main = async function () {
     const versionSource = execFileSync('git', ['show',
         `${sourceCommit}:packages/scratch-vm/src/extensions/scratch3_mcremote/client-version.js`],
     {cwd: root, encoding: 'utf8'});
-    const version = /module\.exports\s*=\s*['"]([^'"]+)['"]/.exec(versionSource)[1];
+    const clientVersion = /module\.exports\s*=\s*['"]([^'"]+)['"]/.exec(versionSource)[1];
+    const version = options['--release'] || clientVersion;
+    if (version !== clientVersion && version !== clientVersion.replace(/rc[1-9]\d*$/, '')) {
+        throw new Error('--release must match the source client version or its stable version.');
+    }
     const protocolSource = execFileSync('git', ['show',
         `${sourceCommit}:packages/scratch-vm/src/extensions/scratch3_mcremote/index.js`],
     {cwd: root, encoding: 'utf8'});
