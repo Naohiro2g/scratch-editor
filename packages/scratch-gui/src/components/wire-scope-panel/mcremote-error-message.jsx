@@ -3,6 +3,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {defineMessages, useIntl} from 'react-intl';
 
+import CopyTextButton from './copy-text-button';
+import styles from './wire-scope-panel.css';
+
 const messages = defineMessages({
     operation: {id: 'gui.mcremote.error.operation', defaultMessage: 'This operation'},
     unity: {
@@ -70,6 +73,26 @@ const messages = defineMessages({
         defaultMessage: '“{operation}” failed. Open the error details for the reason.',
         description: 'Fallback for a client operation error'
     },
+    invalidBuildMode: {
+        id: 'gui.mcremote.error.invalidBuildMode',
+        defaultMessage: 'Choose DEBUG, TRACE, or FAST for the build mode.',
+        description: 'Guidance after an invalid build mode input'
+    },
+    invalidTraceDelay: {
+        id: 'gui.mcremote.error.invalidTraceDelay',
+        defaultMessage: 'Set the TRACE delay to a number from 0 to 2 seconds.',
+        description: 'Guidance after an invalid TRACE delay input'
+    },
+    groundNotFound: {
+        id: 'gui.mcremote.error.groundNotFound',
+        defaultMessage: 'No ground was found.',
+        description: 'The server did not find a ground surface'
+    },
+    catalogUnavailable: {
+        id: 'gui.mcremote.error.catalogUnavailable',
+        defaultMessage: 'The catalog is unavailable. Check the connection and try again.',
+        description: 'The connected server has not provided a usable catalog'
+    },
     completionUnknown: {
         id: 'gui.mcremote.error.completionUnknown',
         defaultMessage: 'Could not confirm whether “{operation}” finished.',
@@ -102,6 +125,13 @@ const messages = defineMessages({
     }
 });
 
+const messagesByReason = new Map([
+    ['invalid_build_mode', messages.invalidBuildMode],
+    ['invalid_trace_delay', messages.invalidTraceDelay],
+    ['height_not_found', messages.groundNotFound],
+    ['catalog_unavailable', messages.catalogUnavailable]
+]);
+
 const ErrorMessage = ({error, server}) => {
     const intl = useIntl();
     const data = error.data || {};
@@ -109,7 +139,8 @@ const ErrorMessage = ({error, server}) => {
     const point = data.violating;
     const reason = error.reason || data.reason;
     const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
-    let message = intl.formatMessage(error.origin === 'server' ? messages.rejected : messages.failed, {operation});
+    const fallback = error.origin === 'server' ? messages.rejected : messages.failed;
+    let message = intl.formatMessage(messagesByReason.get(reason) || fallback, {operation});
     if (error.completionUnknown) {
         message = intl.formatMessage(messages.completionUnknown, {operation});
     } else if (error.notSent) {
@@ -140,25 +171,43 @@ const ErrorMessage = ({error, server}) => {
     } else if (reason === 'permission_denied') {
         message = intl.formatMessage(messages.permission, {operation});
     }
+    const diagnostic = {code: error.code, reason, data};
+    const diagnosticJson = JSON.stringify(diagnostic, null, 2);
+    const copyJson = error.method ? JSON.stringify({method: error.method, ...diagnostic}, null, 2) : diagnosticJson;
     return (
         <div role="alert">
             <strong>{message}</strong>
             {point && ['x', 'y', 'z'].every(key => Number.isFinite(point[key])) ? (
-                <p>{intl.formatMessage(messages.point, point)}</p>
+                <p className={styles.diagnosticFact}>{intl.formatMessage(messages.point, point)}</p>
             ) : null}
             {Number.isFinite(bounds.build_range) && bounds.center &&
                 ['x', 'z'].every(key => Number.isFinite(bounds.center[key])) ? (
-                    <p>{intl.formatMessage(messages.rangeDetails, {...bounds.center, range: bounds.build_range})}</p>
+                    <p className={styles.diagnosticFact}>
+                        {intl.formatMessage(messages.rangeDetails, {...bounds.center, range: bounds.build_range})}
+                    </p>
                 ) : null}
             {bounds.world_border && Number.isFinite(bounds.world_border.size) && bounds.world_border.center &&
                 ['x', 'z'].every(key => Number.isFinite(bounds.world_border.center[key])) ? (
-                    <p>{intl.formatMessage(messages.borderDetails,
-                        {...bounds.world_border.center, size: bounds.world_border.size})}</p>
+                    <p className={styles.diagnosticFact}>
+                        {intl.formatMessage(messages.borderDetails,
+                            {...bounds.world_border.center, size: bounds.world_border.size})}
+                    </p>
                 ) : null}
             <details>
                 <summary>{intl.formatMessage(messages.details)}</summary>
-                {error.method ? <code>{error.method}</code> : null}
-                <pre>{JSON.stringify({code: error.code, reason, data}, null, 2)}</pre>
+                <div className={styles.copyRow}>
+                    {error.method ? <code>{error.method}</code> : null}
+                    <CopyTextButton
+                        key={copyJson}
+                        text={copyJson}
+                    />
+                </div>
+                <pre
+                    className={styles.diagnosticJson}
+                    tabIndex={0}
+                >
+                    {diagnosticJson}
+                </pre>
             </details>
         </div>
     );

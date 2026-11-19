@@ -32,9 +32,9 @@ describe('McRemote Japanese localization', () => {
             'mcremote.setEntityDirection': 'エンティティ [HANDLE] の向きを x[X]  y[Y]  z[Z] にする',
             'mcremote.strikeLightning': '雷を x :[X]  y :[Y]  z :[Z] に落とす',
             'mcremote.buildMode.trace': 'TRACE（過程）',
-            'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
-            'gui.alerts.mcremoteBuildDeliveryFailed':
-                'ブロック設置の送信が混み合ったため、mc-remoteとの接続を停止しました。もう一度接続してください。',
+            'gui.mcremote.error.invalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
+            'gui.alerts.mcremoteBuildCompletionUnknown':
+                '送信した建築コマンドの結果を確認できません。やり直す前にワールドを確認してください。',
             'gui.alerts.mcremoteServerBackpressure':
                 'mc-remoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。'
         });

@@ -1,3 +1,4 @@
+import CopyTextButton from './copy-text-button';
 import ErrorMessage from './mcremote-error-message';
 import classNames from 'classnames';
 import PropTypes from 'prop-types';
@@ -148,6 +149,7 @@ const messages = defineMessages({
 });
 
 const EMPTY = '-';
+const ERROR_HIGHLIGHT_MS = 3000;
 const AUTH_REASONS = [
     'auth_required',
     'token_expired',
@@ -176,17 +178,16 @@ const routeOf = function (target) {
     return target && target.sandboxRoute ? String(target.sandboxRoute).trim() : '';
 };
 
+const targetLabel = function (target, sandboxRoute) {
+    if (target.label) return target.label;
+    const knownTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
+    return knownTarget && knownTarget.sandboxRoute === sandboxRoute ? knownTarget.label : '';
+};
+
 const targetText = function (target) {
     const sandboxRoute = routeOf(target);
     if (!sandboxRoute) return EMPTY;
-
-    const knownTarget = getMcRemoteConnectionTargetByRoute(sandboxRoute);
-    let label = '';
-    if (target.label) {
-        label = String(target.label);
-    } else if (knownTarget && knownTarget.sandboxRoute === sandboxRoute) {
-        label = knownTarget.label;
-    }
+    const label = targetLabel(target, sandboxRoute);
     return label ? `${label} - ${sandboxRoute}` : sandboxRoute;
 };
 
@@ -217,6 +218,7 @@ const connectionAction = function (state) {
 const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) => {
     const intl = useIntl();
     const [isCollapsed, setIsCollapsed] = useState(true);
+    const [highlightedErrorKey, setHighlightedErrorKey] = useState(null);
     const openedForConnect = useRef(false);
     const state = snapshot || {};
     useEffect(() => {
@@ -235,10 +237,23 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
     const action = connectionAction(state);
     const connectSelected = targetChanged || (configuredRoute && state.status === 'disconnected' && !action);
     const nextAction = connectSelected ?
-        intl.formatMessage(messages.actionConnectTarget, {target: connectionTarget.label || configuredRoute}) :
+        intl.formatMessage(messages.actionConnectTarget, {
+            target: targetLabel(connectionTarget, configuredRoute) || configuredRoute
+        }) :
         action && intl.formatMessage(action);
     const operationError = !targetChanged && (state.lastOperationError ||
         (state.status === 'connected' && !action && state.lastError));
+    const operationErrorKey = operationError ?
+        (state.lastOperationError && state.lastOperationErrorId) || JSON.stringify(operationError) : null;
+
+    useEffect(() => {
+        if (operationErrorKey === null) return;
+        setIsCollapsed(false);
+        setHighlightedErrorKey(operationErrorKey);
+        const timeout = setTimeout(() => setHighlightedErrorKey(null), ERROR_HIGHLIGHT_MS);
+        return () => clearTimeout(timeout);
+    }, [operationErrorKey]);
+
     const isHighContrast = colorMode === HIGH_CONTRAST_MODE;
     const observationLabel = `${state.sourceKind === 'scratch' ? 'Scratch' : EMPTY} · ${state.displayAlias}`;
 
@@ -323,7 +338,14 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
                         </div>
                     ) : null}
                     {operationError ? (
-                        <div className={styles.detailColumn}>
+                        <div className={classNames(styles.detailColumn, styles.operationError)}>
+                            {highlightedErrorKey === operationErrorKey ? (
+                                <div
+                                    aria-hidden="true"
+                                    className={styles.errorHighlight}
+                                    key={operationErrorKey}
+                                />
+                            ) : null}
                             <span><FormattedMessage {...messages.lastOperationError} /></span>
                             <ErrorMessage
                                 error={operationError}
@@ -339,8 +361,14 @@ const WireScopePanel = ({connectionTarget, snapshot, colorMode, wireScopeUrl}) =
                     ) : null}
                     {!targetChanged && state.pairCommand ? (
                         <div className={styles.detailColumn}>
-                            <span><FormattedMessage {...messages.pairCommand} /></span>
-                            <code>{state.pairCommand}</code>
+                            <div className={styles.copyRow}>
+                                <span><FormattedMessage {...messages.pairCommand} /></span>
+                                <CopyTextButton
+                                    key={state.pairCommand}
+                                    text={state.pairCommand}
+                                />
+                            </div>
+                            <code className={styles.pairCommand}>{state.pairCommand}</code>
                         </div>
                     ) : null}
                     {nextAction ? (
@@ -393,6 +421,7 @@ WireScopePanel.propTypes = {
         pairCode: PropTypes.string,
         pairCommand: PropTypes.string,
         lastOperationError: errorSummaryPropType,
+        lastOperationErrorId: PropTypes.number,
         transportDiagnostic: errorSummaryPropType,
         lastError: errorSummaryPropType
     })

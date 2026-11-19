@@ -37,3 +37,13 @@ test('keeps fractional build-range coordinates', () => {
     expect(screen.getByText(/251.5/, {selector: 'p'})).toBeInTheDocument();
     expect(screen.getByText(/±50/)).toBeInTheDocument();
 });
+
+test.each([
+    ['invalid_build_mode', '建築モードは DEBUG、TRACE、FAST から選んでください。'],
+    ['invalid_trace_delay', 'TRACEの待ち時間は0秒から2秒の数値にしてください。'],
+    ['height_not_found', '地面が見つかりません。'],
+    ['catalog_unavailable', 'カタログを取得できません。接続先への接続を確認して、もう一度実行してください。']
+])('explains %s in the mini', (reason, explanation) => {
+    renderError({reason});
+    expect(screen.getByText(explanation)).toBeInTheDocument();
+});

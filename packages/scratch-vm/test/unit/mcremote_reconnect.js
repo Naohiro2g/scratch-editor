@@ -178,7 +178,7 @@ test('overlapping calls share one reconnect and restore only confirmed build', a
 });
 
 test('reconnect auth_required is not sent and never starts automatic pairing', async t => {
-    const {blocks, socket} = await connected();
+    const {blocks, socket, events} = await connected();
     socket.close();
     const call = blocks._request('world.getBlock', [0, 0, 0]).catch(error => error);
     await turns();
@@ -193,6 +193,9 @@ test('reconnect auth_required is not sent and never starts automatic pairing', a
     t.equal(error.notSent, true);
     t.equal(error.reason, undefined);
     t.same(replacement.sent.map(message => message.method), ['hello']);
+    t.match(events.find(event => event.type === Runtime.MCREMOTE_ACTIONABLE_ERROR).payload, {
+        reason: 'auth_required', localReason: 'pairing_required'
+    });
 });
 
 test('automatic reconnect can be disabled', async t => {
