@@ -256,22 +256,29 @@ const vmListenerHOC = function (WrappedComponent) {
             dispatch(updateMcRemoteCatalog(snapshot));
         },
         onMcRemoteActionableError: error => {
-            const alertByReason = {
-                not_connected: 'mcremoteNotConnected',
-                connection_disabled: 'mcremoteConnectionDisabled',
-                invalid_build_mode: 'mcremoteInvalidBuildMode',
-                invalid_trace_delay: 'mcremoteInvalidTraceDelay',
-                backpressure: 'mcremoteBuildDeliveryFailed',
-                capacity_exhausted: 'mcremoteBuildDeliveryFailed',
-                height_not_found: 'mcremoteGroundNotFound',
-                catalog_unavailable: 'mcremoteCatalogUnavailable'
-            };
-            const alertId = error && error.origin === 'client' && error.deliveryFailure ?
-                'mcremoteBuildDeliveryFailed' :
-                error && error.reason === 'backpressure' && error.origin === 'server' ?
-                    'mcremoteServerBackpressure' :
-                    error && alertByReason[error.reason] ? alertByReason[error.reason] : 'mcremoteOperationFailed';
-            showAlertWithTimeout(dispatch, alertId);
+            if (!error) return;
+            let alertId;
+            if (error.localReason === 'pairing_required') {
+                alertId = 'mcremotePairAgain';
+            } else if (error.origin === 'client' && error.deliveryFailure && error.completionUnknown) {
+                alertId = 'mcremoteBuildCompletionUnknown';
+            } else if (error.origin === 'client' && error.deliveryFailure && error.notSent) {
+                alertId = 'mcremoteBuildNotSent';
+            } else if (error.reason === 'backpressure' && error.origin === 'server') {
+                alertId = 'mcremoteServerBackpressure';
+            } else if (error.deliveryFailure || error.reason === 'backpressure' ||
+                error.reason === 'capacity_exhausted') {
+                alertId = 'mcremoteBuildDeliveryFailed';
+            } else if (error.reason === 'not_connected') {
+                alertId = 'mcremoteNotConnected';
+            } else if (error.reason === 'connection_disabled') {
+                alertId = 'mcremoteConnectionDisabled';
+            } else if (error.reason === 'event_loss') {
+                alertId = 'mcremoteEventsLost';
+            } else if (error.method === 'events.poll') {
+                alertId = 'mcremoteEventsStopped';
+            }
+            if (alertId) showAlertWithTimeout(dispatch, alertId);
         },
         onExtensionDataLoading: loading => {
             if (loading) {
