@@ -174,12 +174,16 @@ for (const suite of suites) {
     const document = JSON.parse(fs.readFileSync(path.join(directory, `client-bootstrap-${suite}-v23.2.1.json`)));
     for (const scenario of document.cases) {
         if (tcpCases.has(scenario.id)) continue;
-        test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => runV1(t, projectHelloProtocols(scenario)));
+        test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => {
+            await runV1(t, projectHelloProtocols(scenario));
+        });
     }
 }
 
 const {runOperations} = require('../fixtures/mcremote-bootstrap/operations');
 const operations = JSON.parse(fs.readFileSync(path.join(directory, 'client-bootstrap-operations-v23.2.1.json')));
 for (const scenario of operations.cases) {
-    test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => runOperations(t, projectHelloProtocols(scenario)));
+    test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => {
+        await runOperations(t, projectHelloProtocols(scenario));
+    });
 }
