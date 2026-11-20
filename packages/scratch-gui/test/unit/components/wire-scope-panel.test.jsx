@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import {screen, fireEvent} from '@testing-library/react';
+import {act, screen, fireEvent, waitFor} from '@testing-library/react';
 import {IntlProvider} from 'react-intl';
 
 import {renderWithIntl} from '../../helpers/intl-helpers.jsx';
@@ -8,6 +8,10 @@ import WireScopePanel from '../../../src/components/wire-scope-panel/wire-scope-
 import mcremoteMessages from '../../../src/lib/mcremote-l10n';
 import {HIGH_CONTRAST_MODE} from '../../../src/lib/settings/color-mode/index.js';
 import {launchWireScope} from '../../../src/lib/mcremote-wirescope-source';
+
+jest.mock('../../../src/lib/mcremote-connection-targets.js', () => ({
+    getMcRemoteConnectionTargetByRoute: route => (route === 'unity' ? {sandboxRoute: 'unity', label: 'Unity箱庭'} : null)
+}));
 
 jest.mock('../../../src/lib/mcremote-wirescope-source', () => ({
     launchWireScope: jest.fn()
@@ -74,6 +78,57 @@ describe('WireScopePanel', () => {
         expect(screen.getByText('827-419')).toBeInTheDocument();
     });
 
+    test('copies the pair command and the displayed error details', async () => {
+        const clipboard = {writeText: jest.fn().mockResolvedValue(null)};
+        Object.defineProperty(navigator, 'clipboard', {configurable: true, value: clipboard});
+        try {
+            const {rerenderPanel} = renderPanel({status: 'pairing', pairCommand: '/mcremote pair 827-419'});
+            fireEvent.click(screen.getByRole('button', {name: 'コピー'}));
+            await screen.findByText('コピーしました');
+            expect(clipboard.writeText).toHaveBeenLastCalledWith('/mcremote pair 827-419');
+
+            rerenderPanel({
+                status: 'connected',
+                lastOperationErrorId: 1,
+                lastOperationError: {method: 'world.setBlock', code: -32000, reason: 'out_of_bounds'}
+            });
+            fireEvent.click(screen.getByText('エラーの詳細'));
+            fireEvent.click(screen.getByRole('button', {name: 'コピー'}));
+            await waitFor(() => expect(clipboard.writeText).toHaveBeenCalledTimes(2));
+            expect(JSON.parse(clipboard.writeText.mock.calls[1][0])).toEqual({
+                method: 'world.setBlock', code: -32000, reason: 'out_of_bounds', data: {}
+            });
+            await screen.findByText('コピーしました');
+        } finally {
+            delete navigator.clipboard;
+        }
+    });
+
+    test('opens and highlights each new operation error, even if the message repeats', () => {
+        jest.useFakeTimers();
+        try {
+            const connected = {status: 'connected'};
+            const lastOperationError = {code: -32000, reason: 'out_of_bounds'};
+            const {rerenderPanel} = renderPanel(connected);
+            const close = () => fireEvent.click(screen.getByRole('button', {name: 'WireScope mini を閉じる'}));
+            close();
+            rerenderPanel({...connected, lastOperationError, lastOperationErrorId: 1});
+            const error = screen.getByText('最後の操作エラー').parentElement;
+            expect(error.querySelector('[aria-hidden="true"]')).toBeInTheDocument();
+            act(() => jest.advanceTimersByTime(3000));
+            expect(error.querySelector('[aria-hidden="true"]')).toBeNull();
+            close();
+
+            rerenderPanel({...connected, lastOperationError: {...lastOperationError}, lastOperationErrorId: 1});
+            expect(screen.queryByText('最後の操作エラー')).not.toBeInTheDocument();
+            rerenderPanel({...connected, lastOperationError, lastOperationErrorId: 2});
+            expect(screen.getByText('最後の操作エラー').parentElement.querySelector('[aria-hidden="true"]'))
+                .toBeInTheDocument();
+        } finally {
+            jest.useRealTimers();
+        }
+    });
+
     test('stays compact until connect runs, and respects a manual close afterward', () => {
         const {rerenderPanel} = renderPanel({status: 'disconnected'});
         expect(screen.getByRole('button', {name: 'WireScope mini を開く'})).toBeInTheDocument();
@@ -133,7 +188,7 @@ describe('WireScopePanel', () => {
         ['connection_disabled', 'このショーケースページでは 接続先の操作が無効です。'],
         ['token_expired', '「接続する」ブロックを実行し、もう一度ペアリングしてください。'],
         ['protocol_mismatch', 'Scratch と mc-remote サーバーのバージョンを揃えてください。'],
-        ['unknown', '接続を確認して、もう一度試してください。']
+        ['sandbox_unreachable', '接続を確認して、もう一度試してください。']
     ])('projects stable reason %s into an actionable message', (reason, expected) => {
         renderPanel({
             status: 'error',
@@ -143,6 +198,52 @@ describe('WireScopePanel', () => {
 
         expect(screen.getByText(expected)).toBeInTheDocument();
         expect(screen.queryByText('raw transport detail')).not.toBeInTheDocument();
+    });
+
+    test('shows the latest operation failure independently of the connection', () => {
+        const target = {sandboxRoute: 'unity', label: 'Unity箱庭'};
+        const connected = {status: 'connected', connectionTarget: target};
+        const {rerenderPanel} = renderPanel({
+            ...connected,
+            lastOperationError: {reason: 'zero_direction', code: -32602, method: 'player.setDirection'}
+        }, {connectionTarget: target});
+
+        expect(screen.getByRole('status', {name: '状態: 接続'})).toBeInTheDocument();
+        expect(screen.getByText('最後の操作エラー')).toBeInTheDocument();
+        expect(screen.getByText(/少なくとも1つを0以外/)).toBeInTheDocument();
+        expect(screen.queryByText('次にすること')).not.toBeInTheDocument();
+
+        rerenderPanel({
+            ...connected,
+            lastOperationError: {reason: 'new_reason', origin: 'server', code: -32000, method: 'world.setBlock'}
+        });
+        expect(screen.getByText(/ブロックを.*拒否/)).toBeInTheDocument();
+        expect(screen.getByText(/new_reason/)).toBeInTheDocument();
+        expect(screen.queryByText('次にすること')).not.toBeInTheDocument();
+    });
+
+    test('shows the connection problem and an unconfirmed operation together', () => {
+        renderPanel({
+            status: 'closed',
+            transportDiagnostic: {reason: 'backpressure', code: 1011},
+            lastOperationError: {method: 'connection.flush', completionUnknown: true}
+        });
+
+        expect(screen.getByRole('status', {name: '状態: 切断'})).toBeInTheDocument();
+        expect(screen.getByText('接続を確認して、もう一度試してください。')).toBeInTheDocument();
+        expect(screen.getByText(/が完了したか確認できませんでした/)).toBeInTheDocument();
+    });
+
+    test('guides the user to connect to the selected target after switching', () => {
+        renderPanel({
+            status: 'connected',
+            connectionTarget: {sandboxRoute: 'minecraft'},
+            lastError: {reason: 'token_expired'}
+        }, {connectionTarget: {sandboxRoute: 'unity'}});
+
+        expect(screen.getByText('Unity箱庭には未接続です。「接続する」ブロックを実行してください。'))
+            .toBeInTheDocument();
+        expect(screen.queryByText(/もう一度ペアリングしてください/)).not.toBeInTheDocument();
     });
 
     test('renders a status badge for each connection state', () => {

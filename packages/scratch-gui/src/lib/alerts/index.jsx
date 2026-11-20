@@ -18,6 +18,9 @@ const AlertLevels = {
     WARN: 'warn'
 };
 
+const mcRemoteConnectionAlerts = ['mcremoteNotConnected', 'mcremoteConnectionDisabled', 'mcremotePairAgain'];
+const mcRemoteEventAlerts = ['mcremoteEventsLost', 'mcremoteEventsStopped'];
+
 const alerts = [
     {
         alertId: 'createSuccess',
@@ -221,21 +224,11 @@ const alerts = [
     {
         alertId: 'mcremoteNotConnected',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: mcRemoteConnectionAlerts,
         content: (
             <FormattedMessage
                 defaultMessage="Run the mc-remote connect block first."
-                description="Guidance after a Minecraft command runs without a connection"
+                description="Guidance after a command runs without a connection"
                 id="gui.alerts.mcremoteNotConnected"
             />
         ),
@@ -246,21 +239,11 @@ const alerts = [
     {
         alertId: 'mcremoteConnectionDisabled',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: mcRemoteConnectionAlerts,
         content: (
             <FormattedMessage
                 defaultMessage="Minecraft commands are turned off in this showcase."
-                description="Guidance after a Minecraft command runs in a connection-disabled showcase"
+                description="Guidance after a command runs with connections disabled"
                 id="gui.alerts.mcremoteConnectionDisabled"
             />
         ),
@@ -269,74 +252,59 @@ const alerts = [
         maxDisplaySecs: 5
     },
     {
-        alertId: 'mcremoteInvalidBuildMode',
+        alertId: 'mcremotePairAgain',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: mcRemoteConnectionAlerts,
         content: (
             <FormattedMessage
-                defaultMessage="Choose DEBUG, TRACE, or FAST for the build mode."
-                description="Guidance after an invalid McRemote build mode input"
-                id="gui.alerts.mcremoteInvalidBuildMode"
+                defaultMessage="Run the connect block and pair again."
+                description="Guidance when reconnecting requires a new pairing"
+                id="gui.alerts.mcremotePairAgain"
             />
         ),
         closeButton: true,
         level: AlertLevels.WARN,
-        maxDisplaySecs: 5
-    },
-    {
-        alertId: 'mcremoteInvalidTraceDelay',
-        alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
-        content: (
-            <FormattedMessage
-                defaultMessage="Set the TRACE delay to a number from 0 to 60 seconds."
-                description="Guidance after an invalid McRemote TRACE delay input"
-                id="gui.alerts.mcremoteInvalidTraceDelay"
-            />
-        ),
-        closeButton: true,
-        level: AlertLevels.WARN,
-        maxDisplaySecs: 5
+        maxDisplaySecs: 8
     },
     {
         alertId: 'mcremoteBuildDeliveryFailed',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: ['mcremoteBuildDeliveryFailed'],
         content: (
             <FormattedMessage
-                defaultMessage="Block placement delivery was overloaded, so mc-remote disconnected. Connect again."
-                description="Guidance after McRemote closes an overloaded block placement transport"
+                defaultMessage="Block placement could not continue. Check the connection before trying again."
+                description="Guidance after a building transport failure"
                 id="gui.alerts.mcremoteBuildDeliveryFailed"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 8
+    },
+    {
+        alertId: 'mcremoteBuildNotSent',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['mcremoteBuildNotSent', 'mcremoteBuildDeliveryFailed'],
+        content: (
+            <FormattedMessage
+                defaultMessage="Some build commands were not sent. Check the connection before running them again."
+                description="Guidance when build commands did not reach the transport"
+                id="gui.alerts.mcremoteBuildNotSent"
+            />
+        ),
+        closeButton: true,
+        level: AlertLevels.WARN,
+        maxDisplaySecs: 8
+    },
+    {
+        alertId: 'mcremoteBuildCompletionUnknown',
+        alertType: AlertTypes.STANDARD,
+        clearList: ['mcremoteBuildCompletionUnknown', 'mcremoteBuildDeliveryFailed'],
+        content: (
+            <FormattedMessage
+                defaultMessage="The result of sent build commands is unknown. Check the world before retrying."
+                description="Guidance when sent build commands were not confirmed"
+                id="gui.alerts.mcremoteBuildCompletionUnknown"
             />
         ),
         closeButton: true,
@@ -346,17 +314,7 @@ const alerts = [
     {
         alertId: 'mcremoteServerBackpressure',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: ['mcremoteServerBackpressure'],
         content: (
             <FormattedMessage
                 defaultMessage="mc-remote server is busy and did not accept the command. Wait a moment and try again."
@@ -369,79 +327,34 @@ const alerts = [
         maxDisplaySecs: 8
     },
     {
-        alertId: 'mcremoteGroundNotFound',
+        alertId: 'mcremoteEventsLost',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: mcRemoteEventAlerts,
         content: (
             <FormattedMessage
-                defaultMessage="No ground was found."
-                description="Guidance when McRemote cannot find a ground surface in a Minecraft column"
-                id="gui.alerts.mcremoteGroundNotFound"
+                defaultMessage="Some events did not reach Scratch. Check any scripts that rely on those events."
+                description="Warning about missed McRemote events"
+                id="gui.alerts.mcremoteEventsLost"
             />
         ),
         closeButton: true,
         level: AlertLevels.WARN,
-        maxDisplaySecs: 5
+        maxDisplaySecs: 8
     },
     {
-        alertId: 'mcremoteOperationFailed',
+        alertId: 'mcremoteEventsStopped',
         alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
+        clearList: mcRemoteEventAlerts,
         content: (
             <FormattedMessage
-                defaultMessage="The The operation failed. Open WireScope mini for details."
-                description="Guidance after a McRemote operation fails for a reason without a specialized message"
-                id="gui.alerts.mcremoteOperationFailed"
+                defaultMessage="Scratch stopped receiving events. Run the connect block to resume reception."
+                description="Warning after Scratch stops receiving McRemote events"
+                id="gui.alerts.mcremoteEventsStopped"
             />
         ),
         closeButton: true,
         level: AlertLevels.WARN,
-        maxDisplaySecs: 5
-    },
-    {
-        alertId: 'mcremoteCatalogUnavailable',
-        alertType: AlertTypes.STANDARD,
-        clearList: [
-            'mcremoteNotConnected',
-            'mcremoteConnectionDisabled',
-            'mcremoteInvalidBuildMode',
-            'mcremoteInvalidTraceDelay',
-            'mcremoteBuildDeliveryFailed',
-            'mcremoteServerBackpressure',
-            'mcremoteGroundNotFound',
-            'mcremoteOperationFailed',
-            'mcremoteCatalogUnavailable'
-        ],
-        content: (
-            <FormattedMessage
-                defaultMessage="The catalog is unavailable. Check your Minecraft connection and try again."
-                description="Guidance when McRemote cannot copy IDs from the current connection catalog"
-                id="gui.alerts.mcremoteCatalogUnavailable"
-            />
-        ),
-        closeButton: true,
-        level: AlertLevels.WARN,
-        maxDisplaySecs: 5
+        maxDisplaySecs: 8
     },
     {
         alertId: 'loadingExtensionData',

@@ -17,6 +17,8 @@ input {width: 100%; border: 1px solid #8ca9a1;}
 button {background: #007f65; color: white; border: 0; cursor: pointer; margin-top: 24px;}
 .actions {display: flex; flex-wrap: wrap; gap: 12px;}
 .actions button {margin-top: 0;}
+.target-toolbar {display: flex; justify-content: flex-end;}
+.target-toolbar button {margin-top: 0;}
 .guide-images {display: flex; flex-wrap: wrap; align-items: flex-start; gap: 16px; margin: 20px 0;}
 .guide-images img {width: auto; max-width: min(100%, 314px); height: auto; border-radius: 8px;}
 button:disabled {opacity: .6; cursor: default;}
@@ -29,10 +31,13 @@ a {color: #006e58;}
 <main>
 <p id="version"></p>
 <h1>LANの中でマイクラリモコンScratchを始める</h1>
-<p>マイクラリモコンするときは、そのマイクラ世界にプレイヤーとして参加している必要があります。サーバーの準備方法については、ホームページ（<a href="https://mc-remote.com/#quickstart" target="_blank" rel="noopener">mc-remote.com</a>）のクイックスタートへ。</p>
+<p>Minecraftサーバーの場合は、そのマイクラ世界にプレイヤーとして参加している必要があります。Unity箱庭サーバーの場合は、マイクラアカウントは必要ありません。</p>
+<p>サーバーの準備方法については、ホームページ（<a href="https://mc-remote.com/#quickstart" target="_blank" rel="noopener">mc-remote.com</a>）のクイックスタートへ。</p>
 <form id="target">
-<div id="target-list"></div>
+<div class="target-toolbar">
 <button id="add-target" type="button" disabled>接続先を追加</button>
+</div>
+<div id="target-list"></div>
 <p>このPCで動かす場合のホスト名は127.0.0.1です。別のPCの場合は、そのPCのホスト名かIPアドレスを指定します。</p>
 <p>MinecraftのMcRemoteは通常25575、Unity箱庭は通常25585です。ゲームに参加するときのポートとは別です。</p>
 <div class="actions">

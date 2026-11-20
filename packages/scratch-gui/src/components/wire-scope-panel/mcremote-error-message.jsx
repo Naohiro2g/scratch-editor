@@ -3,6 +3,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {defineMessages, useIntl} from 'react-intl';
 
+import CopyTextButton from './copy-text-button';
+import styles from './wire-scope-panel.css';
+
 const messages = defineMessages({
     operation: {id: 'gui.mcremote.error.operation', defaultMessage: 'This operation'},
     unity: {
@@ -40,6 +43,66 @@ const messages = defineMessages({
         defaultMessage: 'Too many blocks in one operation. Requested: {requested}. Limit: {limit}.',
         description: 'Learner-facing diagnostic: count'
     },
+    zeroDirection: {
+        id: 'gui.mcremote.error.zeroDirection',
+        defaultMessage: 'Set at least one of x, y, or z to a nonzero value.',
+        description: 'How to correct a zero direction vector'
+    },
+    invalidInput: {
+        id: 'gui.mcremote.error.invalidInput',
+        defaultMessage: 'Check the inputs to “{operation}”.',
+        description: 'The operation rejected one or more input values'
+    },
+    unknownBlock: {
+        id: 'gui.mcremote.error.unknownBlock',
+        defaultMessage: 'This target does not recognize that block ID. Choose a block from its catalog.',
+        description: 'The connected server rejected an unknown block ID'
+    },
+    permission: {
+        id: 'gui.mcremote.error.permission',
+        defaultMessage: 'You do not have permission for “{operation}” on this target.',
+        description: 'The connected server denied permission for the operation'
+    },
+    rejected: {
+        id: 'gui.mcremote.error.rejected',
+        defaultMessage: 'The target rejected “{operation}”. Open the error details for the reason.',
+        description: 'Fallback for a server rejection'
+    },
+    failed: {
+        id: 'gui.mcremote.error.failed',
+        defaultMessage: '“{operation}” failed. Open the error details for the reason.',
+        description: 'Fallback for a client operation error'
+    },
+    invalidBuildMode: {
+        id: 'gui.mcremote.error.invalidBuildMode',
+        defaultMessage: 'Choose DEBUG, TRACE, or FAST for the build mode.',
+        description: 'Guidance after an invalid build mode input'
+    },
+    invalidTraceDelay: {
+        id: 'gui.mcremote.error.invalidTraceDelay',
+        defaultMessage: 'Set the TRACE delay to a number from 0 to 2 seconds.',
+        description: 'Guidance after an invalid TRACE delay input'
+    },
+    groundNotFound: {
+        id: 'gui.mcremote.error.groundNotFound',
+        defaultMessage: 'No ground was found.',
+        description: 'The server did not find a ground surface'
+    },
+    catalogUnavailable: {
+        id: 'gui.mcremote.error.catalogUnavailable',
+        defaultMessage: 'The catalog is unavailable. Check the connection and try again.',
+        description: 'The connected server has not provided a usable catalog'
+    },
+    completionUnknown: {
+        id: 'gui.mcremote.error.completionUnknown',
+        defaultMessage: 'Could not confirm whether “{operation}” finished.',
+        description: 'An operation was sent but its result was lost'
+    },
+    notSent: {
+        id: 'gui.mcremote.error.notSent',
+        defaultMessage: '“{operation}” was not sent.',
+        description: 'An operation failed before it could be sent'
+    },
     point: {
         id: 'gui.mcremote.error.point',
         defaultMessage: 'Offending point (absolute world coordinates): x={x}, y={y}, z={z}.',
@@ -62,16 +125,28 @@ const messages = defineMessages({
     }
 });
 
+const messagesByReason = new Map([
+    ['invalid_build_mode', messages.invalidBuildMode],
+    ['invalid_trace_delay', messages.invalidTraceDelay],
+    ['height_not_found', messages.groundNotFound],
+    ['catalog_unavailable', messages.catalogUnavailable]
+]);
+
 const ErrorMessage = ({error, server}) => {
     const intl = useIntl();
     const data = error.data || {};
     const bounds = data.bounds || {};
     const point = data.violating;
     const reason = error.reason || data.reason;
-    let message = error.message;
-    if (reason === 'method_not_found' || error.code === -32601) {
+    const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
+    const fallback = error.origin === 'server' ? messages.rejected : messages.failed;
+    let message = intl.formatMessage(messagesByReason.get(reason) || fallback, {operation});
+    if (error.completionUnknown) {
+        message = intl.formatMessage(messages.completionUnknown, {operation});
+    } else if (error.notSent) {
+        message = intl.formatMessage(messages.notSent, {operation});
+    } else if (reason === 'method_not_found' || error.code === -32601) {
         const name = server && server.name;
-        const operation = intl.formatMessage(operationLabels[error.method] || messages.operation);
         message = intl.formatMessage(name ? messages.unsupportedNamed : messages.unsupported,
             {operation, server: name === 'mc-remote-unity-sandbox' ? intl.formatMessage(messages.unity) : name});
     } else if (reason === 'out_of_bounds') {
@@ -87,26 +162,52 @@ const ErrorMessage = ({error, server}) => {
             requested: Number.isFinite(data.requested) ? intl.formatNumber(data.requested) : '—',
             limit: Number.isFinite(data.limit) ? intl.formatNumber(data.limit) : '—'
         });
+    } else if (reason === 'zero_direction') {
+        message = intl.formatMessage(messages.zeroDirection);
+    } else if (reason === 'unknown_block') {
+        message = intl.formatMessage(messages.unknownBlock);
+    } else if (reason === 'invalid_params' || reason === 'invalid_block_state' || error.code === -32602) {
+        message = intl.formatMessage(messages.invalidInput, {operation});
+    } else if (reason === 'permission_denied') {
+        message = intl.formatMessage(messages.permission, {operation});
     }
+    const diagnostic = {code: error.code, reason, data};
+    const diagnosticJson = JSON.stringify(diagnostic, null, 2);
+    const copyJson = error.method ? JSON.stringify({method: error.method, ...diagnostic}, null, 2) : diagnosticJson;
     return (
         <div role="alert">
             <strong>{message}</strong>
             {point && ['x', 'y', 'z'].every(key => Number.isFinite(point[key])) ? (
-                <p>{intl.formatMessage(messages.point, point)}</p>
+                <p className={styles.diagnosticFact}>{intl.formatMessage(messages.point, point)}</p>
             ) : null}
             {Number.isFinite(bounds.build_range) && bounds.center &&
                 ['x', 'z'].every(key => Number.isFinite(bounds.center[key])) ? (
-                    <p>{intl.formatMessage(messages.rangeDetails, {...bounds.center, range: bounds.build_range})}</p>
+                    <p className={styles.diagnosticFact}>
+                        {intl.formatMessage(messages.rangeDetails, {...bounds.center, range: bounds.build_range})}
+                    </p>
                 ) : null}
             {bounds.world_border && Number.isFinite(bounds.world_border.size) && bounds.world_border.center &&
                 ['x', 'z'].every(key => Number.isFinite(bounds.world_border.center[key])) ? (
-                    <p>{intl.formatMessage(messages.borderDetails,
-                        {...bounds.world_border.center, size: bounds.world_border.size})}</p>
+                    <p className={styles.diagnosticFact}>
+                        {intl.formatMessage(messages.borderDetails,
+                            {...bounds.world_border.center, size: bounds.world_border.size})}
+                    </p>
                 ) : null}
             <details>
                 <summary>{intl.formatMessage(messages.details)}</summary>
-                {error.method ? <code>{error.method}</code> : null}
-                <pre>{JSON.stringify({code: error.code, reason, data}, null, 2)}</pre>
+                <div className={styles.copyRow}>
+                    {error.method ? <code>{error.method}</code> : null}
+                    <CopyTextButton
+                        key={copyJson}
+                        text={copyJson}
+                    />
+                </div>
+                <pre
+                    className={styles.diagnosticJson}
+                    tabIndex={0}
+                >
+                    {diagnosticJson}
+                </pre>
             </details>
         </div>
     );

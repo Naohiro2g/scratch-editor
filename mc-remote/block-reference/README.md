@@ -52,6 +52,8 @@ cp -a mc-remote/block-reference/site/index.html mc-remote/block-reference/site/b
 cp -a mc-remote/block-reference/site/images/. mc-remote/block-reference/site/2320.0.0b10/images/
 ```
 
+同じソースのrcから安定版の掲載用ページを作るときは、`--release=2400.0.0`のように掲載する版を指定します。ブロックと通信protocolは選んだソースから取得します。
+
 出力先の既定値は`site/`です。別の場所へ出力するときは`--output=/tmp/mcremote-block-reference`を追加します。
 
 ## 入力と出力
