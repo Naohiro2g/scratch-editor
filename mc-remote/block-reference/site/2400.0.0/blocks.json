@@ -1,8 +1,8 @@
 {
   "release": "2400.0.0",
   "protocol": "24.0.0",
-  "sourceRef": "c0ad4f621942eaa61a85fb9d601f4eee24622c93",
-  "sourceCommit": "c0ad4f621942eaa61a85fb9d601f4eee24622c93",
+  "sourceRef": "0ae8af418d095bac734f37bfca35804810ec1cae",
+  "sourceCommit": "0ae8af418d095bac734f37bfca35804810ec1cae",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
