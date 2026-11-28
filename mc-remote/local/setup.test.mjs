@@ -41,7 +41,7 @@ const setup = async (t, {opening = false, blocked = false, failSave = false, sav
                     default_target_id: 'minecraft',
                     targets: [
                         {id: 'minecraft', label: 'Minecraft', host: 'minecraft.local', port: 25575},
-                        {id: 'unity', label: 'Unity箱庭', host: '127.0.0.1', port: 25585}
+                        {id: 'unity', label: '.NET箱庭', host: '127.0.0.1', port: 25585}
                     ],
                     saved}};
         }
@@ -123,6 +123,9 @@ test('adds a third target with a stable ID and allows selecting a default', asyn
     assert.equal(rows.length, 3);
     const id = rows[2].dataset.id;
     assert.match(id, /^target-/);
+    assert.equal(document.activeElement, rows[2].querySelector('[data-field="label"]'));
+    assert.equal(document.getElementById('add-target').compareDocumentPosition(rows[0]) &
+        window.Node.DOCUMENT_POSITION_FOLLOWING, window.Node.DOCUMENT_POSITION_FOLLOWING);
     rows[2].querySelector('[data-field="label"]').value = '教室';
     const host = rows[2].querySelector('[data-field="host"]');
     host.value = 'classroom.example';

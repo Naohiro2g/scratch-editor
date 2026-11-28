@@ -74,7 +74,7 @@ const DEFAULT_BRIDGE_URL = 'wss://bridge.mc-remote.com';
  * carried on the wire (it is irrelevant to compatibility).
  * @type {string}
  */
-const PROTOCOL_VERSION = '23.2.1';
+const PROTOCOL_VERSION = '24.0.0';
 
 const DEFAULT_SANDBOX_ROUTE = 'sb.mc-remote.com';
 const SESSION_TOKEN_STORAGE_KEY_PREFIX = 'mcremote.sessionToken.v1:';
@@ -276,6 +276,7 @@ class Scratch3McRemoteBlocks {
         this._pairingInProgress = false;
         this._flushEpoch = null;
         this._fastEpochs = new Set();
+        this._fastSendCount = 0;
 
         /**
          * Pending requests awaiting a reply, keyed by JSON-RPC id.
@@ -393,13 +394,8 @@ class Scratch3McRemoteBlocks {
          */
         this._disconnectedCommandNoticeShown = false;
 
-        /**
-         * Suppress repeated delivery failure guidance after one connection is
-         * closed to preserve the finite outbound boundary.
-         * @type {boolean}
-         * @private
-         */
-        this._buildDeliveryNoticeShown = false;
+        // Keep the two delivery outcomes visible without repeating them for a batch of failed writes.
+        this._buildDeliveryNotices = new Set();
 
         /**
          * Last connection/auth error summary.
@@ -407,8 +403,9 @@ class Scratch3McRemoteBlocks {
          * @private
          */
         this._lastError = null;
+        this._lastOperationError = null;
+        this._lastOperationErrorId = 0;
         this._transportDiagnostic = null;
-        this._buildDeliveryNoticeShown = false;
 
         /**
          * Recent client send/receive frames for WireScope v0.
@@ -1719,6 +1716,7 @@ class Scratch3McRemoteBlocks {
         const resetError = new Error('McRemote connection epoch reset');
         resetError.reason = 'connection_reset';
         this._rejectOutboundQueue(resetError);
+        this._buildDeliveryNotices.clear();
         this._resetEventState();
         this._connectionStatus = ConnectionStatus.DISCONNECTED;
         this._streamId = DEFAULT_STREAM_ID;
@@ -1726,6 +1724,7 @@ class Scratch3McRemoteBlocks {
         this._helloInfo = null;
         this._buildContext = null;
         this._lastError = null;
+        this._lastOperationError = null;
         this._transportDiagnostic = null;
         this._frameLog = [];
         this._frameSequence = 0;
@@ -1883,6 +1882,8 @@ class Scratch3McRemoteBlocks {
             pairCommand: this._pairCommand,
             hello: this._sanitizeWireValue(this._helloInfo),
             lastError: this._sanitizeWireValue(this._lastError),
+            lastOperationError: this._sanitizeWireValue(this._lastOperationError),
+            lastOperationErrorId: this._lastOperationErrorId,
             transportDiagnostic: this._sanitizeWireValue(this._transportDiagnostic),
             frameLog: this._frameLog.map(frame => this._sanitizeWireValue(frame)),
             droppedFrames: this._droppedFrameCount
@@ -2106,7 +2107,22 @@ class Scratch3McRemoteBlocks {
         }
         if (this._openPromise) return this._openPromise;
         if (this._socket && this._socket.readyState === WebSocket.OPEN &&
-            this._connectionStatus === ConnectionStatus.CONNECTED) return Promise.resolve();
+            this._connectionStatus === ConnectionStatus.CONNECTED) {
+            if (this._isAuthError(this._lastError)) {
+                const socket = this._socket;
+                this._loseConnection(socket, Object.assign(new Error('McRemote pairing is required'), {
+                    localReason: 'pairing_required'
+                }));
+                socket.close();
+            } else {
+                if (this._eventPollErrorNoticeShown) {
+                    this._eventPollErrorNoticeShown = false;
+                    this._setConnectionStatus(ConnectionStatus.CONNECTED);
+                    this._pollEvents(this._eventPollGeneration);
+                }
+                return Promise.resolve();
+            }
+        }
         if (!options.reconnect) {
             this._connectionTarget = this._resolveConnectionTarget(sandbox);
             this._confirmedBuild = null;
@@ -2216,6 +2232,8 @@ class Scratch3McRemoteBlocks {
      */
     _loseConnection (socket, error, status = ConnectionStatus.CLOSED) {
         if (socket !== this._socket) return;
+        const unconfirmedBuild = this._connectionStatus === ConnectionStatus.CONNECTED &&
+            this._fastEpochs.has(this._connectionEpoch) && error.localReason !== 'connection_target_changed';
         this._socket = null;
         this._displayAlias = '';
         this._buildContext = null;
@@ -2232,6 +2250,10 @@ class Scratch3McRemoteBlocks {
         this._resetCatalog();
         this._rejectPending(error);
         this._rejectOutboundQueue(error);
+        if (unconfirmedBuild) {
+            this._actionableCommandError('connection.flush',
+                new McRemoteCompletionUnknownError(error.message, this._connectionEpoch, true));
+        }
         this._emitConnectionEvent('disconnected', {eventLoss: true,
             invalidated: ['entity_handles', 'event_cursor', 'catalog'],
             diagnostic: this._errorInfo(error)});
@@ -2464,7 +2486,10 @@ class Scratch3McRemoteBlocks {
                     authError = nextError;
                 }
             }
-            if (options.reconnect) throw authError;
+            if (options.reconnect) {
+                this._notifyPairingRequired(authError);
+                throw authError;
+            }
             this._setConnectionStatus(ConnectionStatus.PAIRING, authError);
             this._pairingInProgress = true;
             try {
@@ -2584,6 +2609,13 @@ class Scratch3McRemoteBlocks {
      */
     _isAuthError (error) {
         return error && AUTH_REASONS.indexOf(error.reason) !== -1;
+    }
+
+    _notifyPairingRequired (error) {
+        if (this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR,
+                {...this._errorInfo(error), localReason: 'pairing_required'});
+        }
     }
 
     /**
@@ -2744,9 +2776,22 @@ class Scratch3McRemoteBlocks {
             error.origin = 'server';
             error.method = pending.method;
             if (msg.error.data) error.reason = msg.error.data.reason;
-            if (this._isAuthError(error)) this._clearSessionToken();
-            if (pending.method === 'hello' && !this._isAuthError(error)) {
+            const authError = this._isAuthError(error);
+            if (authError) {
+                this._clearSessionToken();
+                if (this._connectionStatus === ConnectionStatus.CONNECTED &&
+                    !this._isSessionSetupMethod(pending.method) && !this._isAuthError(this._lastError)) {
+                    this._setConnectionStatus(ConnectionStatus.CONNECTED, error);
+                    this._notifyPairingRequired(error);
+                }
+            }
+            if (pending.method === 'hello' && !authError) {
                 this._setConnectionStatus(ConnectionStatus.ERROR, error);
+            } else if (pending.showOperationError && error.reason !== 'expected_hello') {
+                // Record the rejection before a block turns it into a warning or a reporter value.
+                this._lastOperationError = this._errorInfo(error);
+                this._lastOperationErrorId++;
+                this._emitObservation();
             }
             pending.reject(error);
             // expected_hello mandates server-side close even if Bridge retains its WebSocket.
@@ -2771,7 +2816,9 @@ class Scratch3McRemoteBlocks {
                     excludedEpochs: [...this._fastEpochs].filter(epoch => epoch !== this._connectionEpoch)
                 });
                 this._flushEpoch = this._connectionEpoch;
-                this._fastEpochs.delete(this._connectionEpoch);
+                if (pending.fastSendCount === this._fastSendCount) {
+                    this._fastEpochs.delete(this._connectionEpoch);
+                }
             }
             pending.resolve(msg.result);
         }
@@ -2848,7 +2895,8 @@ class Scratch3McRemoteBlocks {
         if (this._eventPollErrorNoticeShown) return;
         this._eventPollErrorNoticeShown = true;
         log.warn(`McRemote: events.poll stopped: ${error.reason || error.message}`);
-        this._lastError = this._errorInfo(error);
+        if (this._isAuthError(error)) return;
+        this._lastError = {...this._errorInfo(error), method: 'events.poll'};
         this._emitObservation();
         if (this.runtime && typeof this.runtime.emit === 'function') {
             this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
@@ -3009,8 +3057,10 @@ class Scratch3McRemoteBlocks {
                 throw error;
             }
             if (pending && !hadWait) this._lastReceiveAt = this._connectionClock.now();
+            if (pending && pending.method === 'connection.flush') pending.fastSendCount = this._fastSendCount;
             if (!Object.prototype.hasOwnProperty.call(message, 'id') &&
                 (message.method === 'world.setBlock' || message.method === 'world.setBlocks')) {
+                this._fastSendCount++;
                 this._fastEpochs.add(this._connectionEpoch);
             }
             this._armResponseTimer();
@@ -3049,6 +3099,9 @@ class Scratch3McRemoteBlocks {
             method,
             params,
             sent: false,
+            // Background requests have their own status and should not replace the user's last operation.
+            showOperationError: options.showOperationError !== false && !this._isSessionSetupMethod(method) &&
+                method !== 'catalog.get' && method !== 'events.poll',
             idleTimeoutMs: Math.max(this._connectionPolicy.requestIdleTimeoutMs,
                 options.requestIdleTimeoutMs || 0)};
         this._pending.set(id, pendingEntry);
@@ -3116,10 +3169,10 @@ class Scratch3McRemoteBlocks {
      */
     _enqueueOutbound (start) {
         if (this._outboundQueue.length >= OUTBOUND_QUEUE_LIMIT) {
-            const error = new Error('McRemote outbound registration queue is full');
-            error.reason = 'backpressure';
+            const error = new McRemoteNotSentError('McRemote outbound registration queue is full',
+                this._connectionEpoch, true);
             if (this._socket && this._socket.readyState === WebSocket.OPEN) {
-                this._socket.close(1011, error.reason);
+                this._socket.close(1011, 'backpressure');
             }
             return Promise.reject(error);
         }
@@ -3298,14 +3351,26 @@ class Scratch3McRemoteBlocks {
         const isDeliveryFailure = error.deliveryFailure ||
             (error.reason === 'backpressure' && error.origin !== 'server') ||
             error.reason === 'capacity_exhausted';
-        if (isDeliveryFailure && this._buildDeliveryNoticeShown) return Promise.resolve();
-        if (isDeliveryFailure) this._buildDeliveryNoticeShown = true;
+        if (isDeliveryFailure) {
+            const outcome = error.completionUnknown ? 'unconfirmed' : error.notSent ? 'unsent' : 'failed';
+            if (this._buildDeliveryNotices.has(outcome)) return Promise.resolve();
+            this._buildDeliveryNotices.add(outcome);
+        }
         log.warn(`McRemote: ${method} failed: ${error.reason || error.message}`);
         error.method = error.method || method;
-        this._lastError = this._errorInfo(error);
-        this._emitObservation();
-        if (this.runtime && typeof this.runtime.emit === 'function') {
-            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, this._lastError);
+        const summary = this._errorInfo(error);
+        const deliveryResult = summary.completionUnknown || summary.notSent;
+        // A failed request can settle after the next connection has started.
+        const currentDisconnect = this._transportDiagnostic && summary.epoch === this._connectionEpoch;
+        if (error.origin !== 'server' && (!deliveryResult || currentDisconnect)) {
+            this._lastOperationError = summary;
+            this._lastOperationErrorId++;
+            this._emitObservation();
+        }
+        const fenceOnly = summary.completionUnknown && (method === 'connection.flush' || method === 'setBuildMode') &&
+            !this._fastEpochs.has(summary.epoch);
+        if (!fenceOnly && this.runtime && typeof this.runtime.emit === 'function') {
+            this.runtime.emit(Runtime.MCREMOTE_ACTIONABLE_ERROR, summary);
         }
         return Promise.resolve();
     }
@@ -3383,6 +3448,12 @@ class Scratch3McRemoteBlocks {
             };
         });
         return (reconnect ? reconnect.then(send) : send()).then(() => {}, error => {
+            const transport = this._transportDiagnostic;
+            if ((error.notSent || error.completionUnknown) && error.epoch === this._connectionEpoch &&
+                transport && transport.localReason !== 'connection_target_changed' &&
+                error.localReason !== 'connection_target_changed') {
+                error.deliveryFailure = true;
+            }
             if (error.deliveryFailure || error.reason === 'backpressure' || error.reason === 'capacity_exhausted') {
                 this._actionableCommandError(method, error);
             } else {
@@ -3440,7 +3511,7 @@ class Scratch3McRemoteBlocks {
             const pending = this._blockInfoMonitorPending.get(cacheKey);
             if (pending) return pending;
         }
-        const request = this._request('world.getBlock', params).then(result => {
+        const request = this._request('world.getBlock', params, {showOperationError: !isMonitorPoll}).then(result => {
             try {
                 return formatBlockInfoText(result);
             } catch (error) {
@@ -3543,7 +3614,7 @@ class Scratch3McRemoteBlocks {
             if (pending) return pending;
         }
 
-        const request = this._request('world.getHeight', params).then(result => {
+        const request = this._request('world.getHeight', params, {showOperationError: !isMonitorPoll}).then(result => {
             if (!Number.isInteger(result)) return makeErrorText('remote_error');
             this._heightNotFoundNoticeKeys.delete(cacheKey);
             return result;
@@ -4031,7 +4102,7 @@ class Scratch3McRemoteBlocks {
             (Date.now() - this._playerPosCache.fetchedAt) < PLAYER_POS_MONITOR_THROTTLE_MS) {
             return Promise.resolve(this._playerPosCache.result);
         }
-        return this._request('player.getPos', []).then(result => {
+        return this._request('player.getPos', [], {showOperationError: !isMonitorPoll}).then(result => {
             const parsed = playerResult(result, false);
             this._playerPosCache = {result: parsed, fetchedAt: Date.now()};
             return parsed;
@@ -4052,7 +4123,7 @@ class Scratch3McRemoteBlocks {
             (Date.now() - this._playerPoseCache.fetchedAt) < PLAYER_POSE_MONITOR_THROTTLE_MS) {
             return Promise.resolve(this._playerPoseCache.result);
         }
-        return this._request('player.getPose', []).then(result => {
+        return this._request('player.getPose', [], {showOperationError: !isMonitorPoll}).then(result => {
             const parsed = playerResult(result, true);
             this._playerPoseCache = {result: parsed, fetchedAt: Date.now()};
             return parsed;

@@ -117,7 +117,7 @@ describe('VMListenerHOC', () => {
         expect(actions[0].snapshot).toEqual(snapshot);
     });
 
-    test('McRemote actionable error selects connection or showcase guidance', () => {
+    test('McRemote alerts explain connection and event reception failures', () => {
         jest.useFakeTimers();
         const Component = () => (<div />);
         const WrappedComponent = vmListenerHOC(Component);
@@ -130,53 +130,81 @@ describe('VMListenerHOC', () => {
 
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'not_connected'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'connection_disabled'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_build_mode'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_trace_delay'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'auth_required', localReason: 'pairing_required'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'backpressure'});
         vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'backpressure', origin: 'server'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'capacity_exhausted'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'height_not_found'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_output_list'});
-        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'catalog_unavailable'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'event_loss'});
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'invalid_event_response', method: 'events.poll'});
 
-        const actions = store.getActions();
-        expect(actions[0].alertId).toEqual('mcremoteNotConnected');
-        expect(actions[1].alertId).toEqual('mcremoteConnectionDisabled');
-        expect(actions[2].alertId).toEqual('mcremoteInvalidBuildMode');
-        expect(actions[3].alertId).toEqual('mcremoteInvalidTraceDelay');
-        expect(actions[4].alertId).toEqual('mcremoteBuildDeliveryFailed');
-        expect(actions[5].alertId).toEqual('mcremoteServerBackpressure');
-        expect(actions[6].alertId).toEqual('mcremoteBuildDeliveryFailed');
-        expect(actions[7].alertId).toEqual('mcremoteGroundNotFound');
-        expect(actions[8].alertId).toEqual('mcremoteOperationFailed');
-        expect(actions[9].alertId).toEqual('mcremoteCatalogUnavailable');
+        expect(store.getActions().map(action => action.alertId)).toEqual([
+            'mcremoteNotConnected',
+            'mcremoteConnectionDisabled',
+            'mcremotePairAgain',
+            'mcremoteBuildDeliveryFailed',
+            'mcremoteServerBackpressure',
+            'mcremoteEventsLost',
+            'mcremoteEventsStopped'
+        ]);
         jest.runOnlyPendingTimers();
         jest.useRealTimers();
     });
 
-    test.each(['completionUnknown', 'notSent'])(
-        'local %s delivery failure selects delivery guidance without a server reason', failure => {
-            jest.useFakeTimers();
-            const Component = () => (<div />);
-            const WrappedComponent = vmListenerHOC(Component);
-            render(
-                <WrappedComponent
-                    store={store}
-                    vm={vm}
-                />
-            );
+    test('ordinary McRemote operation failures do not open a top alert or clear an existing warning', () => {
+        jest.useFakeTimers();
+        const Component = () => (<div />);
+        const WrappedComponent = vmListenerHOC(Component);
+        render(
+            <WrappedComponent
+                store={store}
+                vm={vm}
+            />
+        );
 
-            vm.emit('MCREMOTE_ACTIONABLE_ERROR', {
-                origin: 'client',
-                deliveryFailure: true,
-                [failure]: true
-            });
-            const actions = store.getActions();
-            jest.runOnlyPendingTimers();
-            jest.useRealTimers();
-            expect(actions[0].alertId).toEqual('mcremoteBuildDeliveryFailed');
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {reason: 'event_loss'});
+        for (const [method, reason] of [
+            ['player.setDirection', 'zero_direction'],
+            ['world.strikeLightning', 'method_not_found'],
+            ['world.playSound', 'invalid_params'],
+            ['world.spawnEntity', 'permission_denied'],
+            ['world.spawnParticle', 'invalid_params'],
+            ['world.setSign', 'invalid_sign_face'],
+            ['world.setBlocks', 'out_of_bounds'],
+            ['world.getHeight', 'height_not_found'],
+            ['setBuildMode', 'invalid_trace_delay'],
+            ['catalogToList', 'catalog_unavailable']
+        ]) {
+            vm.emit('MCREMOTE_ACTIONABLE_ERROR', {method, reason});
         }
-    );
+
+        expect(store.getActions().map(action => action.alertId)).toEqual(['mcremoteEventsLost']);
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+    });
+
+    test.each([
+        ['completionUnknown', 'mcremoteBuildCompletionUnknown'],
+        ['notSent', 'mcremoteBuildNotSent']
+    ])('local %s delivery failure selects its own guidance', (failure, alertId) => {
+        jest.useFakeTimers();
+        const Component = () => (<div />);
+        const WrappedComponent = vmListenerHOC(Component);
+        render(
+            <WrappedComponent
+                store={store}
+                vm={vm}
+            />
+        );
+
+        vm.emit('MCREMOTE_ACTIONABLE_ERROR', {
+            origin: 'client',
+            deliveryFailure: true,
+            [failure]: true
+        });
+        const actions = store.getActions();
+        jest.runOnlyPendingTimers();
+        jest.useRealTimers();
+        expect(actions[0].alertId).toEqual(alertId);
+    });
 
     test('targetsUpdate does not dispatch if the sound recorder is visible', () => {
         const Component = () => (<div />);

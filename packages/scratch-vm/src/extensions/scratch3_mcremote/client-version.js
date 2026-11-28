@@ -6,4 +6,4 @@
  * scratch-gui) without eagerly loading the McRemote extension class.
  * @type {string}
  */
-module.exports = '2321.2.0';
+module.exports = '2400.0.0';

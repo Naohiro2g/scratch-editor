@@ -12,9 +12,20 @@ const renderError = error => renderWithIntl(<ErrorMessage
 
 test('explains unsupported methods without guessing server identity', () => {
     renderError({code: -32601, method: 'player.setPos', message: 'Method not found'});
-    expect(screen.getByText(/Unity箱庭.*使えません/)).toBeInTheDocument();
+    expect(screen.getByText(/\.NET箱庭.*使えません/)).toBeInTheDocument();
     expect(screen.getByText(/プレイヤーを移動する/)).toBeInTheDocument();
     expect(screen.getByText('player.setPos')).toBeInTheDocument();
+});
+
+test.each([
+    ['en', messages.en, /\.NET sandbox/],
+    ['ja-Hira', messages['ja-Hira'], /\.NETはこにわ/]
+])('uses the .NET sandbox label for %s unsupported method errors', (locale, localeMessages, expected) => {
+    renderWithIntl(<ErrorMessage
+        error={{code: -32601, method: 'player.setPos', message: 'Method not found'}}
+        server={{name: 'mc-remote-unity-sandbox', version: '2321.3.0'}}
+    />, {locale, messages: localeMessages});
+    expect(screen.getByText(expected)).toBeInTheDocument();
 });
 
 test('shows requested and maximum block counts', () => {
@@ -36,4 +47,14 @@ test('keeps fractional build-range coordinates', () => {
             violating: {x: 251.5, y: 64, z: 200}}});
     expect(screen.getByText(/251.5/, {selector: 'p'})).toBeInTheDocument();
     expect(screen.getByText(/±50/)).toBeInTheDocument();
+});
+
+test.each([
+    ['invalid_build_mode', '建築モードは DEBUG、TRACE、FAST から選んでください。'],
+    ['invalid_trace_delay', 'TRACEの待ち時間は0秒から2秒の数値にしてください。'],
+    ['height_not_found', '地面が見つかりません。'],
+    ['catalog_unavailable', 'カタログを取得できません。接続先への接続を確認して、もう一度実行してください。']
+])('explains %s in the mini', (reason, explanation) => {
+    renderError({reason});
+    expect(screen.getByText(explanation)).toBeInTheDocument();
 });

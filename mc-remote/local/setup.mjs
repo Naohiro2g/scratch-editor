@@ -120,6 +120,7 @@ export const setupPage = async window => {
         next.targets.push({id: `target-${window.crypto.randomUUID()}`, label: '', host: '127.0.0.1', port: 25575});
         renderTargets(next);
         updateControls();
+        targetList.lastElementChild.querySelector('[data-field="label"]').focus();
     });
     form.addEventListener('submit', async event => {
         event.preventDefault();

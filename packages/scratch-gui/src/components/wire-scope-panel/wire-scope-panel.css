@@ -167,6 +167,9 @@
     z-index: $z-index-monitor;
     width: 16.5rem;
     max-width: calc(100vw - 0.5rem);
+    max-height: calc(100vh - $menu-bar-height - $stage-menu-height - 0.75rem);
+    max-height: calc(100dvh - $menu-bar-height - $stage-menu-height - 0.75rem);
+    overflow: auto;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -246,6 +249,83 @@
 .detail-column code {
     font-family: Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     font-size: 0.68rem;
+}
+
+.copy-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.4rem;
+}
+
+.copy-control {
+    flex: 0 0 auto;
+    text-align: end;
+}
+
+.copy-button {
+    padding: 0.1rem 0.4rem;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+    background: $ui-white;
+    color: $text-primary;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.copy-feedback {
+    color: $text-primary;
+    font-size: 0.68rem;
+}
+
+.detail-column .pair-command {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.operation-error {
+    position: relative;
+    isolation: isolate;
+    margin-inline: -0.65rem;
+    padding: 0.25rem 0.65rem;
+}
+
+.error-highlight {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: $ui-alert-orange;
+    animation: error-glow 0.5s ease-in-out alternate 5 forwards;
+}
+
+@keyframes error-glow {
+    from { opacity: 1; }
+    to { opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .error-highlight {
+        animation: none;
+    }
+}
+
+.diagnostic-fact {
+    margin: 0.25rem 0 0;
+    font: inherit;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.diagnostic-json {
+    max-height: min(12rem, 32vh);
+    overflow: auto;
+    margin: 0.25rem 0 0;
+    font-size: 0.68rem;
+    line-height: 1.4;
 }
 
 .reconnect-item {

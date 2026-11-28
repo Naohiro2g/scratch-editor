@@ -3,7 +3,7 @@
   "schema_version": 1,
   "source": {
     "repository": "Naohiro2g/minecraft-remote-tooling",
-    "commit": "37a4e79f7536b4b4a5cc9eeb7a2470b1d622a726"
+    "commit": "1a6bc1a12baff31dd4ac944dad93c8018da763a8"
   },
   "fixture_source": {
     "repository": "Naohiro2g/minecraft-remote-tooling",
@@ -141,25 +141,25 @@
     "scratch_tag": "v2320.0.0b8"
   },
   "artifacts": {
-    "github_run_id": 44093466928,
-    "github_artifact_id": 14333465844,
-    "github_artifact_digest": "sha256:9018b672b10096fe0de5b684d22295ca262a3a0a5bce3e1c797b0fbc9e955517",
-    "bridge_digest": "sha256:ae63f463f37eda03ca3442ae848aea03ea57eee9b0fdbc09b91c549370b19acb",
+    "github_run_id": 46145513113,
+    "github_artifact_id": 15263542240,
+    "github_artifact_digest": "sha256:cdb4f5ba598336a9a692ed55192ceebd5d90cb760c26ab9b37fb330fd3dc28d5",
+    "bridge_digest": "sha256:b3aa637036fdb7b95a313d653b77fddd32248e17a5422bc9dba316c8fccdb9c0",
     "files": [
       {
         "file": "bridge.oci.tar",
         "bytes": 114626048,
-        "sha256": "6ae3201893676278939ccefb096ce74030aaa69050a8801cfc181aec3d9f3452"
+        "sha256": "1264bee4ca4c000ba27498e0d6bb804898e495169246d1756790d283967faafa"
       },
       {
         "file": "candidate-manifest.json",
         "bytes": 972,
-        "sha256": "25366528c8d637a8bb96d734b2b30b010b2b4da89cf0c524c7c4ba246ee99f0f"
+        "sha256": "20c18f5ee94435eef1126061ba36b12170d20b9c3bf016813ace7987b77cc9e0"
       },
       {
         "file": "wirescope-app.manifest.json",
         "bytes": 2339,
-        "sha256": "fe5f589872d2d64c83082d13b11f60ec302176e7760decde8de22e3ce59a7e99"
+        "sha256": "105f61b4d2c8bcac382228541c7067bcd901969574e133212ad65cd4ef537091"
       },
       {
         "file": "wirescope-app.zip",

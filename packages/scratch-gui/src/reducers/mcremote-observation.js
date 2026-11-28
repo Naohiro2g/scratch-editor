@@ -10,6 +10,7 @@ const initialState = {
     pairCommand: '',
     hello: null,
     lastError: null,
+    lastOperationError: null,
     frameLog: []
 };
 

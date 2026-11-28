@@ -9,6 +9,32 @@ const tcpCases = new Set([
     'F1-FR-01', 'F1-FR-02', 'F1-FR-03', 'F1-FR-04', 'F1-FR-05', 'F1-FR-06', 'F1-CL-03', 'F1-CL-07'
 ]);
 
+// Replay the same exchanges on the current protocol while retaining the historical fixture bytes.
+const replayProtocols = new Map([
+    ['23.2.0', '24.0.0'],
+    ['23.2.1', '24.0.0'],
+    ['23.2.9', '24.0.9'],
+    ['23.3.0', '24.1.0'],
+    ['23.1.9', '23.3.0'],
+    ['24.2.1', '25.2.1']
+]);
+
+const projectHelloProtocols = function (scenario) {
+    const replay = structuredClone(scenario);
+    const project = function (hello) {
+        if (hello && replayProtocols.has(hello.protocol)) {
+            hello.protocol = replayProtocols.get(hello.protocol);
+        }
+    };
+    for (const {message} of replay.steps) {
+        if (!message) continue;
+        if (message.method === 'hello') project(message.params);
+        project(message.result);
+    }
+    project(replay.expected.result);
+    return replay;
+};
+
 const runV1 = async (t, scenario) => {
     const h = new BrowserHarness(t, scenario);
     const {ext} = h;
@@ -148,12 +174,16 @@ for (const suite of suites) {
     const document = JSON.parse(fs.readFileSync(path.join(directory, `client-bootstrap-${suite}-v23.2.1.json`)));
     for (const scenario of document.cases) {
         if (tcpCases.has(scenario.id)) continue;
-        test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => runV1(t, scenario));
+        test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => {
+            await runV1(t, projectHelloProtocols(scenario));
+        });
     }
 }
 
 const {runOperations} = require('../fixtures/mcremote-bootstrap/operations');
 const operations = JSON.parse(fs.readFileSync(path.join(directory, 'client-bootstrap-operations-v23.2.1.json')));
 for (const scenario of operations.cases) {
-    test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => runOperations(t, scenario));
+    test(`F1 browser semantic replay ${scenario.id}: ${scenario.title}`, async t => {
+        await runOperations(t, projectHelloProtocols(scenario));
+    });
 }

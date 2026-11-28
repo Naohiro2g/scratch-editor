@@ -18,7 +18,7 @@ python3 -m http.server 8640 --bind 127.0.0.1 --directory mc-remote/block-referen
 
 `site/index.html`を直接ブラウザで開いても表示・検索できます。`site/2320.0.0b9/`、`site/2320.0.0b10/`、`site/2321.0.0rc1/`が版別ページです。JavaScriptを無効にしてもブロック一覧は読めます。
 
-「Unity箱庭で使える」で、候補のUnity箱庭に対応するブロックを絞れます。[分類の根拠と対応範囲](UNITY_2321.2.0_ja.md)を参照してください。
+「.NET箱庭で使える」で、.NET箱庭に対応するブロックを絞れます。[分類の根拠と対応範囲](UNITY_2321.2.0_ja.md)を参照してください。
 
 カテゴリーのチェックボックスで、命令・値を返す・イベント・条件を複数選んで絞り込めます。最初はすべて選択されています。カテゴリーはパネルの背景色とラベルでも見分けられます。
 
@@ -51,6 +51,8 @@ mkdir -p mc-remote/block-reference/site/2320.0.0b10/images
 cp -a mc-remote/block-reference/site/index.html mc-remote/block-reference/site/blocks.json mc-remote/block-reference/site/page.js mc-remote/block-reference/site/style.css mc-remote/block-reference/site/2320.0.0b10/
 cp -a mc-remote/block-reference/site/images/. mc-remote/block-reference/site/2320.0.0b10/images/
 ```
+
+同じソースのrcから安定版の掲載用ページを作るときは、`--release=2400.0.0`のように掲載する版を指定します。ブロックと通信protocolは選んだソースから取得します。
 
 出力先の既定値は`site/`です。別の場所へ出力するときは`--output=/tmp/mcremote-block-reference`を追加します。
 

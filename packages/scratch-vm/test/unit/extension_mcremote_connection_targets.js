@@ -22,13 +22,13 @@ test('ID-scoped tokens stay separate on the same host and do not reuse host-scop
     const blocks = new McRemote(runtime);
     t.equal(blocks._readSessionToken(), '', 'a legacy host token is not reused as an ID token');
     blocks._saveSessionToken('minecraft-token');
-    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: 'Unity箱庭'});
+    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: '.NET箱庭'});
     t.equal(blocks._readSessionToken(), '');
     blocks._saveSessionToken('unity-token');
     runtime.setMcRemoteConnectionTarget({sandboxRoute: 'minecraft', label: '名前を変更'});
     t.equal(blocks._readSessionToken(), 'minecraft-token');
     blocks._clearSessionToken();
-    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: 'Unity箱庭'});
+    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: '.NET箱庭'});
     t.equal(blocks._readSessionToken(), 'unity-token', 'clearing one target does not clear the other');
     t.end();
 });
@@ -60,7 +60,7 @@ test('connect closes an active old target before dialing the selected ID', async
         t.equal(closed, true, 'old transport closes before the new dial');
         dialed = blocks._bridgeUrl(blocks._connectionTarget.sandboxRoute);
     };
-    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: 'Unity箱庭'});
+    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: '.NET箱庭'});
     await blocks.connect();
     t.equal(closed, true);
     t.equal(dialed, 'ws://127.0.0.1:8602/?sandbox=unity');
@@ -93,7 +93,7 @@ test('a late pairPoll response cannot save an old target token under the new tar
         saved = true;
     };
     const polling = blocks._pollPair('old-pair', Date.now() + 60000);
-    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: 'Unity箱庭'});
+    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: '.NET箱庭'});
     await blocks.connect();
     reply({status: 'ok', token: 'old-target-token'});
     await t.rejects(polling, {localReason: 'connection_target_changed'});
@@ -117,7 +117,7 @@ test('an old pairing cleanup does not erase the new pairing code', async t => {
     });
     const authenticating = blocks._authenticate();
     await started;
-    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: 'Unity箱庭'});
+    runtime.setMcRemoteConnectionTarget({sandboxRoute: 'unity', label: '.NET箱庭'});
     await blocks.connect();
     blocks._pairingInProgress = true;
     blocks._setPairCode('654-321');

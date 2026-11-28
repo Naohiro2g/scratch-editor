@@ -60,8 +60,21 @@ const mcremoteMessages = {
         'gui.mcremote.operation.world.strikeLightning': '雷を落とす',
 
         'gui.mcremote.wireScope.server': 'サーバー実装 / 版',
+        'gui.mcremote.wireScope.actionConnectTarget': '{target}には未接続です。「接続する」ブロックを実行してください。',
+        'gui.mcremote.wireScope.lastOperationError': '最後の操作エラー',
+        'gui.mcremote.wireScope.copy': 'コピー',
+        'gui.mcremote.wireScope.copied': 'コピーしました',
+        'gui.mcremote.wireScope.copyFailed': 'コピーできませんでした',
+        'gui.mcremote.error.zeroDirection': '向きの x・y・z のうち、少なくとも1つを0以外にしてください。',
+        'gui.mcremote.error.invalidInput': '「{operation}」ブロックの入力値を確認してください。',
+        'gui.mcremote.error.unknownBlock': 'この接続先では、そのブロックIDは使えません。カタログから選んでください。',
+        'gui.mcremote.error.permission': 'この接続先で「{operation}」を実行する権限がありません。',
+        'gui.mcremote.error.rejected': '接続先が「{operation}」を拒否しました。理由は「エラーの詳細」にあります。',
+        'gui.mcremote.error.failed': '「{operation}」に失敗しました。理由は「エラーの詳細」にあります。',
+        'gui.mcremote.error.completionUnknown': '「{operation}」が完了したか確認できませんでした。',
+        'gui.mcremote.error.notSent': '「{operation}」は送信されませんでした。',
         'gui.mcremote.error.operation': 'この操作',
-        'gui.mcremote.server.unity': 'Unity箱庭',
+        'gui.mcremote.server.unity': '.NET箱庭',
         'gui.mcremote.error.unsupported': '今の接続先では、「{operation}」は使えません。',
         'gui.mcremote.error.unsupportedNamed': '今の接続先「{server}」では、「{operation}」は使えません。',
         'gui.mcremote.error.height': '指定した高さ{y}は世界の外です。使える高さは{min}〜{max}です。',
@@ -93,15 +106,23 @@ const mcremoteMessages = {
             'Minecraft世界と双方向でつながり、自動建築や自動演奏をしたり、イベントを感知する。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは 接続先の操作が無効です。',
         'gui.alerts.mcremoteNotConnected': 'まず mc-remote の「接続する」ブロックを実行してください。',
-        'gui.alerts.mcremoteInvalidBuildMode': '建築モードは DEBUG、TRACE、FAST から選んでください。',
-        'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
+        'gui.alerts.mcremotePairAgain': '「接続する」ブロックを実行し、もう一度ペアリングしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
-            'ブロック設置の送信が混み合ったため、mc-remoteとの接続を停止しました。もう一度接続してください。',
+            'ブロック設置を続けられませんでした。接続を確認してから、もう一度試してください。',
+        'gui.alerts.mcremoteBuildNotSent':
+            '送信できなかった建築コマンドがあります。接続を確認してから、もう一度実行してください。',
+        'gui.alerts.mcremoteBuildCompletionUnknown':
+            '送信した建築コマンドの結果を確認できません。やり直す前にワールドを確認してください。',
         'gui.alerts.mcremoteServerBackpressure':
             'mc-remoteサーバーが混み合い、この操作を受け付けませんでした。少し待って、もう一度試してください。',
-        'gui.alerts.mcremoteGroundNotFound': '地面が見つかりません。',
-        'gui.alerts.mcremoteOperationFailed': '操作に失敗しました。WireScope miniを開いて確認してください。',
-        'gui.alerts.mcremoteCatalogUnavailable':
+        'gui.alerts.mcremoteEventsLost':
+            '一部のイベントがScratchに届きませんでした。そのイベントを使うスクリプトの動きを確認してください。',
+        'gui.alerts.mcremoteEventsStopped':
+            'Scratchのイベント受信が止まりました。接続を確認して、もう一度接続してください。',
+        'gui.mcremote.error.invalidBuildMode': '建築モードは DEBUG、TRACE、FAST から選んでください。',
+        'gui.mcremote.error.invalidTraceDelay': 'TRACEの待ち時間は0秒から2秒の数値にしてください。',
+        'gui.mcremote.error.groundNotFound': '地面が見つかりません。',
+        'gui.mcremote.error.catalogUnavailable':
             'カタログを取得できません。接続先への接続を確認して、もう一度実行してください。',
         'gui.aria.mcremoteConnectionMenu': 'mc-remote 接続先メニュー',
         'gui.menuBar.mcremoteConnection': '接続先',
@@ -327,8 +348,23 @@ const mcremoteMessages = {
         'gui.mcremote.operation.world.strikeLightning': 'かみなりをおとす',
 
         'gui.mcremote.wireScope.server': 'サーバーじっそう / ばん',
+        'gui.mcremote.wireScope.actionConnectTarget':
+            '{target}にはまだつながっていません。「せつぞくする」ブロックをうごかしてください。',
+        'gui.mcremote.wireScope.lastOperationError': 'さいごのそうさエラー',
+        'gui.mcremote.wireScope.copy': 'コピー',
+        'gui.mcremote.wireScope.copied': 'コピーしました',
+        'gui.mcremote.wireScope.copyFailed': 'コピーできませんでした',
+        'gui.mcremote.error.zeroDirection': 'むきの x・y・z のうち、すくなくとも1つを0いがいにしてください。',
+        'gui.mcremote.error.invalidInput': '「{operation}」ブロックにいれたあたいをたしかめてください。',
+        'gui.mcremote.error.unknownBlock': 'このせつぞくさきでは、そのブロックIDはつかえません。カタログからえらんでください。',
+        'gui.mcremote.error.permission': 'このせつぞくさきでは「{operation}」をじっこうするきょかがありません。',
+        'gui.mcremote.error.rejected':
+            'せつぞくさきが「{operation}」をうけつけませんでした。りゆうは「エラーのしょうさい」にあります。',
+        'gui.mcremote.error.failed': '「{operation}」にしっぱいしました。りゆうは「エラーのしょうさい」にあります。',
+        'gui.mcremote.error.completionUnknown': '「{operation}」がおわったか、たしかめられませんでした。',
+        'gui.mcremote.error.notSent': '「{operation}」はおくられませんでした。',
         'gui.mcremote.error.operation': 'このそうさ',
-        'gui.mcremote.server.unity': 'Unityはこにわ',
+        'gui.mcremote.server.unity': '.NETはこにわ',
         'gui.mcremote.error.unsupported': 'いまのせつぞくさきでは、「{operation}」はつかえません。',
         'gui.mcremote.error.unsupportedNamed': 'いまのせつぞくさき「{server}」では、「{operation}」はつかえません。',
         'gui.mcremote.error.height': 'していしたたかさ{y}はせかいのそとです。つかえるたかさは{min}〜{max}です。',
@@ -360,16 +396,23 @@ const mcremoteMessages = {
             'まいんくらふとのせかいと、そうほうこうでつながり、じどうけんちくや、じどうえんそうをしたり、イベントをかんじとる。',
         'gui.alerts.mcremoteConnectionDisabled': 'このショーケースでは せつぞくさきをそうさできません。',
         'gui.alerts.mcremoteNotConnected': 'まず mc-remote の「せつぞくする」ブロックをうごかしてください。',
-        'gui.alerts.mcremoteInvalidBuildMode': 'けんちくモードは DEBUG、TRACE、FAST からえらんでください。',
-        'gui.alerts.mcremoteInvalidTraceDelay': 'TRACEのまちじかんは0びょうから2びょうのすうじにしてください。',
+        'gui.alerts.mcremotePairAgain': '「せつぞくする」ブロックをうごかし、もういちどペアリングしてください。',
         'gui.alerts.mcremoteBuildDeliveryFailed':
-            'ブロックせっちのそうしんがこみあったため、mc-remoteとのせつぞくをとめました。もういちどせつぞくしてください。',
+            'ブロックせっちをつづけられませんでした。せつぞくをかくにんしてから、もういちどためしてください。',
+        'gui.alerts.mcremoteBuildNotSent':
+            'おくれなかったけんちくコマンドがあります。せつぞくをかくにんしてから、もういちどうごかしてください。',
+        'gui.alerts.mcremoteBuildCompletionUnknown':
+            'おくったけんちくコマンドのけっかをかくにんできません。やりなおすまえにワールドをかくにんしてください。',
         'gui.alerts.mcremoteServerBackpressure':
             'mc-remoteサーバーがこんでいて、このそうさをうけつけませんでした。すこしまって、もういちどためしてください。',
-        'gui.alerts.mcremoteGroundNotFound': 'じめんがみつかりません。',
-        'gui.alerts.mcremoteOperationFailed':
-            'そうさにしっぱいしました。WireScope miniをひらいてかくにんしてください。',
-        'gui.alerts.mcremoteCatalogUnavailable':
+        'gui.alerts.mcremoteEventsLost':
+            'Scratchにとどかなかったイベントがあります。そのイベントをつかうスクリプトのうごきをかくにんしてください。',
+        'gui.alerts.mcremoteEventsStopped':
+            'Scratchでイベントをうけとれなくなりました。せつぞくをかくにんして、もういちどせつぞくしてください。',
+        'gui.mcremote.error.invalidBuildMode': 'けんちくモードは DEBUG、TRACE、FAST からえらんでください。',
+        'gui.mcremote.error.invalidTraceDelay': 'TRACEのまちじかんは0びょうから2びょうのすうじにしてください。',
+        'gui.mcremote.error.groundNotFound': 'じめんがみつかりません。',
+        'gui.mcremote.error.catalogUnavailable':
             'カタログをしゅとくできません。せつぞくさきをかくにんして、もういちどじっこうしてください。',
         'gui.aria.mcremoteConnectionMenu': 'mc-remote せつぞくさきメニュー',
         'gui.menuBar.mcremoteConnection': 'せつぞくさき',

@@ -28,6 +28,7 @@ test('updateMcRemoteObservation stores a full observer snapshot', () => {
             permissions: {build: true}
         },
         lastError: null,
+        lastOperationError: {method: 'world.setBlock', reason: 'out_of_bounds'},
         frameLog: [{sequence: 1, method: 'hello'}]
     };
 
@@ -35,8 +36,12 @@ test('updateMcRemoteObservation stores a full observer snapshot', () => {
 });
 
 test('updateMcRemoteObservation falls back to initial values for missing fields', () => {
-    let defaultState;
-    expect(reducer(defaultState, updateMcRemoteObservation({
+    const previousState = {
+        ...mcremoteObservationInitialState,
+        status: 'connected',
+        lastOperationError: {method: 'world.setBlock', reason: 'out_of_bounds'}
+    };
+    expect(reducer(previousState, updateMcRemoteObservation({
         status: 'pairing',
         pairCode: '827-419'
     }))).toEqual({
