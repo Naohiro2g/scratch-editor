@@ -4,6 +4,7 @@ import {defaultConnectionTargets, validateConnectionTargets} from './connection-
 
 test('the two local servers and another host remain separate targets', () => {
     const value = defaultConnectionTargets();
+    assert.deepEqual(value.targets[1], {id: 'unity', label: '.NET箱庭', host: '127.0.0.1', port: 25585});
     value.targets.push({id: 'other', label: '別のPC', host: 'server.example', port: 12345});
     assert.deepEqual(validateConnectionTargets(value), value);
     assert.deepEqual(value.targets.map(target => target.port), [25575, 25585, 12345]);

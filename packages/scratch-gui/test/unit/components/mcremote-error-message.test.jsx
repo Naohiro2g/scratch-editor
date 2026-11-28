@@ -12,9 +12,20 @@ const renderError = error => renderWithIntl(<ErrorMessage
 
 test('explains unsupported methods without guessing server identity', () => {
     renderError({code: -32601, method: 'player.setPos', message: 'Method not found'});
-    expect(screen.getByText(/Unity箱庭.*使えません/)).toBeInTheDocument();
+    expect(screen.getByText(/\.NET箱庭.*使えません/)).toBeInTheDocument();
     expect(screen.getByText(/プレイヤーを移動する/)).toBeInTheDocument();
     expect(screen.getByText('player.setPos')).toBeInTheDocument();
+});
+
+test.each([
+    ['en', messages.en, /\.NET sandbox/],
+    ['ja-Hira', messages['ja-Hira'], /\.NETはこにわ/]
+])('uses the .NET sandbox label for %s unsupported method errors', (locale, localeMessages, expected) => {
+    renderWithIntl(<ErrorMessage
+        error={{code: -32601, method: 'player.setPos', message: 'Method not found'}}
+        server={{name: 'mc-remote-unity-sandbox', version: '2321.3.0'}}
+    />, {locale, messages: localeMessages});
+    expect(screen.getByText(expected)).toBeInTheDocument();
 });
 
 test('shows requested and maximum block counts', () => {

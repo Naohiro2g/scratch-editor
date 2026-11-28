@@ -10,7 +10,7 @@ const messages = defineMessages({
     operation: {id: 'gui.mcremote.error.operation', defaultMessage: 'This operation'},
     unity: {
         id: 'gui.mcremote.server.unity',
-        defaultMessage: 'Unity sandbox',
+        defaultMessage: '.NET sandbox',
         description: 'Learner-facing diagnostic: unity'
     },
     unsupported: {

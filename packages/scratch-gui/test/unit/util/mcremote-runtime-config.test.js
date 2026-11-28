@@ -45,7 +45,7 @@ describe('McRemote runtime config', () => {
             default_target_id: 'unity',
             connection_targets: [
                 {id: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 25575},
-                {id: 'unity', label: 'Unity箱庭', host: '127.0.0.1', port: 25585},
+                {id: 'unity', label: '.NET箱庭', host: '127.0.0.1', port: 25585},
                 {id: 'remote', label: '別のPC', host: 'server.example', port: 25595}
             ]
         });

@@ -14,7 +14,7 @@ Stackでの入力・生成・配備はこの変更に含めません。LANラン
   "default_target_id": "minecraft",
   "targets": [
     {"id": "minecraft", "label": "Minecraft", "host": "127.0.0.1", "port": 25575},
-    {"id": "unity", "label": "Unity箱庭", "host": "127.0.0.1", "port": 25585},
+    {"id": "unity", "label": ".NET箱庭", "host": "127.0.0.1", "port": 25585},
     {"id": "classroom", "label": "教室", "host": "server.example", "port": 25575}
   ]
 }
@@ -44,7 +44,7 @@ Scratch runtime configは新方式を`schema_version: 2`とし、`default_target
 
 ## LAN設定画面
 
-初回はMinecraftとUnity箱庭の二件を表示し、hostはどちらも127.0.0.1、portは25575／25585とします。
+初回はMinecraftと.NET箱庭の二件を表示し、hostはどちらも127.0.0.1、portは25575／25585とします。
 表示名、host、port、既定を編集でき、追加・削除に対応します。IDは画面で直接編集させません。
 「接続先を追加」は新しいIDを発行し、既存行の編集はIDを保持します。
 一覧の編集はScratchタブを閉じてから行い、保存後はBridgeを再起動してScratchを開き直します。

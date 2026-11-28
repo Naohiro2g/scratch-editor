@@ -41,7 +41,7 @@ const setup = async (t, {opening = false, blocked = false, failSave = false, sav
                     default_target_id: 'minecraft',
                     targets: [
                         {id: 'minecraft', label: 'Minecraft', host: 'minecraft.local', port: 25575},
-                        {id: 'unity', label: 'Unity箱庭', host: '127.0.0.1', port: 25585}
+                        {id: 'unity', label: '.NET箱庭', host: '127.0.0.1', port: 25585}
                     ],
                     saved}};
         }

@@ -35,10 +35,10 @@ const renderArgument = argument => {
         `<td>${defaultLabel}</td><td>${options || '—'}</td></tr>`;
 };
 
-const renderBlock = block => {
+const renderBlock = (block, apiUrl) => {
     const search = [block.title, block.text, block.opcode, block.description, ...(block.methods || []),
         ...(block.keywords || []), ...(block.targets || []).flatMap(target =>
-            target === 'unity' ? ['Unity', 'Unity箱庭', 'ユニティ'] : [target]),
+            target === 'unity' ? ['Unity', 'Unity箱庭', 'ユニティ', '.NET箱庭'] : [target]),
         ...block.arguments.flatMap(argument => [argument.label,
             ...(argument.options || []).flatMap(option => [option.text, option.value])])].join(' ');
     const argumentsTable = block.arguments.length ? `<details class="inputs"><summary>入力・選択肢 ` +
@@ -54,7 +54,7 @@ const renderBlock = block => {
     const methods = block.methods && block.methods.length ? `<div class="protocol"><span>通信API</span> ${
         block.methods.map(method => {
             const category = method.startsWith('auth.') ? 'auth' : protocolCategories[block.category];
-            return `<a href="https://mc-remote.com/api/#${category}"><code>${escapeHtml(method)}</code></a>`;
+            return `<a href="${apiUrl}#${category}"><code>${escapeHtml(method)}</code></a>`;
         }).join(' ')}</div>` : '';
     return `<article id="${escapeHtml(block.opcode)}" class="block-card" data-search="${escapeHtml(search)}" ` +
         `data-kind="${escapeHtml(block.blockType)}" data-targets="${escapeHtml((block.targets || []).join(' '))}"><div class="card-heading"><h3>${escapeHtml(block.title)}</h3>` +
@@ -71,6 +71,7 @@ const renderBlock = block => {
 };
 
 const renderPage = (template, data) => {
+    const apiUrl = `https://mc-remote.com/api/${escapeHtml(data.protocol)}/`;
     const categories = Object.entries(data.categories);
     const navigation = categories.map(([id, name]) => {
         const count = data.blocks.filter(block => block.category === id).length;
@@ -79,13 +80,14 @@ const renderPage = (template, data) => {
     }).join('');
     const sections = categories.map(([id, name]) => `<section class="block-section" data-section="${id}" ` +
         `aria-labelledby="heading-${id}"><h2 id="heading-${id}">${escapeHtml(name)}</h2>${
-            data.blocks.filter(block => block.category === id).map(renderBlock)
+            data.blocks.filter(block => block.category === id).map(block => renderBlock(block, apiUrl))
                 .join('')}</section>`).join('');
     return template.replace('<!-- CATEGORY_NAVIGATION -->', navigation)
         .replace('<!-- BLOCK_SECTIONS -->', sections)
         .replaceAll('{{BLOCK_COUNT}}', String(data.blocks.length))
         .replaceAll('{{RELEASE}}', escapeHtml(data.release))
         .replaceAll('{{PROTOCOL}}', escapeHtml(data.protocol))
+        .replaceAll('{{API_URL}}', apiUrl)
         .replace('{{SOURCE_COMMIT}}', escapeHtml(data.sourceCommit));
 };
 

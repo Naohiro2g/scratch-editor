@@ -10,7 +10,7 @@ import {persistMcRemoteConnectionTargetRoute} from '../../../src/lib/mcremote-co
 jest.mock('../../../src/lib/mcremote-connection-targets', () => {
     const targets = [
         {id: 'minecraft', sandboxRoute: 'minecraft', label: 'Minecraft', host: '127.0.0.1', port: 25575},
-        {id: 'unity-id', sandboxRoute: 'unity-id', label: 'Unity箱庭', host: '127.0.0.1', port: 25585},
+        {id: 'unity-id', sandboxRoute: 'unity-id', label: '.NET箱庭', host: '127.0.0.1', port: 25585},
         {id: 'ipv6-id', sandboxRoute: 'ipv6-id', label: 'IPv6', host: '::1', port: 25595}
     ];
     return {MCREMOTE_CONNECTION_TARGETS: targets,
