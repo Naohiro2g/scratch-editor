@@ -1,8 +1,8 @@
 {
-  "release": "2321.2.0",
-  "protocol": "23.2.1",
-  "sourceRef": "f9e6625f4246529f0e894875ce20dccb21f6fc1c",
-  "sourceCommit": "f9e6625f4246529f0e894875ce20dccb21f6fc1c",
+  "release": "2400.0.0",
+  "protocol": "24.0.0",
+  "sourceRef": "7d797d351e065c251f5e2cc2a7132637e3e67d04",
+  "sourceCommit": "7d797d351e065c251f5e2cc2a7132637e3e67d04",
   "locale": "ja",
   "categories": {
     "connection": "接続・ペアリング",
@@ -63,7 +63,7 @@
         "unity"
       ],
       "notes": [
-        "Unity箱庭ではオーバーワールドだけを使えます。"
+        ".NET箱庭ではオーバーワールドだけを使えます。"
       ],
       "arguments": [
         {
@@ -266,7 +266,7 @@
       "description": "取得済みカタログのブロックID・エンティティID・パーティクルIDを、選んだScratchリストへ入れます。",
       "notes": [
         "リストの中身を置き換えます。IDは名前空間付きで、文字列順に並びます。",
-        "Unity箱庭のカタログはブロックIDに対応しています。"
+        ".NET箱庭のカタログはブロックIDに対応しています。"
       ],
       "related": [
         {
@@ -976,7 +976,7 @@
         "unity"
       ],
       "notes": [
-        "Unity箱庭ではオーバーワールドだけを使えます。"
+        ".NET箱庭ではオーバーワールドだけを使えます。"
       ],
       "arguments": [
         {
@@ -1102,7 +1102,7 @@
         "unity"
       ],
       "notes": [
-        "Unity箱庭ではオーバーワールドだけを使えます。"
+        ".NET箱庭ではオーバーワールドだけを使えます。"
       ],
       "arguments": [
         {
@@ -2973,7 +2973,7 @@
         "unity"
       ],
       "notes": [
-        "Unity箱庭ではペアリングした画面のチャット入力を受信します。"
+        ".NET箱庭ではペアリングした画面のチャット入力を受信します。"
       ],
       "arguments": [],
       "imageWidth": 224,
@@ -3025,7 +3025,7 @@
         "unity"
       ],
       "notes": [
-        "Unity箱庭ではチャットイベントの情報を読みます。"
+        ".NET箱庭ではチャットイベントの情報を読みます。"
       ],
       "arguments": [
         {
